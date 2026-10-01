@@ -192,8 +192,7 @@ function renderArchive(dashboard) {
     button.type = "button";
     button.append(
       node("strong", "", `W${String(week.week).padStart(2, "0")}`),
-      (() => { const wrap = node("span"); wrap.append(node("span", "", `${compactDate(week.startDate)}–${compactDate(week.endDate)}`), node("small", "", `${week.dayCount} 個供餐日 · 已校讀`)); return wrap; })(),
-      node("b", "", "→")
+      (() => { const wrap = node("span"); wrap.append(node("span", "", `${compactDate(week.startDate)}–${compactDate(week.endDate)}`), node("small", "", `${week.dayCount} 個供餐日 · 已校讀`)); return wrap; })()
     );
     button.addEventListener("click", () => loadDashboard(week.startDate));
     refs.archiveList.append(button);

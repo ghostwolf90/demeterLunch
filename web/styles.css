@@ -172,12 +172,11 @@ h1 em { color: var(--orange); font-style: normal; }
 .primary-action { color: var(--white); background: var(--ink); }
 .secondary-action { background: transparent; }
 .archive-list { display: grid; border-top: 1px solid var(--line); }
-.archive-item { appearance: none; width: 100%; display: grid; grid-template-columns: 61px 1fr auto; align-items: center; gap: 18px; padding: 18px 4px; text-align: left; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; background: transparent; }
+.archive-item { appearance: none; width: 100%; display: grid; grid-template-columns: 61px 1fr; align-items: center; gap: 18px; padding: 18px 4px; text-align: left; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; background: transparent; }
 .archive-item:hover { color: var(--orange); }
 .archive-item strong { font-family: Georgia, serif; font-size: 22px; }
 .archive-item > span { display: grid; gap: 4px; font-size: 13px; font-weight: 650; }
 .archive-item small { display: block; color: var(--ink-soft); font-size: 11px; font-weight: 500; }
-.archive-item b { font-size: 15px; }
 
 footer { width: min(1320px, calc(100% - 44px)); margin: 0 auto; padding: 25px 0 38px; display: flex; justify-content: space-between; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 11px; }
 footer strong { color: var(--ink); letter-spacing: .08em; }
@@ -255,7 +254,7 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   .source-copy h2 { font-size: 39px; }
   .source-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .primary-action, .secondary-action { min-height: 45px; display: grid; place-items: center; padding: 10px; text-align: center; }
-  .archive-item { min-height: 67px; grid-template-columns: 52px 1fr auto; }
+  .archive-item { min-height: 67px; grid-template-columns: 52px 1fr; }
   footer { gap: 14px; flex-direction: column; }
   .mobile-nav {
     position: fixed;
