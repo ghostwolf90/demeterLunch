@@ -8,6 +8,9 @@ const ids = [
   "fruitDays", "fruitDaysContext", "friedDays", "friedDaysContext", "proteinBars", "calorieChart", "trendRange",
   "sourceArticle", "openSource", "archiveList", "errorState", "errorMessage",
   "sourceDialog", "closeSource", "dialogTitle", "sourceImage", "downloadSource",
+  "educationIngredient", "educationTitle", "educationFact", "educationPrompt", "educationSource",
+  "recipeInspired", "recipeTitle", "recipeMeta", "recipePreview", "recipeDetails",
+  "recipeIngredients", "recipeSteps", "recipeAllergens", "recipeNote",
 ];
 const refs = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
 
@@ -53,6 +56,8 @@ function dashboardFromStatic(data, selectedDate) {
     isFallback: !exact,
     week: data.days.filter((day) => day.weekId === active.weekId),
     dinnerSuggestion: data.dinnerSuggestions[active.date],
+    foodEducation: data.foodEducation[active.date],
+    homeRecipe: data.homeRecipes[active.date],
     insights: data.insights,
     archive: data.archive,
     dateRange: data.dateRange,
@@ -125,6 +130,36 @@ function renderDinner(suggestion) {
   refs.dinnerReason.textContent = suggestion.reason;
   refs.dinnerNotes.replaceChildren(...suggestion.notes.map((text) => node("li", "", text)));
   refs.disclaimer.textContent = suggestion.disclaimer;
+}
+
+function renderFoodEducation(card) {
+  refs.educationIngredient.textContent = card.ingredient;
+  refs.educationTitle.textContent = card.title;
+  refs.educationFact.textContent = card.fact;
+  refs.educationPrompt.textContent = card.prompt;
+  refs.educationSource.textContent = card.source.label;
+  refs.educationSource.href = card.source.url;
+}
+
+function renderHomeRecipe(recipe) {
+  refs.recipeInspired.textContent = `從「${recipe.inspiredBy}」延伸`;
+  refs.recipeTitle.textContent = recipe.title;
+  refs.recipeMeta.replaceChildren(
+    node("span", "", recipe.time),
+    node("span", "", recipe.servings),
+  );
+  refs.recipePreview.replaceChildren(
+    ...recipe.ingredients.slice(0, 3).map((item) => node("span", "", item)),
+  );
+  refs.recipeIngredients.replaceChildren(
+    ...recipe.ingredients.map((item) => node("li", "", item)),
+  );
+  refs.recipeSteps.replaceChildren(
+    ...recipe.steps.map((step) => node("li", "", step)),
+  );
+  refs.recipeAllergens.textContent = `留意過敏原：${recipe.allergens.join("、")}`;
+  refs.recipeNote.textContent = recipe.note;
+  refs.recipeDetails.open = false;
 }
 
 function renderWeek(dashboard) {
@@ -220,6 +255,8 @@ function render(dashboard) {
   renderMeal(day);
   renderNutrition(day.nutrition);
   renderDinner(dashboard.dinnerSuggestion);
+  renderFoodEducation(dashboard.foodEducation);
+  renderHomeRecipe(dashboard.homeRecipe);
   renderWeek(dashboard);
   renderInsights(dashboard.insights, dashboard);
   renderArchive(dashboard);

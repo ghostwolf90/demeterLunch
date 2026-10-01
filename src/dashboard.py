@@ -7,6 +7,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from .family_content import make_food_education, make_home_recipe
+
 
 PROTEIN_LABELS = {
     "chicken": "雞肉",
@@ -124,6 +126,8 @@ def load_dashboard(database_path: Path, selected_date: str | None = None) -> dic
         "isFallback": exact is None and selected_date is not None,
         "week": week_days,
         "dinnerSuggestion": make_dinner_suggestion(active),
+        "foodEducation": make_food_education(active),
+        "homeRecipe": make_home_recipe(active),
         "insights": _build_insights(days, top_dishes),
         "archive": [
             {

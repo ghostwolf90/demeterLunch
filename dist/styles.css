@@ -128,6 +128,42 @@ h1 em { color: var(--orange); font-style: normal; }
 .dinner-card ul { position: relative; z-index: 1; margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.8; }
 .disclaimer { position: relative; z-index: 1; margin: 20px 0 0; padding-top: 14px; border-top: 1px solid rgba(21,52,71,.18); font-size: 10px; line-height: 1.55; opacity: .66; }
 
+.family-section { padding-top: 92px; }
+.family-title { align-items: end; }
+.family-grid { display: grid; grid-template-columns: .92fr 1.08fr; gap: 18px; }
+.family-grid > article { min-width: 0; padding: 30px; box-shadow: none; }
+.food-card { position: relative; overflow: hidden; color: var(--white); background: var(--green); }
+.food-card::after { content: attr(data-mark); position: absolute; right: -12px; bottom: -50px; color: rgba(255,255,255,.08); font-family: Georgia, serif; font-size: 180px; font-weight: 800; line-height: 1; }
+.food-card .kicker { color: #e8f4ec; }
+.food-card-top, .recipe-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+.food-card-top > span { padding: 7px 12px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; background: rgba(255,255,255,.11); font-size: 13px; font-weight: 750; }
+.food-card h3, .recipe-card h3 { margin: 34px 0 16px; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(29px, 3.2vw, 43px); line-height: 1.08; letter-spacing: -.035em; }
+.food-fact { position: relative; z-index: 1; max-width: 560px; margin-bottom: 25px; color: rgba(255,255,255,.86); font-size: 15px; line-height: 1.85; }
+.food-prompt { position: relative; z-index: 1; padding: 18px; border: 1px solid rgba(255,255,255,.24); border-radius: 17px; background: rgba(255,255,255,.1); }
+.food-prompt span { display: block; margin-bottom: 6px; color: #e7f3eb; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.food-prompt strong { display: block; font-size: 15px; line-height: 1.6; }
+.education-source { position: relative; z-index: 1; display: inline-block; margin-top: 19px; color: rgba(255,255,255,.75); border-bottom: 1px solid rgba(255,255,255,.36); font-size: 11px; line-height: 1.7; }
+.education-source:hover { color: var(--white); }
+
+.recipe-card { background: rgba(255,253,248,.88); }
+.recipe-inspired { margin: -3px 0 0; color: var(--ink-soft); font-size: 12px; }
+.recipe-stamp { width: 49px; height: 49px; display: grid; place-items: center; flex: 0 0 auto; border: 2px solid var(--orange); border-radius: 13px; color: var(--orange); font-family: Georgia, "Noto Serif TC", serif; font-size: 25px; font-weight: 800; transform: rotate(5deg); }
+.recipe-card h3 { margin-top: 25px; margin-bottom: 12px; }
+.recipe-meta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--ink-soft); font-size: 12px; }
+.recipe-meta span { padding: 6px 10px; border-radius: 999px; background: var(--paper-deep); }
+.recipe-preview { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 18px; }
+.recipe-preview span { padding: 8px 11px; border: 1px dashed var(--line); border-radius: 12px; color: var(--ink-soft); background: rgba(245,240,231,.55); font-size: 12px; }
+.recipe-card details { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.recipe-card summary { min-height: 49px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 13px; font-weight: 800; list-style: none; }
+.recipe-card summary::-webkit-details-marker { display: none; }
+.recipe-card summary::after { content: "+"; width: 25px; height: 25px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; font-size: 17px; font-weight: 500; }
+.recipe-card details[open] summary::after { content: "−"; }
+.recipe-body { display: grid; grid-template-columns: .82fr 1.18fr; gap: 25px; padding: 7px 0 19px; }
+.recipe-body h4 { margin: 0 0 9px; font-size: 12px; letter-spacing: .08em; }
+.recipe-body ul, .recipe-body ol { margin: 0; padding-left: 19px; color: var(--ink-soft); font-size: 12px; line-height: 1.75; }
+.recipe-allergens { margin: 0 0 18px; color: var(--orange); font-size: 11px; line-height: 1.5; }
+.recipe-note { margin: 15px 0 0; color: var(--ink-soft); font-size: 10px; line-height: 1.55; }
+
 .section { padding: 105px 0 20px; scroll-margin-top: 80px; }
 .section-title { margin-bottom: 31px; display: flex; justify-content: space-between; align-items: flex-end; gap: 28px; }
 .section-title h2 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(35px, 4.1vw, 58px); line-height: 1.02; letter-spacing: -.045em; }
@@ -167,6 +203,11 @@ h1 em { color: var(--orange); font-style: normal; }
 .source-section { display: grid; grid-template-columns: .86fr 1.14fr; gap: 80px; align-items: start; padding-bottom: 105px; }
 .source-copy h2 { margin-bottom: 22px; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(38px, 4.5vw, 61px); line-height: 1.02; letter-spacing: -.045em; }
 .source-copy > p:not(.kicker) { max-width: 500px; color: var(--ink-soft); font-size: 14px; line-height: 1.85; }
+.monitor-note { max-width: 500px; margin-top: 24px; padding: 14px 15px; display: flex; align-items: flex-start; gap: 12px; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,253,248,.55); }
+.monitor-note > span { width: 9px; height: 9px; margin-top: 4px; flex: 0 0 auto; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(93,147,125,.15); }
+.monitor-note div { display: grid; gap: 4px; }
+.monitor-note strong { font-size: 12px; }
+.monitor-note small { color: var(--ink-soft); font-size: 11px; line-height: 1.55; }
 .source-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 27px; }
 .primary-action, .secondary-action { padding: 12px 17px; border: 1px solid var(--ink); border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 13px; }
 .primary-action { color: var(--white); background: var(--ink); }
@@ -214,7 +255,7 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   h1 { margin-bottom: 13px; font-size: clamp(42px, 12.5vw, 54px); line-height: .96; }
   .intro-note { font-size: 13px; line-height: 1.55; }
   .doodle { display: none; }
-  .today-grid, .insight-grid, .source-section { grid-template-columns: minmax(0, 1fr); }
+  .today-grid, .family-grid, .insight-grid, .source-section { grid-template-columns: minmax(0, 1fr); }
   .today-grid { gap: 12px; }
   .dinner-card { grid-column: auto; }
   .card { border-radius: 22px; box-shadow: 0 12px 35px rgba(47,54,56,.09); }
@@ -231,6 +272,13 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   .nutrition-bars { margin-top: 25px; gap: 15px; }
   .nutrition-row { grid-template-columns: 72px 1fr 35px; gap: 8px; }
   .dinner-card h2 { font-size: 27px; }
+  .family-section { padding-top: 68px; }
+  .family-grid { gap: 12px; }
+  .family-grid > article { padding: 21px; }
+  .food-card h3, .recipe-card h3 { font-size: 30px; }
+  .food-card h3 { margin-top: 27px; }
+  .food-fact { font-size: 14px; }
+  .recipe-body { grid-template-columns: 1fr; gap: 17px; }
   .section { padding-top: 68px; scroll-margin-top: 62px; }
   .section-title { align-items: flex-start; flex-direction: column; }
   .section-title { margin-bottom: 22px; gap: 17px; }

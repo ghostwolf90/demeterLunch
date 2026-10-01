@@ -50,6 +50,12 @@ def build_static_site(
         "dinnerSuggestions": {
             day: dashboards[day]["dinnerSuggestion"] for day in dates
         },
+        "foodEducation": {
+            day: dashboards[day]["foodEducation"] for day in dates
+        },
+        "homeRecipes": {
+            day: dashboards[day]["homeRecipe"] for day in dates
+        },
         "insights": latest["insights"],
         "archive": latest["archive"],
         "dateRange": latest["dateRange"],

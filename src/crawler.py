@@ -35,9 +35,18 @@ class LunchCrawler:
 
     def fetch_latest(self, *, since: date) -> CrawlReport:
         articles = self._discover(since=since, max_pages=1)
-        candidates = self._prepare_candidates(articles, since)
-        selected = [max(candidates, key=_article_sort_key)] if candidates else []
+        latest = self._latest_candidate(articles, since)
+        selected = [latest] if latest else []
         return self._process(articles, selected)
+
+    def discover_latest(self, *, since: date) -> Article | None:
+        """Return the latest matching lunch post without downloading its images."""
+        articles = self._discover(since=since, max_pages=1)
+        return self._latest_candidate(articles, since)
+
+    def _latest_candidate(self, articles: list[Article], since: date) -> Article | None:
+        candidates = self._prepare_candidates(articles, since)
+        return max(candidates, key=_article_sort_key) if candidates else None
 
     def _discover(self, *, since: date, max_pages: int) -> list[Article]:
         try:

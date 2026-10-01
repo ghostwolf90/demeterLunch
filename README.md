@@ -17,6 +17,9 @@
 - 23 個供餐日已轉成可查詢的每日菜單與營養資料
 - 今日餐盤、整週瀏覽與跨週營養趨勢
 - 依午餐蛋白質、蔬菜、水果與烹調方式產生晚餐搭配靈感
+- 每日食育小卡，以食材觀察與親子對話延伸午餐內容
+- 依當日菜色提供家庭靈感版料理，明確區分於校方原始配方
+- 定期偵測 Blogger 新文章與既有菜單更新
 - 每筆資料可回到校方文章及原始菜單圖片核對
 
 ## 環境需求
@@ -48,6 +51,33 @@ python3 scripts/fetch_latest.py
 ```
 
 若文章與圖片都已存在且 `updatedAt` 未改變，執行結果會是 `skipped`。
+
+只檢查 Blogger 是否出現新文章或原圖更新：
+
+```bash
+python3 scripts/check_for_updates.py
+```
+
+偵測到變化時一併保存原始圖片：
+
+```bash
+python3 scripts/check_for_updates.py --download
+```
+
+檢查狀態會以原子方式寫入 `data/monitor/state.json`。第一次執行只建立比較基準，不會把既有文章誤報為新菜單；之後會回報 `new`、`updated` 或 `unchanged`。
+
+## 網站自動檢查流程
+
+公開網站連結的排程每天讀取相同 Site 原始碼，並依下列步驟執行：
+
+1. 從網站原始碼取得本專案，執行 `python3 scripts/check_for_updates.py --download`。
+2. Atom feed 是主要來源；只有 Atom 無法使用時才回退到 Blogger HTML。
+3. `initialized` 或 `unchanged` 時保持安靜，不更新公開菜單。
+4. `new` 或 `updated` 時保存 `data/monitor/state.json` 與完整原始圖片，通知使用者文章標題、日期區間和變更類型。
+5. 新資料只停留在原始資料層；不得自動修改 `data/parsed/`、營養數字、過敏原或公開頁面，也不得把未校讀內容部署到網站。
+6. 暫時性網路錯誤可重試一次；仍失敗時保留上一個有效狀態並通知使用者，不得以空資料覆蓋既有內容。
+
+這個流程需要 Blogger 的公開讀取權限，以及同一個 Site 原始碼的讀寫權限；不使用個人帳號、Cookie 或其他憑證。
 
 ## 開啟本機網站
 
@@ -133,4 +163,4 @@ python3 scripts/build_static_site.py
 - 未解析的新標題格式仍會保存到 `data/raw/unparsed/`，並在 log 中提出警告。
 - Blogger 或 Google 可能限流；遇到 429 或 5xx 時只會做有限次重試，不會繞過網站限制。
 - Blogger 偶爾會讓 `s0` 仍只回傳較小版本；下載器會重試並在 metadata 的 `matchesDeclaredDimensions` 標示是否符合文章宣告尺寸。
-- 目前只提供本機網站，不含 GitHub Actions、排程或雲端儲存。
+- 不使用 GitHub Actions；公開網站的來源偵測由連結到 Site 的排程負責。
