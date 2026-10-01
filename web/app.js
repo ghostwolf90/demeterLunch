@@ -5,7 +5,7 @@ const ids = [
   "allergenRow", "calories", "nutritionBars", "dinnerTitle", "dinnerPicks",
   "dinnerReason", "dinnerNotes", "disclaimer", "weekLabel", "weekDays",
   "previousWeek", "nextWeek", "averageCalories", "averageVegetables",
-  "fruitDays", "friedDays", "proteinBars", "calorieChart", "trendRange",
+  "fruitDays", "fruitDaysContext", "friedDays", "friedDaysContext", "proteinBars", "calorieChart", "trendRange",
   "sourceArticle", "openSource", "archiveList", "errorState", "errorMessage",
   "sourceDialog", "closeSource", "dialogTitle", "sourceImage", "downloadSource",
 ];
@@ -152,9 +152,11 @@ function renderWeek(dashboard) {
 
 function renderInsights(insights, dashboard) {
   refs.averageCalories.textContent = insights.averageCaloriesKcal;
-  refs.averageVegetables.textContent = insights.averageVegetablesServings;
-  refs.fruitDays.textContent = `${insights.fruitDays}/${dashboard.totalDays}`;
-  refs.friedDays.textContent = insights.friedDays;
+  refs.averageVegetables.textContent = `約 ${insights.averageVegetablesServings} 份`;
+  refs.fruitDays.textContent = `${insights.fruitDays} 天`;
+  refs.fruitDaysContext.textContent = `共 ${dashboard.totalDays} 個供餐日`;
+  refs.friedDays.textContent = `${insights.friedDays} 天`;
+  refs.friedDaysContext.textContent = `共 ${dashboard.totalDays} 個供餐日`;
 
   refs.proteinBars.replaceChildren();
   const maxProtein = Math.max(...insights.proteinCounts.map((item) => item.count), 1);
