@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 import tempfile
 import unittest
+from collections import Counter
 from pathlib import Path
 
 from src.dashboard import load_dashboard
@@ -38,8 +39,22 @@ class ReviewedMenuTests(unittest.TestCase):
     def test_dashboard_selects_day_and_creates_dinner_idea(self) -> None:
         dashboard = load_dashboard(PROJECT_ROOT / "data" / "lunch.db", "2026-10-01")
         self.assertEqual(dashboard["selected"]["meal"]["mainDish"], "可樂豬腳")
-        self.assertIn("豆腐蔬菜煲", dashboard["dinnerSuggestion"]["recommendations"])
+        self.assertEqual(len(dashboard["dinnerSuggestion"]["recommendations"]), 2)
+        self.assertNotIn("清蒸魚", dashboard["dinnerSuggestion"]["recommendations"])
         self.assertEqual(dashboard["totalDays"], 23)
+
+    def test_dinner_ideas_rotate_instead_of_repeating_one_default(self) -> None:
+        database = PROJECT_ROOT / "data" / "lunch.db"
+        with sqlite3.connect(database) as connection:
+            dates = [row[0] for row in connection.execute("SELECT date FROM daily_menus")]
+        first_choices = [
+            load_dashboard(database, menu_date)["dinnerSuggestion"]["recommendations"][0]
+            for menu_date in dates
+        ]
+        counts = Counter(first_choices)
+        self.assertGreaterEqual(len(counts), 12)
+        self.assertLessEqual(max(counts.values()), 3)
+        self.assertNotIn("清蒸魚", counts)
 
     def test_dashboard_falls_back_to_nearest_previous_school_day(self) -> None:
         dashboard = load_dashboard(PROJECT_ROOT / "data" / "lunch.db", "2026-09-27")

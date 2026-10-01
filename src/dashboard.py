@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 from collections import Counter
@@ -14,6 +15,72 @@ PROTEIN_LABELS = {
     "seafood": "海鮮",
     "egg": "蛋",
     "tofu": "豆製品",
+}
+
+DINNER_POOLS = {
+    "chicken": (
+        ("番茄豆腐煲", "蒜炒地瓜葉"),
+        ("味噌烤鯖魚", "涼拌秋葵"),
+        ("毛豆炒蛋", "香菇炊飯"),
+        ("豆豉蒸鱈魚", "清炒高麗菜"),
+        ("香煎板豆腐", "玉米筍炒菇"),
+        ("鮭魚蔬菜炊飯", "海帶芽湯"),
+        ("海鮮豆腐煲", "蒜炒菠菜"),
+        ("香菇豆干煲", "烤南瓜"),
+    ),
+    "pork": (
+        ("檸檬烤鯖魚", "蒜香花椰菜"),
+        ("番茄炒蛋", "毛豆炒菇"),
+        ("香煎百頁豆腐", "涼拌小黃瓜"),
+        ("蛤蜊絲瓜", "烤地瓜"),
+        ("豆腐蔬菜煲", "蒜炒菠菜"),
+        ("香草烤鱸魚", "彩椒菇菇"),
+        ("蒜香蛤蜊", "炒小白菜"),
+        ("南瓜蒸蛋", "涼拌豆芽"),
+    ),
+    "fish": (
+        ("香菇蒸雞", "清炒菠菜"),
+        ("番茄炒蛋", "滷豆干"),
+        ("三杯杏鮑菇", "毛豆玉米"),
+        ("蔥燒雞腿", "涼拌小黃瓜"),
+        ("豆腐蔬菜煲", "蒜炒青江菜"),
+        ("雞肉蔬菜捲", "南瓜濃湯"),
+        ("香草豬里肌", "燙青花菜"),
+        ("毛豆豆干丁", "玉米濃湯"),
+    ),
+    "egg": (
+        ("味噌烤鯖魚", "燙青花菜"),
+        ("香菇雞肉煲", "涼拌木耳"),
+        ("麻婆豆腐", "清炒高麗菜"),
+        ("蒜香蝦仁", "清炒絲瓜"),
+        ("毛豆豆干丁", "紫菜湯"),
+        ("番茄燉魚", "烤南瓜"),
+    ),
+    "tofu": (
+        ("蔥燒雞腿", "清炒小松菜"),
+        ("鮭魚炊飯", "涼拌秋葵"),
+        ("番茄炒蛋", "蒜香花椰菜"),
+        ("蛤蜊冬瓜湯", "炒地瓜葉"),
+        ("香草豬里肌", "烤時蔬"),
+        ("蒸蛋", "毛豆玉米"),
+    ),
+    "balanced": (
+        ("南瓜雞肉燉飯", "燙青花菜"),
+        ("味噌烤鯖魚", "涼拌豆芽"),
+        ("番茄豆腐煲", "蒜炒菠菜"),
+        ("香菇蒸蛋", "烤地瓜"),
+        ("蔥燒豬里肌", "炒高麗菜"),
+        ("蛤蜊絲瓜", "玉米筍炒菇"),
+    ),
+}
+
+DINNER_REASONS = {
+    "chicken": "午餐已有雞肉，晚餐改用魚、蛋或豆製品，整天更有變化。",
+    "pork": "午餐已有豬肉，晚餐換成魚、蛋、海鮮或豆製品。",
+    "fish": "午餐已有魚或海鮮，晚餐改搭雞肉、蛋或豆製品。",
+    "egg": "午餐已有蛋料理，晚餐換一種主要蛋白質。",
+    "tofu": "午餐已有豆製品，晚餐可搭配魚、蛋或肉類。",
+    "balanced": "從不同料理輪替選一組，讓一天的餐桌更多元。",
 }
 
 
@@ -151,21 +218,14 @@ def _build_insights(
 
 def make_dinner_suggestion(day: dict[str, Any]) -> dict[str, Any]:
     tags = set(day["tags"])
-    if "chicken" in tags:
-        proteins = ["清蒸魚", "板豆腐料理"]
-        reason = "午餐已有雞肉，晚餐換一種蛋白質，整天會更有變化。"
-    elif "pork" in tags:
-        proteins = ["烤鮭魚", "豆腐蔬菜煲"]
-        reason = "午餐已有豬肉，晚餐可改選魚類或豆製品。"
-    elif tags & {"fish", "seafood"}:
-        proteins = ["香煎雞胸", "番茄炒蛋"]
-        reason = "午餐已有魚或海鮮，晚餐可改搭雞蛋或雞肉。"
-    elif "egg" in tags:
-        proteins = ["清蒸魚", "滷豆干"]
-        reason = "午餐已有蛋料理，晚餐可換成魚類或豆製品。"
-    else:
-        proteins = ["清蒸魚", "豆腐料理"]
-        reason = "用不同的蛋白質與午餐錯開，讓一天的餐桌更多元。"
+    dinner_group = _primary_protein(day, tags)
+    pool = DINNER_POOLS[dinner_group]
+    main_dish = str(day.get("meal", {}).get("mainDish") or "")
+    rotation_key = f"{day['date']}:{main_dish}".encode("utf-8")
+    rotation_seed = int.from_bytes(hashlib.sha256(rotation_key).digest()[:4], "big")
+    rotation = rotation_seed % len(pool)
+    proteins = list(pool[rotation])
+    reason = DINNER_REASONS[dinner_group]
 
     notes: list[str] = []
     nutrition = day["nutrition"]
@@ -187,3 +247,21 @@ def make_dinner_suggestion(day: dict[str, Any]) -> dict[str, Any]:
         "notes": notes,
         "disclaimer": "這是依午餐內容產生的家庭搭配靈感，不是個人化醫療或營養建議。",
     }
+
+
+def _primary_protein(day: dict[str, Any], tags: set[str]) -> str:
+    main_dish = str(day.get("meal", {}).get("mainDish") or "")
+    if "雞" in main_dish:
+        return "chicken"
+    if any(keyword in main_dish for keyword in ("豬", "排骨", "肉燥", "肉片", "豬腳")):
+        return "pork"
+    if any(keyword in main_dish for keyword in ("魚", "蝦", "蚵", "魷", "海鮮")):
+        return "fish"
+    if "蛋" in main_dish:
+        return "egg"
+    if any(keyword in main_dish for keyword in ("豆腐", "豆干", "豆皮", "百頁")):
+        return "tofu"
+    for tag in ("chicken", "pork", "fish", "seafood", "egg", "tofu"):
+        if tag in tags:
+            return "fish" if tag == "seafood" else tag
+    return "balanced"
