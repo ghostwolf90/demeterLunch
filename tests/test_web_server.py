@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.serve import load_menus
+from scripts.serve import load_menus, load_news
 
 
 class WebDataTests(unittest.TestCase):
@@ -38,6 +38,14 @@ class WebDataTests(unittest.TestCase):
                 menus[0]["images"][0]["url"],
                 "/data/2026/semester-1/week-02/menu-01.png",
             )
+
+    def test_news_api_returns_saved_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            news = root / "news.json"
+            news.write_text('{"items":[{"title":"午餐新聞"}]}', encoding="utf-8")
+            payload = load_news(news)
+            self.assertEqual(payload["items"][0]["title"], "午餐新聞")
 
 
 if __name__ == "__main__":

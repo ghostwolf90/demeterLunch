@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="近期校園營養午餐政策、食安、供應與食育消息整理" />
+    <meta name="theme-color" content="#f5f0e7" />
+    <title>午餐觀察｜好好吃飯</title>
+    <script>
+      if (window.location.protocol === "file:") {
+        window.location.replace("http://127.0.0.1:8000/news.html");
+      }
+    </script>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="news-page">
+    <header class="topbar">
+      <a class="brand" href="./index.html" aria-label="回到今日菜單">
+        <span class="brand-mark" aria-hidden="true">好</span>
+        <span><strong>好好吃飯</strong><small>忠信國小午餐助手</small></span>
+      </a>
+      <nav aria-label="主要導覽">
+        <a href="./index.html#today">今日</a><a href="./index.html#week">本週</a><a href="./index.html#insights">趨勢</a><a class="active" href="./news.html" aria-current="page">午餐觀察</a>
+      </nav>
+      <div class="sync-pill" id="newsSync"><span></span>讀取消息中</div>
+    </header>
+
+    <main class="news-main">
+      <section class="news-hero">
+        <div>
+          <p class="kicker">LUNCH WATCH</p>
+          <h1>午餐觀察</h1>
+          <p>追蹤近期校園午餐政策、食安、供應與食育消息。地方官方資訊優先；每則都保留原文連結。</p>
+        </div>
+        <aside class="news-method card">
+          <strong>我們怎麼整理</strong>
+          <p>每日檢查公開 RSS，合併重複消息，僅保留標題、日期、來源與本站整理的關聯說明。</p>
+          <small id="newsRange">整理近 30 天</small>
+        </aside>
+      </section>
+
+      <section class="news-board" aria-labelledby="newsHeading">
+        <div class="news-toolbar">
+          <div><p class="kicker">RECENT STORIES</p><h2 id="newsHeading">近期消息</h2></div>
+          <div class="news-filters" id="newsFilters" aria-label="依類別篩選">
+            <button class="active" type="button" data-category="全部" aria-pressed="true">全部</button>
+            <button type="button" data-category="食安與供應" aria-pressed="false">食安與供應</button>
+            <button type="button" data-category="營養與政策" aria-pressed="false">營養與政策</button>
+            <button type="button" data-category="食育現場" aria-pressed="false">食育現場</button>
+          </div>
+        </div>
+        <div class="news-list" id="newsList" aria-live="polite"></div>
+        <div class="news-empty card" id="newsEmpty" hidden>這個分類近 30 天暫時沒有消息。</div>
+      </section>
+
+      <section class="news-sources section">
+        <div><p class="kicker">SOURCE POLICY</p><h2>直接回到原文，<br />不取代新聞來源。</h2></div>
+        <p id="sourcePolicy">本站不轉載全文與新聞圖片；摘要文字只說明它為什麼和校園午餐有關。</p>
+      </section>
+    </main>
+
+    <footer><strong>好好吃飯</strong><span>消息來源：政府公開資訊與新聞媒體 RSS · 點選標題查看原文</span></footer>
+
+    <nav class="mobile-nav" aria-label="手機版主要導覽">
+      <a href="./index.html#today"><span aria-hidden="true">●</span>今日</a>
+      <a href="./index.html#week"><span aria-hidden="true">▦</span>本週</a>
+      <a href="./index.html#insights"><span aria-hidden="true">↗</span>趨勢</a>
+      <a class="active" href="./news.html" aria-current="page"><span aria-hidden="true">◉</span>觀察</a>
+    </nav>
+    <script src="./news.js" defer></script>
+  </body>
+</html>

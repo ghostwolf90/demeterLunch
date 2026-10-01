@@ -11,6 +11,7 @@ const ids = [
   "educationIngredient", "educationTitle", "educationFact", "educationPrompt", "educationSource",
   "recipeInspired", "recipeTitle", "recipeMeta", "recipePreview", "recipeDetails",
   "recipeIngredients", "recipeSteps", "recipeAllergens", "recipeNote",
+  "latestNews", "newsUpdated",
 ];
 const refs = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
 
@@ -39,6 +40,13 @@ function formatDate(value, options = {}) {
 function compactDate(value) {
   const [, month, day] = value.split("-").map(Number);
   return `${month}/${day}`;
+}
+
+function formatNewsDate(value) {
+  const date = new Date(value);
+  return new Intl.DateTimeFormat("zh-TW", {
+    year: "numeric", month: "long", day: "numeric",
+  }).format(date);
 }
 
 function isLocalApiAvailable() {
@@ -81,6 +89,50 @@ async function fetchDashboard(date) {
     state.staticData = await response.json();
   }
   return dashboardFromStatic(state.staticData, date);
+}
+
+async function fetchNews() {
+  const endpoint = isLocalApiAvailable() ? "/api/news" : "./data/news.json";
+  const response = await fetch(endpoint, { cache: "no-store" });
+  if (!response.ok) throw new Error(`無法讀取午餐觀察（HTTP ${response.status}）`);
+  return response.json();
+}
+
+function newsCard(item) {
+  const article = node("article", "news-preview-card card");
+  const meta = node("div", "news-meta");
+  meta.append(
+    node("span", `news-tag${item.isLocal ? " local" : ""}`, item.isLocal ? "臺中優先" : item.category),
+    node("time", "", formatNewsDate(item.publishedAt)),
+  );
+  const title = node("h3");
+  const link = node("a", "", item.title);
+  link.href = item.url;
+  link.target = "_blank";
+  link.rel = "noreferrer";
+  title.append(link);
+  article.append(
+    meta,
+    title,
+    node("p", "news-why", item.whyItMatters),
+    node("span", "news-source", `${item.sourceType} · ${item.source}`),
+  );
+  return article;
+}
+
+async function loadNewsPreview() {
+  try {
+    const payload = await fetchNews();
+    const items = Array.isArray(payload.items) ? payload.items.slice(0, 2) : [];
+    refs.latestNews.replaceChildren(...items.map(newsCard));
+    if (!items.length) {
+      refs.latestNews.append(node("p", "news-empty", "近 30 天暫時沒有符合條件的消息。"));
+    }
+    refs.newsUpdated.textContent = `最近更新：${formatNewsDate(payload.generatedAt)} · 僅整理近 ${payload.lookbackDays || 30} 天`;
+  } catch (error) {
+    refs.latestNews.replaceChildren(node("p", "news-empty", "近期消息暫時讀取不到，午餐菜單仍可正常使用。"));
+    refs.newsUpdated.textContent = "新聞資料暫時無法更新";
+  }
 }
 
 function renderMeal(day) {
@@ -290,3 +342,4 @@ refs.sourceDialog.addEventListener("click", (event) => {
 });
 
 loadDashboard(localIsoDate());
+loadNewsPreview();

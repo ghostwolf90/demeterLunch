@@ -15,6 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WEB_ROOT = PROJECT_ROOT / "web"
 DEFAULT_DATA_ROOT = PROJECT_ROOT / "data" / "raw"
 DEFAULT_DATABASE = PROJECT_ROOT / "data" / "lunch.db"
+DEFAULT_NEWS_DATA = PROJECT_ROOT / "data" / "news" / "news.json"
 LOGGER = logging.getLogger(__name__)
 
 if str(PROJECT_ROOT) not in sys.path:
@@ -77,8 +78,18 @@ def load_menus(data_root: Path) -> dict[str, object]:
     }
 
 
+def load_news(news_path: Path) -> dict[str, object]:
+    payload = json.loads(news_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+        raise ValueError("News data must be an object with an items array")
+    return payload
+
+
 def make_handler(
-    web_root: Path, data_root: Path, database_path: Path = DEFAULT_DATABASE
+    web_root: Path,
+    data_root: Path,
+    database_path: Path = DEFAULT_DATABASE,
+    news_path: Path = DEFAULT_NEWS_DATA,
 ) -> type[BaseHTTPRequestHandler]:
     class LunchRequestHandler(BaseHTTPRequestHandler):
         server_version = "DemeterLunch/0.1"
@@ -98,6 +109,15 @@ def make_handler(
                 return
             if path == "/api/menus":
                 self._send_json(load_menus(data_root))
+                return
+            if path == "/api/news":
+                try:
+                    payload = load_news(news_path)
+                except (OSError, json.JSONDecodeError, ValueError) as exc:
+                    LOGGER.exception("Unable to load news")
+                    self._send_json({"error": str(exc)}, status=500)
+                    return
+                self._send_json(payload)
                 return
             if path == "/api/health":
                 self._send_bytes(
@@ -175,6 +195,7 @@ def main() -> int:
     parser.add_argument("--web-root", type=Path, default=DEFAULT_WEB_ROOT)
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_ROOT)
     parser.add_argument("--database", type=Path, default=DEFAULT_DATABASE)
+    parser.add_argument("--news", type=Path, default=DEFAULT_NEWS_DATA)
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
@@ -187,7 +208,7 @@ def main() -> int:
     args.data_dir.mkdir(parents=True, exist_ok=True)
     server = ThreadingHTTPServer(
         (args.host, args.port),
-        make_handler(args.web_root, args.data_dir, args.database),
+        make_handler(args.web_root, args.data_dir, args.database, args.news),
     )
     url = f"http://{args.host}:{server.server_port}"
     print(f"Lunch website running at {url}", flush=True)

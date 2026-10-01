@@ -24,6 +24,7 @@ def build_static_site(
     raw_root: Path,
     parsed_root: Path,
     database_path: Path,
+    news_path: Path,
     output_root: Path,
 ) -> dict[str, int]:
     database_stats = build_database(parsed_root, database_path)
@@ -67,6 +68,17 @@ def build_static_site(
         json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
         encoding="utf-8",
     )
+    if not news_path.is_file():
+        raise FileNotFoundError(f"找不到午餐新聞資料：{news_path}")
+    news_payload = json.loads(news_path.read_text(encoding="utf-8"))
+    if not isinstance(news_payload, dict) or not isinstance(
+        news_payload.get("items"), list
+    ):
+        raise ValueError(f"午餐新聞資料格式不正確：{news_path}")
+    (data_output / "news.json").write_text(
+        json.dumps(news_payload, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
 
     copied_images = 0
     for week in latest["archive"]:
@@ -98,6 +110,9 @@ def main() -> int:
     parser.add_argument(
         "--database", type=Path, default=PROJECT_ROOT / "data" / "lunch.db"
     )
+    parser.add_argument(
+        "--news", type=Path, default=PROJECT_ROOT / "data" / "news" / "news.json"
+    )
     parser.add_argument("--output", type=Path, default=PROJECT_ROOT / "dist")
     args = parser.parse_args()
     stats = build_static_site(
@@ -105,6 +120,7 @@ def main() -> int:
         raw_root=args.raw_root,
         parsed_root=args.parsed_root,
         database_path=args.database,
+        news_path=args.news,
         output_root=args.output,
     )
     print(

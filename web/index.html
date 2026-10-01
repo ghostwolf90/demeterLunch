@@ -21,7 +21,7 @@
         <span><strong>好好吃飯</strong><small>忠信國小午餐助手</small></span>
       </a>
       <nav aria-label="主要導覽">
-        <a href="#today">今日</a><a href="#week">本週</a><a href="#insights">趨勢</a><a href="#source">原始資料</a>
+        <a href="#today">今日</a><a href="#week">本週</a><a href="#insights">趨勢</a><a href="./news.html">午餐觀察</a>
       </nav>
       <div class="sync-pill" id="syncStatus"><span></span>讀取資料中</div>
     </header>
@@ -62,6 +62,14 @@
         </article>
       </section>
 
+      <section class="week-section section" id="week">
+        <div class="section-title">
+          <div><p class="kicker">THIS WEEK</p><h2>這週每天吃什麼</h2></div>
+          <div class="week-nav"><button id="previousWeek" type="button" aria-label="前一週">←</button><span id="weekLabel">—</span><button id="nextWeek" type="button" aria-label="下一週">→</button></div>
+        </div>
+        <div class="week-days" id="weekDays"></div>
+      </section>
+
       <section class="family-section section" id="learn">
         <div class="section-title family-title">
           <div><p class="kicker">LEARN FROM LUNCH</p><h2>從今天午餐，<br />多認識一點</h2></div>
@@ -94,14 +102,6 @@
         </div>
       </section>
 
-      <section class="week-section section" id="week">
-        <div class="section-title">
-          <div><p class="kicker">THIS WEEK</p><h2>這週每天吃什麼</h2></div>
-          <div class="week-nav"><button id="previousWeek" type="button" aria-label="前一週">←</button><span id="weekLabel">—</span><button id="nextWeek" type="button" aria-label="下一週">→</button></div>
-        </div>
-        <div class="week-days" id="weekDays"></div>
-      </section>
-
       <section class="insights-section section" id="insights">
         <div class="section-title">
           <div><p class="kicker">SEPTEMBER AT A GLANCE</p><h2>不是只看一張圖，<br />而是看見飲食節奏</h2></div>
@@ -117,6 +117,15 @@
           <article class="chart-card card"><div class="card-heading"><div><p class="kicker">PROTEIN MIX</p><h3>蛋白質出現天數</h3></div></div><div class="protein-bars" id="proteinBars"></div></article>
           <article class="chart-card card"><div class="card-heading"><div><p class="kicker">ENERGY TREND</p><h3>每日熱量趨勢</h3></div><span id="trendRange"></span></div><div class="calorie-chart" id="calorieChart"></div></article>
         </div>
+      </section>
+
+      <section class="news-preview-section section" id="news">
+        <div class="section-title">
+          <div><p class="kicker">LUNCH WATCH</p><h2>最近，校園午餐<br />還發生了什麼？</h2></div>
+          <div class="news-preview-intro"><p class="section-lead">整理近期政策、食安與食育消息，只留下和家庭真正相關的線索。</p><a class="text-action" href="./news.html">查看午餐觀察</a></div>
+        </div>
+        <div class="news-preview-grid" id="latestNews" aria-live="polite"></div>
+        <p class="news-freshness" id="newsUpdated">正在讀取近期消息…</p>
       </section>
 
       <section class="source-section section" id="source">
@@ -138,7 +147,7 @@
       <a href="#today"><span aria-hidden="true">●</span>今日</a>
       <a href="#week"><span aria-hidden="true">▦</span>本週</a>
       <a href="#insights"><span aria-hidden="true">↗</span>趨勢</a>
-      <a href="#source"><span aria-hidden="true">⌁</span>來源</a>
+      <a href="./news.html"><span aria-hidden="true">◉</span>觀察</a>
     </nav>
 
     <dialog class="source-dialog" id="sourceDialog">
