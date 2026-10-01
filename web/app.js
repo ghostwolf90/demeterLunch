@@ -1,7 +1,7 @@
 const state = { dashboard: null, loading: false, staticData: null };
 
 const ids = [
-  "syncStatus", "todayLabel", "heroDish", "introNote", "mainDish", "mealList",
+  "syncStatus", "todayLabel", "mealMoment", "heroDish", "introNote", "mainDish", "mealList",
   "allergenRow", "calories", "nutritionBars", "dinnerTitle", "dinnerPicks",
   "dinnerReason", "dinnerNotes", "disclaimer", "weekLabel", "weekDays",
   "previousWeek", "nextWeek", "averageCalories", "averageVegetables",
@@ -177,7 +177,7 @@ function renderNutrition(nutrition) {
 }
 
 function renderDinner(suggestion) {
-  refs.dinnerTitle.textContent = suggestion.title;
+  refs.dinnerTitle.textContent = "這天晚餐，換個主角";
   refs.dinnerPicks.replaceChildren(...suggestion.recommendations.map((item) => node("span", "", item)));
   refs.dinnerReason.textContent = suggestion.reason;
   refs.dinnerNotes.replaceChildren(...suggestion.notes.map((text) => node("li", "", text)));
@@ -301,6 +301,7 @@ function render(dashboard) {
   const day = dashboard.selected;
   const formatted = formatDate(day.date, { year: "numeric", weekday: "long" });
   refs.todayLabel.textContent = formatted;
+  refs.mealMoment.textContent = LunchDateContext.mealMoment(day.date, localIsoDate());
   refs.introNote.textContent = dashboard.isFallback
     ? `指定日期沒有供餐資料，先顯示最近的 ${formatDate(day.date)}。`
     : `${day.meal.staple}、${day.meal.mainDish}，以及 ${day.meal.sideDishes.length} 道配菜。`;
@@ -340,6 +341,15 @@ refs.closeSource.addEventListener("click", () => refs.sourceDialog.close());
 refs.sourceDialog.addEventListener("click", (event) => {
   if (event.target === refs.sourceDialog) refs.sourceDialog.close();
 });
+
+for (const link of document.querySelectorAll("a.today-link")) {
+  link.addEventListener("click", async (event) => {
+    event.preventDefault();
+    await loadDashboard(localIsoDate());
+    history.replaceState(null, "", "#today");
+    document.getElementById("today").scrollIntoView();
+  });
+}
 
 loadDashboard(localIsoDate());
 loadNewsPreview();
