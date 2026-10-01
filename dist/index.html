@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="忠信國小每日午餐、營養趨勢與晚餐搭配建議" />
+    <meta name="theme-color" content="#f5f0e7" />
+    <title>好好吃飯｜忠信國小午餐助手</title>
+    <script>
+      if (window.location.protocol === "file:") {
+        window.location.replace("http://127.0.0.1:8000/");
+      }
+    </script>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#today" aria-label="回到今日菜單">
+        <span class="brand-mark" aria-hidden="true">好</span>
+        <span><strong>好好吃飯</strong><small>忠信國小午餐助手</small></span>
+      </a>
+      <nav aria-label="主要導覽">
+        <a href="#today">今日</a><a href="#week">本週</a><a href="#insights">趨勢</a><a href="#source">原始資料</a>
+      </nav>
+      <div class="sync-pill" id="syncStatus"><span></span>讀取資料中</div>
+    </header>
+
+    <main>
+      <section class="intro" id="today">
+        <div class="intro-copy">
+          <p class="eyebrow">TODAY'S SCHOOL LUNCH</p>
+          <p class="today-label" id="todayLabel">—</p>
+          <h1>今天中午，<br /><em id="heroDish">吃得好嗎？</em></h1>
+          <p class="intro-note" id="introNote">把學校菜單整理成真正看得懂、用得上的每日資訊。</p>
+        </div>
+        <div class="doodle" aria-hidden="true">
+          <span class="doodle-sun">☀</span><span class="doodle-bowl">🥣</span>
+          <svg viewBox="0 0 320 210"><path d="M22 142c52-65 96 62 151-6s94 22 126-34"/><path d="M46 179c59-38 107 30 165-23"/></svg>
+        </div>
+      </section>
+
+      <section class="today-grid" aria-live="polite">
+        <article class="menu-board card">
+          <div class="card-heading"><div><p class="kicker">TODAY'S PLATE</p><h2>今日餐盤</h2></div><span class="review-badge">✓ 已校讀</span></div>
+          <div class="main-dish"><span>今日主角</span><strong id="mainDish">—</strong></div>
+          <div class="meal-list" id="mealList"></div>
+          <div class="allergen-row" id="allergenRow"></div>
+        </article>
+
+        <article class="nutrition-card card">
+          <div class="card-heading"><div><p class="kicker">NUTRITION SNAPSHOT</p><h2>營養快照</h2></div><div class="calorie-orb"><strong id="calories">—</strong><span>kcal</span></div></div>
+          <div class="nutrition-bars" id="nutritionBars"></div>
+          <p class="source-note">份數與熱量照學校公布的營養分析登錄。</p>
+        </article>
+
+        <article class="dinner-card card">
+          <p class="kicker">DINNER IDEA</p><h2 id="dinnerTitle">今晚換個主角</h2>
+          <div class="dinner-picks" id="dinnerPicks"></div>
+          <p class="dinner-reason" id="dinnerReason"></p><ul id="dinnerNotes"></ul>
+          <p class="disclaimer" id="disclaimer"></p>
+        </article>
+      </section>
+
+      <section class="week-section section" id="week">
+        <div class="section-title">
+          <div><p class="kicker">THIS WEEK</p><h2>這週每天吃什麼</h2></div>
+          <div class="week-nav"><button id="previousWeek" type="button" aria-label="前一週">←</button><span id="weekLabel">—</span><button id="nextWeek" type="button" aria-label="下一週">→</button></div>
+        </div>
+        <div class="week-days" id="weekDays"></div>
+      </section>
+
+      <section class="insights-section section" id="insights">
+        <div class="section-title">
+          <div><p class="kicker">SEPTEMBER AT A GLANCE</p><h2>不是只看一張圖，<br />而是看見飲食節奏</h2></div>
+          <p class="section-lead">以目前收錄的供餐日計算；資料增加時，這些數字會自動更新。</p>
+        </div>
+        <div class="stat-grid">
+          <article><span>平均熱量</span><strong id="averageCalories">—</strong><small>kcal / 餐</small></article>
+          <article><span>平均蔬菜</span><strong id="averageVegetables">—</strong><small>份 / 餐</small></article>
+          <article><span>有水果</span><strong id="fruitDays">—</strong><small>個供餐日</small></article>
+          <article><span>酥炸料理</span><strong id="friedDays">—</strong><small>個供餐日</small></article>
+        </div>
+        <div class="insight-grid">
+          <article class="chart-card card"><div class="card-heading"><div><p class="kicker">PROTEIN MIX</p><h3>蛋白質出現天數</h3></div></div><div class="protein-bars" id="proteinBars"></div></article>
+          <article class="chart-card card"><div class="card-heading"><div><p class="kicker">ENERGY TREND</p><h3>每日熱量趨勢</h3></div><span id="trendRange"></span></div><div class="calorie-chart" id="calorieChart"></div></article>
+        </div>
+      </section>
+
+      <section class="source-section section" id="source">
+        <div class="source-copy">
+          <p class="kicker">TRACEABLE DATA</p><h2>分析有依據，<br />原圖也沒有消失。</h2>
+          <p>每筆菜單都保留來源文章與原始圖片。若自動分類或菜名有疑問，可以直接回到校方資料核對。</p>
+          <div class="source-actions"><a class="primary-action" id="sourceArticle" target="_blank" rel="noreferrer">查看來源文章 ↗</a><button class="secondary-action" id="openSource" type="button">檢視本週原圖</button></div>
+        </div>
+        <div class="archive-list" id="archiveList"></div>
+      </section>
+
+      <section class="empty-state card" id="errorState" hidden><h2>暫時讀不到菜單</h2><p id="errorMessage"></p></section>
+    </main>
+
+    <footer><strong>好好吃飯</strong><span>資料來源：忠信國小午餐網 · 僅供家庭餐食規劃參考</span></footer>
+
+    <nav class="mobile-nav" aria-label="手機版主要導覽">
+      <a href="#today"><span aria-hidden="true">●</span>今日</a>
+      <a href="#week"><span aria-hidden="true">▦</span>本週</a>
+      <a href="#insights"><span aria-hidden="true">↗</span>趨勢</a>
+      <a href="#source"><span aria-hidden="true">⌁</span>來源</a>
+    </nav>
+
+    <dialog class="source-dialog" id="sourceDialog">
+      <button class="dialog-close" id="closeSource" type="button" aria-label="關閉">×</button>
+      <div><p class="kicker">ORIGINAL MENU</p><h2 id="dialogTitle">本週原始菜單</h2></div>
+      <img id="sourceImage" alt="" /><a id="downloadSource" download>下載原圖</a>
+    </dialog>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
