@@ -73,7 +73,7 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertEqual(dashboard["traceability"]["status"], "unavailable")
         self.assertIsNone(dashboard["traceability"]["dataDate"])
         self.assertEqual(dashboard["traceability"]["dishes"], [])
-        self.assertIn("相同供餐日期", dashboard["traceability"]["notice"])
+        self.assertIn("可靠匹配", dashboard["traceability"]["notice"])
         self.assertEqual(dashboard["totalDays"], 23)
 
     def test_dashboard_exposes_verified_enoki_traceability(self) -> None:
@@ -103,6 +103,28 @@ class ReviewedMenuTests(unittest.TestCase):
         }
         self.assertEqual(statuses["2026-08-31"], ("verified", 14))
         self.assertEqual(statuses["2026-09-01"], ("unavailable", 0))
+
+    def test_dashboard_uses_only_historical_ingredients_matched_to_menu(self) -> None:
+        dashboard = load_dashboard(PROJECT_ROOT / "data" / "lunch.db", "2026-09-29")
+        traceability = dashboard["traceability"]
+        self.assertEqual(traceability["status"], "matched_reference")
+        self.assertEqual(traceability["referenceDates"], ["2026-08-31"])
+        self.assertEqual(traceability["ingredientCount"], 1)
+        self.assertEqual(len(traceability["dishes"]), 1)
+        dish = traceability["dishes"][0]
+        self.assertEqual(dish["name"], "金菇味噌排骨湯")
+        ingredient = dish["ingredients"][0]
+        self.assertEqual(ingredient["name"], "金針菇")
+        self.assertEqual(ingredient["referenceDishName"], "砂鍋魚")
+        self.assertIn("金菇", ingredient["matchReason"])
+        self.assertEqual(
+            ingredient["certification"]["operator"]["name"], "戴養菌園農場"
+        )
+        week_statuses = {
+            day["date"]: day["traceabilityStatus"] for day in dashboard["week"]
+        }
+        self.assertEqual(week_statuses["2026-09-29"], "matched_reference")
+        self.assertEqual(week_statuses["2026-10-02"], "unavailable")
 
     def test_every_day_has_food_education_and_home_recipe(self) -> None:
         database = PROJECT_ROOT / "data" / "lunch.db"

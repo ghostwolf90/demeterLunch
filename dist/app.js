@@ -211,6 +211,16 @@ function renderIngredient(ingredient) {
   card.append(heading);
 
   const details = node("dl", "ingredient-details");
+  if (ingredient.referenceDate) {
+    details.append(
+      traceabilityDetail("匹配依據", ingredient.matchReason),
+      traceabilityDetail(
+        "歷史資料日",
+        formatDate(ingredient.referenceDate, { year: "numeric" }),
+      ),
+      traceabilityDetail("原始菜色", ingredient.referenceDishName),
+    );
+  }
   const supplier = ingredient.supplier;
   details.append(
     traceabilityDetail("平臺申報供應商", supplier.name),
@@ -261,18 +271,23 @@ function renderTraceability(traceability) {
     refs.traceabilitySummary.textContent = "本日菜單已收錄 · 食材來源待補";
     const empty = node("div", "traceability-empty");
     empty.append(
-      node("strong", "", "這一天尚無食材明細"),
-      node("p", "", "為避免混用其他日期的供應商或批次，這裡只呈現同一供餐日的官方溯源資料。"),
+      node("strong", "", "目前沒有可靠的食材匹配"),
+      node("p", "", "同日資料尚未取得，這份菜單的菜名也沒有可與既有資料明確對應的食材。"),
     );
     refs.traceabilityDishes.append(empty);
     refs.traceabilitySource.textContent = "";
     return;
   }
 
-  refs.traceabilityStatus.textContent = `本日已比對 · ${compactDate(traceability.dataDate)}`;
-  refs.traceabilityStatus.classList.add("verified");
+  const isHistoricalMatch = traceability.status === "matched_reference";
+  refs.traceabilityStatus.textContent = isHistoricalMatch
+    ? `歷史匹配 · ${traceability.ingredientCount} 項`
+    : `本日已比對 · ${compactDate(traceability.dataDate)}`;
+  refs.traceabilityStatus.classList.add(isHistoricalMatch ? "reference" : "verified");
   refs.traceabilityNotice.textContent = traceability.notice;
-  refs.traceabilitySummary.textContent = `${traceability.dishes.length} 道菜 · ${traceability.ingredientCount} 項食材 · ${traceability.certifiedIngredientCount} 項附標章資料`;
+  refs.traceabilitySummary.textContent = isHistoricalMatch
+    ? `${traceability.dishes.length} 道菜找到匹配 · ${traceability.ingredientCount} 項歷史食材來源`
+    : `${traceability.dishes.length} 道菜 · ${traceability.ingredientCount} 項食材 · ${traceability.certifiedIngredientCount} 項附標章資料`;
 
   for (const dish of traceability.dishes) {
     const details = node("details", "traceability-dish");
@@ -289,7 +304,9 @@ function renderTraceability(traceability) {
     refs.traceabilityDishes.append(details);
   }
 
-  refs.traceabilitySource.textContent = `資料來源：${traceability.sourceName} ${traceability.sourceMonth} 月資料 · 校讀日期 ${traceability.reviewedAt}`;
+  refs.traceabilitySource.textContent = isHistoricalMatch
+    ? `資料來源：${traceability.sourceName} · 歷史資料日期 ${traceability.referenceDates.map(compactDate).join("、")} · 不代表本日供應批次`
+    : `資料來源：${traceability.sourceName} ${traceability.sourceMonth} 月資料 · 校讀日期 ${traceability.reviewedAt}`;
 }
 
 function renderDinner(suggestion) {
@@ -342,13 +359,19 @@ function renderWeek(dashboard) {
     dateLine.append(node("span", "", day.weekday), node("strong", "", day.date.slice(-2)));
     const sides = [day.meal.staple, ...day.meal.sideDishes.slice(0, 2)].join(" · ");
     const hasTraceability = day.traceabilityStatus === "verified";
+    const hasHistoricalMatch = day.traceabilityStatus === "matched_reference";
     const traceabilityLabel = hasTraceability
-      ? `${day.traceableIngredientCount} 項可追溯`
-      : "溯源待補";
+      ? `${day.traceableIngredientCount} 項同日可追溯`
+      : hasHistoricalMatch
+        ? `${day.traceableIngredientCount} 項歷史匹配`
+        : "溯源待補";
+    const traceabilityClass = hasTraceability
+      ? "verified"
+      : hasHistoricalMatch ? "reference" : "pending";
     button.append(
       dateLine,
       node("h3", "", day.meal.mainDish),
-      node("span", `day-traceability ${hasTraceability ? "verified" : "pending"}`, traceabilityLabel),
+      node("span", `day-traceability ${traceabilityClass}`, traceabilityLabel),
       node("p", "", sides),
     );
     button.addEventListener("click", () => loadDashboard(day.date));
