@@ -48,5 +48,17 @@ class WebDataTests(unittest.TestCase):
             self.assertEqual(payload["items"][0]["title"], "午餐新聞")
 
 
+class SiteLayoutTests(unittest.TestCase):
+    def test_week_menu_precedes_traceability_section(self) -> None:
+        index_html = (
+            Path(__file__).resolve().parents[1] / "web" / "index.html"
+        ).read_text(encoding="utf-8")
+
+        self.assertLess(
+            index_html.index('id="week"'),
+            index_html.index('id="traceability"'),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
