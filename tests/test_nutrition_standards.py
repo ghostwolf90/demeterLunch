@@ -34,6 +34,17 @@ class NutritionStandardTests(unittest.TestCase):
             upper["foodContent"]["transitional"]["proteinFoods"]["target"],
             2.5,
         )
+        self.assertEqual(
+            rules["schoolSupplySchedule"]["fruit"],
+            {
+                "target": 2,
+                "unit": "servings_per_week",
+                "weekdays": ["星期二", "星期四"],
+                "displayName": "水果",
+                "confirmedAt": "2026-10-03",
+                "notes": "校方確認每週二、四各供應一份；菜單只標示水果，不推定實際果種。",
+            },
+        )
 
     def test_week_assessment_uses_target_and_transitional_rules_separately(self) -> None:
         dashboard = load_dashboard(
@@ -48,7 +59,9 @@ class NutritionStandardTests(unittest.TestCase):
 
         self.assertEqual(target_metrics["calories"]["status"], "within")
         self.assertEqual(target_metrics["wholeGrains"]["status"], "above")
-        self.assertEqual(target_metrics["fruit"]["status"], "below")
+        self.assertEqual(target_metrics["fruit"]["valueLabel"], "2 份／週")
+        self.assertEqual(target_metrics["fruit"]["status"], "within")
+        self.assertIn("星期二、星期四", target_metrics["fruit"]["targetLabel"])
         self.assertEqual(target_metrics["dairy"]["status"], "unavailable")
         self.assertEqual(transitional_metrics["wholeGrains"]["status"], "within")
         self.assertEqual(transitional_metrics["fruit"]["valueLabel"], "2 份／週")

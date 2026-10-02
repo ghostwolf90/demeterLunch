@@ -111,7 +111,11 @@ def build_week_assessment(
     ]
     for key, label, nutrition_key in DAILY_METRICS:
         values = [float(day["nutrition"][nutrition_key]) for day in days]
-        rule = food_rules[key]
+        rule = (
+            active_rules["schoolSupplySchedule"]["fruit"]
+            if key == "fruit"
+            else food_rules[key]
+        )
         metrics.append(
             _food_metric(
                 key=key,
@@ -157,7 +161,8 @@ def build_week_assessment(
         "guidance": _build_guidance(attention),
         "coverageNote": (
             "目前只判讀學校菜單明示的熱量與食物份數；蛋白質克數、脂肪、鈣、鈉、"
-            "乳品及深色蔬菜份數未提供，因此不推估。"
+            "乳品及深色蔬菜份數未提供，因此不推估。水果依校方確認的每週二、四"
+            "各一份判讀，品項只標示「水果」。"
         ),
         "methodNote": (
             f"以本週 {day_count} 個供餐日的校方食譜設計值計算；食物類別週間平均依"
@@ -202,6 +207,10 @@ def _food_metric(
     acceptable_maximum = target_maximum * (1 + tolerance_ratio)
     status = _range_status(value, acceptable_minimum, acceptable_maximum)
     target_value = _target_label(rule)
+    target_prefix = "校方安排" if key == "fruit" else "基準"
+    schedule_note = (
+        f"（{'、'.join(rule['weekdays'])}）" if key == "fruit" else ""
+    )
     value_suffix = "份／週" if is_weekly else "份／餐"
     return {
         "key": key,
@@ -209,7 +218,8 @@ def _food_metric(
         "value": round(value, 2),
         "valueLabel": f"{_format_number(value)} {value_suffix}",
         "targetLabel": (
-            f"基準 {target_value} · 判讀含 ±{_format_number(tolerance_percent)}%"
+            f"{target_prefix} {target_value}{schedule_note}"
+            f" · 判讀含 ±{_format_number(tolerance_percent)}%"
         ),
         "status": status,
         "statusLabel": STATUS_LABELS[status],
@@ -346,6 +356,14 @@ def _validate_rules(payload: object, path: Path) -> None:
     modes = payload.get("modes")
     if not isinstance(profiles, dict) or not isinstance(modes, dict):
         raise NutritionRulesError(f"{path}: 缺少年級或基準模式")
+    fruit_schedule = payload.get("schoolSupplySchedule", {}).get("fruit", {})
+    if (
+        fruit_schedule.get("target") != 2
+        or fruit_schedule.get("unit") != "servings_per_week"
+        or fruit_schedule.get("weekdays") != ["星期二", "星期四"]
+        or fruit_schedule.get("displayName") != "水果"
+    ):
+        raise NutritionRulesError(f"{path}: 水果供應安排不完整")
     for mode in STANDARD_MODES:
         if mode not in modes:
             raise NutritionRulesError(f"{path}: 缺少基準模式 {mode}")

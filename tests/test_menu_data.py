@@ -33,6 +33,18 @@ class ReviewedMenuTests(unittest.TestCase):
             54,
         )
 
+    def test_fruit_is_generic_and_served_once_on_tuesday_and_thursday(self) -> None:
+        weeks = load_reviewed_weeks(PARSED_ROOT)
+        for week in weeks:
+            for day in week["days"]:
+                expected_servings = 1 if day["weekday"] in {"星期二", "星期四"} else 0
+                for variant in day["variants"].values():
+                    self.assertEqual(variant["nutrition"]["fruitServings"], expected_servings)
+                    self.assertEqual(
+                        variant["meal"]["fruit"],
+                        "水果" if expected_servings else None,
+                    )
+
     def test_item_classification_detects_proteins_and_methods(self) -> None:
         tags = classify_items(["香酥雞排", "咖哩蝦仁白菜"])
         self.assertEqual(tags, ["chicken", "fried", "seafood"])
