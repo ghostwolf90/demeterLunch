@@ -15,6 +15,8 @@
 - 更新時先完整寫入 staging directory，再替換既有資料
 - 單篇失敗不會中止整批匯入
 - 23 個供餐日已轉成可查詢的每日菜單與營養資料
+- 將校園食材平臺資料整理成菜色、食材、供應商、認證與經營者溯源關聯
+- 官方食材月份尚未公布時，顯示最近一次資料作參考並明確標示不代表當日批次
 - 今日餐盤、整週瀏覽與跨週營養趨勢
 - 依午餐蛋白質、蔬菜、水果與烹調方式產生晚餐搭配靈感
 - 每日食育小卡，以食材觀察與親子對話延伸午餐內容
@@ -155,16 +157,17 @@ data/raw/
             └── menu-03.jpg
 
 data/parsed/2026/semester-1/week-02/menu.json
+data/parsed/2026/semester-1/week-01/traceability.json
 data/lunch.db
 ```
 
 `metadata.json` 會保存文章 ID、標題、網址、發布／更新時間、解析後日期，以及每張圖片的來源網址、本地檔名、Content-Type、位元組數、尺寸和 SHA-256。
 
-`data/parsed/` 是人工校讀後的結構化來源，包含每日主食、主菜、配菜、湯、水果、營養份數、信心值與可辨識過敏原。`scripts/build_database.py` 會先驗證日期、必填欄位及重複資料，再以原子替換方式產生 `data/lunch.db`。
+`data/parsed/` 是人工校讀後的結構化來源，包含每日主食、主菜、配菜、湯、水果、營養份數、信心值與可辨識過敏原。校園食材平臺的菜色、食材、供應商、認證與認證經營者也先校讀成 `traceability.json`；原始 CSV 不會直接進入網站。`scripts/build_database.py` 會先驗證日期、必填欄位、關聯及重複資料，再以原子替換方式產生 `data/lunch.db`。
 
 ## 本機 API
 
-- `GET /api/dashboard?date=2026-10-01`：今日、當週、趨勢與晚餐建議
+- `GET /api/dashboard?date=2026-10-01`：今日、當週、趨勢與食材溯源資料
 - `GET /api/menus`：原始文章與圖片清單
 - `GET /api/health`：伺服器狀態
 

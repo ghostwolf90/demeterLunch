@@ -113,6 +113,44 @@ def load_dashboard(database_path: Path, selected_date: str | None = None) -> dic
             GROUP BY name ORDER BY appearances DESC, name LIMIT 6
             """
         ).fetchall()
+        traceability_rows = connection.execute(
+            """
+            SELECT di.source_id, di.menu_date, di.dish_position,
+                   di.ingredient_position, di.dish_name,
+                   di.official_dish_name, di.dish_category,
+                   di.ingredient_name,
+                   supplier.id AS supplier_id,
+                   supplier.name AS supplier_name,
+                   supplier.tax_id AS supplier_tax_id,
+                   supplier.address AS supplier_address,
+                   supplier.phone AS supplier_phone,
+                   supplier.source_url AS supplier_source_url,
+                   certification.id AS certification_id,
+                   certification.label AS certification_label,
+                   certification.number AS certification_number,
+                   certification.verification_body,
+                   certification.status AS certification_status,
+                   certification.valid_until,
+                   certification.official_url,
+                   operator.id AS operator_id,
+                   operator.name AS operator_name,
+                   operator.address AS operator_address,
+                   operator.phone AS operator_phone,
+                   operator.source_url AS operator_source_url
+            FROM dish_ingredients di
+            JOIN businesses supplier ON supplier.id = di.supplier_business_id
+            LEFT JOIN certifications certification
+                ON certification.id = di.certification_id
+            LEFT JOIN businesses operator
+                ON operator.id = certification.operator_business_id
+            ORDER BY di.menu_date, di.dish_position, di.ingredient_position
+            """
+        ).fetchall()
+        traceability_sources = connection.execute(
+            """
+            SELECT * FROM traceability_sources ORDER BY source_month, id
+            """
+        ).fetchall()
 
     days = [_row_to_day(row) for row in rows]
     if not days:
@@ -128,6 +166,9 @@ def load_dashboard(database_path: Path, selected_date: str | None = None) -> dic
         "dinnerSuggestion": make_dinner_suggestion(active),
         "foodEducation": make_food_education(active),
         "homeRecipe": make_home_recipe(active),
+        "traceability": _build_traceability(
+            active["date"], traceability_rows, traceability_sources
+        ),
         "insights": _build_insights(days, top_dishes),
         "archive": [
             {
@@ -144,6 +185,114 @@ def load_dashboard(database_path: Path, selected_date: str | None = None) -> dic
         ],
         "dateRange": {"start": days[0]["date"], "end": days[-1]["date"]},
         "totalDays": len(days),
+    }
+
+
+def _build_traceability(
+    selected_date: str,
+    rows: list[sqlite3.Row],
+    sources: list[sqlite3.Row],
+) -> dict[str, Any]:
+    available_dates = sorted({row["menu_date"] for row in rows})
+    if not available_dates:
+        return {
+            "status": "unavailable",
+            "selectedDate": selected_date,
+            "dataDate": None,
+            "notice": "目前沒有已校讀的官方食材明細。",
+            "dishes": [],
+            "ingredientCount": 0,
+            "certifiedIngredientCount": 0,
+        }
+
+    if selected_date in available_dates:
+        data_date = selected_date
+        status = "verified"
+    else:
+        earlier = [value for value in available_dates if value <= selected_date]
+        data_date = earlier[-1] if earlier else available_dates[0]
+        status = "reference"
+
+    selected_rows = [row for row in rows if row["menu_date"] == data_date]
+    source_by_id = {row["id"]: row for row in sources}
+    source = source_by_id[selected_rows[0]["source_id"]]
+    dishes: list[dict[str, Any]] = []
+    dish_by_position: dict[int, dict[str, Any]] = {}
+    for row in selected_rows:
+        dish_position = row["dish_position"]
+        dish = dish_by_position.get(dish_position)
+        if dish is None:
+            dish = {
+                "name": row["dish_name"],
+                "officialName": row["official_dish_name"],
+                "category": row["dish_category"],
+                "ingredients": [],
+            }
+            dish_by_position[dish_position] = dish
+            dishes.append(dish)
+
+        certification = None
+        if row["certification_id"]:
+            operator = None
+            if row["operator_id"]:
+                operator = {
+                    "id": row["operator_id"],
+                    "name": row["operator_name"],
+                    "address": row["operator_address"],
+                    "phone": row["operator_phone"],
+                    "sourceUrl": row["operator_source_url"],
+                }
+            certification = {
+                "id": row["certification_id"],
+                "label": row["certification_label"],
+                "number": row["certification_number"],
+                "verificationBody": row["verification_body"],
+                "status": row["certification_status"],
+                "validUntil": row["valid_until"],
+                "officialUrl": row["official_url"],
+                "operator": operator,
+            }
+        dish["ingredients"].append(
+            {
+                "name": row["ingredient_name"],
+                "supplier": {
+                    "id": row["supplier_id"],
+                    "name": row["supplier_name"],
+                    "taxId": row["supplier_tax_id"],
+                    "address": row["supplier_address"],
+                    "phone": row["supplier_phone"],
+                    "sourceUrl": row["supplier_source_url"],
+                },
+                "certification": certification,
+            }
+        )
+
+    certified_count = sum(
+        ingredient["certification"] is not None
+        for dish in dishes
+        for ingredient in dish["ingredients"]
+    )
+    ingredient_count = sum(len(dish["ingredients"]) for dish in dishes)
+    if status == "verified":
+        notice = "本日菜色已與校園食材平臺的官方明細完成比對。"
+    else:
+        notice = (
+            f"{selected_date} 的官方食材明細尚未公布；以下是最近一次 "
+            f"{data_date} 的官方資料，只作供應鏈參考，不代表本日食材或批次。"
+        )
+    return {
+        "status": status,
+        "selectedDate": selected_date,
+        "dataDate": data_date,
+        "notice": notice,
+        "schoolName": source["school_name"],
+        "sourceName": source["name"],
+        "sourceMonth": source["source_month"],
+        "exportedAt": source["exported_at"],
+        "reviewedAt": source["reviewed_at"],
+        "dishes": dishes,
+        "ingredientCount": ingredient_count,
+        "certifiedIngredientCount": certified_count,
     }
 
 

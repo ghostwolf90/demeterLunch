@@ -45,7 +45,7 @@ def build_static_site(
     dashboards = {day: load_dashboard(database_path, day) for day in dates}
     latest = dashboards[dates[-1]]
     payload = {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "days": [dashboards[day]["selected"] for day in dates],
         "dinnerSuggestions": {
@@ -56,6 +56,9 @@ def build_static_site(
         },
         "homeRecipes": {
             day: dashboards[day]["homeRecipe"] for day in dates
+        },
+        "traceability": {
+            day: dashboards[day]["traceability"] for day in dates
         },
         "insights": latest["insights"],
         "archive": latest["archive"],

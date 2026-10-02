@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="忠信國小每日午餐、營養趨勢與晚餐搭配建議" />
+    <meta name="description" content="忠信國小每日午餐、營養資料與食材溯源" />
     <meta name="theme-color" content="#f5f0e7" />
     <title>好好吃飯｜忠信國小午餐助手</title>
     <script>
@@ -21,7 +21,7 @@
         <span><strong>好好吃飯</strong><small>忠信國小午餐助手</small></span>
       </a>
       <nav aria-label="主要導覽">
-        <a class="today-link" href="#today">今日</a><a href="#week">本週</a><a href="#insights">趨勢</a><a href="./news.html">午餐觀察</a>
+        <a class="today-link" href="#today">今日</a><a href="#week">本週</a><a href="#traceability">溯源</a><a href="#insights">趨勢</a><a href="./news.html">午餐觀察</a>
       </nav>
       <div class="sync-pill" id="syncStatus"><span></span>讀取資料中</div>
     </header>
@@ -59,6 +59,19 @@
           <div class="dinner-picks" id="dinnerPicks"></div>
           <p class="dinner-reason" id="dinnerReason"></p><ul id="dinnerNotes"></ul>
           <p class="disclaimer" id="disclaimer"></p>
+        </article>
+
+        <article class="traceability-card card" id="traceability">
+          <div class="card-heading">
+            <div><p class="kicker">SOURCE TO PLATE</p><h2>食材與溯源</h2></div>
+            <span class="traceability-status" id="traceabilityStatus">讀取中</span>
+          </div>
+          <div class="traceability-intro">
+            <p id="traceabilityNotice">正在讀取官方食材資料。</p>
+            <strong id="traceabilitySummary">—</strong>
+          </div>
+          <div class="traceability-dishes" id="traceabilityDishes"></div>
+          <p class="traceability-source" id="traceabilitySource"></p>
         </article>
       </section>
 
@@ -146,6 +159,7 @@
     <nav class="mobile-nav" aria-label="手機版主要導覽">
       <a class="today-link" href="#today"><span aria-hidden="true">●</span>今日</a>
       <a href="#week"><span aria-hidden="true">▦</span>本週</a>
+      <a href="#traceability"><span aria-hidden="true">⌁</span>溯源</a>
       <a href="#insights"><span aria-hidden="true">↗</span>趨勢</a>
       <a href="./news.html"><span aria-hidden="true">◉</span>觀察</a>
     </nav>

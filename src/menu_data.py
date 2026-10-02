@@ -45,6 +45,25 @@ def load_reviewed_weeks(parsed_root: Path) -> list[dict[str, Any]]:
     return weeks
 
 
+def load_reviewed_traceability(
+    parsed_root: Path, available_dates: set[str]
+) -> list[dict[str, Any]]:
+    packages: list[dict[str, Any]] = []
+    seen_source_ids: set[str] = set()
+    seen_dates: set[str] = set()
+    for path in sorted(parsed_root.glob("**/traceability.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise DataValidationError(f"無法讀取 {path}: {exc}") from exc
+        _validate_traceability(
+            payload, path, available_dates, seen_source_ids, seen_dates
+        )
+        payload["_path"] = str(path)
+        packages.append(payload)
+    return packages
+
+
 def _validate_week(
     week: object, path: Path, seen_dates: set[str]
 ) -> None:
@@ -105,6 +124,85 @@ def _iso_date(value: object, path: Path) -> date:
         raise DataValidationError(f"{path}: 日期格式錯誤 {value!r}") from exc
 
 
+def _validate_traceability(
+    payload: object,
+    path: Path,
+    available_dates: set[str],
+    seen_source_ids: set[str],
+    seen_dates: set[str],
+) -> None:
+    if not isinstance(payload, dict) or payload.get("schemaVersion") != 1:
+        raise DataValidationError(f"{path}: 不支援的溯源資料格式")
+    for key in ("schoolName", "source", "review", "businesses", "certifications", "days"):
+        if key not in payload:
+            raise DataValidationError(f"{path}: 溯源資料缺少 {key}")
+
+    source = payload["source"]
+    review = payload["review"]
+    if not isinstance(source, dict) or not source.get("id") or not source.get("sourceMonth"):
+        raise DataValidationError(f"{path}: 溯源來源資料不完整")
+    if source["id"] in seen_source_ids:
+        raise DataValidationError(f"{path}: 溯源來源重複 {source['id']}")
+    seen_source_ids.add(source["id"])
+    if not isinstance(review, dict) or review.get("status") != "reviewed":
+        raise DataValidationError(f"{path}: 溯源資料必須先完成校讀")
+
+    businesses = payload["businesses"]
+    certifications = payload["certifications"]
+    days = payload["days"]
+    if not isinstance(businesses, list) or not isinstance(certifications, list):
+        raise DataValidationError(f"{path}: 廠商與認證資料必須是陣列")
+    if not isinstance(days, list) or not days:
+        raise DataValidationError(f"{path}: 溯源資料必須包含供餐日")
+
+    business_ids: set[str] = set()
+    for business in businesses:
+        if not isinstance(business, dict) or not business.get("id") or not business.get("name"):
+            raise DataValidationError(f"{path}: 廠商資料缺少 id 或 name")
+        if business["id"] in business_ids:
+            raise DataValidationError(f"{path}: 廠商 id 重複 {business['id']}")
+        business_ids.add(business["id"])
+
+    certification_ids: set[str] = set()
+    for certification in certifications:
+        if not isinstance(certification, dict) or not certification.get("id"):
+            raise DataValidationError(f"{path}: 認證資料缺少 id")
+        if not certification.get("label") or not certification.get("number"):
+            raise DataValidationError(f"{path}: 認證資料缺少標章或編號")
+        if certification["id"] in certification_ids:
+            raise DataValidationError(f"{path}: 認證 id 重複 {certification['id']}")
+        operator_id = certification.get("operatorBusinessId")
+        if operator_id and operator_id not in business_ids:
+            raise DataValidationError(f"{path}: 找不到認證經營者 {operator_id}")
+        certification_ids.add(certification["id"])
+
+    for day in days:
+        if not isinstance(day, dict) or not day.get("date") or not isinstance(day.get("dishes"), list):
+            raise DataValidationError(f"{path}: 每日溯源資料格式錯誤")
+        _iso_date(day["date"], path)
+        if day["date"] not in available_dates:
+            raise DataValidationError(f"{path}: 溯源日期沒有校讀菜單 {day['date']}")
+        if day["date"] in seen_dates:
+            raise DataValidationError(f"{path}: 溯源日期重複 {day['date']}")
+        seen_dates.add(day["date"])
+        for dish in day["dishes"]:
+            if not isinstance(dish, dict) or not dish.get("name"):
+                raise DataValidationError(f"{path}: 菜色資料缺少名稱")
+            ingredients = dish.get("ingredients")
+            if not isinstance(ingredients, list) or not ingredients:
+                raise DataValidationError(f"{path}: {dish['name']} 沒有食材")
+            for ingredient in ingredients:
+                if not isinstance(ingredient, dict) or not ingredient.get("name"):
+                    raise DataValidationError(f"{path}: 食材資料缺少名稱")
+                if ingredient.get("supplierBusinessId") not in business_ids:
+                    raise DataValidationError(
+                        f"{path}: 找不到食材供應商 {ingredient.get('supplierBusinessId')}"
+                    )
+                certification_id = ingredient.get("certificationId")
+                if certification_id and certification_id not in certification_ids:
+                    raise DataValidationError(f"{path}: 找不到認證 {certification_id}")
+
+
 def classify_items(items: list[str]) -> list[str]:
     text = " ".join(items)
     tags = [
@@ -117,6 +215,10 @@ def classify_items(items: list[str]) -> list[str]:
 
 def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
     weeks = load_reviewed_weeks(parsed_root)
+    available_dates = {
+        day["date"] for week in weeks for day in week["days"]
+    }
+    traceability_packages = load_reviewed_traceability(parsed_root, available_dates)
     database_path.parent.mkdir(parents=True, exist_ok=True)
     handle, temporary_name = tempfile.mkstemp(
         prefix=f".{database_path.name}.", suffix=".tmp", dir=database_path.parent
@@ -209,8 +311,11 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
                         )
                         item_count += 1
                     day_count += 1
+            traceability_count = _insert_traceability(
+                connection, traceability_packages
+            )
             connection.execute(
-                "INSERT INTO metadata (key, value) VALUES ('schema_version', '1')"
+                "INSERT INTO metadata (key, value) VALUES ('schema_version', '2')"
             )
             connection.execute(
                 "INSERT INTO metadata (key, value) VALUES ('generated_at', datetime('now'))"
@@ -219,7 +324,130 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
         os.replace(temporary_path, database_path)
     finally:
         temporary_path.unlink(missing_ok=True)
-    return {"weeks": len(weeks), "days": day_count, "items": item_count}
+    return {
+        "weeks": len(weeks),
+        "days": day_count,
+        "items": item_count,
+        "traceableIngredients": traceability_count,
+    }
+
+
+def _insert_traceability(
+    connection: sqlite3.Connection, packages: list[dict[str, Any]]
+) -> int:
+    ingredient_count = 0
+    for package in packages:
+        source = package["source"]
+        review = package["review"]
+        connection.execute(
+            """
+            INSERT INTO traceability_sources (
+                id, name, school_name, source_month, exported_at,
+                source_file, review_status, reviewed_at, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                source["id"],
+                source.get("name") or "校園食材登錄平臺",
+                package["schoolName"],
+                source["sourceMonth"],
+                source.get("exportedAt"),
+                source.get("sourceFile"),
+                review["status"],
+                review.get("reviewedAt"),
+                review.get("notes"),
+            ),
+        )
+        for business in package["businesses"]:
+            connection.execute(
+                """
+                INSERT INTO businesses (
+                    id, name, kind, tax_id, address, phone, source_url
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    kind = excluded.kind,
+                    tax_id = COALESCE(excluded.tax_id, businesses.tax_id),
+                    address = COALESCE(excluded.address, businesses.address),
+                    phone = COALESCE(excluded.phone, businesses.phone),
+                    source_url = COALESCE(excluded.source_url, businesses.source_url)
+                """,
+                (
+                    business["id"],
+                    business["name"],
+                    business.get("kind") or "unknown",
+                    business.get("taxId"),
+                    business.get("address"),
+                    business.get("phone"),
+                    business.get("sourceUrl"),
+                ),
+            )
+        for certification in package["certifications"]:
+            connection.execute(
+                """
+                INSERT INTO certifications (
+                    id, label, number, operator_business_id,
+                    verification_body, status, valid_until, official_url
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    label = excluded.label,
+                    number = excluded.number,
+                    operator_business_id = COALESCE(
+                        excluded.operator_business_id,
+                        certifications.operator_business_id
+                    ),
+                    verification_body = COALESCE(
+                        excluded.verification_body,
+                        certifications.verification_body
+                    ),
+                    status = COALESCE(excluded.status, certifications.status),
+                    valid_until = COALESCE(
+                        excluded.valid_until,
+                        certifications.valid_until
+                    ),
+                    official_url = COALESCE(
+                        excluded.official_url,
+                        certifications.official_url
+                    )
+                """,
+                (
+                    certification["id"],
+                    certification["label"],
+                    certification["number"],
+                    certification.get("operatorBusinessId"),
+                    certification.get("verificationBody"),
+                    certification.get("status"),
+                    certification.get("validUntil"),
+                    certification.get("officialUrl"),
+                ),
+            )
+        for day in package["days"]:
+            for dish_position, dish in enumerate(day["dishes"]):
+                for ingredient_position, ingredient in enumerate(dish["ingredients"]):
+                    connection.execute(
+                        """
+                        INSERT INTO dish_ingredients (
+                            source_id, menu_date, dish_position,
+                            ingredient_position, dish_name, official_dish_name,
+                            dish_category, ingredient_name,
+                            supplier_business_id, certification_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            source["id"],
+                            day["date"],
+                            dish_position,
+                            ingredient_position,
+                            dish["name"],
+                            dish.get("officialName") or dish["name"],
+                            dish.get("category"),
+                            ingredient["name"],
+                            ingredient["supplierBusinessId"],
+                            ingredient.get("certificationId"),
+                        ),
+                    )
+                    ingredient_count += 1
+    return ingredient_count
 
 
 def _item_role(item: str, meal: dict[str, Any]) -> str:
@@ -285,7 +513,55 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
         );
+        CREATE TABLE traceability_sources (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            school_name TEXT NOT NULL,
+            source_month TEXT NOT NULL,
+            exported_at TEXT,
+            source_file TEXT,
+            review_status TEXT NOT NULL,
+            reviewed_at TEXT,
+            notes TEXT
+        );
+        CREATE TABLE businesses (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            tax_id TEXT,
+            address TEXT,
+            phone TEXT,
+            source_url TEXT
+        );
+        CREATE TABLE certifications (
+            id TEXT PRIMARY KEY,
+            label TEXT NOT NULL,
+            number TEXT NOT NULL,
+            operator_business_id TEXT REFERENCES businesses(id),
+            verification_body TEXT,
+            status TEXT,
+            valid_until TEXT,
+            official_url TEXT
+        );
+        CREATE TABLE dish_ingredients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_id TEXT NOT NULL REFERENCES traceability_sources(id),
+            menu_date TEXT NOT NULL REFERENCES daily_menus(date),
+            dish_position INTEGER NOT NULL,
+            ingredient_position INTEGER NOT NULL,
+            dish_name TEXT NOT NULL,
+            official_dish_name TEXT NOT NULL,
+            dish_category TEXT,
+            ingredient_name TEXT NOT NULL,
+            supplier_business_id TEXT NOT NULL REFERENCES businesses(id),
+            certification_id TEXT REFERENCES certifications(id),
+            UNIQUE(menu_date, dish_position, ingredient_position)
+        );
         CREATE INDEX menu_items_date_idx ON menu_items(menu_date, position);
         CREATE INDEX daily_menus_week_idx ON daily_menus(week_id, date);
+        CREATE INDEX dish_ingredients_date_idx
+            ON dish_ingredients(menu_date, dish_position, ingredient_position);
+        CREATE INDEX dish_ingredients_supplier_idx
+            ON dish_ingredients(supplier_business_id, menu_date);
         """
     )

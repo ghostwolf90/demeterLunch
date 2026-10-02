@@ -7,7 +7,12 @@ from collections import Counter
 from pathlib import Path
 
 from src.dashboard import load_dashboard
-from src.menu_data import build_database, classify_items, load_reviewed_weeks
+from src.menu_data import (
+    build_database,
+    classify_items,
+    load_reviewed_traceability,
+    load_reviewed_weeks,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -29,12 +34,32 @@ class ReviewedMenuTests(unittest.TestCase):
             database = Path(directory) / "lunch.db"
             stats = build_database(PARSED_ROOT, database)
             self.assertEqual(stats["days"], 23)
+            self.assertEqual(stats["traceableIngredients"], 14)
             with sqlite3.connect(database) as connection:
                 row = connection.execute(
                     "SELECT main_dish, calories_kcal FROM daily_menus WHERE date = ?",
                     ("2026-10-01",),
                 ).fetchone()
+                traceability_count = connection.execute(
+                    "SELECT COUNT(*) FROM dish_ingredients"
+                ).fetchone()[0]
             self.assertEqual(row, ("可樂豬腳", 684.0))
+            self.assertEqual(traceability_count, 14)
+
+    def test_reviewed_traceability_links_dishes_suppliers_and_certifications(self) -> None:
+        weeks = load_reviewed_weeks(PARSED_ROOT)
+        available_dates = {
+            day["date"] for week in weeks for day in week["days"]
+        }
+        packages = load_reviewed_traceability(PARSED_ROOT, available_dates)
+        self.assertEqual(len(packages), 1)
+        dishes = packages[0]["days"][0]["dishes"]
+        mushrooms = next(dish for dish in dishes if dish["name"] == "砂鍋魚")
+        enoki = next(
+            item for item in mushrooms["ingredients"] if item["name"] == "金針菇"
+        )
+        self.assertEqual(enoki["supplierBusinessId"], "tax-25095192")
+        self.assertEqual(enoki["certificationId"], "organic-1-007-118010")
 
     def test_dashboard_selects_day_and_creates_dinner_idea(self) -> None:
         dashboard = load_dashboard(PROJECT_ROOT / "data" / "lunch.db", "2026-10-01")
@@ -45,7 +70,27 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertTrue(dashboard["foodEducation"]["prompt"])
         self.assertEqual(dashboard["homeRecipe"]["title"], "家庭版可樂豬腳")
         self.assertIn("非校方", dashboard["homeRecipe"]["note"])
+        self.assertEqual(dashboard["traceability"]["status"], "reference")
+        self.assertEqual(dashboard["traceability"]["dataDate"], "2026-08-31")
+        self.assertIn("不代表本日食材或批次", dashboard["traceability"]["notice"])
         self.assertEqual(dashboard["totalDays"], 23)
+
+    def test_dashboard_exposes_verified_enoki_traceability(self) -> None:
+        dashboard = load_dashboard(PROJECT_ROOT / "data" / "lunch.db", "2026-08-31")
+        traceability = dashboard["traceability"]
+        self.assertEqual(traceability["status"], "verified")
+        self.assertEqual(traceability["ingredientCount"], 14)
+        self.assertEqual(traceability["certifiedIngredientCount"], 12)
+        fish_dish = next(
+            dish for dish in traceability["dishes"] if dish["name"] == "砂鍋魚"
+        )
+        enoki = next(
+            item for item in fish_dish["ingredients"] if item["name"] == "金針菇"
+        )
+        self.assertEqual(enoki["supplier"]["name"], "昱品美食股份有限公司")
+        self.assertEqual(
+            enoki["certification"]["operator"]["name"], "戴養菌園農場"
+        )
 
     def test_every_day_has_food_education_and_home_recipe(self) -> None:
         database = PROJECT_ROOT / "data" / "lunch.db"

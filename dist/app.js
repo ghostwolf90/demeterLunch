@@ -11,7 +11,8 @@ const ids = [
   "educationIngredient", "educationTitle", "educationFact", "educationPrompt", "educationSource",
   "recipeInspired", "recipeTitle", "recipeMeta", "recipePreview", "recipeDetails",
   "recipeIngredients", "recipeSteps", "recipeAllergens", "recipeNote",
-  "latestNews", "newsUpdated",
+  "latestNews", "newsUpdated", "traceabilityStatus", "traceabilityNotice",
+  "traceabilitySummary", "traceabilityDishes", "traceabilitySource",
 ];
 const refs = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
 
@@ -66,6 +67,7 @@ function dashboardFromStatic(data, selectedDate) {
     dinnerSuggestion: data.dinnerSuggestions[active.date],
     foodEducation: data.foodEducation[active.date],
     homeRecipe: data.homeRecipes[active.date],
+    traceability: data.traceability?.[active.date],
     insights: data.insights,
     archive: data.archive,
     dateRange: data.dateRange,
@@ -174,6 +176,117 @@ function renderNutrition(nutrition) {
     row.append(node("span", "", label), track, node("strong", "", `${value} 份`));
     refs.nutritionBars.append(row);
   }
+}
+
+function traceabilityDetail(label, value, url = null) {
+  const row = node("div", "traceability-detail");
+  row.append(node("dt", "", label));
+  const description = node("dd");
+  if (url) {
+    const link = node("a", "", value);
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    description.append(link);
+  } else {
+    description.textContent = value;
+  }
+  row.append(description);
+  return row;
+}
+
+function renderIngredient(ingredient) {
+  const card = node("article", "ingredient-card");
+  const heading = node("div", "ingredient-heading");
+  heading.append(node("strong", "", ingredient.name));
+  const certification = ingredient.certification;
+  const certificationLabel = certification?.label.includes("CAS")
+    ? "CAS"
+    : certification?.label;
+  heading.append(node(
+    "span",
+    `certification-badge${certification ? "" : " empty"}`,
+    certificationLabel || "未提供標章",
+  ));
+  card.append(heading);
+
+  const details = node("dl", "ingredient-details");
+  const supplier = ingredient.supplier;
+  details.append(
+    traceabilityDetail("平臺申報供應商", supplier.name),
+    traceabilityDetail("供應商統編", supplier.taxId || "未提供"),
+  );
+  if (supplier.address) details.append(traceabilityDetail("供應商地址", supplier.address));
+
+  if (certification) {
+    details.append(traceabilityDetail(
+      "認證／追溯號碼",
+      certification.number,
+      certification.officialUrl,
+    ));
+    if (certification.operator) {
+      details.append(traceabilityDetail(
+        "認證經營者",
+        certification.operator.name,
+        certification.operator.sourceUrl,
+      ));
+      if (certification.operator.address) {
+        details.append(traceabilityDetail("經營者所在地", certification.operator.address));
+      }
+    }
+    if (certification.verificationBody) {
+      details.append(traceabilityDetail("驗證／管理單位", certification.verificationBody));
+    }
+    if (certification.status || certification.validUntil) {
+      const state = [
+        certification.status,
+        certification.validUntil ? `效期至 ${formatDate(certification.validUntil, { year: "numeric" })}` : null,
+      ].filter(Boolean).join(" · ");
+      details.append(traceabilityDetail("查核狀態", state));
+    }
+  } else {
+    details.append(traceabilityDetail("標章資料", "這筆平臺資料未提供認證標章或追溯號碼"));
+  }
+  card.append(details);
+  return card;
+}
+
+function renderTraceability(traceability) {
+  refs.traceabilityDishes.replaceChildren();
+  refs.traceabilityStatus.className = "traceability-status";
+  if (!traceability || traceability.status === "unavailable") {
+    refs.traceabilityStatus.textContent = "尚無資料";
+    refs.traceabilityStatus.classList.add("unavailable");
+    refs.traceabilityNotice.textContent = traceability?.notice || "目前沒有已校讀的官方食材明細。";
+    refs.traceabilitySummary.textContent = "—";
+    refs.traceabilitySource.textContent = "";
+    return;
+  }
+
+  const isReference = traceability.status === "reference";
+  refs.traceabilityStatus.textContent = isReference
+    ? `最近資料 · ${compactDate(traceability.dataDate)}`
+    : `本日已比對 · ${compactDate(traceability.dataDate)}`;
+  refs.traceabilityStatus.classList.add(isReference ? "reference" : "verified");
+  refs.traceabilityNotice.textContent = traceability.notice;
+  refs.traceabilitySummary.textContent = `${traceability.dishes.length} 道菜 · ${traceability.ingredientCount} 項食材 · ${traceability.certifiedIngredientCount} 項附標章資料`;
+
+  for (const dish of traceability.dishes) {
+    const details = node("details", "traceability-dish");
+    const summary = node("summary");
+    const title = node("span", "traceability-dish-title");
+    title.append(node("small", "", dish.category || "菜色"), node("strong", "", dish.name));
+    if (dish.officialName && dish.officialName !== dish.name) {
+      title.append(node("em", "", `平臺名稱：${dish.officialName}`));
+    }
+    summary.append(title, node("span", "traceability-count", `${dish.ingredients.length} 項食材`));
+    const ingredients = node("div", "ingredient-grid");
+    ingredients.append(...dish.ingredients.map(renderIngredient));
+    details.append(summary, ingredients);
+    refs.traceabilityDishes.append(details);
+  }
+
+  refs.traceabilitySource.textContent = `資料來源：${traceability.sourceName} ${traceability.sourceMonth} 月資料 · 校讀日期 ${traceability.reviewedAt}`;
 }
 
 function renderDinner(suggestion) {
@@ -307,6 +420,7 @@ function render(dashboard) {
     : `${day.meal.staple}、${day.meal.mainDish}，以及 ${day.meal.sideDishes.length} 道配菜。`;
   renderMeal(day);
   renderNutrition(day.nutrition);
+  renderTraceability(dashboard.traceability);
   renderDinner(dashboard.dinnerSuggestion);
   renderFoodEducation(dashboard.foodEducation);
   renderHomeRecipe(dashboard.homeRecipe);

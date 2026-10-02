@@ -30,7 +30,8 @@ def main() -> int:
         parser.error(str(exc))
     print(
         f"Built {args.database} from {stats['weeks']} weeks, "
-        f"{stats['days']} days and {stats['items']} menu items."
+        f"{stats['days']} days, {stats['items']} menu items and "
+        f"{stats['traceableIngredients']} traceable ingredients."
     )
     return 0
 
