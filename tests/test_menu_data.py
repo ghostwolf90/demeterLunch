@@ -70,9 +70,10 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertTrue(dashboard["foodEducation"]["prompt"])
         self.assertEqual(dashboard["homeRecipe"]["title"], "家庭版可樂豬腳")
         self.assertIn("非校方", dashboard["homeRecipe"]["note"])
-        self.assertEqual(dashboard["traceability"]["status"], "reference")
-        self.assertEqual(dashboard["traceability"]["dataDate"], "2026-08-31")
-        self.assertIn("不代表本日食材或批次", dashboard["traceability"]["notice"])
+        self.assertEqual(dashboard["traceability"]["status"], "unavailable")
+        self.assertIsNone(dashboard["traceability"]["dataDate"])
+        self.assertEqual(dashboard["traceability"]["dishes"], [])
+        self.assertIn("相同供餐日期", dashboard["traceability"]["notice"])
         self.assertEqual(dashboard["totalDays"], 23)
 
     def test_dashboard_exposes_verified_enoki_traceability(self) -> None:
@@ -91,6 +92,17 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertEqual(
             enoki["certification"]["operator"]["name"], "戴養菌園農場"
         )
+
+    def test_week_marks_only_exact_date_traceability_as_verified(self) -> None:
+        dashboard = load_dashboard(PROJECT_ROOT / "data" / "lunch.db", "2026-09-01")
+        statuses = {
+            day["date"]: (
+                day["traceabilityStatus"], day["traceableIngredientCount"]
+            )
+            for day in dashboard["week"]
+        }
+        self.assertEqual(statuses["2026-08-31"], ("verified", 14))
+        self.assertEqual(statuses["2026-09-01"], ("unavailable", 0))
 
     def test_every_day_has_food_education_and_home_recipe(self) -> None:
         database = PROJECT_ROOT / "data" / "lunch.db"

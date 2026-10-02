@@ -255,19 +255,22 @@ function renderTraceability(traceability) {
   refs.traceabilityDishes.replaceChildren();
   refs.traceabilityStatus.className = "traceability-status";
   if (!traceability || traceability.status === "unavailable") {
-    refs.traceabilityStatus.textContent = "尚無資料";
+    refs.traceabilityStatus.textContent = "等待官方資料";
     refs.traceabilityStatus.classList.add("unavailable");
     refs.traceabilityNotice.textContent = traceability?.notice || "目前沒有已校讀的官方食材明細。";
-    refs.traceabilitySummary.textContent = "—";
+    refs.traceabilitySummary.textContent = "本日菜單已收錄 · 食材來源待補";
+    const empty = node("div", "traceability-empty");
+    empty.append(
+      node("strong", "", "這一天尚無食材明細"),
+      node("p", "", "為避免混用其他日期的供應商或批次，這裡只呈現同一供餐日的官方溯源資料。"),
+    );
+    refs.traceabilityDishes.append(empty);
     refs.traceabilitySource.textContent = "";
     return;
   }
 
-  const isReference = traceability.status === "reference";
-  refs.traceabilityStatus.textContent = isReference
-    ? `最近資料 · ${compactDate(traceability.dataDate)}`
-    : `本日已比對 · ${compactDate(traceability.dataDate)}`;
-  refs.traceabilityStatus.classList.add(isReference ? "reference" : "verified");
+  refs.traceabilityStatus.textContent = `本日已比對 · ${compactDate(traceability.dataDate)}`;
+  refs.traceabilityStatus.classList.add("verified");
   refs.traceabilityNotice.textContent = traceability.notice;
   refs.traceabilitySummary.textContent = `${traceability.dishes.length} 道菜 · ${traceability.ingredientCount} 項食材 · ${traceability.certifiedIngredientCount} 項附標章資料`;
 
@@ -338,7 +341,16 @@ function renderWeek(dashboard) {
     const dateLine = node("div", "day-date");
     dateLine.append(node("span", "", day.weekday), node("strong", "", day.date.slice(-2)));
     const sides = [day.meal.staple, ...day.meal.sideDishes.slice(0, 2)].join(" · ");
-    button.append(dateLine, node("h3", "", day.meal.mainDish), node("p", "", sides));
+    const hasTraceability = day.traceabilityStatus === "verified";
+    const traceabilityLabel = hasTraceability
+      ? `${day.traceableIngredientCount} 項可追溯`
+      : "溯源待補";
+    button.append(
+      dateLine,
+      node("h3", "", day.meal.mainDish),
+      node("span", `day-traceability ${hasTraceability ? "verified" : "pending"}`, traceabilityLabel),
+      node("p", "", sides),
+    );
     button.addEventListener("click", () => loadDashboard(day.date));
     refs.weekDays.append(button);
   }

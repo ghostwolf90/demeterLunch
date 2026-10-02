@@ -157,6 +157,13 @@ def load_dashboard(database_path: Path, selected_date: str | None = None) -> dic
         raise ValueError("資料庫沒有每日菜單")
     exact = next((day for day in days if day["date"] == selected_date), None)
     active = exact or _nearest_day(days, selected_date)
+    traceability_counts = Counter(row["menu_date"] for row in traceability_rows)
+    for day in days:
+        ingredient_count = traceability_counts.get(day["date"], 0)
+        day["traceabilityStatus"] = (
+            "verified" if ingredient_count else "unavailable"
+        )
+        day["traceableIngredientCount"] = ingredient_count
     week_days = [day for day in days if day["weekId"] == active["weekId"]]
     return {
         "selected": active,
@@ -193,27 +200,20 @@ def _build_traceability(
     rows: list[sqlite3.Row],
     sources: list[sqlite3.Row],
 ) -> dict[str, Any]:
-    available_dates = sorted({row["menu_date"] for row in rows})
-    if not available_dates:
+    selected_rows = [row for row in rows if row["menu_date"] == selected_date]
+    if not selected_rows:
         return {
             "status": "unavailable",
             "selectedDate": selected_date,
             "dataDate": None,
-            "notice": "目前沒有已校讀的官方食材明細。",
+            "notice": (
+                f"{selected_date} 的官方食材溯源資料尚未取得；"
+                "待取得相同供餐日期的資料後，才會顯示供應商與認證。"
+            ),
             "dishes": [],
             "ingredientCount": 0,
             "certifiedIngredientCount": 0,
         }
-
-    if selected_date in available_dates:
-        data_date = selected_date
-        status = "verified"
-    else:
-        earlier = [value for value in available_dates if value <= selected_date]
-        data_date = earlier[-1] if earlier else available_dates[0]
-        status = "reference"
-
-    selected_rows = [row for row in rows if row["menu_date"] == data_date]
     source_by_id = {row["id"]: row for row in sources}
     source = source_by_id[selected_rows[0]["source_id"]]
     dishes: list[dict[str, Any]] = []
@@ -273,18 +273,11 @@ def _build_traceability(
         for ingredient in dish["ingredients"]
     )
     ingredient_count = sum(len(dish["ingredients"]) for dish in dishes)
-    if status == "verified":
-        notice = "本日菜色已與校園食材平臺的官方明細完成比對。"
-    else:
-        notice = (
-            f"{selected_date} 的官方食材明細尚未公布；以下是最近一次 "
-            f"{data_date} 的官方資料，只作供應鏈參考，不代表本日食材或批次。"
-        )
     return {
-        "status": status,
+        "status": "verified",
         "selectedDate": selected_date,
-        "dataDate": data_date,
-        "notice": notice,
+        "dataDate": selected_date,
+        "notice": "本日菜色已與校園食材平臺的同日官方明細完成比對。",
         "schoolName": source["school_name"],
         "sourceName": source["name"],
         "sourceMonth": source["source_month"],

@@ -112,6 +112,9 @@ h1 em { color: var(--orange); font-style: normal; }
 .traceability-intro p { max-width: 780px; margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
 .traceability-intro strong { flex: 0 0 auto; font-size: 12px; }
 .traceability-dishes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.traceability-empty { grid-column: 1 / -1; padding: 22px; border: 1px dashed var(--line); border-radius: 16px; background: rgba(255,253,248,.72); }
+.traceability-empty strong { display: block; margin-bottom: 7px; font-size: 15px; }
+.traceability-empty p { max-width: 650px; margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
 .traceability-dish { min-width: 0; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,253,248,.72); }
 .traceability-dish[open] { grid-column: 1 / -1; }
 .traceability-dish summary { min-height: 75px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 15px; cursor: pointer; list-style: none; }
@@ -214,6 +217,10 @@ h1 em { color: var(--orange); font-style: normal; }
 .day-date { display: flex; justify-content: space-between; align-items: center; margin-bottom: 27px; font-size: 11px; letter-spacing: .05em; opacity: .75; }
 .day-date strong { font-family: Georgia, serif; font-size: 29px; line-height: 1; }
 .day-card h3 { min-height: 48px; margin: 0 0 16px; font-size: 17px; line-height: 1.4; }
+.day-traceability { width: fit-content; margin: -4px 0 12px; padding: 5px 8px; display: block; border-radius: 999px; font-size: 11px; font-weight: 750; }
+.day-traceability.verified { color: #306852; background: rgba(93,147,125,.15); }
+.day-traceability.pending { color: var(--ink-soft); background: var(--paper-deep); }
+.day-card[aria-current="true"] .day-traceability { color: inherit; background: rgba(255,255,255,.18); }
 .day-card p { margin: 0; color: inherit; opacity: .68; font-size: 11px; line-height: 1.55; }
 
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; background: rgba(255,253,248,.6); }
