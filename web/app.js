@@ -1,9 +1,13 @@
 const savedMealType = window.localStorage.getItem("demeter-meal-type");
+const savedGradeGroup = window.localStorage.getItem("demeter-grade-group");
+const savedStandardMode = window.localStorage.getItem("demeter-standard-mode");
 const state = {
   dashboard: null,
   loading: false,
   staticData: null,
   mealType: savedMealType === "vegetarian" ? "vegetarian" : "meat",
+  gradeGroup: savedGradeGroup === "elementary_upper" ? "elementary_upper" : "elementary_lower",
+  standardMode: savedStandardMode === "transitional" ? "transitional" : "target",
   dishDetails: [],
   activeDishIndex: -1,
   lastDishTrigger: null,
@@ -45,6 +49,10 @@ const ids = [
   "dishCount", "mainDishButton", "dishDetailDialog", "closeDishDetail",
   "dishDetailRole", "dishDetailTitle", "dishDetailCount", "dishDetailIngredients",
   "dishDetailNote", "previousDish", "nextDish",
+  "gradeLower", "gradeUpper", "standardTarget", "standardTransitional",
+  "standardPeriod", "standardBasis", "standardDescription", "standardSummary",
+  "standardMetrics", "standardGuidance", "standardObservations", "standardMethod",
+  "standardCoverage", "standardSource", "standardRevision",
 ];
 const refs = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
 
@@ -100,6 +108,8 @@ function dashboardFromStatic(data, selectedDate, mealType) {
     requestedDate: selectedDate,
     isFallback: !exact,
     week: variant.days.filter((day) => day.weekId === active.weekId),
+    nutritionStandard: data.nutritionStandard,
+    nutritionAssessments: variant.nutritionAssessments?.[active.date],
     dinnerSuggestion: variant.dinnerSuggestions[active.date],
     foodEducation: variant.foodEducation[active.date],
     homeRecipe: variant.homeRecipes[active.date],
@@ -302,6 +312,72 @@ function renderNutrition(nutrition) {
     row.append(node("span", "", label), track, node("strong", "", `${value} 份`));
     refs.nutritionBars.append(row);
   }
+}
+
+function renderStandard(dashboard) {
+  const assessment = dashboard.nutritionAssessments?.[state.gradeGroup]?.[state.standardMode];
+  const standard = dashboard.nutritionStandard;
+  if (!assessment || !standard) {
+    refs.standardDescription.textContent = "這份資料快照尚未包含營養基準，請重新建立網站資料。";
+    refs.standardSummary.textContent = "基準資料待更新";
+    refs.standardMetrics.replaceChildren();
+    refs.standardGuidance.replaceChildren();
+    refs.standardObservations.replaceChildren();
+    return;
+  }
+
+  refs.gradeLower.setAttribute("aria-pressed", String(state.gradeGroup === "elementary_lower"));
+  refs.gradeUpper.setAttribute("aria-pressed", String(state.gradeGroup === "elementary_upper"));
+  refs.standardTarget.setAttribute("aria-pressed", String(state.standardMode === "target"));
+  refs.standardTransitional.setAttribute("aria-pressed", String(state.standardMode === "transitional"));
+  refs.standardPeriod.textContent = [
+    `${compactDate(assessment.period.start)}–${compactDate(assessment.period.end)}`,
+    `${assessment.dayCount} 個供餐日`,
+    assessment.mealTypeLabel,
+  ].join(" · ");
+  refs.standardBasis.textContent = `${assessment.gradeLabel} · ${assessment.modeLabel}`;
+  refs.standardDescription.textContent = assessment.modeDescription;
+  refs.standardSummary.textContent = assessment.summary.label;
+
+  refs.standardMetrics.replaceChildren();
+  for (const metric of assessment.metrics) {
+    const card = node("article", `standard-metric ${metric.status}`);
+    const heading = node("header");
+    heading.append(
+      node("span", "", metric.label),
+      node("span", "standard-status", metric.statusLabel),
+    );
+    card.append(
+      heading,
+      node("strong", "", metric.valueLabel),
+      node("p", "", metric.targetLabel),
+      node("small", "", metric.message),
+    );
+    refs.standardMetrics.append(card);
+  }
+
+  refs.standardGuidance.replaceChildren(
+    ...assessment.guidance.map((item) => node("li", "", item)),
+  );
+  refs.standardObservations.replaceChildren();
+  for (const observation of assessment.observations) {
+    const card = node("article", "standard-observation");
+    card.append(
+      node("strong", "", observation.label),
+      node("span", "", observation.valueLabel),
+    );
+    const note = node("p");
+    const reference = node("b", "", observation.referenceLabel);
+    note.append(reference, document.createTextNode(`；${observation.note}`));
+    card.append(note);
+    refs.standardObservations.append(card);
+  }
+
+  refs.standardMethod.textContent = assessment.methodNote;
+  refs.standardCoverage.textContent = assessment.coverageNote;
+  refs.standardSource.textContent = standard.source.title;
+  refs.standardSource.href = standard.source.url;
+  refs.standardRevision.textContent = ` · ${standard.source.revisionLabel} · 本站校讀 ${standard.source.reviewedAt}`;
 }
 
 function traceabilityDetail(label, value, url = null) {
@@ -600,6 +676,7 @@ function render(dashboard) {
     : `${dashboard.mealTypeLabel}：${day.meal.staple}、${day.meal.mainDish}；食譜明細共 ${day.recipeDetails?.length || day.meal.sideDishes.length + 2} 道。`;
   renderMeal(day);
   renderNutrition(day.nutrition);
+  renderStandard(dashboard);
   renderTraceability(dashboard.traceability);
   renderDinner(dashboard.dinnerSuggestion);
   renderFoodEducation(dashboard.foodEducation);
@@ -667,6 +744,25 @@ async function selectMealType(mealType) {
 
 refs.mealTypeMeat.addEventListener("click", () => selectMealType("meat"));
 refs.mealTypeVegetarian.addEventListener("click", () => selectMealType("vegetarian"));
+
+function selectGradeGroup(gradeGroup) {
+  if (gradeGroup === state.gradeGroup) return;
+  state.gradeGroup = gradeGroup;
+  window.localStorage.setItem("demeter-grade-group", gradeGroup);
+  if (state.dashboard) renderStandard(state.dashboard);
+}
+
+function selectStandardMode(mode) {
+  if (mode === state.standardMode) return;
+  state.standardMode = mode;
+  window.localStorage.setItem("demeter-standard-mode", mode);
+  if (state.dashboard) renderStandard(state.dashboard);
+}
+
+refs.gradeLower.addEventListener("click", () => selectGradeGroup("elementary_lower"));
+refs.gradeUpper.addEventListener("click", () => selectGradeGroup("elementary_upper"));
+refs.standardTarget.addEventListener("click", () => selectStandardMode("target"));
+refs.standardTransitional.addEventListener("click", () => selectStandardMode("transitional"));
 
 for (const link of document.querySelectorAll("a.today-link")) {
   link.addEventListener("click", async (event) => {

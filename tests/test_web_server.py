@@ -71,6 +71,18 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('id="dishDetailDialog"', index_html)
         self.assertNotIn('id="recipeSourceDetails"', index_html)
 
+    def test_site_exposes_grade_and_standard_controls(self) -> None:
+        index_html = (
+            Path(__file__).resolve().parents[1] / "web" / "index.html"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn('id="standard"', index_html)
+        self.assertIn('id="gradeLower"', index_html)
+        self.assertIn('id="gradeUpper"', index_html)
+        self.assertIn('id="standardTarget"', index_html)
+        self.assertIn('id="standardTransitional"', index_html)
+        self.assertNotIn("營養符合度", index_html)
+
 
 if __name__ == "__main__":
     unittest.main()

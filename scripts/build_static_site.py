@@ -50,11 +50,15 @@ def build_static_site(
     }
     latest = {meal_type: values[dates[-1]] for meal_type, values in dashboards.items()}
     payload = {
-        "schemaVersion": 3,
+        "schemaVersion": 4,
         "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "nutritionStandard": latest["meat"]["nutritionStandard"],
         "variants": {
             meal_type: {
                 "days": [values[day]["selected"] for day in dates],
+                "nutritionAssessments": {
+                    day: values[day]["nutritionAssessments"] for day in dates
+                },
                 "dinnerSuggestions": {
                     day: values[day]["dinnerSuggestion"] for day in dates
                 },

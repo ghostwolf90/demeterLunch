@@ -21,7 +21,7 @@
         <span><strong>好好吃飯</strong><small>忠信國小午餐助手</small></span>
       </a>
       <nav aria-label="主要導覽">
-        <a class="today-link" href="#today">今日</a><a href="#week">本週</a><a href="#traceability">溯源</a><a href="#insights">趨勢</a><a href="./news.html">午餐觀察</a>
+        <a class="today-link" href="#today">今日</a><a href="#week">本週</a><a href="#standard">基準</a><a href="#traceability">溯源</a><a href="#insights">趨勢</a><a href="./news.html">午餐觀察</a>
       </nav>
       <div class="sync-pill" id="syncStatus"><span></span>讀取資料中</div>
     </header>
@@ -75,6 +75,56 @@
           <p class="disclaimer" id="disclaimer"></p>
         </article>
 
+      </section>
+
+      <section class="standard-section section" id="standard" aria-labelledby="standardTitle">
+        <div class="section-title standard-title">
+          <div><p class="kicker">WEEKLY NUTRITION STANDARD</p><h2 id="standardTitle">本週供應，<br />和官方基準一起看</h2></div>
+          <div class="standard-controls" aria-label="選擇營養基準">
+            <div class="standard-control">
+              <span>年級</span>
+              <div class="standard-switch" role="group" aria-label="選擇年級">
+                <button id="gradeLower" type="button" aria-pressed="true">1–3 年級</button>
+                <button id="gradeUpper" type="button" aria-pressed="false">4–6 年級</button>
+              </div>
+            </div>
+            <div class="standard-control">
+              <span>比較方式</span>
+              <div class="standard-switch" role="group" aria-label="選擇目標值或階段值">
+                <button id="standardTarget" type="button" aria-pressed="true">目標值</button>
+                <button id="standardTransitional" type="button" aria-pressed="false">階段值</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <article class="standard-card card">
+          <div class="standard-overview">
+            <div>
+              <p class="standard-period" id="standardPeriod">—</p>
+              <h3 id="standardBasis">國小 1–3 年級 · 目標值</h3>
+              <p id="standardDescription">正在讀取官方基準。</p>
+            </div>
+            <strong class="standard-summary" id="standardSummary">—</strong>
+          </div>
+          <div class="standard-metrics" id="standardMetrics"></div>
+          <div class="standard-detail-grid">
+            <div class="standard-guidance">
+              <p class="kicker">FAMILY NOTE</p>
+              <h3>其他餐次怎麼接</h3>
+              <ul id="standardGuidance"></ul>
+            </div>
+            <div class="standard-observation-panel">
+              <p class="kicker">SUPPLY OBSERVATION</p>
+              <h3>只觀察，不硬判定</h3>
+              <div class="standard-observations" id="standardObservations"></div>
+            </div>
+          </div>
+          <div class="standard-method">
+            <p id="standardMethod">—</p>
+            <p id="standardCoverage">—</p>
+            <p>基準來源：<a id="standardSource" target="_blank" rel="noreferrer">學校午餐食物內容及營養基準</a><span id="standardRevision"></span></p>
+          </div>
+        </article>
       </section>
 
       <section class="traceability-section section" id="traceability">
@@ -168,8 +218,8 @@
     <nav class="mobile-nav" aria-label="手機版主要導覽">
       <a class="today-link" href="#today"><span aria-hidden="true">●</span>今日</a>
       <a href="#week"><span aria-hidden="true">▦</span>本週</a>
+      <a href="#standard"><span aria-hidden="true">◎</span>基準</a>
       <a href="#traceability"><span aria-hidden="true">⌁</span>溯源</a>
-      <a href="#insights"><span aria-hidden="true">↗</span>趨勢</a>
       <a href="./news.html"><span aria-hidden="true">◉</span>觀察</a>
     </nav>
 

@@ -21,6 +21,8 @@
 - 每道菜可展開查看食材、設計用量與原表色塊宣稱；原表宣稱不會冒充官方認證
 - 食材溯源優先顯示同日官方資料；缺少同日資料時，只呈現菜名或明細食材可明確匹配的歷史來源並標示非本日批次
 - 今日餐盤、整週瀏覽與跨週營養趨勢
+- 依國小 1–3／4–6 年級及官方目標值／階段值，判讀週間平均供應情形
+- 不以單一百分比評分；缺少乳品、鈉、鈣等原始數值時明確標示資料不足
 - 依午餐蛋白質、蔬菜、水果與烹調方式產生晚餐搭配靈感
 - 每日食育小卡，以食材觀察與親子對話延伸午餐內容
 - 依當日菜色提供家庭靈感版料理，明確區分於校方原始配方
@@ -162,16 +164,17 @@ data/raw/
 data/parsed/2026/semester-1/week-02/menu.json
 data/parsed/2026/semester-1/week-02/recipe-details.json
 data/parsed/2026/semester-1/week-01/traceability.json
+data/reference/school-lunch-nutrition-rules.json
 data/lunch.db
 ```
 
 `metadata.json` 會保存文章 ID、標題、網址、發布／更新時間、解析後日期，以及每張圖片的來源網址、本地檔名、Content-Type、位元組數、尺寸和 SHA-256。
 
-`data/parsed/` 是人工校讀後的結構化來源。`menu.json` 保存每日葷食與素食的菜單總表、營養份數、信心值與可辨識過敏原；`recipe-details.json` 保存每道菜底下的材料、設計用量，以及原表的「初級加工／非基改、在地、安全蔬菜」色塊宣稱。每週另保存菜單總表、葷食用量明細與素食用量明細三張來源圖。校園食材平臺的菜色、食材、供應商、認證與認證經營者則先校讀成 `traceability.json`；原始 CSV 不會直接進入網站。`scripts/build_database.py` 會先驗證日期、餐別、必填欄位、關聯及重複資料，再以原子替換方式產生 `data/lunch.db`。
+`data/parsed/` 是人工校讀後的結構化來源。`menu.json` 保存每日葷食與素食的菜單總表、營養份數、信心值與可辨識過敏原；`recipe-details.json` 保存每道菜底下的材料、設計用量，以及原表的「初級加工／非基改、在地、安全蔬菜」色塊宣稱。每週另保存菜單總表、葷食用量明細與素食用量明細三張來源圖。校園食材平臺的菜色、食材、供應商、認證與認證經營者則先校讀成 `traceability.json`；原始 CSV 不會直接進入網站。`data/reference/school-lunch-nutrition-rules.json` 保存由 109 年 12 月 28 日修訂版官方文件逐頁核對的國小營養建議量、食物內容目標值、階段值與 ±8% 週間容許範圍。`scripts/build_database.py` 會先驗證日期、餐別、必填欄位、關聯及重複資料，再以原子替換方式產生 `data/lunch.db`。
 
 ## 本機 API
 
-- `GET /api/dashboard?date=2026-10-01&mealType=meat`：指定葷食或素食（`vegetarian`）的今日、當週、趨勢與食材溯源資料
+- `GET /api/dashboard?date=2026-10-01&mealType=meat`：指定葷食或素食（`vegetarian`）的今日、當週、營養基準判讀、趨勢與食材溯源資料
 - `GET /api/menus`：原始文章與圖片清單
 - `GET /api/health`：伺服器狀態
 
@@ -198,6 +201,7 @@ python3 scripts/build_static_site.py
 - 食譜明細表的色塊只代表供餐廠商在原表上的分類或文字宣稱；正式供應商、認證編號與認證經營者只取自校園食材平臺及其官方連結。
 - 若素食明細原表列出可能含動物性來源的材料（例如柴魚），系統會忠實保留並供核對，不會自行改寫來源資料。
 - 晚餐內容是規則式搭配靈感，不是個人化醫療或營養建議。
+- 營養基準只使用校方明示的食譜設計值；蛋白質克數、脂肪、鈣、鈉、乳品與深色蔬菜份數未提供時不推估，所有結果也不代表學生實際攝取量。
 - 過敏原只整理原圖明示或可由菜名辨識的項目，有過敏需求時仍應以校方公告與食材現場資訊為準。
 - 圖片沒有可靠的 alt 文字，因此仍按來源順序命名為 `menu-01`、`menu-02` 等；metadata 另記錄 `summary`、`meat_detail`、`vegetarian_detail` 角色。
 - 未解析的新標題格式仍會保存到 `data/raw/unparsed/`，並在 log 中提出警告。

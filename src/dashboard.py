@@ -8,6 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from .family_content import make_food_education, make_home_recipe
+from .nutrition_standards import (
+    build_all_week_assessments,
+    load_nutrition_rules,
+    public_rule_metadata,
+)
 
 
 PROTEIN_LABELS = {
@@ -227,6 +232,7 @@ def load_dashboard(
         day["traceabilityStatus"] = traceability["status"]
         day["traceableIngredientCount"] = traceability["ingredientCount"]
     week_days = [day for day in days if day["weekId"] == active["weekId"]]
+    nutrition_rules = load_nutrition_rules()
     return {
         "selected": active,
         "mealType": meal_type,
@@ -235,6 +241,10 @@ def load_dashboard(
         "requestedDate": selected_date,
         "isFallback": exact is None and selected_date is not None,
         "week": week_days,
+        "nutritionStandard": public_rule_metadata(nutrition_rules),
+        "nutritionAssessments": build_all_week_assessments(
+            week_days, nutrition_rules
+        ),
         "dinnerSuggestion": make_dinner_suggestion(active),
         "foodEducation": make_food_education(active),
         "homeRecipe": make_home_recipe(active),

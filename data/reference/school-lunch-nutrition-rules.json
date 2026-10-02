@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "title": "學校午餐食物內容及營養基準",
+    "revisionDate": "2020-12-28",
+    "revisionLabel": "109.12.28 修訂",
+    "publisher": "教育部國民及學前教育署",
+    "fileName": "學校午餐食物內容及營養基準(1091228).pdf",
+    "url": "https://schoollunchdemo.k12ea.gov.tw/announcement?announcementMainTypeId=1",
+    "review": {
+      "status": "reviewed",
+      "reviewedAt": "2026-10-03",
+      "pages": [1, 2, 4],
+      "notes": "逐頁核對營養建議量、國小目標值與階段值，以及週間平均容許範圍。"
+    }
+  },
+  "weeklyAverageTolerancePercent": 8,
+  "modes": {
+    "target": {
+      "label": "目標值",
+      "description": "依每日飲食指南計算的午餐最佳供應目標；官方說明以目標值為主要設計方向。"
+    },
+    "transitional": {
+      "label": "階段值",
+      "description": "考量學校水果與乳品供應現況的階段性標準，並調整其他食物類別份量。"
+    }
+  },
+  "profiles": {
+    "elementary_lower": {
+      "label": "國小 1–3 年級",
+      "shortLabel": "1–3 年級",
+      "nutrition": {
+        "caloriesKcal": {"minimum": 620, "maximum": 720},
+        "proteinGrams": {"target": 27},
+        "fatGrams": {"maximum": 22},
+        "calciumMg": {"target": 270},
+        "sodiumMg": {"maximum": 800}
+      },
+      "foodContent": {
+        "target": {
+          "wholeGrains": {"minimum": 3.5, "maximum": 4.5, "unit": "servings_per_meal"},
+          "dairy": {"target": 3, "unit": "servings_per_week"},
+          "proteinFoods": {"target": 2, "unit": "servings_per_meal"},
+          "vegetables": {"target": 1.5, "unit": "servings_per_meal"},
+          "fruit": {"target": 1, "unit": "servings_per_meal"},
+          "oilsNuts": {"target": 2, "unit": "servings_per_meal"},
+          "fishSeafood": {"minimum": 1, "unit": "servings_per_week"}
+        },
+        "transitional": {
+          "wholeGrains": {"minimum": 4.5, "maximum": 5.5, "unit": "servings_per_meal"},
+          "dairy": {"target": 1, "unit": "servings_per_week"},
+          "proteinFoods": {"target": 2, "unit": "servings_per_meal"},
+          "vegetables": {"target": 1.5, "unit": "servings_per_meal"},
+          "fruit": {"target": 2, "unit": "servings_per_week"},
+          "oilsNuts": {"target": 2.5, "unit": "servings_per_meal"},
+          "fishSeafood": {"minimum": 2, "unit": "servings_per_month"}
+        }
+      },
+      "darkVegetablesMinimumServingsPerMeal": 0.5
+    },
+    "elementary_upper": {
+      "label": "國小 4–6 年級",
+      "shortLabel": "4–6 年級",
+      "nutrition": {
+        "caloriesKcal": {"minimum": 720, "maximum": 830},
+        "proteinGrams": {"target": 31},
+        "fatGrams": {"maximum": 26},
+        "calciumMg": {"target": 330},
+        "sodiumMg": {"maximum": 800}
+      },
+      "foodContent": {
+        "target": {
+          "wholeGrains": {"minimum": 4.5, "maximum": 5.5, "unit": "servings_per_meal"},
+          "dairy": {"target": 3, "unit": "servings_per_week"},
+          "proteinFoods": {"target": 2, "unit": "servings_per_meal"},
+          "vegetables": {"target": 2, "unit": "servings_per_meal"},
+          "fruit": {"target": 1, "unit": "servings_per_meal"},
+          "oilsNuts": {"target": 2.5, "unit": "servings_per_meal"},
+          "fishSeafood": {"minimum": 1, "unit": "servings_per_week"}
+        },
+        "transitional": {
+          "wholeGrains": {"minimum": 5, "maximum": 6.5, "unit": "servings_per_meal"},
+          "dairy": {"target": 1, "unit": "servings_per_week"},
+          "proteinFoods": {"target": 2.5, "unit": "servings_per_meal"},
+          "vegetables": {"target": 2, "unit": "servings_per_meal"},
+          "fruit": {"target": 2, "unit": "servings_per_week"},
+          "oilsNuts": {"target": 2.5, "unit": "servings_per_meal"},
+          "fishSeafood": {"minimum": 2, "unit": "servings_per_month"}
+        }
+      },
+      "darkVegetablesMinimumServingsPerMeal": 0.6666666667
+    }
+  },
+  "sharedRules": {
+    "unrefinedWholeGrainsMinimumRatio": 0.3333333333,
+    "grainSubstitutesMaximumServingsPerWeek": 2,
+    "soyProductsMinimumServingsPerWeek": 2,
+    "processedFishMeatMaximumServingsPerWeek": 1,
+    "friedDishesMaximumOccurrencesPerWeek": 2,
+    "vegetableTypesMinimumPerDay": 2
+  },
+  "coverage": {
+    "assessedFromSchoolMenu": [
+      "caloriesKcal",
+      "wholeGrainsServings",
+      "proteinServings",
+      "vegetablesServings",
+      "fruitServings",
+      "oilsNutsServings"
+    ],
+    "notProvidedBySchoolMenu": [
+      "proteinGrams",
+      "fatGrams",
+      "calciumMg",
+      "sodiumMg",
+      "dairyServings",
+      "darkVegetableServings",
+      "unrefinedWholeGrainServings"
+    ]
+  }
+}
