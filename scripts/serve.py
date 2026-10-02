@@ -98,9 +98,11 @@ def make_handler(
             request = urlsplit(self.path)
             path = unquote(request.path)
             if path == "/api/dashboard":
-                selected_date = parse_qs(request.query).get("date", [None])[0]
+                query = parse_qs(request.query)
+                selected_date = query.get("date", [None])[0]
+                meal_type = query.get("mealType", ["meat"])[0]
                 try:
-                    dashboard = load_dashboard(database_path, selected_date)
+                    dashboard = load_dashboard(database_path, selected_date, meal_type)
                 except (OSError, ValueError) as exc:
                     LOGGER.exception("Unable to load dashboard")
                     self._send_json({"error": str(exc)}, status=500)

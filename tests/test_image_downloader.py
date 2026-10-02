@@ -4,7 +4,12 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from src.image_downloader import ImageDownloader, InvalidImageError, inspect_image
+from src.image_downloader import (
+    ImageDownloader,
+    InvalidImageError,
+    classify_menu_image_role,
+    inspect_image,
+)
 from src.models import ImageSource
 
 
@@ -44,6 +49,22 @@ class ImageInspectionTests(unittest.TestCase):
         self.assertEqual(http.calls, 2)
         self.assertEqual((result["width"], result["height"]), (800, 600))
         self.assertTrue(result["matchesDeclaredDimensions"])
+
+    def test_classifies_summary_meat_and_vegetarian_images(self) -> None:
+        summary = ImageSource("https://example.test/1.png", "https://example.test/1.png")
+        meat = ImageSource(
+            "https://example.test/%E8%91%B7_page-0001.jpg",
+            "https://example.test/M_page-0001.jpg",
+        )
+        vegetarian = ImageSource(
+            "https://example.test/%E7%B4%A0_page-0001.jpg",
+            "https://example.test/V_page-0001.jpg",
+        )
+        self.assertEqual(classify_menu_image_role(summary, 1), "summary")
+        self.assertEqual(classify_menu_image_role(meat, 2), "meat_detail")
+        self.assertEqual(
+            classify_menu_image_role(vegetarian, 3), "vegetarian_detail"
+        )
 
 
 if __name__ == "__main__":

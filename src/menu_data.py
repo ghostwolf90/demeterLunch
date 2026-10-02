@@ -28,6 +28,8 @@ METHOD_KEYWORDS = {
     "grilled": ("烤",),
 }
 
+MEAL_TYPES = ("meat", "vegetarian")
+
 
 def load_reviewed_weeks(parsed_root: Path) -> list[dict[str, Any]]:
     weeks: list[dict[str, Any]] = []
@@ -37,12 +39,59 @@ def load_reviewed_weeks(parsed_root: Path) -> list[dict[str, Any]]:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise DataValidationError(f"無法讀取 {path}: {exc}") from exc
+        _merge_recipe_details(payload, path)
         _validate_week(payload, path, seen_dates)
         payload["_path"] = str(path)
         weeks.append(payload)
     if not weeks:
         raise DataValidationError(f"找不到結構化菜單：{parsed_root}")
     return weeks
+
+
+def _merge_recipe_details(week: dict[str, Any], menu_path: Path) -> None:
+    details_path = menu_path.with_name("recipe-details.json")
+    if not details_path.is_file():
+        return
+    try:
+        details = json.loads(details_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise DataValidationError(f"無法讀取 {details_path}: {exc}") from exc
+    if not isinstance(details, dict) or details.get("schemaVersion") != 1:
+        raise DataValidationError(f"{details_path}: 不支援的食譜明細格式")
+    review = details.get("review")
+    if not isinstance(review, dict) or review.get("status") != "reviewed":
+        raise DataValidationError(f"{details_path}: 食譜明細必須先完成校讀")
+    if details.get("week") != week.get("week"):
+        raise DataValidationError(f"{details_path}: 週次與 menu.json 不一致")
+
+    details_by_date: dict[str, dict[str, Any]] = {}
+    for day in details.get("days", []):
+        if not isinstance(day, dict) or not day.get("date"):
+            raise DataValidationError(f"{details_path}: 明細日期不完整")
+        if day["date"] in details_by_date:
+            raise DataValidationError(f"{details_path}: 明細日期重複 {day['date']}")
+        details_by_date[day["date"]] = day
+
+    for day in week.get("days", []):
+        detail_day = details_by_date.get(day.get("date"))
+        if detail_day is None:
+            raise DataValidationError(f"{details_path}: 缺少 {day.get('date')} 明細")
+        variants = detail_day.get("variants")
+        if not isinstance(variants, dict):
+            raise DataValidationError(f"{details_path}: {day['date']} variants 不完整")
+        for meal_type in MEAL_TYPES:
+            dishes = variants.get(meal_type)
+            if not isinstance(dishes, list) or not dishes:
+                raise DataValidationError(
+                    f"{details_path}: {day['date']} 缺少 {meal_type} 菜色明細"
+                )
+            day["variants"][meal_type]["dishes"] = dishes
+
+    extra_dates = set(details_by_date) - {day["date"] for day in week.get("days", [])}
+    if extra_dates:
+        raise DataValidationError(
+            f"{details_path}: 出現 menu.json 未收錄日期 {', '.join(sorted(extra_dates))}"
+        )
 
 
 def load_reviewed_traceability(
@@ -85,8 +134,14 @@ def _validate_week(
     missing = [key for key in required if key not in week]
     if missing:
         raise DataValidationError(f"{path}: 缺少欄位 {', '.join(missing)}")
-    if week["schemaVersion"] != 1:
+    if week["schemaVersion"] != 2:
         raise DataValidationError(f"{path}: 不支援 schemaVersion")
+    source_images = week.get("sourceImages")
+    if not isinstance(source_images, dict):
+        raise DataValidationError(f"{path}: sourceImages 必須是物件")
+    for key in ("summary", "meatDetail", "vegetarianDetail"):
+        if not source_images.get(key):
+            raise DataValidationError(f"{path}: sourceImages 缺少 {key}")
     if not isinstance(week["days"], list) or not week["days"]:
         raise DataValidationError(f"{path}: days 必須是非空陣列")
 
@@ -98,7 +153,7 @@ def _validate_week(
     for day in week["days"]:
         if not isinstance(day, dict):
             raise DataValidationError(f"{path}: day 必須是物件")
-        for key in ("date", "weekday", "meal", "nutrition", "confidence"):
+        for key in ("date", "weekday", "variants"):
             if key not in day:
                 raise DataValidationError(f"{path}: day 缺少 {key}")
         day_date = _iso_date(day["date"], path)
@@ -107,14 +162,76 @@ def _validate_week(
         if day["date"] in seen_dates:
             raise DataValidationError(f"{path}: 日期重複 {day['date']}")
         seen_dates.add(day["date"])
-        meal = day["meal"]
-        if not isinstance(meal, dict) or not meal.get("staple") or not meal.get("mainDish"):
-            raise DataValidationError(f"{path}: {day_date} 缺少主食或主菜")
-        if not isinstance(meal.get("sideDishes", []), list):
-            raise DataValidationError(f"{path}: {day_date} sideDishes 必須是陣列")
-        nutrition = day["nutrition"]
-        if not isinstance(nutrition, dict) or "caloriesKcal" not in nutrition:
-            raise DataValidationError(f"{path}: {day_date} 缺少營養資料")
+        variants = day["variants"]
+        if not isinstance(variants, dict):
+            raise DataValidationError(f"{path}: {day_date} variants 必須是物件")
+        missing_variants = [key for key in MEAL_TYPES if key not in variants]
+        if missing_variants:
+            raise DataValidationError(
+                f"{path}: {day_date} 缺少餐別 {', '.join(missing_variants)}"
+            )
+        for meal_type in MEAL_TYPES:
+            _validate_variant(variants[meal_type], path, day_date, meal_type)
+
+
+def _validate_variant(
+    variant: object, path: Path, day_date: date, meal_type: str
+) -> None:
+    if not isinstance(variant, dict):
+        raise DataValidationError(f"{path}: {day_date} {meal_type} 必須是物件")
+    for key in ("meal", "nutrition", "confidence"):
+        if key not in variant:
+            raise DataValidationError(f"{path}: {day_date} {meal_type} 缺少 {key}")
+    meal = variant["meal"]
+    if not isinstance(meal, dict) or not meal.get("staple") or not meal.get("mainDish"):
+        raise DataValidationError(f"{path}: {day_date} {meal_type} 缺少主食或主菜")
+    if not isinstance(meal.get("sideDishes", []), list):
+        raise DataValidationError(
+            f"{path}: {day_date} {meal_type} sideDishes 必須是陣列"
+        )
+    nutrition = variant["nutrition"]
+    required_nutrition = (
+        "caloriesKcal",
+        "wholeGrainsServings",
+        "proteinServings",
+        "vegetablesServings",
+        "oilsNutsServings",
+        "fruitServings",
+    )
+    if not isinstance(nutrition, dict) or any(
+        key not in nutrition for key in required_nutrition
+    ):
+        raise DataValidationError(f"{path}: {day_date} {meal_type} 營養資料不完整")
+    dishes = variant.get("dishes", [])
+    if not isinstance(dishes, list):
+        raise DataValidationError(f"{path}: {day_date} {meal_type} dishes 必須是陣列")
+    for dish in dishes:
+        if not isinstance(dish, dict) or not dish.get("name") or not dish.get("role"):
+            raise DataValidationError(f"{path}: {day_date} {meal_type} 菜色明細不完整")
+        ingredients = dish.get("ingredients", [])
+        if not isinstance(ingredients, list) or not ingredients:
+            raise DataValidationError(
+                f"{path}: {day_date} {meal_type} 的 {dish['name']} 缺少食材明細"
+            )
+        for ingredient in ingredients:
+            if not isinstance(ingredient, dict) or not ingredient.get("name"):
+                raise DataValidationError(f"{path}: {dish['name']} 食材缺少名稱")
+            if not ingredient.get("quantityText"):
+                raise DataValidationError(
+                    f"{path}: {dish['name']} 的 {ingredient['name']} 缺少份量文字"
+                )
+            quantity_value = ingredient.get("quantityValue")
+            if quantity_value is not None and not isinstance(quantity_value, (int, float)):
+                raise DataValidationError(
+                    f"{path}: {dish['name']} 的 {ingredient['name']} 數量必須是數字"
+                )
+            claims = ingredient.get("claims", [])
+            if not isinstance(claims, list) or not all(
+                isinstance(claim, str) for claim in claims
+            ):
+                raise DataValidationError(
+                    f"{path}: {dish['name']} 的 {ingredient['name']} claims 必須是字串陣列"
+                )
 
 
 def _iso_date(value: object, path: Path) -> date:
@@ -230,7 +347,9 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
             connection.execute("PRAGMA foreign_keys = ON")
             _create_schema(connection)
             day_count = 0
+            variant_count = 0
             item_count = 0
+            recipe_ingredient_count = 0
             for week in weeks:
                 week_id = f"{week['schoolYear']}-{week['semester']}-{week['week']:02d}"
                 extraction = week["extraction"]
@@ -239,8 +358,9 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
                     INSERT INTO weeks (
                         id, article_id, source_url, source_image, school_year,
                         semester, week_number, start_date, end_date,
+                        meat_detail_image, vegetarian_detail_image,
                         review_status, reviewed_at, notes
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         week_id,
@@ -252,70 +372,87 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
                         week["week"],
                         week["startDate"],
                         week["endDate"],
+                        week["sourceImages"]["meatDetail"],
+                        week["sourceImages"]["vegetarianDetail"],
                         extraction["reviewStatus"],
                         extraction["reviewedAt"],
                         extraction.get("notes"),
                     ),
                 )
                 for day in week["days"]:
-                    meal = day["meal"]
-                    nutrition = day["nutrition"]
-                    ordered_items = [
-                        meal["staple"],
-                        meal["mainDish"],
-                        *meal.get("sideDishes", []),
-                        meal.get("soup"),
-                        meal.get("fruit"),
-                        meal.get("drink"),
-                    ]
-                    ordered_items = [item for item in ordered_items if item]
-                    tags = classify_items(ordered_items)
-                    connection.execute(
-                        """
-                        INSERT INTO daily_menus (
-                            date, week_id, weekday, staple, main_dish,
-                            side_dishes_json, soup, fruit, drink,
-                            calories_kcal, whole_grains_servings,
-                            protein_servings, vegetables_servings,
-                            oils_nuts_servings, fruit_servings, tags_json,
-                            allergens_json, confidence, review_status
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (
-                            day["date"],
-                            week_id,
-                            day["weekday"],
+                    for meal_type in MEAL_TYPES:
+                        variant = day["variants"][meal_type]
+                        meal = variant["meal"]
+                        nutrition = variant["nutrition"]
+                        menu_id = f"{day['date']}:{meal_type}"
+                        ordered_items = [
                             meal["staple"],
                             meal["mainDish"],
-                            json.dumps(meal.get("sideDishes", []), ensure_ascii=False),
+                            *meal.get("sideDishes", []),
                             meal.get("soup"),
                             meal.get("fruit"),
                             meal.get("drink"),
-                            nutrition["caloriesKcal"],
-                            nutrition["wholeGrainsServings"],
-                            nutrition["proteinServings"],
-                            nutrition["vegetablesServings"],
-                            nutrition["oilsNutsServings"],
-                            nutrition["fruitServings"],
-                            json.dumps(tags, ensure_ascii=False),
-                            json.dumps(day.get("allergens", []), ensure_ascii=False),
-                            day["confidence"],
-                            extraction["reviewStatus"],
-                        ),
-                    )
-                    for position, item in enumerate(ordered_items):
-                        role = _item_role(item, meal)
+                        ]
+                        ordered_items = [item for item in ordered_items if item]
+                        tags = classify_items(ordered_items)
+                        if meal_type == "vegetarian":
+                            tags = [
+                                tag
+                                for tag in tags
+                                if tag not in {"chicken", "pork", "fish", "seafood"}
+                            ]
                         connection.execute(
-                            "INSERT INTO menu_items (menu_date, position, role, name) VALUES (?, ?, ?, ?)",
-                            (day["date"], position, role, item),
+                            """
+                            INSERT INTO daily_menus (
+                                id, date, meal_type, week_id, weekday, staple,
+                                main_dish, side_dishes_json, soup, fruit, drink,
+                                calories_kcal, whole_grains_servings,
+                                protein_servings, vegetables_servings,
+                                oils_nuts_servings, fruit_servings, tags_json,
+                                allergens_json, confidence, review_status
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                menu_id,
+                                day["date"],
+                                meal_type,
+                                week_id,
+                                day["weekday"],
+                                meal["staple"],
+                                meal["mainDish"],
+                                json.dumps(meal.get("sideDishes", []), ensure_ascii=False),
+                                meal.get("soup"),
+                                meal.get("fruit"),
+                                meal.get("drink"),
+                                nutrition["caloriesKcal"],
+                                nutrition["wholeGrainsServings"],
+                                nutrition["proteinServings"],
+                                nutrition["vegetablesServings"],
+                                nutrition["oilsNutsServings"],
+                                nutrition["fruitServings"],
+                                json.dumps(tags, ensure_ascii=False),
+                                json.dumps(variant.get("allergens", []), ensure_ascii=False),
+                                variant["confidence"],
+                                extraction["reviewStatus"],
+                            ),
                         )
-                        item_count += 1
+                        for position, item in enumerate(ordered_items):
+                            role = _item_role(item, meal)
+                            connection.execute(
+                                "INSERT INTO menu_items (menu_id, position, role, name) VALUES (?, ?, ?, ?)",
+                                (menu_id, position, role, item),
+                            )
+                            item_count += 1
+                        recipe_ingredient_count += _insert_recipe_details(
+                            connection, menu_id, variant.get("dishes", [])
+                        )
+                        variant_count += 1
                     day_count += 1
             traceability_count = _insert_traceability(
                 connection, traceability_packages
             )
             connection.execute(
-                "INSERT INTO metadata (key, value) VALUES ('schema_version', '2')"
+                "INSERT INTO metadata (key, value) VALUES ('schema_version', '3')"
             )
             connection.execute(
                 "INSERT INTO metadata (key, value) VALUES ('generated_at', datetime('now'))"
@@ -327,9 +464,48 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
     return {
         "weeks": len(weeks),
         "days": day_count,
+        "variants": variant_count,
         "items": item_count,
+        "recipeIngredients": recipe_ingredient_count,
         "traceableIngredients": traceability_count,
     }
+
+
+def _insert_recipe_details(
+    connection: sqlite3.Connection,
+    menu_id: str,
+    dishes: list[dict[str, Any]],
+) -> int:
+    ingredient_count = 0
+    for dish_position, dish in enumerate(dishes):
+        cursor = connection.execute(
+            """
+            INSERT INTO recipe_dishes (menu_id, position, role, name)
+            VALUES (?, ?, ?, ?)
+            """,
+            (menu_id, dish_position, dish["role"], dish["name"]),
+        )
+        dish_id = cursor.lastrowid
+        for ingredient_position, ingredient in enumerate(dish.get("ingredients", [])):
+            connection.execute(
+                """
+                INSERT INTO recipe_ingredients (
+                    dish_id, position, name, quantity_value,
+                    quantity_unit, quantity_text, claims_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    dish_id,
+                    ingredient_position,
+                    ingredient["name"],
+                    ingredient.get("quantityValue"),
+                    ingredient.get("quantityUnit"),
+                    ingredient.get("quantityText"),
+                    json.dumps(ingredient.get("claims", []), ensure_ascii=False),
+                ),
+            )
+            ingredient_count += 1
+    return ingredient_count
 
 
 def _insert_traceability(
@@ -470,19 +646,23 @@ def _create_schema(connection: sqlite3.Connection) -> None:
         CREATE TABLE weeks (
             id TEXT PRIMARY KEY,
             article_id TEXT NOT NULL UNIQUE,
-            source_url TEXT NOT NULL,
+            source_url TEXT,
             source_image TEXT NOT NULL,
             school_year INTEGER NOT NULL,
             semester INTEGER NOT NULL,
             week_number INTEGER NOT NULL,
             start_date TEXT NOT NULL,
             end_date TEXT NOT NULL,
+            meat_detail_image TEXT NOT NULL,
+            vegetarian_detail_image TEXT NOT NULL,
             review_status TEXT NOT NULL,
             reviewed_at TEXT NOT NULL,
             notes TEXT
         );
         CREATE TABLE daily_menus (
-            date TEXT PRIMARY KEY,
+            id TEXT PRIMARY KEY,
+            date TEXT NOT NULL,
+            meal_type TEXT NOT NULL CHECK (meal_type IN ('meat', 'vegetarian')),
             week_id TEXT NOT NULL REFERENCES weeks(id),
             weekday TEXT NOT NULL,
             staple TEXT NOT NULL,
@@ -500,14 +680,34 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             tags_json TEXT NOT NULL,
             allergens_json TEXT NOT NULL,
             confidence REAL NOT NULL,
-            review_status TEXT NOT NULL
+            review_status TEXT NOT NULL,
+            UNIQUE(date, meal_type)
         );
         CREATE TABLE menu_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            menu_date TEXT NOT NULL REFERENCES daily_menus(date),
+            menu_id TEXT NOT NULL REFERENCES daily_menus(id),
             position INTEGER NOT NULL,
             role TEXT NOT NULL,
             name TEXT NOT NULL
+        );
+        CREATE TABLE recipe_dishes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            menu_id TEXT NOT NULL REFERENCES daily_menus(id),
+            position INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            name TEXT NOT NULL,
+            UNIQUE(menu_id, position)
+        );
+        CREATE TABLE recipe_ingredients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            dish_id INTEGER NOT NULL REFERENCES recipe_dishes(id),
+            position INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            quantity_value REAL,
+            quantity_unit TEXT,
+            quantity_text TEXT,
+            claims_json TEXT NOT NULL,
+            UNIQUE(dish_id, position)
         );
         CREATE TABLE metadata (
             key TEXT PRIMARY KEY,
@@ -546,7 +746,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
         CREATE TABLE dish_ingredients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             source_id TEXT NOT NULL REFERENCES traceability_sources(id),
-            menu_date TEXT NOT NULL REFERENCES daily_menus(date),
+            menu_date TEXT NOT NULL,
             dish_position INTEGER NOT NULL,
             ingredient_position INTEGER NOT NULL,
             dish_name TEXT NOT NULL,
@@ -557,8 +757,10 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             certification_id TEXT REFERENCES certifications(id),
             UNIQUE(menu_date, dish_position, ingredient_position)
         );
-        CREATE INDEX menu_items_date_idx ON menu_items(menu_date, position);
-        CREATE INDEX daily_menus_week_idx ON daily_menus(week_id, date);
+        CREATE INDEX menu_items_menu_idx ON menu_items(menu_id, position);
+        CREATE INDEX daily_menus_week_idx ON daily_menus(week_id, meal_type, date);
+        CREATE INDEX daily_menus_date_idx ON daily_menus(date, meal_type);
+        CREATE INDEX recipe_dishes_menu_idx ON recipe_dishes(menu_id, position);
         CREATE INDEX dish_ingredients_date_idx
             ON dish_ingredients(menu_date, dish_position, ingredient_position);
         CREATE INDEX dish_ingredients_supplier_idx

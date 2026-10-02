@@ -251,6 +251,36 @@ RECIPES = (
     },
 )
 
+VEGETARIAN_RECIPES = (
+    {
+        "keywords": ("豆腐", "豆干", "豆包", "豆腸", "豆輪", "烤麩"),
+        "title": "彩蔬豆腐煲",
+        "time": "約 25 分鐘",
+        "servings": "4 人份",
+        "ingredients": ("板豆腐 1 盒", "高麗菜 1/4 顆", "菇類 1 碗", "紅蘿蔔 1/3 根", "醬油 1 大匙"),
+        "steps": ("豆腐切塊煎至表面金黃。", "蔬菜與菇類切成適口大小。", "鍋中加入蔬菜、少量水與醬油煮軟。", "放回豆腐，小火燴至入味。"),
+        "allergens": ("大豆", "麩質"),
+    },
+    {
+        "keywords": ("蛋", "起司"),
+        "title": "菇菇蔬菜烘蛋",
+        "time": "約 20 分鐘",
+        "servings": "4 人份",
+        "ingredients": ("雞蛋 4 顆", "綜合菇 1 碗", "甜椒 1/2 顆", "牛奶或無糖豆漿 2 大匙", "鹽少許"),
+        "steps": ("菇類與甜椒切小塊。", "雞蛋與牛奶打勻。", "先炒香蔬菜，再倒入蛋液。", "小火加蓋煎熟後切塊。"),
+        "allergens": ("蛋", "奶類或大豆"),
+    },
+    {
+        "keywords": (),
+        "title": "毛豆菇菇炊飯",
+        "time": "約 35 分鐘",
+        "servings": "4 人份",
+        "ingredients": ("白米 2 杯", "毛豆仁 1/2 杯", "綜合菇 1 碗", "紅蘿蔔丁 1/3 杯", "醬油 1 大匙"),
+        "steps": ("白米洗淨後依平常水量入鍋。", "菇類切片，與毛豆、紅蘿蔔鋪在米上。", "加入醬油後照一般炊飯程序煮熟。", "燜 10 分鐘後拌勻。"),
+        "allergens": ("大豆", "麩質"),
+    },
+)
+
 
 def make_food_education(day: dict[str, Any]) -> dict[str, Any]:
     items = _menu_items(day)
@@ -275,6 +305,14 @@ def make_food_education(day: dict[str, Any]) -> dict[str, Any]:
 
 
 def make_home_recipe(day: dict[str, Any]) -> dict[str, Any]:
+    if day.get("mealType") == "vegetarian":
+        items = _menu_items(day)
+        for item in items:
+            for recipe in VEGETARIAN_RECIPES[:-1]:
+                if any(keyword in item for keyword in recipe["keywords"]):
+                    return _recipe_payload(recipe, item)
+        fallback = VEGETARIAN_RECIPES[-1]
+        return _recipe_payload(fallback, day["meal"]["mainDish"])
     for item in _menu_items(day):
         for recipe in RECIPES:
             if any(keyword in item for keyword in recipe["keywords"]):

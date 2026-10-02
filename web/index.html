@@ -30,6 +30,10 @@
       <section class="intro" id="today">
         <div class="intro-copy">
           <p class="eyebrow">TODAY'S SCHOOL LUNCH</p>
+          <div class="meal-type-switch" role="group" aria-label="選擇午餐餐別">
+            <button id="mealTypeMeat" type="button" aria-pressed="true">葷食</button>
+            <button id="mealTypeVegetarian" type="button" aria-pressed="false">素食</button>
+          </div>
           <p class="today-label" id="todayLabel">—</p>
           <h1><span id="mealMoment">今天中午，</span><br /><em id="heroDish">吃得好嗎？</em></h1>
           <p class="intro-note" id="introNote">把學校菜單整理成真正看得懂、用得上的每日資訊。</p>
@@ -40,12 +44,22 @@
         </div>
       </section>
 
+      <section class="week-section section" id="week" aria-label="本週菜單日期選擇">
+        <div class="week-toolbar">
+          <div class="week-nav"><button id="previousWeek" type="button" aria-label="前一週">←</button><span id="weekLabel">—</span><button id="nextWeek" type="button" aria-label="下一週">→</button></div>
+        </div>
+        <div class="week-days" id="weekDays"></div>
+      </section>
+
       <section class="today-grid" aria-live="polite">
         <article class="menu-board card">
           <div class="card-heading"><div><p class="kicker">SELECTED PLATE</p><h2>午餐內容</h2></div><span class="review-badge">✓ 已校讀</span></div>
-          <div class="main-dish"><span>這餐主角</span><strong id="mainDish">—</strong></div>
+          <button class="main-dish" id="mainDishButton" type="button"><span>這餐主角</span><strong id="mainDish">—</strong></button>
+          <p class="dish-count" id="dishCount">—</p>
           <div class="meal-list" id="mealList"></div>
           <div class="allergen-row" id="allergenRow"></div>
+          <button class="detail-menu-action" id="openDetail" type="button">查看每道菜的食材與用量原表</button>
+          <p class="detail-menu-note" id="mealTypeNote">用量為供餐廠商的每人食譜設計值，不代表實際攝取量。</p>
         </article>
 
         <article class="nutrition-card card">
@@ -55,20 +69,12 @@
         </article>
 
         <article class="dinner-card card">
-          <p class="kicker">DINNER IDEA</p><h2 id="dinnerTitle">這天晚餐，換個主角</h2>
+          <div class="card-heading"><div><p class="kicker">DINNER IDEA</p><h2 id="dinnerTitle">這天晚餐，換個主角</h2></div></div>
           <div class="dinner-picks" id="dinnerPicks"></div>
           <p class="dinner-reason" id="dinnerReason"></p><ul id="dinnerNotes"></ul>
           <p class="disclaimer" id="disclaimer"></p>
         </article>
 
-      </section>
-
-      <section class="week-section section" id="week">
-        <div class="section-title">
-          <div><p class="kicker">THIS WEEK</p><h2>這週每天吃什麼</h2></div>
-          <div class="week-nav"><button id="previousWeek" type="button" aria-label="前一週">←</button><span id="weekLabel">—</span><button id="nextWeek" type="button" aria-label="下一週">→</button></div>
-        </div>
-        <div class="week-days" id="weekDays"></div>
       </section>
 
       <section class="traceability-section section" id="traceability">
@@ -147,9 +153,9 @@
       <section class="source-section section" id="source">
         <div class="source-copy">
           <p class="kicker">TRACEABLE DATA</p><h2>分析有依據，<br />原圖也沒有消失。</h2>
-          <p>每筆菜單都保留來源文章與原始圖片。若自動分類或菜名有疑問，可以直接回到校方資料核對。</p>
+          <p>每筆菜單都保留原始圖片；有校方文章時也保留連結。若分類或菜名有疑問，可以直接回到來源資料核對。</p>
           <div class="monitor-note"><span aria-hidden="true"></span><div><strong>定期檢查菜單來源</strong><small>發現新文章或原圖更新時，先保存與校讀，再加入公開統計。</small></div></div>
-          <div class="source-actions"><a class="primary-action" id="sourceArticle" target="_blank" rel="noreferrer">查看來源文章 ↗</a><button class="secondary-action" id="openSource" type="button">檢視本週原圖</button></div>
+          <div class="source-actions"><a class="primary-action" id="sourceArticle" target="_blank" rel="noreferrer">查看來源文章 ↗</a><button class="secondary-action" id="openSource" type="button">檢視本週菜單</button></div>
         </div>
         <div class="archive-list" id="archiveList"></div>
       </section>
@@ -171,6 +177,24 @@
       <button class="dialog-close" id="closeSource" type="button" aria-label="關閉">×</button>
       <div><p class="kicker">ORIGINAL MENU</p><h2 id="dialogTitle">本週原始菜單</h2></div>
       <img id="sourceImage" alt="" /><a id="downloadSource" download>下載原圖</a>
+    </dialog>
+
+    <dialog class="dish-detail-dialog" id="dishDetailDialog" aria-labelledby="dishDetailTitle" aria-describedby="dishDetailNote">
+      <div class="dish-detail-shell">
+        <header class="dish-detail-header">
+          <button class="dish-detail-close" id="closeDishDetail" type="button" aria-label="關閉菜色明細">×</button>
+          <p class="kicker">DISH DETAILS</p>
+          <p class="dish-detail-role" id="dishDetailRole">菜色明細</p>
+          <h2 id="dishDetailTitle">—</h2>
+          <p class="dish-detail-count" id="dishDetailCount">—</p>
+        </header>
+        <div class="dish-detail-ingredients" id="dishDetailIngredients"></div>
+        <p class="dish-detail-note" id="dishDetailNote">用量為供餐廠商的食譜設計值，不代表實際攝取量。</p>
+        <div class="dish-detail-nav" aria-label="切換菜色">
+          <button id="previousDish" type="button">上一道</button>
+          <button id="nextDish" type="button">下一道</button>
+        </div>
+      </div>
     </dialog>
     <script src="./date-context.js" defer></script>
     <script src="./app.js" defer></script>

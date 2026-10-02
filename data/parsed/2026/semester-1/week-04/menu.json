@@ -1,43 +1,40 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "articleId": "1273751628550061340",
   "sourceUrl": "https://zxes.blogspot.com/2026/09/115140921-0924.html",
   "sourceImage": "2026/semester-1/week-04/menu-01.png",
-  "schoolYear": 115,
-  "semester": 1,
-  "week": 4,
-  "startDate": "2026-09-21",
-  "endDate": "2026-09-24",
-  "extraction": {
-    "method": "vision-assisted-manual-review",
-    "reviewStatus": "reviewed",
-    "reviewedAt": "2026-10-01",
-    "notes": "依原始菜單圖人工校讀；本週來源圖列四個供餐日。"
-  },
+  "sourceImages": {"summary": "2026/semester-1/week-04/menu-01.png", "meatDetail": "2026/semester-1/week-04/menu-02.jpg", "vegetarianDetail": "2026/semester-1/week-04/menu-03.jpg"},
+  "schoolYear": 115, "semester": 1, "week": 4,
+  "startDate": "2026-09-21", "endDate": "2026-09-24",
+  "extraction": {"method": "vision-assisted-manual-review", "reviewStatus": "reviewed", "reviewedAt": "2026-10-02", "notes": "葷素週菜單與兩張食譜數量設計表均依原圖校讀；本週列四個供餐日。"},
   "days": [
     {
-      "date": "2026-09-21", "weekday": "星期一", "confidence": 0.96,
-      "meal": {"staple": "元氣香菇炊飯", "mainDish": "如意彩絲", "sideDishes": ["翡翠田園炒蛋", "蚵白菜", "可樂餅"], "soup": "蘿蔔丸片湯", "fruit": null, "drink": null},
-      "nutrition": {"caloriesKcal": 687, "wholeGrainsServings": 5.2, "proteinServings": 2.2, "vegetablesServings": 2, "oilsNutsServings": 2.4, "fruitServings": 0},
-      "allergens": ["蛋", "麩質"]
+      "date": "2026-09-21", "weekday": "星期一",
+      "variants": {
+        "meat": {"confidence": 0.98, "meal": {"staple": "元氣香菇炊飯", "mainDish": "如意彩絲", "sideDishes": ["翡翠田園炒蛋", "蚵白菜", "可樂餅"], "soup": "蘿蔔丸片湯", "fruit": null, "drink": null}, "nutrition": {"caloriesKcal": 686.98, "wholeGrainsServings": 5.23, "proteinServings": 2.17, "vegetablesServings": 2.01, "oilsNutsServings": 2.4, "fruitServings": 0}, "allergens": ["蛋", "麩質"]},
+        "vegetarian": {"confidence": 0.98, "meal": {"staple": "元氣香菇炊飯", "mainDish": "如意彩絲", "sideDishes": ["翡翠田園炒蛋", "蚵白菜", "可樂餅"], "soup": "蘿蔔丸子湯", "fruit": null, "drink": null}, "nutrition": {"caloriesKcal": 717.8, "wholeGrainsServings": 5.73, "proteinServings": 2.11, "vegetablesServings": 2.01, "oilsNutsServings": 2.4, "fruitServings": 0}, "allergens": ["蛋", "大豆", "麩質"]}
+      }
     },
     {
-      "date": "2026-09-22", "weekday": "星期二", "confidence": 0.96,
-      "meal": {"staple": "糙米飯", "mainDish": "迷迭香烤雞排", "sideDishes": ["關東煮", "油菜炒豆皮"], "soup": null, "fruit": "白色火龍果", "drink": "芋頭西米露"},
-      "nutrition": {"caloriesKcal": 799, "wholeGrainsServings": 5.7, "proteinServings": 2.7, "vegetablesServings": 1.5, "oilsNutsServings": 2.3, "fruitServings": 1},
-      "allergens": ["大豆", "奶類"]
+      "date": "2026-09-22", "weekday": "星期二",
+      "variants": {
+        "meat": {"confidence": 0.98, "meal": {"staple": "糙米飯", "mainDish": "迷迭香烤雞排", "sideDishes": ["關東煮", "油菜炒豆皮"], "soup": null, "fruit": "白色火龍果", "drink": "芋頭西米露"}, "nutrition": {"caloriesKcal": 799.14, "wholeGrainsServings": 5.67, "proteinServings": 2.7, "vegetablesServings": 1.45, "oilsNutsServings": 2.3, "fruitServings": 1}, "allergens": ["大豆", "奶類"]},
+        "vegetarian": {"confidence": 0.98, "meal": {"staple": "糙米飯", "mainDish": "壽喜烤麩", "sideDishes": ["關東煮", "佛手瓜燴百頁", "油菜炒豆皮"], "soup": null, "fruit": "白色火龍果", "drink": "芋頭西米露"}, "nutrition": {"caloriesKcal": 765.57, "wholeGrainsServings": 5.67, "proteinServings": 2.16, "vegetablesServings": 1.9, "oilsNutsServings": 2.2, "fruitServings": 1}, "allergens": ["大豆", "奶類", "麩質"]}
+      }
     },
     {
-      "date": "2026-09-23", "weekday": "星期三", "confidence": 0.96,
-      "meal": {"staple": "多穀飯", "mainDish": "韓式醬燒豬肉", "sideDishes": ["部隊鍋", "空心菜"], "soup": "馬鈴薯雞湯", "fruit": null, "drink": null},
-      "nutrition": {"caloriesKcal": 706, "wholeGrainsServings": 5.6, "proteinServings": 2.3, "vegetablesServings": 1.5, "oilsNutsServings": 2.3, "fruitServings": 0},
-      "allergens": []
+      "date": "2026-09-23", "weekday": "星期三",
+      "variants": {
+        "meat": {"confidence": 0.98, "meal": {"staple": "多穀飯", "mainDish": "韓式醬燒豬肉", "sideDishes": ["部隊鍋", "空心菜"], "soup": "馬鈴薯雞湯", "fruit": null, "drink": null}, "nutrition": {"caloriesKcal": 706.17, "wholeGrainsServings": 5.62, "proteinServings": 2.28, "vegetablesServings": 1.53, "oilsNutsServings": 2.3, "fruitServings": 0}, "allergens": []},
+        "vegetarian": {"confidence": 0.98, "meal": {"staple": "多穀飯", "mainDish": "韓式醬燒豆腐", "sideDishes": ["部隊鍋", "箭筍炒麵腸", "空心菜"], "soup": "馬鈴薯海芽湯", "fruit": null, "drink": null}, "nutrition": {"caloriesKcal": 690.46, "wholeGrainsServings": 5.55, "proteinServings": 2.09, "vegetablesServings": 1.68, "oilsNutsServings": 2.3, "fruitServings": 0}, "allergens": ["大豆", "麩質"]}
+      }
     },
     {
-      "date": "2026-09-24", "weekday": "星期四", "confidence": 0.96,
-      "meal": {"staple": "燕麥飯", "mainDish": "鹹水雞", "sideDishes": ["客家小炒", "有機黑葉白菜"], "soup": "客家鹹湯", "fruit": "香蕉", "drink": null},
-      "nutrition": {"caloriesKcal": 743, "wholeGrainsServings": 5.2, "proteinServings": 2.4, "vegetablesServings": 1.7, "oilsNutsServings": 2.2, "fruitServings": 1},
-      "allergens": ["甲殼類"]
+      "date": "2026-09-24", "weekday": "星期四",
+      "variants": {
+        "meat": {"confidence": 0.98, "meal": {"staple": "燕麥飯", "mainDish": "鹹水雞", "sideDishes": ["客家小炒", "有機黑葉白菜"], "soup": "客家鹹湯", "fruit": "香蕉", "drink": null}, "nutrition": {"caloriesKcal": 742.92, "wholeGrainsServings": 5.17, "proteinServings": 2.4, "vegetablesServings": 1.69, "oilsNutsServings": 2.2, "fruitServings": 1}, "allergens": ["甲殼類"]},
+        "vegetarian": {"confidence": 0.97, "meal": {"staple": "燕麥飯", "mainDish": "鹹水素雞", "sideDishes": ["客家小炒", "客家碗粿", "有機黑葉白菜"], "soup": "客家鹹湯", "fruit": "香蕉", "drink": null}, "nutrition": {"caloriesKcal": 791.69, "wholeGrainsServings": 6, "proteinServings": 2.17, "vegetablesServings": 1.83, "oilsNutsServings": 2.3, "fruitServings": 1}, "allergens": ["大豆", "麩質"]}
+      }
     }
   ]
 }

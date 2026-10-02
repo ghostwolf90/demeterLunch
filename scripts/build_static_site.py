@@ -36,34 +36,44 @@ def build_static_site(
         dates = [
             row[0]
             for row in connection.execute(
-                "SELECT date FROM daily_menus ORDER BY date"
+                "SELECT DISTINCT date FROM daily_menus ORDER BY date"
             ).fetchall()
         ]
     if not dates:
         raise ValueError("資料庫沒有可匯出的供餐日")
 
-    dashboards = {day: load_dashboard(database_path, day) for day in dates}
-    latest = dashboards[dates[-1]]
+    dashboards = {
+        meal_type: {
+            day: load_dashboard(database_path, day, meal_type) for day in dates
+        }
+        for meal_type in ("meat", "vegetarian")
+    }
+    latest = {meal_type: values[dates[-1]] for meal_type, values in dashboards.items()}
     payload = {
-        "schemaVersion": 2,
+        "schemaVersion": 3,
         "generatedAt": datetime.now(timezone.utc).isoformat(),
-        "days": [dashboards[day]["selected"] for day in dates],
-        "dinnerSuggestions": {
-            day: dashboards[day]["dinnerSuggestion"] for day in dates
+        "variants": {
+            meal_type: {
+                "days": [values[day]["selected"] for day in dates],
+                "dinnerSuggestions": {
+                    day: values[day]["dinnerSuggestion"] for day in dates
+                },
+                "foodEducation": {
+                    day: values[day]["foodEducation"] for day in dates
+                },
+                "homeRecipes": {
+                    day: values[day]["homeRecipe"] for day in dates
+                },
+                "traceability": {
+                    day: values[day]["traceability"] for day in dates
+                },
+                "insights": latest[meal_type]["insights"],
+                "archive": latest[meal_type]["archive"],
+                "dateRange": latest[meal_type]["dateRange"],
+                "totalDays": latest[meal_type]["totalDays"],
+            }
+            for meal_type, values in dashboards.items()
         },
-        "foodEducation": {
-            day: dashboards[day]["foodEducation"] for day in dates
-        },
-        "homeRecipes": {
-            day: dashboards[day]["homeRecipe"] for day in dates
-        },
-        "traceability": {
-            day: dashboards[day]["traceability"] for day in dates
-        },
-        "insights": latest["insights"],
-        "archive": latest["archive"],
-        "dateRange": latest["dateRange"],
-        "totalDays": latest["totalDays"],
     }
     data_output = output_root / "data"
     data_output.mkdir(parents=True, exist_ok=True)
@@ -84,8 +94,12 @@ def build_static_site(
     )
 
     copied_images = 0
-    for week in latest["archive"]:
-        relative = str(week["sourceImage"]).removeprefix("/data/")
+    image_paths = {
+        str(week[key]).removeprefix("/data/")
+        for week in latest["meat"]["archive"]
+        for key in ("sourceImage", "meatDetailImage", "vegetarianDetailImage")
+    }
+    for relative in sorted(image_paths):
         source = raw_root / relative
         if not source.is_file():
             raise FileNotFoundError(f"找不到原始菜單圖：{source}")

@@ -59,6 +59,18 @@ class SiteLayoutTests(unittest.TestCase):
             index_html.index('id="traceability"'),
         )
 
+    def test_site_exposes_meat_vegetarian_and_detail_controls(self) -> None:
+        index_html = (
+            Path(__file__).resolve().parents[1] / "web" / "index.html"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn('id="mealTypeMeat"', index_html)
+        self.assertIn('id="mealTypeVegetarian"', index_html)
+        self.assertIn('id="openDetail"', index_html)
+        self.assertIn('id="mainDishButton"', index_html)
+        self.assertIn('id="dishDetailDialog"', index_html)
+        self.assertNotIn('id="recipeSourceDetails"', index_html)
+
 
 if __name__ == "__main__":
     unittest.main()

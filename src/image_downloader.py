@@ -5,6 +5,7 @@ import logging
 import struct
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 from .http_client import HttpClient
 from .models import ImageSource
@@ -36,6 +37,7 @@ class ImageDownloader:
         LOGGER.info("Saved image %s", destination)
         return {
             "file": filename,
+            "role": classify_menu_image_role(source, index),
             "originalUrl": source.original_url,
             "downloadUrl": source.download_url,
             "contentType": response.content_type,
@@ -114,6 +116,25 @@ def inspect_image(data: bytes) -> tuple[str, int | None, int | None]:
     if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
         return "webp", None, None
     raise InvalidImageError("Downloaded response is not a supported image")
+
+
+def classify_menu_image_role(source: ImageSource, index: int) -> str | None:
+    """Classify the three recurring menu images without relying on order alone."""
+    names = " ".join(
+        unquote(Path(urlsplit(url).path).name).lower()
+        for url in (source.original_url, source.download_url)
+    )
+    if "葷" in names or any(
+        name.startswith(("m_", "m-", "meat")) for name in names.split()
+    ):
+        return "meat_detail"
+    if "素" in names or any(
+        name.startswith(("v_", "v-", "veg")) for name in names.split()
+    ):
+        return "vegetarian_detail"
+    if index == 1:
+        return "summary"
+    return None
 
 
 def _jpeg_dimensions(data: bytes) -> tuple[int | None, int | None]:

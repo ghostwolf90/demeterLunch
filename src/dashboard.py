@@ -23,6 +23,17 @@ TRACEABILITY_INGREDIENT_ALIASES = {
     "白蘿蔔": ("蘿蔔",),
     "甘藍": ("高麗菜",),
     "金針菇": ("金菇",),
+    "豬絞肉": ("絞肉",),
+    "鯊魚": ("沙魚", "沙魚丁"),
+    "黑木耳": ("木耳",),
+    "豬上肩肉": ("排骨", "排骨丁"),
+    "骨腿": ("骨腿（T4）", "骨腿T4"),
+}
+
+TRACEABILITY_DISH_ALIASES = {
+    "油菜": ("炒油菜",),
+    "快炒時蔬": ("油菜", "炒油菜"),
+    "阿婆豆腐": ("麻婆豆腐",),
 }
 
 DINNER_POOLS = {
@@ -91,37 +102,74 @@ DINNER_REASONS = {
     "balanced": "從不同料理輪替選一組，讓一天的餐桌更多元。",
 }
 
+VEGETARIAN_DINNER_POOL = (
+    ("番茄豆腐煲", "蒜炒地瓜葉"),
+    ("毛豆炒蛋", "香菇炊飯"),
+    ("三杯杏鮑菇", "涼拌小黃瓜"),
+    ("南瓜蒸蛋", "清炒高麗菜"),
+    ("香煎板豆腐", "玉米筍炒菇"),
+    ("豆乳蔬菜鍋", "烤地瓜"),
+    ("鷹嘴豆咖哩", "燙青花菜"),
+    ("豆干毛豆丁", "紫菜湯"),
+)
 
-def load_dashboard(database_path: Path, selected_date: str | None = None) -> dict[str, Any]:
+
+def load_dashboard(
+    database_path: Path,
+    selected_date: str | None = None,
+    meal_type: str = "meat",
+) -> dict[str, Any]:
     if not database_path.is_file():
         raise FileNotFoundError(f"結構化資料庫不存在：{database_path}")
+    if meal_type not in {"meat", "vegetarian"}:
+        raise ValueError(f"不支援的餐別：{meal_type}")
     with sqlite3.connect(database_path) as connection:
         connection.row_factory = sqlite3.Row
         rows = connection.execute(
             """
             SELECT d.*, w.week_number, w.school_year, w.semester,
-                   w.start_date, w.end_date, w.source_url, w.source_image
+                   w.start_date, w.end_date, w.source_url, w.source_image,
+                   w.meat_detail_image, w.vegetarian_detail_image
             FROM daily_menus d JOIN weeks w ON w.id = d.week_id
+            WHERE d.meal_type = ?
             ORDER BY d.date
-            """
+            """,
+            (meal_type,),
         ).fetchall()
         weeks = connection.execute(
             """
-            SELECT w.*, COUNT(d.date) AS day_count
-            FROM weeks w LEFT JOIN daily_menus d ON d.week_id = w.id
+            SELECT w.*, COUNT(DISTINCT d.date) AS day_count
+            FROM weeks w LEFT JOIN daily_menus d
+                ON d.week_id = w.id AND d.meal_type = ?
             GROUP BY w.id ORDER BY w.start_date DESC
-            """
+            """,
+            (meal_type,),
         ).fetchall()
         top_dishes = connection.execute(
             """
-            SELECT name, COUNT(*) AS appearances
-            FROM menu_items WHERE role IN ('main', 'side')
-            GROUP BY name ORDER BY appearances DESC, name LIMIT 6
+            SELECT i.name, COUNT(*) AS appearances
+            FROM menu_items i JOIN daily_menus d ON d.id = i.menu_id
+            WHERE i.role IN ('main', 'side') AND d.meal_type = ?
+            GROUP BY i.name ORDER BY appearances DESC, i.name LIMIT 6
+            """,
+            (meal_type,),
+        ).fetchall()
+        recipe_rows = connection.execute(
             """
+            SELECT d.menu_id, d.position AS dish_position, d.role, d.name AS dish_name,
+                   i.position AS ingredient_position, i.name AS ingredient_name,
+                   i.quantity_value, i.quantity_unit, i.quantity_text, i.claims_json
+            FROM recipe_dishes d
+            LEFT JOIN recipe_ingredients i ON i.dish_id = d.id
+            JOIN daily_menus m ON m.id = d.menu_id
+            WHERE m.meal_type = ?
+            ORDER BY d.menu_id, d.position, i.position
+            """,
+            (meal_type,),
         ).fetchall()
         traceability_rows = connection.execute(
             """
-            SELECT di.source_id, di.menu_date, di.dish_position,
+            SELECT di.id, di.source_id, di.menu_date, di.dish_position,
                    di.ingredient_position, di.dish_name,
                    di.official_dish_name, di.dish_category,
                    di.ingredient_name,
@@ -158,7 +206,11 @@ def load_dashboard(database_path: Path, selected_date: str | None = None) -> dic
             """
         ).fetchall()
 
-    days = [_row_to_day(row) for row in rows]
+    recipes_by_menu = _group_recipe_details(recipe_rows)
+    days = [
+        _row_to_day(row, recipes_by_menu.get(row["id"], []))
+        for row in rows
+    ]
     if not days:
         raise ValueError("資料庫沒有每日菜單")
     exact = next((day for day in days if day["date"] == selected_date), None)
@@ -171,11 +223,15 @@ def load_dashboard(database_path: Path, selected_date: str | None = None) -> dic
     }
     for day in days:
         traceability = traceability_by_date[day["date"]]
+        _annotate_recipe_traceability(day, traceability)
         day["traceabilityStatus"] = traceability["status"]
         day["traceableIngredientCount"] = traceability["ingredientCount"]
     week_days = [day for day in days if day["weekId"] == active["weekId"]]
     return {
         "selected": active,
+        "mealType": meal_type,
+        "mealTypeLabel": "葷食" if meal_type == "meat" else "素食",
+        "availableMealTypes": ["meat", "vegetarian"],
         "requestedDate": selected_date,
         "isFallback": exact is None and selected_date is not None,
         "week": week_days,
@@ -193,6 +249,8 @@ def load_dashboard(database_path: Path, selected_date: str | None = None) -> dic
                 "dayCount": row["day_count"],
                 "sourceUrl": row["source_url"],
                 "sourceImage": f"/data/{row['source_image']}",
+                "meatDetailImage": f"/data/{row['meat_detail_image']}",
+                "vegetarianDetailImage": f"/data/{row['vegetarian_detail_image']}",
                 "reviewStatus": row["review_status"],
             }
             for row in weeks
@@ -208,15 +266,22 @@ def _build_traceability(
     sources: list[sqlite3.Row],
 ) -> dict[str, Any]:
     selected_date = selected_day["date"]
-    selected_rows = [row for row in rows if row["menu_date"] == selected_date]
+    exact_date_rows = [row for row in rows if row["menu_date"] == selected_date]
+    exact_dishes, selected_rows = _match_exact_traceability(
+        selected_day, exact_date_rows
+    )
     if selected_rows:
+        meal_label = "葷食" if selected_day["mealType"] == "meat" else "素食"
         return _traceability_payload(
             selected_date=selected_date,
             status="verified",
-            dishes=_group_exact_traceability(selected_rows),
+            dishes=exact_dishes,
             matched_rows=selected_rows,
             sources=sources,
-            notice="本日菜色已與校園食材平臺的同日官方明細完成比對。",
+            notice=(
+                f"本日{meal_label}菜色已與校園食材平臺的同日官方明細完成比對。"
+                "平臺未提供葷素欄位，因此只呈現菜名或食譜明細可明確對應的項目。"
+            ),
         )
 
     matched_dishes, matched_rows = _match_historical_traceability(
@@ -232,7 +297,7 @@ def _build_traceability(
             matched_rows=matched_rows,
             sources=sources,
             notice=(
-                f"{selected_date} 尚無同日食材明細；以下只列出菜名中能與既有資料"
+                f"{selected_date} 尚無同日食材明細；以下只列出菜名或食譜明細中能與既有資料"
                 f"明確匹配的食材。供應商與認證來自 {date_text}，僅供來源參考，"
                 "不代表本日批次。"
             ),
@@ -243,7 +308,7 @@ def _build_traceability(
         "selectedDate": selected_date,
         "dataDate": None,
         "notice": (
-            f"{selected_date} 尚無同日食材明細，菜名中也沒有可與既有資料"
+            f"{selected_date} 尚無同日食材明細，菜名與食譜明細中也沒有可與既有資料"
             "可靠匹配的食材。"
         ),
         "dishes": [],
@@ -253,7 +318,98 @@ def _build_traceability(
     }
 
 
-def _menu_dishes(day: dict[str, Any]) -> list[tuple[str, str]]:
+def _match_exact_traceability(
+    selected_day: dict[str, Any], rows: list[sqlite3.Row]
+) -> tuple[list[dict[str, Any]], list[sqlite3.Row]]:
+    groups = _group_historical_dishes(rows)
+    matched_groups: list[list[sqlite3.Row]] = []
+    ingredient_dishes: list[dict[str, Any]] = []
+    matched_rows_by_id: dict[int, sqlite3.Row] = {}
+    for category, menu_name, ingredients in _menu_dishes(selected_day):
+        candidates = [
+            group
+            for group in groups
+            if _dish_names_match(
+                menu_name,
+                group[0]["dish_name"],
+                group[0]["official_dish_name"],
+            )
+        ]
+        if candidates:
+            group = candidates[0]
+            if ingredients:
+                group = [
+                    row
+                    for row in group
+                    if any(
+                        _ingredient_names_match(detail_name, row["ingredient_name"])
+                        for detail_name in ingredients
+                    )
+                ]
+            if not group:
+                continue
+            if group not in matched_groups:
+                matched_groups.append(group)
+                matched_rows_by_id.update({row["id"]: row for row in group})
+            continue
+
+        ingredient_matches: list[sqlite3.Row] = []
+        for row in rows:
+            if row["id"] in matched_rows_by_id:
+                continue
+            if any(
+                _ingredient_names_match(detail_name, row["ingredient_name"])
+                for detail_name in ingredients
+            ):
+                ingredient_matches.append(row)
+                matched_rows_by_id[row["id"]] = row
+        if ingredient_matches:
+            ingredient_dishes.append(
+                {
+                    "name": menu_name,
+                    "officialName": menu_name,
+                    "category": category,
+                    "ingredients": [
+                        _traceability_ingredient(
+                            row,
+                            match_type="ingredient",
+                            match_reason=(
+                                f"同日食譜明細含「{row['ingredient_name']}」"
+                            ),
+                        )
+                        for row in ingredient_matches
+                    ],
+                }
+            )
+    matched_rows = list(matched_rows_by_id.values())
+    dishes = _group_exact_traceability(
+        [row for group in matched_groups for row in group]
+    )
+    dishes.extend(ingredient_dishes)
+    return dishes, matched_rows
+
+
+def _dish_names_match(menu_name: str, *official_names: str) -> bool:
+    menu_terms = {
+        _normalize_trace_text(menu_name),
+        *(
+            _normalize_trace_text(alias)
+            for alias in TRACEABILITY_DISH_ALIASES.get(menu_name, ())
+        ),
+    }
+    return any(_normalize_trace_text(name) in menu_terms for name in official_names)
+
+
+def _menu_dishes(day: dict[str, Any]) -> list[tuple[str, str, list[str]]]:
+    if day.get("recipeDetails"):
+        return [
+            (
+                _dish_role_label(dish.get("role")),
+                dish["name"],
+                [ingredient["name"] for ingredient in dish.get("ingredients", [])],
+            )
+            for dish in day["recipeDetails"]
+        ]
     meal = day["meal"]
     values: list[tuple[str, str | None]] = [
         ("主食", meal.get("staple")),
@@ -263,11 +419,37 @@ def _menu_dishes(day: dict[str, Any]) -> list[tuple[str, str]]:
         ("水果", meal.get("fruit")),
         ("飲品", meal.get("drink")),
     ]
-    return [(category, name) for category, name in values if name]
+    return [(category, name, []) for category, name in values if name]
+
+
+def _dish_role_label(role: str | None) -> str:
+    return {
+        "staple": "主食",
+        "main": "主菜",
+        "side_1": "副菜一",
+        "side_2": "副菜二",
+        "side_3": "副菜三",
+        "vegetable": "青菜",
+        "soup": "湯品",
+        "fruit": "水果",
+        "drink": "飲品",
+    }.get(role or "", "配菜")
 
 
 def _normalize_trace_text(value: str) -> str:
     return "".join(character for character in value if character.isalnum())
+
+
+def _ingredient_names_match(detail_name: str, official_name: str) -> bool:
+    detail = _normalize_trace_text(detail_name)
+    official_terms = {
+        _normalize_trace_text(official_name),
+        *(
+            _normalize_trace_text(alias)
+            for alias in TRACEABILITY_INGREDIENT_ALIASES.get(official_name, ())
+        ),
+    }
+    return detail in official_terms
 
 
 def _group_historical_dishes(
@@ -289,7 +471,7 @@ def _match_historical_traceability(
     dishes: list[dict[str, Any]] = []
     matched_rows: list[sqlite3.Row] = []
 
-    for category, dish_name in _menu_dishes(selected_day):
+    for category, dish_name, detail_ingredients in _menu_dishes(selected_day):
         normalized_dish = _normalize_trace_text(dish_name)
         exact_candidates = [
             group
@@ -304,6 +486,15 @@ def _match_historical_traceability(
             selected_group = max(
                 exact_candidates, key=lambda group: group[0]["menu_date"]
             )
+            if detail_ingredients:
+                selected_group = [
+                    row
+                    for row in selected_group
+                    if any(
+                        _ingredient_names_match(detail_name, row["ingredient_name"])
+                        for detail_name in detail_ingredients
+                    )
+                ]
             ingredients = [
                 _traceability_ingredient(
                     row,
@@ -315,6 +506,9 @@ def _match_historical_traceability(
             matched_rows.extend(selected_group)
         else:
             ingredient_matches: dict[str, tuple[sqlite3.Row, str]] = {}
+            detail_terms = {
+                _normalize_trace_text(name): name for name in detail_ingredients
+            }
             for row in sorted(
                 historical_rows, key=lambda item: item["menu_date"], reverse=True
             ):
@@ -328,6 +522,7 @@ def _match_historical_traceability(
                         term
                         for term in terms
                         if _normalize_trace_text(term) in normalized_dish
+                        or _normalize_trace_text(term) in detail_terms
                     ),
                     None,
                 )
@@ -341,11 +536,15 @@ def _match_historical_traceability(
                         row,
                         match_type="ingredient",
                         match_reason=(
-                            f"菜名「{dish_name}」包含「{matched_term}」"
-                            + (
-                                f"，對應食材「{row['ingredient_name']}」"
-                                if matched_term != row["ingredient_name"]
-                                else ""
+                            f"食譜明細含「{detail_terms[_normalize_trace_text(matched_term)]}」"
+                            if _normalize_trace_text(matched_term) in detail_terms
+                            else (
+                                f"菜名「{dish_name}」包含「{matched_term}」"
+                                + (
+                                    f"，對應食材「{row['ingredient_name']}」"
+                                    if matched_term != row["ingredient_name"]
+                                    else ""
+                                )
                             )
                         ),
                     )
@@ -363,6 +562,32 @@ def _match_historical_traceability(
             )
 
     return dishes, matched_rows
+
+
+def _annotate_recipe_traceability(
+    day: dict[str, Any], traceability: dict[str, Any]
+) -> None:
+    matched_names = {
+        ingredient["name"]
+        for dish in traceability.get("dishes", [])
+        for ingredient in dish.get("ingredients", [])
+    }
+    for dish in day.get("recipeDetails", []):
+        for ingredient in dish.get("ingredients", []):
+            claims = ingredient.get("claims", [])
+            if any(
+                _ingredient_names_match(ingredient["name"], matched_name)
+                for matched_name in matched_names
+            ):
+                ingredient["traceabilityStatus"] = (
+                    "verified"
+                    if traceability.get("status") == "verified"
+                    else "matched_reference"
+                )
+            elif claims:
+                ingredient["traceabilityStatus"] = "menu_claim"
+            else:
+                ingredient["traceabilityStatus"] = "unavailable"
 
 
 def _group_exact_traceability(
@@ -480,9 +705,18 @@ def _nearest_day(days: list[dict[str, Any]], selected_date: str | None) -> dict[
     return earlier[-1] if earlier else days[0]
 
 
-def _row_to_day(row: sqlite3.Row) -> dict[str, Any]:
+def _row_to_day(
+    row: sqlite3.Row, recipe_details: list[dict[str, Any]]
+) -> dict[str, Any]:
+    detail_image = (
+        row["meat_detail_image"]
+        if row["meal_type"] == "meat"
+        else row["vegetarian_detail_image"]
+    )
     return {
+        "id": row["id"],
         "date": row["date"],
+        "mealType": row["meal_type"],
         "weekday": row["weekday"],
         "weekId": row["week_id"],
         "week": row["week_number"],
@@ -510,11 +744,42 @@ def _row_to_day(row: sqlite3.Row) -> dict[str, Any]:
         "allergens": json.loads(row["allergens_json"]),
         "confidence": row["confidence"],
         "reviewStatus": row["review_status"],
+        "recipeDetails": recipe_details,
         "source": {
             "url": row["source_url"],
             "image": f"/data/{row['source_image']}",
+            "detailImage": f"/data/{detail_image}",
         },
     }
+
+
+def _group_recipe_details(
+    rows: list[sqlite3.Row],
+) -> dict[str, list[dict[str, Any]]]:
+    result: dict[str, list[dict[str, Any]]] = {}
+    dish_lookup: dict[tuple[str, int], dict[str, Any]] = {}
+    for row in rows:
+        key = (row["menu_id"], row["dish_position"])
+        dish = dish_lookup.get(key)
+        if dish is None:
+            dish = {
+                "role": row["role"],
+                "name": row["dish_name"],
+                "ingredients": [],
+            }
+            dish_lookup[key] = dish
+            result.setdefault(row["menu_id"], []).append(dish)
+        if row["ingredient_name"] is not None:
+            dish["ingredients"].append(
+                {
+                    "name": row["ingredient_name"],
+                    "quantityValue": row["quantity_value"],
+                    "quantityUnit": row["quantity_unit"],
+                    "quantityText": row["quantity_text"],
+                    "claims": json.loads(row["claims_json"]),
+                }
+            )
+    return result
 
 
 def _build_insights(
@@ -548,14 +813,19 @@ def _build_insights(
 
 def make_dinner_suggestion(day: dict[str, Any]) -> dict[str, Any]:
     tags = set(day["tags"])
+    is_vegetarian = day.get("mealType") == "vegetarian"
     dinner_group = _primary_protein(day, tags)
-    pool = DINNER_POOLS[dinner_group]
+    pool = VEGETARIAN_DINNER_POOL if is_vegetarian else DINNER_POOLS[dinner_group]
     main_dish = str(day.get("meal", {}).get("mainDish") or "")
     rotation_key = f"{day['date']}:{main_dish}".encode("utf-8")
     rotation_seed = int.from_bytes(hashlib.sha256(rotation_key).digest()[:4], "big")
     rotation = rotation_seed % len(pool)
     proteins = list(pool[rotation])
-    reason = DINNER_REASONS[dinner_group]
+    reason = (
+        "依素食午餐內容輪替豆類、蛋與蔬菜，晚餐也維持素食搭配。"
+        if is_vegetarian
+        else DINNER_REASONS[dinner_group]
+    )
 
     notes: list[str] = []
     nutrition = day["nutrition"]
