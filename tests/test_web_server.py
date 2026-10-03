@@ -83,6 +83,18 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('id="standardTransitional"', index_html)
         self.assertNotIn("營養符合度", index_html)
 
+    def test_dish_detail_uses_staged_apple_style_motion(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
+        styles = (project_root / "web" / "styles.css").read_text(encoding="utf-8")
+
+        self.assertIn("DISH_DETAIL_MOTION_MS = 360", app_js)
+        self.assertIn('classList.add("is-visible")', app_js)
+        self.assertIn('addEventListener("cancel"', app_js)
+        self.assertIn(".dish-detail-dialog.is-visible", styles)
+        self.assertIn("cubic-bezier(.32,.72,0,1)", styles)
+        self.assertIn("prefers-reduced-motion: reduce", styles)
+
 
 if __name__ == "__main__":
     unittest.main()

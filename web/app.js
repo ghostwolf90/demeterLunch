@@ -11,7 +11,12 @@ const state = {
   dishDetails: [],
   activeDishIndex: -1,
   lastDishTrigger: null,
+  dishDetailOpenFrame: 0,
+  dishDetailCloseTimer: 0,
 };
+
+const DISH_DETAIL_MOTION_MS = 360;
+const DISH_DETAIL_REDUCED_MOTION_MS = 160;
 
 const roleLabels = {
   staple: "主食", main: "主菜", side_1: "副菜一", side_2: "副菜二",
@@ -186,7 +191,7 @@ async function loadNewsPreview() {
 function renderMeal(day) {
   if (refs.dishDetailDialog.open) {
     state.lastDishTrigger = null;
-    refs.dishDetailDialog.close();
+    closeDishDetail({ immediate: true });
   }
   refs.mainDish.textContent = day.meal.mainDish;
   refs.heroDish.textContent = day.meal.mainDish;
@@ -290,7 +295,54 @@ function openDishDetail(index, trigger) {
   state.activeDishIndex = index;
   state.lastDishTrigger = trigger || document.activeElement;
   renderDishDetail();
-  if (!refs.dishDetailDialog.open) refs.dishDetailDialog.showModal();
+  if (refs.dishDetailDialog.open) return;
+
+  window.clearTimeout(state.dishDetailCloseTimer);
+  window.cancelAnimationFrame(state.dishDetailOpenFrame);
+  refs.dishDetailDialog.classList.remove("is-visible", "is-closing");
+  refs.dishDetailDialog.showModal();
+  refs.dishDetailDialog.getBoundingClientRect();
+  state.dishDetailOpenFrame = window.requestAnimationFrame(() => {
+    state.dishDetailOpenFrame = 0;
+    if (refs.dishDetailDialog.open) {
+      refs.dishDetailDialog.classList.add("is-visible");
+    }
+  });
+}
+
+function closeDishDetail({ immediate = false } = {}) {
+  const dialog = refs.dishDetailDialog;
+  if (!dialog.open || dialog.classList.contains("is-closing")) return;
+
+  window.cancelAnimationFrame(state.dishDetailOpenFrame);
+  state.dishDetailOpenFrame = 0;
+  window.clearTimeout(state.dishDetailCloseTimer);
+
+  if (immediate) {
+    dialog.classList.remove("is-visible", "is-closing");
+    dialog.close();
+    return;
+  }
+
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const finishProperty = reducedMotion ? "opacity" : "transform";
+  const finish = () => {
+    window.clearTimeout(state.dishDetailCloseTimer);
+    dialog.removeEventListener("transitionend", handleTransitionEnd);
+    dialog.classList.remove("is-visible", "is-closing");
+    if (dialog.open) dialog.close();
+  };
+  const handleTransitionEnd = (event) => {
+    if (event.target === dialog && event.propertyName === finishProperty) finish();
+  };
+
+  dialog.classList.add("is-closing");
+  dialog.classList.remove("is-visible");
+  dialog.addEventListener("transitionend", handleTransitionEnd);
+  state.dishDetailCloseTimer = window.setTimeout(
+    finish,
+    (reducedMotion ? DISH_DETAIL_REDUCED_MOTION_MS : DISH_DETAIL_MOTION_MS) + 80,
+  );
 }
 
 function renderNutrition(nutrition) {
@@ -712,9 +764,13 @@ refs.sourceDialog.addEventListener("click", (event) => {
   if (event.target === refs.sourceDialog) refs.sourceDialog.close();
 });
 
-refs.closeDishDetail.addEventListener("click", () => refs.dishDetailDialog.close());
+refs.closeDishDetail.addEventListener("click", () => closeDishDetail());
 refs.dishDetailDialog.addEventListener("click", (event) => {
-  if (event.target === refs.dishDetailDialog) refs.dishDetailDialog.close();
+  if (event.target === refs.dishDetailDialog) closeDishDetail();
+});
+refs.dishDetailDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeDishDetail();
 });
 refs.dishDetailDialog.addEventListener("close", () => {
   const trigger = state.lastDishTrigger;
