@@ -49,7 +49,7 @@ class WebDataTests(unittest.TestCase):
 
 
 class SiteLayoutTests(unittest.TestCase):
-    def test_week_menu_precedes_traceability_section(self) -> None:
+    def test_week_then_traceability_then_standard_sections(self) -> None:
         index_html = (
             Path(__file__).resolve().parents[1] / "web" / "index.html"
         ).read_text(encoding="utf-8")
@@ -58,17 +58,23 @@ class SiteLayoutTests(unittest.TestCase):
             index_html.index('id="week"'),
             index_html.index('id="traceability"'),
         )
+        self.assertLess(
+            index_html.index('id="traceability"'),
+            index_html.index('id="standard"'),
+        )
 
     def test_site_exposes_meat_vegetarian_and_detail_controls(self) -> None:
-        index_html = (
-            Path(__file__).resolve().parents[1] / "web" / "index.html"
-        ).read_text(encoding="utf-8")
+        project_root = Path(__file__).resolve().parents[1]
+        index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
+        app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
 
         self.assertIn('id="mealTypeMeat"', index_html)
         self.assertIn('id="mealTypeVegetarian"', index_html)
         self.assertIn('id="openDetail"', index_html)
         self.assertIn('id="mainDishButton"', index_html)
         self.assertIn('id="dishDetailDialog"', index_html)
+        self.assertIn("<title>好好吃飯</title>", index_html)
+        self.assertNotIn("document.title =", app_js)
         self.assertNotIn('id="recipeSourceDetails"', index_html)
 
     def test_site_exposes_grade_and_standard_controls(self) -> None:
@@ -82,6 +88,14 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('id="standardTarget"', index_html)
         self.assertIn('id="standardTransitional"', index_html)
         self.assertNotIn("營養符合度", index_html)
+
+    def test_hero_title_keeps_readable_line_spacing(self) -> None:
+        styles = (
+            Path(__file__).resolve().parents[1] / "web" / "styles.css"
+        ).read_text(encoding="utf-8")
+
+        self.assertRegex(styles, r"h1 \{[^}]*line-height: \.98;")
+        self.assertRegex(styles, r"h1 \{[^}]*font-size: clamp\(42px[^}]*line-height: 1;")
 
     def test_dish_detail_uses_staged_apple_style_motion(self) -> None:
         project_root = Path(__file__).resolve().parents[1]

@@ -740,7 +740,6 @@ function render(dashboard) {
   refs.syncStatus.classList.add("ready");
   refs.syncStatus.lastChild.textContent = `已整理 ${dashboard.totalDays} 個供餐日`;
   refs.errorState.hidden = true;
-  document.title = `${dashboard.mealTypeLabel}・${day.meal.mainDish}｜好好吃飯`;
 }
 
 async function loadDashboard(date) {
