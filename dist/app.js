@@ -43,6 +43,7 @@ const ids = [
   "dinnerReason", "dinnerNotes", "disclaimer", "weekLabel", "weekDays",
   "previousWeek", "nextWeek", "averageCalories", "averageVegetables",
   "fruitDays", "fruitDaysContext", "friedDays", "friedDaysContext", "proteinBars", "calorieChart", "trendRange",
+  "insightsKicker", "selectionAnnouncement",
   "sourceArticle", "openSource", "archiveList", "errorState", "errorMessage",
   "sourceDialog", "closeSource", "dialogTitle", "sourceImage", "downloadSource",
   "educationCategory", "educationIngredient", "educationTitle", "educationFact", "educationPrompt", "educationSource",
@@ -609,6 +610,7 @@ function renderWeek(dashboard) {
   for (const day of dashboard.week) {
     const button = node("button", "day-card");
     button.type = "button";
+    button.dataset.date = day.date;
     button.setAttribute("aria-current", String(day.date === active.date));
     const dateLine = node("div", "day-date");
     dateLine.append(node("span", "", day.weekday), node("strong", "", day.date.slice(-2)));
@@ -629,18 +631,31 @@ function renderWeek(dashboard) {
       node("span", `day-traceability ${traceabilityClass}`, traceabilityLabel),
       node("p", "", sides),
     );
-    button.addEventListener("click", () => loadDashboard(day.date));
+    button.addEventListener("click", () => loadDashboard(day.date, {
+      announce: true,
+      focusWeekDay: true,
+    }));
     refs.weekDays.append(button);
   }
 
   const archiveIndex = dashboard.archive.findIndex((week) => week.id === active.weekId);
   refs.previousWeek.disabled = archiveIndex < 0 || archiveIndex >= dashboard.archive.length - 1;
   refs.nextWeek.disabled = archiveIndex <= 0;
-  refs.previousWeek.onclick = () => loadDashboard(dashboard.archive[archiveIndex + 1].startDate);
-  refs.nextWeek.onclick = () => loadDashboard(dashboard.archive[archiveIndex - 1].startDate);
+  refs.previousWeek.onclick = () => loadDashboard(
+    dashboard.archive[archiveIndex + 1].startDate,
+    { announce: true },
+  );
+  refs.nextWeek.onclick = () => loadDashboard(
+    dashboard.archive[archiveIndex - 1].startDate,
+    { announce: true },
+  );
 }
 
 function renderInsights(insights, dashboard) {
+  refs.insightsKicker.textContent = LunchDateContext.insightsPeriodLabel(
+    dashboard.dateRange.start,
+    dashboard.dateRange.end,
+  );
   refs.averageCalories.textContent = insights.averageCaloriesKcal;
   refs.averageVegetables.textContent = `約 ${insights.averageVegetablesServings} 份`;
   refs.fruitDays.textContent = `${insights.fruitDays} 天`;
@@ -686,7 +701,7 @@ function renderArchive(dashboard) {
       node("strong", "", `W${String(week.week).padStart(2, "0")}`),
       (() => { const wrap = node("span"); wrap.append(node("span", "", `${compactDate(week.startDate)}–${compactDate(week.endDate)}`), node("small", "", `${week.dayCount} 個供餐日 · 已校讀`)); return wrap; })()
     );
-    button.addEventListener("click", () => loadDashboard(week.startDate));
+    button.addEventListener("click", () => loadDashboard(week.startDate, { announce: true }));
     refs.archiveList.append(button);
   }
 }
@@ -743,13 +758,29 @@ function render(dashboard) {
   refs.errorState.hidden = true;
 }
 
-async function loadDashboard(date) {
+function announceSelection(dashboard) {
+  const day = dashboard.selected;
+  refs.selectionAnnouncement.textContent = [
+    formatDate(day.date, { year: "numeric", weekday: "long" }),
+    `${dashboard.mealTypeLabel}午餐`,
+    day.meal.mainDish,
+  ].join("，");
+}
+
+async function loadDashboard(date, { announce = false, focusWeekDay = false } = {}) {
   if (state.loading) return;
   state.loading = true;
   try {
     const payload = await fetchDashboard(date);
     state.dashboard = payload;
     render(payload);
+    if (focusWeekDay) {
+      const selectedDay = refs.weekDays.querySelector(
+        `.day-card[data-date="${payload.selected.date}"]`,
+      );
+      selectedDay?.focus({ preventScroll: true });
+    }
+    if (announce) announceSelection(payload);
   } catch (error) {
     refs.errorState.hidden = false;
     refs.errorMessage.textContent = error instanceof Error ? error.message : "未知錯誤";
@@ -795,7 +826,7 @@ async function selectMealType(mealType) {
   state.mealType = mealType;
   window.localStorage.setItem("demeter-meal-type", mealType);
   const selectedDate = state.dashboard?.selected?.date || localIsoDate();
-  await loadDashboard(selectedDate);
+  await loadDashboard(selectedDate, { announce: true });
 }
 
 refs.mealTypeMeat.addEventListener("click", () => selectMealType("meat"));
@@ -823,7 +854,7 @@ refs.standardTransitional.addEventListener("click", () => selectStandardMode("tr
 for (const link of document.querySelectorAll("a.today-link")) {
   link.addEventListener("click", async (event) => {
     event.preventDefault();
-    await loadDashboard(localIsoDate());
+    await loadDashboard(localIsoDate(), { announce: true });
     history.replaceState(null, "", "#today");
     document.getElementById("today").scrollIntoView();
   });

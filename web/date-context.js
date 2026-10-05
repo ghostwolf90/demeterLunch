@@ -4,6 +4,10 @@
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 }(typeof globalThis !== "undefined" ? globalThis : this, function createDateContext() {
   const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+  const englishMonths = [
+    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER",
+  ];
 
   function parseIsoDate(value) {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
@@ -29,5 +33,19 @@
     return `${weekdays[new Date(Date.UTC(year, month - 1, day)).getUTCDay()]}中午，`;
   }
 
-  return { mealMoment, relativeDayOffset };
+  function insightsPeriodLabel(startDate, endDate) {
+    const [startYear, startMonth] = parseIsoDate(startDate);
+    const [endYear, endMonth] = parseIsoDate(endDate);
+    const startLabel = englishMonths[startMonth - 1];
+    const endLabel = englishMonths[endMonth - 1];
+    if (startYear === endYear && startMonth === endMonth) {
+      return `${startLabel} AT A GLANCE`;
+    }
+    if (startYear === endYear) {
+      return `${startLabel}–${endLabel} AT A GLANCE`;
+    }
+    return `${startLabel} ${startYear}–${endLabel} ${endYear} AT A GLANCE`;
+  }
+
+  return { insightsPeriodLabel, mealMoment, relativeDayOffset };
 }));

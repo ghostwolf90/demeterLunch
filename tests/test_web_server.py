@@ -1,4 +1,5 @@
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -49,6 +50,21 @@ class WebDataTests(unittest.TestCase):
 
 
 class SiteLayoutTests(unittest.TestCase):
+    @staticmethod
+    def _contrast_ratio(first: str, second: str) -> float:
+        def luminance(value: str) -> float:
+            channels = [int(value[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+            linear = [
+                channel / 12.92
+                if channel <= 0.04045
+                else ((channel + 0.055) / 1.055) ** 2.4
+                for channel in channels
+            ]
+            return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+        brighter, darker = sorted((luminance(first), luminance(second)), reverse=True)
+        return (brighter + 0.05) / (darker + 0.05)
+
     def test_week_then_traceability_then_standard_sections(self) -> None:
         index_html = (
             Path(__file__).resolve().parents[1] / "web" / "index.html"
@@ -108,6 +124,41 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn(".dish-detail-dialog.is-visible", styles)
         self.assertIn("cubic-bezier(.32,.72,0,1)", styles)
         self.assertIn("prefers-reduced-motion: reduce", styles)
+
+    def test_tablet_widths_keep_primary_navigation(self) -> None:
+        styles = (
+            Path(__file__).resolve().parents[1] / "web" / "styles.css"
+        ).read_text(encoding="utf-8")
+        tablet_rules = styles[
+            styles.index("@media (max-width: 1050px)"):
+            styles.index("@media (max-width: 720px)")
+        ]
+
+        self.assertIn(".mobile-nav {", tablet_rules)
+        self.assertIn("display: grid;", tablet_rules)
+        self.assertIn("grid-auto-flow: column;", tablet_rules)
+        self.assertIn("grid-auto-columns: 1fr;", tablet_rules)
+        self.assertIn("padding-bottom: calc(76px + env(safe-area-inset-bottom));", tablet_rules)
+
+    def test_brand_colors_meet_normal_text_contrast(self) -> None:
+        styles = (
+            Path(__file__).resolve().parents[1] / "web" / "styles.css"
+        ).read_text(encoding="utf-8")
+        colors = dict(re.findall(r"--(orange|green|paper|white):\s*(#[0-9a-fA-F]{6});", styles))
+
+        self.assertGreaterEqual(self._contrast_ratio(colors["orange"], colors["paper"]), 4.5)
+        self.assertGreaterEqual(self._contrast_ratio(colors["white"], colors["orange"]), 4.5)
+        self.assertGreaterEqual(self._contrast_ratio(colors["white"], colors["green"]), 4.5)
+
+    def test_selection_updates_use_a_dedicated_live_region(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
+        app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="selectionAnnouncement" aria-live="polite"', index_html)
+        self.assertNotIn('class="today-grid" aria-live="polite"', index_html)
+        self.assertIn('selectedDay?.focus({ preventScroll: true });', app_js)
+        self.assertIn("insightsPeriodLabel", app_js)
 
 
 if __name__ == "__main__":

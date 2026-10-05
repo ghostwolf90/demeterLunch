@@ -51,7 +51,9 @@
         <div class="week-days" id="weekDays"></div>
       </section>
 
-      <section class="today-grid" aria-live="polite">
+      <p class="sr-only" id="selectionAnnouncement" aria-live="polite" aria-atomic="true"></p>
+
+      <section class="today-grid">
         <article class="menu-board card">
           <div class="card-heading"><div><p class="kicker">SELECTED PLATE</p><h2>午餐內容</h2></div><span class="review-badge">✓ 已校讀</span></div>
           <button class="main-dish" id="mainDishButton" type="button"><span>這餐主角</span><strong id="mainDish">—</strong></button>
@@ -176,7 +178,7 @@
 
       <section class="insights-section section" id="insights">
         <div class="section-title">
-          <div><p class="kicker">SEPTEMBER AT A GLANCE</p><h2>不是只看一張圖，<br />而是看見飲食節奏</h2></div>
+          <div><p class="kicker" id="insightsKicker">近期飲食節奏</p><h2>不是只看一張圖，<br />而是看見飲食節奏</h2></div>
           <p class="section-lead">以目前收錄的供餐日計算；資料增加時，這些數字會自動更新。</p>
         </div>
         <div class="stat-grid">
