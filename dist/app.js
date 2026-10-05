@@ -45,7 +45,7 @@ const ids = [
   "fruitDays", "fruitDaysContext", "friedDays", "friedDaysContext", "proteinBars", "calorieChart", "trendRange",
   "sourceArticle", "openSource", "archiveList", "errorState", "errorMessage",
   "sourceDialog", "closeSource", "dialogTitle", "sourceImage", "downloadSource",
-  "educationIngredient", "educationTitle", "educationFact", "educationPrompt", "educationSource",
+  "educationCategory", "educationIngredient", "educationTitle", "educationFact", "educationPrompt", "educationSource",
   "recipeInspired", "recipeTitle", "recipeMeta", "recipePreview", "recipeDetails",
   "recipeIngredients", "recipeSteps", "recipeAllergens", "recipeNote",
   "latestNews", "newsUpdated", "traceabilityStatus", "traceabilityNotice",
@@ -346,7 +346,7 @@ function closeDishDetail({ immediate = false } = {}) {
 }
 
 function renderNutrition(nutrition) {
-  refs.calories.textContent = Math.round(nutrition.caloriesKcal);
+  refs.calories.textContent = LunchNumberFormat.sourceCalories(nutrition.caloriesKcal);
   refs.nutritionBars.replaceChildren();
   const entries = [
     ["全穀雜糧", nutrition.wholeGrainsServings, 6],
@@ -572,6 +572,7 @@ function renderDinner(suggestion) {
 }
 
 function renderFoodEducation(card) {
+  refs.educationCategory.textContent = `健康小常識 · ${card.category || "吃得更懂"}`;
   refs.educationIngredient.textContent = card.ingredient;
   refs.educationTitle.textContent = card.title;
   refs.educationFact.textContent = card.fact;
@@ -666,7 +667,7 @@ function renderInsights(insights, dashboard) {
   for (const point of insights.calorieTrend) {
     const column = node("div", "calorie-column");
     const height = Math.max(8, ((point.value - minimum) / (maximum - minimum)) * 100);
-    column.dataset.label = `${compactDate(point.date)} · ${Math.round(point.value)} kcal`;
+    column.dataset.label = `${compactDate(point.date)} · ${LunchNumberFormat.sourceCalories(point.value)} kcal`;
     column.style.setProperty("--height", `${height}%`);
     const bar = node("i");
     bar.style.height = `${height}%`;

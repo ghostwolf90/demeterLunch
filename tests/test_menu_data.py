@@ -7,6 +7,7 @@ from collections import Counter
 from pathlib import Path
 
 from src.dashboard import load_dashboard
+from src.family_content import FOOD_CARDS, GUIDE_CARDS
 from src.menu_data import (
     build_database,
     classify_items,
@@ -20,6 +21,38 @@ PARSED_ROOT = PROJECT_ROOT / "data" / "parsed"
 
 
 class ReviewedMenuTests(unittest.TestCase):
+    def test_nutritionist_guide_cards_are_concise_and_parent_friendly(self) -> None:
+        self.assertGreaterEqual(len(GUIDE_CARDS), 30)
+        for card in GUIDE_CARDS:
+            self.assertIn(card["category"], {"吃得更懂", "午餐怎麼把關"})
+            self.assertLessEqual(len(card["fact"]), 45)
+            self.assertLessEqual(len(card["prompt"]), 25)
+            self.assertIn("schoollunchdemo.k12ea.gov.tw", card["source"]["url"])
+            self.assertNotIn("image", card)
+
+    def test_health_tip_food_cards_are_concise_and_link_the_exact_article(self) -> None:
+        health_cards = [
+            card
+            for card in FOOD_CARDS
+            if "fatraceschool.k12ea.gov.tw" in card.get("source", {}).get("url", "")
+        ]
+
+        self.assertGreaterEqual(len(health_cards), 10)
+        for card in health_cards:
+            self.assertLessEqual(len(card["fact"]), 45)
+            self.assertLessEqual(len(card["prompt"]), 25)
+            self.assertIn("news-detail.html?newsId=", card["source"]["url"])
+            self.assertNotIn("image", card)
+
+    def test_october_fifth_uses_the_official_non_heading_cabbage_tip(self) -> None:
+        dashboard = load_dashboard(PROJECT_ROOT / "data" / "lunch.db", "2026-10-05")
+        card = dashboard["foodEducation"]
+
+        self.assertEqual(card["ingredient"], "不結球白菜")
+        self.assertEqual(card["title"], "葉子不會包成一顆球")
+        self.assertEqual(card["category"], "吃得更懂")
+        self.assertTrue(card["source"]["url"].endswith("newsId=6200"))
+
     def test_reviewed_data_covers_six_weeks_and_both_meal_types(self) -> None:
         weeks = load_reviewed_weeks(PARSED_ROOT)
         self.assertEqual(len(weeks), 6)
