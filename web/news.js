@@ -2,12 +2,23 @@ const state = { items: [], category: "全部" };
 
 const refs = {
   newsSync: document.getElementById("newsSync"),
+  newsSyncText: document.getElementById("newsSyncText"),
   newsRange: document.getElementById("newsRange"),
   newsFilters: document.getElementById("newsFilters"),
   newsList: document.getElementById("newsList"),
   newsEmpty: document.getElementById("newsEmpty"),
   sourcePolicy: document.getElementById("sourcePolicy"),
 };
+
+function setNewsStatus(status, message) {
+  refs.newsSync.classList.remove("ready", "is-loading", "is-error");
+  refs.newsSync.classList.add(status === "ready" ? "ready" : `is-${status}`);
+  refs.newsSyncText.textContent = message;
+  refs.newsList.setAttribute("aria-busy", String(status === "loading"));
+  for (const button of refs.newsFilters.querySelectorAll("button")) {
+    button.disabled = status === "loading";
+  }
+}
 
 function node(tag, className, text) {
   const element = document.createElement(tag);
@@ -74,6 +85,7 @@ refs.newsFilters.addEventListener("click", (event) => {
 });
 
 async function loadNews() {
+  setNewsStatus("loading", "正在讀取消息…");
   try {
     const response = await fetch(endpoint(), { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -81,11 +93,10 @@ async function loadNews() {
     state.items = Array.isArray(payload.items) ? payload.items : [];
     refs.newsRange.textContent = `整理近 ${payload.lookbackDays || 30} 天 · ${state.items.length} 則`;
     refs.sourcePolicy.textContent = payload.sourcePolicy || refs.sourcePolicy.textContent;
-    refs.newsSync.classList.add("ready");
-    refs.newsSync.lastChild.textContent = `更新於 ${formatDate(payload.generatedAt)}`;
+    setNewsStatus("ready", `更新於 ${formatDate(payload.generatedAt)}`);
     render();
   } catch (error) {
-    refs.newsSync.lastChild.textContent = "消息讀取失敗";
+    setNewsStatus("error", "消息讀取失敗");
     refs.newsList.replaceChildren();
     refs.newsEmpty.hidden = false;
     refs.newsEmpty.textContent = "近期消息暫時讀取不到，請稍後再試。";

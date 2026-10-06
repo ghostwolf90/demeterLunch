@@ -23,7 +23,9 @@
       <nav aria-label="主要導覽">
         <a href="./index.html#today">今日</a><a href="./index.html#week">本週</a><a href="./index.html#insights">趨勢</a><a class="active" href="./news.html" aria-current="page">午餐觀察</a>
       </nav>
-      <div class="sync-pill" id="newsSync"><span></span>讀取消息中</div>
+      <div class="sync-pill is-loading" id="newsSync" role="status" aria-live="polite" aria-atomic="true">
+        <span class="status-dot" aria-hidden="true"></span><span id="newsSyncText">正在讀取消息…</span>
+      </div>
     </header>
 
     <main class="news-main">
@@ -50,7 +52,9 @@
             <button type="button" data-category="食育現場" aria-pressed="false">食育現場</button>
           </div>
         </div>
-        <div class="news-list" id="newsList" aria-live="polite"></div>
+        <div class="news-list" id="newsList" aria-live="polite" aria-busy="true">
+          <div class="loading-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><span>正在整理近期消息…</span></div>
+        </div>
         <div class="news-empty card" id="newsEmpty" hidden>這個分類近 30 天暫時沒有消息。</div>
       </section>
 

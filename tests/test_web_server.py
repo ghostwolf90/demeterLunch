@@ -160,6 +160,24 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('selectedDay?.focus({ preventScroll: true });', app_js)
         self.assertIn("insightsPeriodLabel", app_js)
 
+    def test_async_surfaces_expose_loading_and_error_statuses(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
+        news_html = (project_root / "web" / "news.html").read_text(encoding="utf-8")
+        app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
+        news_js = (project_root / "web" / "news.js").read_text(encoding="utf-8")
+        styles = (project_root / "web" / "styles.css").read_text(encoding="utf-8")
+
+        self.assertIn('<main id="dashboard" aria-busy="true">', index_html)
+        self.assertIn('id="sourceImageStatus" role="status"', index_html)
+        self.assertIn('id="newsList" aria-live="polite" aria-busy="true"', news_html)
+        self.assertIn('setDashboardStatus("loading"', app_js)
+        self.assertIn('setSourceImageState("loading"', app_js)
+        self.assertIn("await refs.sourceImage.decode()", app_js)
+        self.assertIn('setNewsStatus("loading"', news_js)
+        self.assertIn("@keyframes status-spin", styles)
+        self.assertIn(".loading-spinner { animation: none; }", styles)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,6 +13,7 @@ const state = {
   lastDishTrigger: null,
   dishDetailOpenFrame: 0,
   dishDetailCloseTimer: 0,
+  sourceImageRequestId: 0,
 };
 
 const DISH_DETAIL_MOTION_MS = 360;
@@ -38,14 +39,15 @@ const traceabilityStatusLabels = {
 };
 
 const ids = [
-  "syncStatus", "todayLabel", "mealMoment", "heroDish", "introNote", "mainDish", "mealList",
+  "dashboard", "syncStatus", "syncStatusText", "todayLabel", "mealMoment", "heroDish", "introNote", "mainDish", "mealList",
   "allergenRow", "calories", "nutritionBars", "dinnerTitle", "dinnerPicks",
   "dinnerReason", "dinnerNotes", "disclaimer", "weekLabel", "weekDays",
   "previousWeek", "nextWeek", "averageCalories", "averageVegetables",
   "fruitDays", "fruitDaysContext", "friedDays", "friedDaysContext", "proteinBars", "calorieChart", "trendRange",
   "insightsKicker", "selectionAnnouncement",
   "sourceArticle", "openSource", "archiveList", "errorState", "errorMessage",
-  "sourceDialog", "closeSource", "dialogTitle", "sourceImage", "downloadSource",
+  "sourceDialog", "closeSource", "dialogTitle", "sourceImageStage", "sourceImageStatus",
+  "sourceImageStatusText", "sourceImage", "downloadSource",
   "educationCategory", "educationIngredient", "educationTitle", "educationFact", "educationPrompt", "educationSource",
   "recipeInspired", "recipeTitle", "recipeMeta", "recipePreview", "recipeDetails",
   "recipeIngredients", "recipeSteps", "recipeAllergens", "recipeNote",
@@ -67,6 +69,22 @@ function node(tag, className, text) {
   if (className) element.className = className;
   if (text !== undefined) element.textContent = text;
   return element;
+}
+
+function loadingState(message) {
+  const status = node("div", "loading-state");
+  status.setAttribute("role", "status");
+  const spinner = node("span", "loading-spinner");
+  spinner.setAttribute("aria-hidden", "true");
+  status.append(spinner, node("span", "", message));
+  return status;
+}
+
+function setDashboardStatus(status, message) {
+  refs.syncStatus.classList.remove("ready", "is-loading", "is-error");
+  refs.syncStatus.classList.add(status === "ready" ? "ready" : `is-${status}`);
+  refs.syncStatusText.textContent = message;
+  refs.dashboard.setAttribute("aria-busy", String(status === "loading"));
 }
 
 function localIsoDate() {
@@ -175,6 +193,9 @@ function newsCard(item) {
 }
 
 async function loadNewsPreview() {
+  refs.latestNews.setAttribute("aria-busy", "true");
+  refs.latestNews.replaceChildren(loadingState("正在整理近期午餐消息…"));
+  refs.newsUpdated.textContent = "正在讀取近期消息…";
   try {
     const payload = await fetchNews();
     const items = Array.isArray(payload.items) ? payload.items.slice(0, 2) : [];
@@ -186,6 +207,8 @@ async function loadNewsPreview() {
   } catch (error) {
     refs.latestNews.replaceChildren(node("p", "news-empty", "近期消息暫時讀取不到，午餐菜單仍可正常使用。"));
     refs.newsUpdated.textContent = "新聞資料暫時無法更新";
+  } finally {
+    refs.latestNews.setAttribute("aria-busy", "false");
   }
 }
 
@@ -715,17 +738,46 @@ function renderSource(day) {
     const label = isDetail
       ? `${day.mealType === "meat" ? "葷食" : "素食"}食譜用量明細`
       : "原始午餐菜單";
-    refs.sourceImage.src = image;
+    const requestId = ++state.sourceImageRequestId;
+    refs.sourceImage.onload = null;
+    refs.sourceImage.onerror = null;
+    refs.sourceImage.removeAttribute("src");
     refs.sourceImage.alt = `第 ${day.week} 週${label}`;
     refs.downloadSource.href = image;
     const imageExtension = image.match(/\.(png|jpe?g|webp)(?:\?|$)/i)?.[1] || "jpg";
     refs.downloadSource.download = `week-${String(day.week).padStart(2, "0")}-${isDetail ? day.mealType : "menu"}.${imageExtension}`;
     refs.dialogTitle.textContent = `第 ${day.week} 週${label}`;
     refs.sourceDialog.dataset.kind = kind;
+    setSourceImageState("loading", `正在載入第 ${day.week} 週${label}…`);
     refs.sourceDialog.showModal();
+    refs.sourceImage.onload = async () => {
+      try {
+        await refs.sourceImage.decode();
+      } catch (error) {
+        // The load event already confirms usable pixels when decode is unavailable.
+      }
+      if (requestId === state.sourceImageRequestId) {
+        setSourceImageState("ready", `${label}已載入`);
+      }
+    };
+    refs.sourceImage.onerror = () => {
+      if (requestId === state.sourceImageRequestId) {
+        refs.sourceImage.alt = "";
+        setSourceImageState("error", `${label}載入失敗，請稍後再試。`);
+      }
+    };
+    refs.sourceImage.src = image;
   };
   refs.openSource.onclick = () => openImage("summary");
   refs.openDetail.onclick = () => openImage("detail");
+}
+
+function setSourceImageState(status, message) {
+  refs.sourceImageStage.dataset.state = status;
+  refs.sourceImageStatus.setAttribute("role", status === "error" ? "alert" : "status");
+  refs.sourceImageStatusText.textContent = message;
+  refs.sourceDialog.setAttribute("aria-busy", String(status === "loading"));
+  refs.downloadSource.hidden = status !== "ready";
 }
 
 function render(dashboard) {
@@ -753,8 +805,7 @@ function render(dashboard) {
   renderInsights(dashboard.insights, dashboard);
   renderArchive(dashboard);
   renderSource(day);
-  refs.syncStatus.classList.add("ready");
-  refs.syncStatus.lastChild.textContent = `已整理 ${dashboard.totalDays} 個供餐日`;
+  setDashboardStatus("ready", `已整理 ${dashboard.totalDays} 個供餐日`);
   refs.errorState.hidden = true;
 }
 
@@ -770,6 +821,7 @@ function announceSelection(dashboard) {
 async function loadDashboard(date, { announce = false, focusWeekDay = false } = {}) {
   if (state.loading) return;
   state.loading = true;
+  setDashboardStatus("loading", state.dashboard ? "正在更新菜單…" : "正在讀取菜單…");
   try {
     const payload = await fetchDashboard(date);
     state.dashboard = payload;
@@ -784,7 +836,7 @@ async function loadDashboard(date, { announce = false, focusWeekDay = false } = 
   } catch (error) {
     refs.errorState.hidden = false;
     refs.errorMessage.textContent = error instanceof Error ? error.message : "未知錯誤";
-    refs.syncStatus.lastChild.textContent = "資料讀取失敗";
+    setDashboardStatus("error", "資料讀取失敗");
   } finally {
     state.loading = false;
   }
@@ -793,6 +845,11 @@ async function loadDashboard(date, { announce = false, focusWeekDay = false } = 
 refs.closeSource.addEventListener("click", () => refs.sourceDialog.close());
 refs.sourceDialog.addEventListener("click", (event) => {
   if (event.target === refs.sourceDialog) refs.sourceDialog.close();
+});
+refs.sourceDialog.addEventListener("close", () => {
+  state.sourceImageRequestId += 1;
+  refs.sourceImage.onload = null;
+  refs.sourceImage.onerror = null;
 });
 
 refs.closeDishDetail.addEventListener("click", () => closeDishDetail());

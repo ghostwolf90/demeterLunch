@@ -89,7 +89,7 @@ class ReviewedMenuTests(unittest.TestCase):
             self.assertEqual(stats["days"], 27)
             self.assertEqual(stats["variants"], 54)
             self.assertEqual(stats["recipeIngredients"], 900)
-            self.assertEqual(stats["traceableIngredients"], 14)
+            self.assertEqual(stats["traceableIngredients"], 21)
             with sqlite3.connect(database) as connection:
                 row = connection.execute(
                     """
@@ -112,7 +112,7 @@ class ReviewedMenuTests(unittest.TestCase):
                 ).fetchone()[0]
             self.assertEqual(row, ("可樂豬腳", 683.9))
             self.assertEqual(meal_type_count, 2)
-            self.assertEqual(traceability_count, 14)
+            self.assertEqual(traceability_count, 21)
             self.assertEqual(recipe_dish_count, 312)
             self.assertEqual(recipe_ingredient_count, 900)
 
@@ -122,7 +122,7 @@ class ReviewedMenuTests(unittest.TestCase):
             day["date"] for week in weeks for day in week["days"]
         }
         packages = load_reviewed_traceability(PARSED_ROOT, available_dates)
-        self.assertEqual(len(packages), 1)
+        self.assertEqual(len(packages), 2)
         dishes = packages[0]["days"][0]["dishes"]
         mushrooms = next(dish for dish in dishes if dish["name"] == "砂鍋魚")
         enoki = next(
@@ -130,6 +130,42 @@ class ReviewedMenuTests(unittest.TestCase):
         )
         self.assertEqual(enoki["supplierBusinessId"], "tax-25095192")
         self.assertEqual(enoki["certificationId"], "organic-1-007-118010")
+
+    def test_october_fifth_traceability_uses_reviewed_same_day_records(self) -> None:
+        dashboard = load_dashboard(
+            PROJECT_ROOT / "data" / "lunch.db",
+            "2026-10-05",
+            "meat",
+        )
+        traceability = dashboard["traceability"]
+
+        self.assertEqual(traceability["status"], "verified")
+        self.assertEqual(traceability["dataDate"], "2026-10-05")
+        self.assertEqual(traceability["ingredientCount"], 7)
+        cabbage_dish = next(
+            dish for dish in traceability["dishes"] if dish["name"] == "快炒時蔬"
+        )
+        cabbage = cabbage_dish["ingredients"][0]
+        self.assertEqual(cabbage["name"], "蚵仔白菜")
+        self.assertEqual(cabbage["certification"]["number"], "01138353264238")
+        self.assertEqual(cabbage["certification"]["operator"]["name"], "林珍綠")
+        self.assertEqual(cabbage["certification"]["validUntil"], "2029-04-27")
+
+    def test_october_fifth_vegetarian_traceability_does_not_match_pork_blood(self) -> None:
+        dashboard = load_dashboard(
+            PROJECT_ROOT / "data" / "lunch.db",
+            "2026-10-05",
+            "vegetarian",
+        )
+        traceability = dashboard["traceability"]
+
+        self.assertEqual(traceability["status"], "verified")
+        bean_curd = next(
+            dish for dish in traceability["dishes"] if dish["name"] == "春水堂豆干"
+        )
+        ingredient_names = {item["name"] for item in bean_curd["ingredients"]}
+        self.assertEqual(ingredient_names, {"豆干", "杏鮑菇"})
+        self.assertNotIn("豬血糕", ingredient_names)
 
     def test_dashboard_selects_day_and_creates_dinner_idea(self) -> None:
         dashboard = load_dashboard(PROJECT_ROOT / "data" / "lunch.db", "2026-10-01")

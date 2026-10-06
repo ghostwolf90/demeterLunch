@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "schoolName": "臺中市西區忠信國小",
+  "source": {
+    "id": "school-food-platform-2026-10-05-zhongxin-reviewed-ui",
+    "name": "校園食材登錄平臺（人工校讀）",
+    "sourceMonth": "2026-10",
+    "exportedAt": "2026-10-05T23:19:35+08:00",
+    "sourceFile": "校園食材登錄平臺 2026-10-05 忠信國小午餐頁面截圖（3 張）"
+  },
+  "review": {
+    "status": "reviewed",
+    "reviewedAt": "2026-10-05",
+    "notes": "依校園食材登錄平臺 2026-10-05 午餐頁面逐項校讀。蚵仔白菜已展開產銷履歷詳細資訊；雞水煮蛋、香菇、胡蘿蔔、豬血糕僅保留同日供應紀錄，不以列表上的標章文字猜測未顯示的認證編號。杏鮑菇的有機經營者與證書另以農業部官方頁核對。"
+  },
+  "businesses": [
+    {
+      "id": "tax-25095192",
+      "name": "昱品美食股份有限公司",
+      "kind": "platform-supplier",
+      "taxId": "25095192",
+      "address": "臺中市太平區太平里新仁路一段22巷71-3號",
+      "sourceUrl": null
+    },
+    {
+      "id": "operator-tap-138353",
+      "name": "林珍綠",
+      "kind": "certification-operator",
+      "taxId": null,
+      "address": "雲林縣二崙鄉港後段",
+      "phone": null,
+      "sourceUrl": null
+    },
+    {
+      "id": "operator-organic-1-008-180101",
+      "name": "綠園生活有限公司",
+      "kind": "certification-operator",
+      "taxId": null,
+      "address": "臺中市霧峰區五福西路73號",
+      "phone": "04-23306276",
+      "sourceUrl": "https://epv.afa.gov.tw/Home/ProcessDetail/7769"
+    }
+  ],
+  "certifications": [
+    {
+      "id": "tap-01138353264238",
+      "label": "產銷履歷",
+      "number": "01138353264238",
+      "operatorBusinessId": "operator-tap-138353",
+      "verificationBody": "國立中興大學",
+      "status": null,
+      "validUntil": "2029-04-27",
+      "officialUrl": null
+    },
+    {
+      "id": "organic-1-008-180101",
+      "label": "臺灣有機農產品",
+      "number": "1-008-180101",
+      "operatorBusinessId": "operator-organic-1-008-180101",
+      "verificationBody": "采園生態驗證有限公司",
+      "status": "通過",
+      "validUntil": "2027-12-12",
+      "officialUrl": "https://epv.afa.gov.tw/Home/ProcessDetail/7769"
+    }
+  ],
+  "days": [
+    {
+      "date": "2026-10-05",
+      "dishes": [
+        {
+          "name": "阿婆滷蛋",
+          "officialName": "阿婆滷蛋",
+          "category": "主菜",
+          "ingredients": [
+            {"name": "雞水煮蛋", "supplierBusinessId": "tax-25095192", "certificationId": null},
+            {"name": "香菇", "supplierBusinessId": "tax-25095192", "certificationId": null},
+            {"name": "胡蘿蔔", "supplierBusinessId": "tax-25095192", "certificationId": null}
+          ]
+        },
+        {
+          "name": "春水堂豆干",
+          "officialName": "春水堂豆干",
+          "category": "副菜",
+          "ingredients": [
+            {"name": "豆干", "supplierBusinessId": "tax-25095192", "certificationId": null},
+            {"name": "豬血糕", "supplierBusinessId": "tax-25095192", "certificationId": null},
+            {"name": "杏鮑菇", "supplierBusinessId": "tax-25095192", "certificationId": "organic-1-008-180101"}
+          ]
+        },
+        {
+          "name": "快炒時蔬",
+          "officialName": "炒蚵仔白菜",
+          "category": "蔬菜",
+          "ingredients": [
+            {"name": "蚵仔白菜", "supplierBusinessId": "tax-25095192", "certificationId": "tap-01138353264238"}
+          ]
+        }
+      ]
+    }
+  ]
+}

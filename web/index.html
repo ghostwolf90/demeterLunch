@@ -23,10 +23,12 @@
       <nav aria-label="主要導覽">
         <a class="today-link" href="#today">今日</a><a href="#week">本週</a><a href="#traceability">溯源</a><a href="#standard">基準</a><a href="#insights">趨勢</a><a href="./news.html">午餐觀察</a>
       </nav>
-      <div class="sync-pill" id="syncStatus"><span></span>讀取資料中</div>
+      <div class="sync-pill is-loading" id="syncStatus" role="status" aria-live="polite" aria-atomic="true">
+        <span class="status-dot" aria-hidden="true"></span><span id="syncStatusText">正在讀取菜單…</span>
+      </div>
     </header>
 
-    <main>
+    <main id="dashboard" aria-busy="true">
       <section class="intro" id="today">
         <div class="intro-copy">
           <p class="eyebrow">TODAY'S SCHOOL LUNCH</p>
@@ -198,7 +200,9 @@
           <div><p class="kicker">LUNCH WATCH</p><h2>最近，校園午餐<br />還發生了什麼？</h2></div>
           <div class="news-preview-intro"><p class="section-lead">整理近期政策、食安與食育消息，只留下和家庭真正相關的線索。</p><a class="text-action" href="./news.html">查看午餐觀察</a></div>
         </div>
-        <div class="news-preview-grid" id="latestNews" aria-live="polite"></div>
+        <div class="news-preview-grid" id="latestNews" aria-live="polite" aria-busy="true">
+          <div class="loading-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><span>正在整理近期午餐消息…</span></div>
+        </div>
         <p class="news-freshness" id="newsUpdated">正在讀取近期消息…</p>
       </section>
 
@@ -225,10 +229,16 @@
       <a href="./news.html"><span aria-hidden="true">◉</span>觀察</a>
     </nav>
 
-    <dialog class="source-dialog" id="sourceDialog">
+    <dialog class="source-dialog" id="sourceDialog" aria-labelledby="dialogTitle">
       <button class="dialog-close" id="closeSource" type="button" aria-label="關閉">×</button>
       <div><p class="kicker">ORIGINAL MENU</p><h2 id="dialogTitle">本週原始菜單</h2></div>
-      <img id="sourceImage" alt="" /><a id="downloadSource" download>下載原圖</a>
+      <div class="source-image-stage" id="sourceImageStage" data-state="idle">
+        <div class="source-image-status loading-state" id="sourceImageStatus" role="status" aria-live="polite" aria-atomic="true">
+          <span class="loading-spinner" aria-hidden="true"></span><span id="sourceImageStatusText">準備載入原圖…</span>
+        </div>
+        <img id="sourceImage" alt="" />
+      </div>
+      <a id="downloadSource" download hidden>下載原圖</a>
     </dialog>
 
     <dialog class="dish-detail-dialog" id="dishDetailDialog" aria-labelledby="dishDetailTitle" aria-describedby="dishDetailNote">
