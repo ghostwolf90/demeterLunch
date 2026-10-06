@@ -178,6 +178,25 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("@keyframes status-spin", styles)
         self.assertIn(".loading-spinner { animation: none; }", styles)
 
+    def test_local_admin_exposes_read_only_status_controls(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        admin_html = (project_root / "admin" / "index.html").read_text(
+            encoding="utf-8"
+        )
+        admin_js = (project_root / "admin" / "admin.js").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("本機後台", admin_html)
+        self.assertIn('id="refreshButton"', admin_html)
+        self.assertIn('id="runUpdateButton"', admin_html)
+        self.assertIn('id="copyPublishButton"', admin_html)
+        self.assertIn('href="/api/admin/status"', admin_html)
+        self.assertIn('fetch("/api/admin/status"', admin_js)
+        self.assertIn('fetch("/api/admin/update"', admin_js)
+        self.assertIn('method: "POST"', admin_js)
+        self.assertNotIn("fatrace_access_code", admin_html)
+
 
 if __name__ == "__main__":
     unittest.main()

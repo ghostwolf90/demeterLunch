@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>資料更新後台｜好好吃飯</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/admin/admin.css">
+    <script src="/admin/admin.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="回到好好吃飯首頁">
+        <span class="brand-mark" aria-hidden="true">好</span>
+        <span>好好吃飯</span>
+      </a>
+      <span class="local-only">本機後台</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">校園食材資料管理</p>
+          <h1 id="page-title">每月更新，一眼確認。</h1>
+          <p class="intro">這裡只在本機運作，不會顯示 access code，也不會把後台發佈到公開網站。</p>
+        </div>
+        <button id="refreshButton" class="refresh-button" type="button">
+          <span aria-hidden="true">↻</span>
+          重新整理
+        </button>
+      </section>
+
+      <p id="pageStatus" class="page-status" role="status" aria-live="polite">正在讀取資料狀態…</p>
+
+      <section class="summary-grid" aria-label="更新摘要">
+        <article class="summary-card">
+          <span class="card-label">整體狀態</span>
+          <strong id="overallStatus">讀取中</strong>
+          <span id="checkedAt" class="card-detail">—</span>
+        </article>
+        <article class="summary-card">
+          <span class="card-label">每月排程</span>
+          <strong id="scheduleStatus">讀取中</strong>
+          <span id="scheduleTime" class="card-detail">—</span>
+        </article>
+        <article class="summary-card">
+          <span class="card-label">最新資料月份</span>
+          <strong id="sourceMonth">—</strong>
+          <span id="datasetCount" class="card-detail">—</span>
+        </article>
+        <article class="summary-card">
+          <span class="card-label">Reviewed 資料</span>
+          <strong id="ingredientCount">—</strong>
+          <span id="schoolDayCount" class="card-detail">—</span>
+        </article>
+      </section>
+
+      <section class="panel action-panel" aria-labelledby="manual-action-title">
+        <div class="action-copy">
+          <p class="eyebrow">手動操作</p>
+          <h2 id="manual-action-title">立即檢查上一個月資料</h2>
+          <p>會依序查詢資料集、下載官方 CSV、整合 reviewed JSON、重建 SQLite、執行測試並重建網站資料。過程可能需要幾分鐘。</p>
+        </div>
+        <div class="action-controls">
+          <button id="runUpdateButton" class="refresh-button action-button" type="button">下載並整合</button>
+          <button id="copyPublishButton" class="secondary-button" type="button">複製發布請求</button>
+          <a class="secondary-link" href="https://zhongxin-lunch-2026.laibit.chatgpt.site" target="_blank" rel="noreferrer">開啟公開網站</a>
+        </div>
+        <div class="action-result">
+          <p id="actionStatus" role="status" aria-live="polite">尚未執行手動更新。</p>
+          <details id="actionLog" hidden>
+            <summary>查看執行紀錄</summary>
+            <pre id="actionOutput"></pre>
+          </details>
+        </div>
+      </section>
+
+      <section id="warningPanel" class="panel warning-panel" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">需要留意</p>
+            <h2>檢查結果</h2>
+          </div>
+        </div>
+        <ul id="warningList" class="warning-list"></ul>
+      </section>
+
+      <section class="panel" aria-labelledby="pipeline-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">更新流程</p>
+            <h2 id="pipeline-title">從排程到網站資料</h2>
+          </div>
+          <a href="/api/admin/status" target="_blank" rel="noreferrer">查看狀態 JSON</a>
+        </div>
+        <div id="pipeline" class="pipeline" aria-live="polite"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="datasets-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">官方 CSV</p>
+            <h2 id="datasets-title">最新下載資料集</h2>
+          </div>
+          <span id="downloadSize" class="section-meta">—</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">資料集</th>
+                <th scope="col">範圍</th>
+                <th scope="col">建立日期</th>
+                <th scope="col">檔案大小</th>
+                <th scope="col">狀態</th>
+              </tr>
+            </thead>
+            <tbody id="datasetRows">
+              <tr><td colspan="5">正在讀取…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="detail-grid" aria-label="本機輸出狀態">
+        <article class="panel compact-panel">
+          <p class="eyebrow">SQLite</p>
+          <h2>資料庫</h2>
+          <dl id="databaseDetails" class="details"></dl>
+        </article>
+        <article class="panel compact-panel">
+          <p class="eyebrow">靜態網站</p>
+          <h2>本機建置</h2>
+          <dl id="staticDetails" class="details"></dl>
+        </article>
+        <article class="panel compact-panel">
+          <p class="eyebrow">OpenAPI</p>
+          <h2>存取設定</h2>
+          <dl id="secretDetails" class="details"></dl>
+        </article>
+        <article class="panel compact-panel">
+          <p class="eyebrow">公開 Site</p>
+          <h2>發布狀態</h2>
+          <dl id="deploymentDetails" class="details"></dl>
+        </article>
+      </section>
+    </main>
+
+    <footer>
+      <span>僅能從這台電腦的 loopback 位址存取</span>
+      <a href="/">開啟午餐網站</a>
+    </footer>
+  </body>
+</html>

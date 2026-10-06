@@ -37,6 +37,15 @@ TRACEABILITY_INGREDIENT_ALIASES = {
     "黑木耳": ("木耳",),
     "豬上肩肉": ("排骨", "排骨丁"),
     "骨腿": ("骨腿（T4）", "骨腿T4"),
+    "旗魚腹肉": ("旗魚丁",),
+    "白洋蔥": ("洋蔥",),
+    "麻竹筍": ("竹筍",),
+    "蒲瓜": ("蒲瓜絲",),
+    "麵粉": ("中筋麵粉",),
+    "甜椒": ("彩椒絲",),
+    "蕹菜": ("空心菜",),
+    "乾裙帶菜": ("乾海芽",),
+    "豬骨": ("龍骨丁",),
 }
 
 TRACEABILITY_DISH_ALIASES = {
@@ -181,7 +190,13 @@ def load_dashboard(
             SELECT di.id, di.source_id, di.menu_date, di.dish_position,
                    di.ingredient_position, di.dish_name,
                    di.official_dish_name, di.dish_category,
-                   di.ingredient_name,
+                   di.ingredient_name, di.platform_mark, di.origin_country,
+                   producer.id AS producer_id,
+                   producer.name AS producer_name,
+                   producer.tax_id AS producer_tax_id,
+                   producer.address AS producer_address,
+                   producer.phone AS producer_phone,
+                   producer.source_url AS producer_source_url,
                    supplier.id AS supplier_id,
                    supplier.name AS supplier_name,
                    supplier.tax_id AS supplier_tax_id,
@@ -202,6 +217,7 @@ def load_dashboard(
                    operator.source_url AS operator_source_url
             FROM dish_ingredients di
             JOIN businesses supplier ON supplier.id = di.supplier_business_id
+            LEFT JOIN businesses producer ON producer.id = di.producer_business_id
             LEFT JOIN certifications certification
                 ON certification.id = di.certification_id
             LEFT JOIN businesses operator
@@ -328,6 +344,7 @@ def _build_traceability(
         "dishes": [],
         "ingredientCount": 0,
         "certifiedIngredientCount": 0,
+        "markedIngredientCount": 0,
         "referenceDates": [],
     }
 
@@ -367,15 +384,20 @@ def _match_exact_traceability(
                 matched_rows_by_id.update({row["id"]: row for row in group})
             continue
 
-        ingredient_matches: list[sqlite3.Row] = []
+        ingredient_matches: list[tuple[sqlite3.Row, str]] = []
         for row in rows:
             if row["id"] in matched_rows_by_id:
                 continue
-            if any(
-                _ingredient_names_match(detail_name, row["ingredient_name"])
-                for detail_name in ingredients
-            ):
-                ingredient_matches.append(row)
+            matched_detail_name = next(
+                (
+                    detail_name
+                    for detail_name in ingredients
+                    if _ingredient_names_match(detail_name, row["ingredient_name"])
+                ),
+                None,
+            )
+            if matched_detail_name:
+                ingredient_matches.append((row, matched_detail_name))
                 matched_rows_by_id[row["id"]] = row
         if ingredient_matches:
             ingredient_dishes.append(
@@ -387,11 +409,9 @@ def _match_exact_traceability(
                         _traceability_ingredient(
                             row,
                             match_type="ingredient",
-                            match_reason=(
-                                f"同日食譜明細含「{row['ingredient_name']}」"
-                            ),
+                            match_reason=f"同日食譜明細含「{detail_name}」",
                         )
-                        for row in ingredient_matches
+                        for row, detail_name in ingredient_matches
                     ],
                 }
             )
@@ -416,7 +436,7 @@ def _dish_names_match(menu_name: str, *official_names: str) -> bool:
 
 def _menu_dishes(day: dict[str, Any]) -> list[tuple[str, str, list[str]]]:
     if day.get("recipeDetails"):
-        return [
+        dishes = [
             (
                 _dish_role_label(dish.get("role")),
                 dish["name"],
@@ -424,6 +444,14 @@ def _menu_dishes(day: dict[str, Any]) -> list[tuple[str, str, list[str]]]:
             )
             for dish in day["recipeDetails"]
         ]
+        detailed_names = {_normalize_trace_text(item[1]) for item in dishes}
+        for category, name in (
+            ("水果", day["meal"].get("fruit")),
+            ("飲品", day["meal"].get("drink")),
+        ):
+            if name and _normalize_trace_text(name) not in detailed_names:
+                dishes.append((category, name, []))
+        return dishes
     meal = day["meal"]
     values: list[tuple[str, str | None]] = [
         ("主食", meal.get("staple")),
@@ -654,6 +682,20 @@ def _traceability_ingredient(
         }
     ingredient = {
         "name": row["ingredient_name"],
+        "producer": (
+            {
+                "id": row["producer_id"],
+                "name": row["producer_name"],
+                "taxId": row["producer_tax_id"],
+                "address": row["producer_address"],
+                "phone": row["producer_phone"],
+                "sourceUrl": row["producer_source_url"],
+            }
+            if row["producer_id"]
+            else None
+        ),
+        "platformMark": row["platform_mark"],
+        "originCountry": row["origin_country"],
         "supplier": {
             "id": row["supplier_id"],
             "name": row["supplier_name"],
@@ -694,6 +736,11 @@ def _traceability_payload(
         for dish in dishes
         for ingredient in dish["ingredients"]
     )
+    marked_count = sum(
+        ingredient["certification"] is not None or bool(ingredient["platformMark"])
+        for dish in dishes
+        for ingredient in dish["ingredients"]
+    )
     return {
         "status": status,
         "selectedDate": selected_date,
@@ -709,6 +756,7 @@ def _traceability_payload(
         "dishes": dishes,
         "ingredientCount": ingredient_count,
         "certifiedIngredientCount": certified_count,
+        "markedIngredientCount": marked_count,
     }
 
 

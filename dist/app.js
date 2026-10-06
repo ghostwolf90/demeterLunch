@@ -221,10 +221,21 @@ function renderMeal(day) {
   refs.heroDish.textContent = day.meal.mainDish;
   refs.mealList.replaceChildren();
   const sourceDishes = Array.isArray(day.recipeDetails) ? day.recipeDetails : [];
+  const detailedRoles = new Set(sourceDishes.map((dish) => dish.role));
+  const supplementalItems = [
+    !detailedRoles.has("fruit") && day.meal.fruit
+      ? { label: "水果", value: day.meal.fruit }
+      : null,
+    !detailedRoles.has("drink") && day.meal.drink
+      ? { label: "飲品", value: day.meal.drink }
+      : null,
+  ].filter(Boolean);
   state.dishDetails = sourceDishes;
   state.activeDishIndex = -1;
   refs.dishCount.textContent = sourceDishes.length
-    ? `本餐共 ${sourceDishes.length} 道 · 點選菜色查看食材與設計用量`
+    ? supplementalItems.length
+      ? `菜單共 ${sourceDishes.length + supplementalItems.length} 道 · 其中 ${sourceDishes.length} 道可查看食材與設計用量`
+      : `本餐共 ${sourceDishes.length} 道 · 點選菜色查看食材與設計用量`
     : "菜色依午餐總表校讀";
 
   const mainDishIndex = sourceDishes.findIndex((dish) => dish.role === "main");
@@ -238,9 +249,12 @@ function renderMeal(day) {
     : null;
 
   const items = sourceDishes.length
-    ? sourceDishes
-      .filter((dish) => dish.role !== "main")
-      .map((dish) => ({ label: roleLabels[dish.role] || "配菜", value: dish.name, dish }))
+    ? [
+      ...sourceDishes
+        .filter((dish) => dish.role !== "main")
+        .map((dish) => ({ label: roleLabels[dish.role] || "配菜", value: dish.name, dish })),
+      ...supplementalItems,
+    ]
     : [
       { label: "主食", value: day.meal.staple },
       ...day.meal.sideDishes.map((dish, index) => ({ label: `配菜 ${index + 1}`, value: dish })),
@@ -480,7 +494,7 @@ function renderIngredient(ingredient) {
   const certification = ingredient.certification;
   const certificationLabel = certification?.label.includes("CAS")
     ? "CAS"
-    : certification?.label;
+    : certification?.label || ingredient.platformMark;
   heading.append(node(
     "span",
     `certification-badge${certification ? "" : " empty"}`,
@@ -493,13 +507,22 @@ function renderIngredient(ingredient) {
     details.append(
       traceabilityDetail("匹配依據", ingredient.matchReason),
       traceabilityDetail(
-        "歷史資料日",
+        "資料日期",
         formatDate(ingredient.referenceDate, { year: "numeric" }),
       ),
       traceabilityDetail("原始菜色", ingredient.referenceDishName),
     );
   }
   const supplier = ingredient.supplier;
+  if (ingredient.producer) {
+    details.append(traceabilityDetail("製造／生產者", ingredient.producer.name));
+  }
+  if (ingredient.platformMark) {
+    details.append(traceabilityDetail("平臺標示", ingredient.platformMark));
+  }
+  if (ingredient.originCountry) {
+    details.append(traceabilityDetail("原料產地（國）", ingredient.originCountry));
+  }
   details.append(
     traceabilityDetail("平臺申報供應商", supplier.name),
     traceabilityDetail("供應商統編", supplier.taxId || "未提供"),
@@ -532,6 +555,8 @@ function renderIngredient(ingredient) {
       ].filter(Boolean).join(" · ");
       details.append(traceabilityDetail("查核狀態", state));
     }
+  } else if (ingredient.platformMark) {
+    details.append(traceabilityDetail("追溯號碼", "本次頁面截圖未顯示可核對的號碼"));
   } else {
     details.append(traceabilityDetail("標章資料", "這筆平臺資料未提供認證標章或追溯號碼"));
   }
@@ -565,7 +590,7 @@ function renderTraceability(traceability) {
   refs.traceabilityNotice.textContent = traceability.notice;
   refs.traceabilitySummary.textContent = isHistoricalMatch
     ? `${traceability.dishes.length} 道菜找到匹配 · ${traceability.ingredientCount} 項歷史食材來源`
-    : `${traceability.dishes.length} 道菜 · ${traceability.ingredientCount} 項食材 · ${traceability.certifiedIngredientCount} 項附標章資料`;
+    : `${traceability.dishes.length} 道菜 · ${traceability.ingredientCount} 項食材 · ${traceability.markedIngredientCount ?? traceability.certifiedIngredientCount} 項附標章／溯源標示`;
 
   for (const dish of traceability.dishes) {
     const details = node("details", "traceability-dish");
@@ -584,7 +609,7 @@ function renderTraceability(traceability) {
 
   refs.traceabilitySource.textContent = isHistoricalMatch
     ? `資料來源：${traceability.sourceName} · 歷史資料日期 ${traceability.referenceDates.map(compactDate).join("、")} · 不代表本日供應批次`
-    : `資料來源：${traceability.sourceName} ${traceability.sourceMonth} 月資料 · 校讀日期 ${traceability.reviewedAt}`;
+    : `資料來源：${traceability.sourceName} · 供餐日期 ${compactDate(traceability.dataDate)} · 校讀日期 ${traceability.reviewedAt}`;
 }
 
 function renderDinner(suggestion) {
@@ -793,7 +818,7 @@ function render(dashboard) {
   refs.mealMoment.textContent = LunchDateContext.mealMoment(day.date, localIsoDate());
   refs.introNote.textContent = dashboard.isFallback
     ? `指定日期沒有供餐資料，先顯示最近的 ${formatDate(day.date)}。`
-    : `${dashboard.mealTypeLabel}：${day.meal.staple}、${day.meal.mainDish}；食譜明細共 ${day.recipeDetails?.length || day.meal.sideDishes.length + 2} 道。`;
+    : `${dashboard.mealTypeLabel}：${day.meal.staple}、${day.meal.mainDish}；${day.meal.fruit ? `附餐 ${day.meal.fruit}；` : ""}食譜明細共 ${day.recipeDetails?.length || day.meal.sideDishes.length + 2} 道。`;
   renderMeal(day);
   renderNutrition(day.nutrition);
   renderStandard(dashboard);

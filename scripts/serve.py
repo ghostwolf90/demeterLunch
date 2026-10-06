@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
 import logging
 import mimetypes
+import secrets
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -13,6 +15,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WEB_ROOT = PROJECT_ROOT / "web"
+DEFAULT_ADMIN_ROOT = PROJECT_ROOT / "admin"
 DEFAULT_DATA_ROOT = PROJECT_ROOT / "data" / "raw"
 DEFAULT_DATABASE = PROJECT_ROOT / "data" / "lunch.db"
 DEFAULT_NEWS_DATA = PROJECT_ROOT / "data" / "news" / "news.json"
@@ -21,6 +24,8 @@ LOGGER = logging.getLogger(__name__)
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.admin_actions import AdminActionRunner  # noqa: E402
+from src.admin_status import load_admin_status  # noqa: E402
 from src.dashboard import load_dashboard  # noqa: E402
 
 
@@ -90,13 +95,37 @@ def make_handler(
     data_root: Path,
     database_path: Path = DEFAULT_DATABASE,
     news_path: Path = DEFAULT_NEWS_DATA,
+    admin_root: Path = DEFAULT_ADMIN_ROOT,
+    project_root: Path = PROJECT_ROOT,
 ) -> type[BaseHTTPRequestHandler]:
+    action_runner = AdminActionRunner(project_root)
+    action_token = secrets.token_urlsafe(32)
+
     class LunchRequestHandler(BaseHTTPRequestHandler):
         server_version = "DemeterLunch/0.1"
 
         def do_GET(self) -> None:  # noqa: N802
             request = urlsplit(self.path)
             path = unquote(request.path)
+            if path == "/api/admin/status":
+                if not self._is_loopback_client():
+                    self._send_json({"error": "Local access only"}, status=403)
+                    return
+                try:
+                    payload = load_admin_status(project_root)
+                except (OSError, ValueError) as exc:
+                    LOGGER.exception("Unable to load admin status")
+                    self._send_json({"error": str(exc)}, status=500)
+                    return
+                payload["actionToken"] = action_token
+                self._send_json(payload)
+                return
+            if path == "/api/admin/action":
+                if not self._is_loopback_client():
+                    self._send_json({"error": "Local access only"}, status=403)
+                    return
+                self._send_json(action_runner.status())
+                return
             if path == "/api/dashboard":
                 query = parse_qs(request.query)
                 selected_date = query.get("date", [None])[0]
@@ -131,9 +160,40 @@ def make_handler(
             if path.startswith("/data/"):
                 self._serve_file(data_root, path.removeprefix("/data/"), cache_images=True)
                 return
+            if path in {"/admin", "/admin/"}:
+                if not self._is_loopback_client():
+                    self.send_error(403, "Local access only")
+                    return
+                self._serve_file(admin_root, "index.html", cache_images=False)
+                return
+            if path.startswith("/admin/"):
+                if not self._is_loopback_client():
+                    self.send_error(403, "Local access only")
+                    return
+                self._serve_file(
+                    admin_root,
+                    path.removeprefix("/admin/"),
+                    cache_images=False,
+                )
+                return
 
             relative = "index.html" if path in {"", "/"} else path.lstrip("/")
             self._serve_file(web_root, relative, cache_images=False)
+
+        def do_POST(self) -> None:  # noqa: N802
+            path = unquote(urlsplit(self.path).path)
+            if path != "/api/admin/update":
+                self.send_error(404, "Not found")
+                return
+            if not self._is_loopback_client():
+                self._send_json({"error": "Local access only"}, status=403)
+                return
+            provided_token = self.headers.get("X-Demeter-Admin", "")
+            if not secrets.compare_digest(provided_token, action_token):
+                self._send_json({"error": "Invalid action token"}, status=403)
+                return
+            started = action_runner.start_update()
+            self._send_json(action_runner.status(), status=202 if started else 409)
 
         def _send_json(self, payload: object, *, status: int = 200) -> None:
             data = json.dumps(
@@ -145,6 +205,12 @@ def make_handler(
                 cache_control="no-store",
                 status=status,
             )
+
+        def _is_loopback_client(self) -> bool:
+            try:
+                return ipaddress.ip_address(self.client_address[0]).is_loopback
+            except ValueError:
+                return False
 
         def _serve_file(
             self, root: Path, relative: str, *, cache_images: bool
@@ -195,6 +261,7 @@ def main() -> int:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--web-root", type=Path, default=DEFAULT_WEB_ROOT)
+    parser.add_argument("--admin-root", type=Path, default=DEFAULT_ADMIN_ROOT)
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_ROOT)
     parser.add_argument("--database", type=Path, default=DEFAULT_DATABASE)
     parser.add_argument("--news", type=Path, default=DEFAULT_NEWS_DATA)
@@ -203,6 +270,8 @@ def main() -> int:
 
     if not args.web_root.is_dir():
         parser.error(f"Website directory does not exist: {args.web_root}")
+    if not args.admin_root.is_dir():
+        parser.error(f"Admin directory does not exist: {args.admin_root}")
     if not args.database.is_file():
         parser.error(
             f"Database does not exist: {args.database}. Run scripts/build_database.py first."
@@ -210,10 +279,18 @@ def main() -> int:
     args.data_dir.mkdir(parents=True, exist_ok=True)
     server = ThreadingHTTPServer(
         (args.host, args.port),
-        make_handler(args.web_root, args.data_dir, args.database, args.news),
+        make_handler(
+            args.web_root,
+            args.data_dir,
+            args.database,
+            args.news,
+            args.admin_root,
+            PROJECT_ROOT,
+        ),
     )
     url = f"http://{args.host}:{server.server_port}"
     print(f"Lunch website running at {url}", flush=True)
+    print(f"Local admin dashboard at {url}/admin/", flush=True)
     print("Press Ctrl+C to stop.", flush=True)
     try:
         server.serve_forever()

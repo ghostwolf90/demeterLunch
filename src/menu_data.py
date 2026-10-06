@@ -100,7 +100,7 @@ def load_reviewed_traceability(
     packages: list[dict[str, Any]] = []
     seen_source_ids: set[str] = set()
     seen_dates: set[str] = set()
-    for path in sorted(parsed_root.glob("**/traceability.json")):
+    for path in traceability_paths(parsed_root):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
@@ -111,6 +111,27 @@ def load_reviewed_traceability(
         payload["_path"] = str(path)
         packages.append(payload)
     return packages
+
+
+def traceability_paths(parsed_root: Path) -> list[Path]:
+    return sorted(parsed_root.glob("**/traceability*.json"))
+
+
+def validate_traceability_package(
+    payload: object,
+    path: Path,
+    available_dates: set[str],
+    *,
+    seen_source_ids: set[str] | None = None,
+    seen_dates: set[str] | None = None,
+) -> None:
+    _validate_traceability(
+        payload,
+        path,
+        available_dates,
+        seen_source_ids if seen_source_ids is not None else set(),
+        seen_dates if seen_dates is not None else set(),
+    )
 
 
 def _validate_week(
@@ -315,6 +336,9 @@ def _validate_traceability(
                     raise DataValidationError(
                         f"{path}: 找不到食材供應商 {ingredient.get('supplierBusinessId')}"
                     )
+                producer_id = ingredient.get("producerBusinessId")
+                if producer_id and producer_id not in business_ids:
+                    raise DataValidationError(f"{path}: 找不到食材製造／生產者 {producer_id}")
                 certification_id = ingredient.get("certificationId")
                 if certification_id and certification_id not in certification_ids:
                     raise DataValidationError(f"{path}: 找不到認證 {certification_id}")
@@ -452,7 +476,7 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
                 connection, traceability_packages
             )
             connection.execute(
-                "INSERT INTO metadata (key, value) VALUES ('schema_version', '3')"
+                "INSERT INTO metadata (key, value) VALUES ('schema_version', '4')"
             )
             connection.execute(
                 "INSERT INTO metadata (key, value) VALUES ('generated_at', datetime('now'))"
@@ -606,8 +630,9 @@ def _insert_traceability(
                             source_id, menu_date, dish_position,
                             ingredient_position, dish_name, official_dish_name,
                             dish_category, ingredient_name,
+                            producer_business_id, platform_mark, origin_country,
                             supplier_business_id, certification_id
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             source["id"],
@@ -618,6 +643,9 @@ def _insert_traceability(
                             dish.get("officialName") or dish["name"],
                             dish.get("category"),
                             ingredient["name"],
+                            ingredient.get("producerBusinessId"),
+                            ingredient.get("platformMark"),
+                            ingredient.get("originCountry"),
                             ingredient["supplierBusinessId"],
                             ingredient.get("certificationId"),
                         ),
@@ -753,6 +781,9 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             official_dish_name TEXT NOT NULL,
             dish_category TEXT,
             ingredient_name TEXT NOT NULL,
+            producer_business_id TEXT REFERENCES businesses(id),
+            platform_mark TEXT,
+            origin_country TEXT,
             supplier_business_id TEXT NOT NULL REFERENCES businesses(id),
             certification_id TEXT REFERENCES certifications(id),
             UNIQUE(menu_date, dish_position, ingredient_position)

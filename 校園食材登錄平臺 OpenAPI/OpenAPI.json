@@ -1,0 +1,348 @@
+{
+"swagger": "2.0",
+"info": {
+"description": "校園食材登錄平臺 OpenAPI",
+"version": "v1",
+"title": "校園食材登錄平臺 OpenAPI"
+},
+"host": "fatraceschool.k12ea.gov.tw/",
+"basePath": "/cateringservice/openapi",
+"schemes": [
+"https"
+],
+"paths": {
+"/accountReg/": {
+"post": {
+"tags": [
+"accountRegApi"
+],
+"summary": "帳號登錄取得openapi存取碼",
+"description": "輸入帳號(電子郵件信箱地址)向系統登錄,openapi存取碼會透過電子郵件寄送至該信箱",
+"operationId": "accountReg",
+"consumes": [],
+"produces": [
+"application/json"
+],
+"parameters": [
+{
+"name": "account",
+"in": "body",
+"description": "電子郵件信箱地址",
+"required": true,
+"schema": {
+"$ref": "#/definitions/accountRegReq"
+}
+}
+],
+"responses": {
+"200": {
+"description": "系統回應訊息",
+"schema": {
+"$ref": "#/definitions/accountRegResp"
+}
+}
+}
+}
+},
+"/county/": {
+"post": {
+"tags": [
+"countyApi"
+],
+"summary": "查詢縣市名稱",
+"description": "輸入openapi存取碼,取得opendata全國縣市名稱資料",
+"operationId": "county",
+"consumes": [],
+"produces": [
+"application/json"
+],
+"parameters": [
+{
+"name": "accesscode",
+"in": "body",
+"description": "openapi存取碼",
+"required": true,
+"schema": {
+"$ref": "#/definitions/countyReq"
+}
+}
+],
+"responses": {
+"200": {
+"description": "系統回應訊息與opendata全國縣市名稱資料",
+"schema": {
+"$ref": "#/definitions/countyResp"
+}
+}
+}
+}
+},
+"/opendatadataset/": {
+"post": {
+"tags": [
+"opendatadatasetApi"
+],
+"summary": "查詢opendata資料集與食材中文名稱資料集",
+"description": "輸入openapi存取碼、年、月、縣市名稱,取得opendata資料集與食材中文名稱資料集資料",
+"operationId": "opendatadataset",
+"consumes": [],
+"produces": [
+"application/json"
+],
+"parameters": [
+{
+"name": "opendatadataset",
+"in": "body",
+"description": "openapi存取碼、年、月、縣市名稱",
+"required": true,
+"schema": {
+"$ref": "#/definitions/opendatadatasetReq"
+}
+}
+],
+"responses": {
+"200": {
+"description": "系統回應訊息與opendata資料集與食材中文名稱資料集資料",
+"schema": {
+"$ref": "#/definitions/opendatadatasetResp"
+}
+}
+}
+}
+},
+"/opendatadownload/": {
+"post": {
+"tags": [
+"opendatadownloadApi"
+],
+"summary": "取得資料集下載連結",
+"description": "輸入openapi存取碼、年、月、縣市名稱、學級名稱、資料集名稱,取得資料集下載連結",
+"operationId": "opendatadownload",
+"consumes": [],
+"produces": [
+"application/json"
+],
+"parameters": [
+{
+"name": "opendatadownload",
+"in": "body",
+"description": "openapi存取碼、年、月、縣市名稱、學級名稱、資料集名稱",
+"required": true,
+"schema": {
+"$ref": "#/definitions/opendatadownloadReq"
+}
+}
+],
+"responses": {
+"200": {
+"description": "系統回應訊息與資料集下載連結",
+"schema": {
+"$ref": "#/definitions/opendatadownloadResp"
+}
+}
+}
+}
+}
+},
+"definitions": {
+"accountRegReq": {
+"type": "object",
+"properties": {
+"account": {
+"type": "string",
+"description": "電子郵件信箱地址",
+"example": "johndoe@gmail.com"
+}
+}
+},
+"accountRegResp": {
+"type": "object",
+"properties": {
+"message": {
+"type": "string",
+"description": "openapi回應訊息",
+"example": "帳號登錄成功,請至您的電子郵件信箱收取openapi存取碼"
+}
+}
+},
+"countyReq": {
+"type": "object",
+"properties": {
+"accesscode": {
+"type": "string",
+"description": "openapi存取碼",
+"example": "dcd78f628520181029182043"
+}
+}
+},
+"countyResp": {
+"type": "object",
+"properties": {
+"message": {
+"type": "string",
+"description": "openapi回應訊息",
+"example": "openapi查詢縣市名稱成功"
+},
+"countyList": {
+"type": "array",
+"items": {
+"type": "string",
+"description": "縣市名稱",
+"example": "臺南市"
+}
+}
+}
+},
+"opendatadatasetReq": {
+"type": "object",
+"properties": {
+"accesscode": {
+"type": "string",
+"description": "openapi存取碼",
+"example": "dcd78f628520181029182043"
+},
+"year": {
+"type": "string",
+"description": "年",
+"example": "2018"
+},
+"month": {
+"type": "string",
+"description": "月",
+"example": "02"
+},
+"county": {
+"type": "string",
+"description": "縣市名稱",
+"example": "臺南市"
+}
+}
+},
+"opendatadatasetResp": {
+"type": "object",
+"properties": {
+"message": {
+"type": "string",
+"description": "openapi回應訊息",
+"example": "openapi查詢opendata縣市資料集成功"
+},
+"datasetList": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/opendatadataset"
+}
+}
+}
+},
+"opendatadataset": {
+"type": "object",
+"properties": {
+"year": {
+"type": "string",
+"description": "年",
+"example": "2018"
+},
+"month": {
+"type": "string",
+"description": "月",
+"example": "02"
+},
+"county": {
+"type": "string",
+"description": "縣市名稱",
+"example": "臺南市"
+},
+"grade": {
+"type": "string",
+"description": "學級名稱",
+"example": "國中小"
+},
+"datasetname": {
+"type": "string",
+"description": "資料集名稱",
+"example": "午餐食材及供應商資料集"
+},
+"createdate": {
+"type": "string",
+"description": "資料集產生日期",
+"example": "2018/10/26"
+}
+}
+},
+"opendatadownloadReq": {
+"type": "object",
+"properties": {
+"accesscode": {
+"type": "string",
+"description": "openapi存取碼",
+"example": "dcd78f628520181029182043"
+},
+"year": {
+"type": "string",
+"description": "年",
+"example": "2018"
+},
+"month": {
+"type": "string",
+"description": "月",
+"example": "02"
+},
+"county": {
+"type": "string",
+"description": "縣市名稱(若下載調味料或團膳業者資料集,此欄位請填空白)",
+"example": "臺南市"
+},
+"grade": {
+"type": "string",
+"description": "學級名稱(若下載調味料或團膳業者資料集,此欄位請填空白)",
+"example": "國中小"
+},
+"datasetname": {
+"type": "string",
+"description": "資料集名稱",
+"example": "午餐食材及供應商資料集"
+}
+}
+},
+"opendatadownloadResp": {
+"type": "object",
+"properties": {
+"message": {
+"type": "string",
+"description": "openapi回應訊息",
+"example": "openapi取得opendata縣市資料集下載連結成功"
+},
+"year": {
+"type": "string",
+"description": "年",
+"example": "2018"
+},
+"month": {
+"type": "string",
+"description": "月",
+"example": "02"
+},
+"county": {
+"type": "string",
+"description": "縣市名稱",
+"example": "臺南市"
+},
+"grade": {
+"type": "string",
+"description": "學級名稱",
+"example": "國中小"
+},
+"datasetname": {
+"type": "string",
+"description": "資料集名稱",
+"example": "午餐食材及供應商資料集"
+},
+"link": {
+"type": "string",
+"description": "資料集下載連結",
+"example": "https://fatraceschool.k12ea.gov.tw/cateringservice/web/openapi_download/201802_臺南市國中小午餐食材及供應商資料集20181105171052.csv"
+}
+}
+}
+}
+}
