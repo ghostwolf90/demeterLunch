@@ -175,6 +175,52 @@ http://127.0.0.1:8000/admin/
 
 後台的「下載並整合」按鈕可手動執行與每月排程相同的本機流程。按下後會要求確認，再依序下載、驗證、整合、重建 SQLite、執行測試並重建 `dist/`；執行期間不可重複啟動。若官方資料尚未發布或更新失敗，既有有效資料會保留。公開 Site 的部署需要短效雲端憑證，因此不由本機網頁保存或直接執行；後台可複製一段發布請求，交由 Codex 讀取線上最新 Site 原始碼後安全發布。
 
+## 西區六校每日公開紀錄
+
+`scripts/fetch_school_meals.py` 會依 `data/reference/taichung-active-elementary-schools.json` 的教育部查詢代碼，從校園食材登錄平臺公開頁面使用的唯讀接口，依序收集目前啟用的西區、西屯區與東區國小當日或歷史實際供餐紀錄：
+
+```bash
+python3 scripts/fetch_school_meals.py --date 2026-10-08 --district 西區
+```
+
+只測試單一學校：
+
+```bash
+python3 scripts/fetch_school_meals.py --date 2026-10-08 --school 忠信國小
+```
+
+每校資料以完整目錄原子替換，保存於：
+
+```text
+data/raw/fatrace-daily/YYYY-MM-DD/<fatraceSchoolId>/raw.json
+data/raw/fatrace-daily/YYYY-MM-DD/<fatraceSchoolId>/candidate.json
+data/raw/fatrace-daily/YYYY-MM-DD/report.json
+```
+
+`raw.json` 保存官方接口的完整回應；`candidate.json` 是統一格式的待校讀候選資料。候選資料固定標示 `review.status: pending`，不會自動進入 reviewed `data/parsed/`、SQLite 或公開網站。若官方明確回傳不供餐設定，狀態為 `no_meal`；空菜單且沒有官方原因則標示 `not_published`，不可解讀為今日沒有供餐。既有 `available` 或 `no_meal` 紀錄不會被後續空回應覆蓋。
+
+確認候選資料的學校、日期與內容後，執行結構校讀與晉升：
+
+```bash
+python3 scripts/review_school_meals.py --date 2026-10-08
+python3 scripts/build_database.py
+python3 scripts/build_static_site.py
+```
+
+只有 `available` 或官方明確標示的 `no_meal` 才能晉升。流程會核對學校代碼、完整校名、來源網址日期、供餐批次、菜色、食材、內容雜湊與校讀資訊；`not_published` 不會進入公開資料。reviewed JSON 保存於 `data/parsed/schools/fatrace/<fatraceSchoolId>/YYYY-MM-DD.json`，並作為 SQLite 與靜態網站的來源真相。
+
+SQLite 會把啟用學校的名冊、供餐日、餐次、菜色、食材與認證拆成關聯資料表；公開網站則提供可擴充的行政區與學校選單。`data/reference/taichung-elementary-schools.json` 保存教育部公開清單中的臺中市 29 個行政區、242 所國小及 School ID，`data/reference/taichung-elementary-schools.md` 則提供方便人工檢查的行政區清單；兩份資料均以一次行政區查詢與一次全市國小名冊查詢整理，沒有逐號掃描 School ID。`data/reference/taichung-active-elementary-schools.json` 是網站目前啟用的子集，包含西區 6 所、西屯區 15 所與東區 6 所國小。使用者可把一間學校設為「我的最愛」並保存在自己的瀏覽器；下次進站只會優先讀取那間學校。沒有設定最愛時，網站停在選校畫面，不會先讀取任何學校的午餐資料。忠信國小保留校方週菜單、營養分析、葷素餐與家庭晚餐建議等完整體驗；其餘學校目前顯示教育部同日實際供餐公開紀錄。當同日紀錄同時包含一個有「素」字與一個沒有「素」字的主菜時，網站會開放葷食／素食切換：主菜、副菜依名稱的「素」字分組，主食、蔬菜、湯品與附餐列為共用。這只是方便閱讀的菜名分組，不等同素食認證，仍須以官方食材明細判斷內容。指定日期沒有紀錄時不會退回較早日期冒充今天。
+
+平常可用一條指令完成收集、校讀、資料庫重建、測試、JavaScript 檢查與靜態網站重建：
+
+```bash
+python3 scripts/update_school_meals.py --date 2026-10-08 --verify-and-build
+```
+
+若官方尚未發布，指令會以 pending 狀態結束並保留既有有效資料。它不會自動部署公開 Site；部署仍須先取得同一個 Site 的最新原始碼，避免蓋掉線上排程剛寫入的新聞或監測狀態。
+
+這條每日資料線與每月 OpenAPI 不同。它只代表平臺公開查詢頁當下可見的實際供餐紀錄，不能提供下週預定菜單；下週資料仍須由各校公告、Atom/RSS 或菜單圖片取得。收集器預設使用 20 秒逾時、有限次重試、描述性 User-Agent 與 1.2 秒請求間隔。若只想先驗證菜色、不逐道查詢食材，可加上 `--skip-ingredients`。
+
 網站的日常分析讀取 `data/lunch.db`，原圖則從 `data/raw/` 提供。兩者都在本機，不需要安裝前端套件。按 `Ctrl+C` 可停止伺服器。
 
 ## 執行測試
@@ -198,17 +244,21 @@ data/raw/
 data/parsed/2026/semester-1/week-02/menu.json
 data/parsed/2026/semester-1/week-02/recipe-details.json
 data/parsed/2026/semester-1/week-01/traceability.json
+data/reference/taichung-active-elementary-schools.json
+data/reference/taichung-elementary-schools.json
+data/reference/taichung-elementary-schools.md
 data/reference/school-lunch-nutrition-rules.json
 data/lunch.db
 ```
 
 `metadata.json` 會保存文章 ID、標題、網址、發布／更新時間、解析後日期，以及每張圖片的來源網址、本地檔名、Content-Type、位元組數、尺寸和 SHA-256。
 
-`data/parsed/` 是人工校讀後的結構化來源。`menu.json` 保存每日葷食與素食的菜單總表、營養份數、信心值與可辨識過敏原；`recipe-details.json` 保存每道菜底下的材料、設計用量，以及原表的「初級加工／非基改、在地、安全蔬菜」色塊宣稱。每週另保存菜單總表、葷食用量明細與素食用量明細三張來源圖。校園食材平臺的菜色、食材、供應商、認證與認證經營者則先校讀成 `traceability.json`；原始 CSV 不會直接進入網站。`data/reference/school-lunch-nutrition-rules.json` 保存由 109 年 12 月 28 日修訂版官方文件逐頁核對的國小營養建議量、食物內容目標值、階段值與 ±8% 週間容許範圍。`scripts/build_database.py` 會先驗證日期、餐別、必填欄位、關聯及重複資料，再以原子替換方式產生 `data/lunch.db`。
+`data/parsed/` 是校讀後的結構化來源。`menu.json` 保存每日葷食與素食的菜單總表、營養份數、信心值與可辨識過敏原；`recipe-details.json` 保存每道菜底下的材料、設計用量，以及原表的「初級加工／非基改、在地、安全蔬菜」色塊宣稱。每週另保存菜單總表、葷食用量明細與素食用量明細三張來源圖。校園食材平臺的月資料先校讀成 `traceability.json`；六校同日公開紀錄則保存於 `schools/fatrace/`。原始接口回應或 CSV 不會直接進入網站。`data/reference/school-lunch-nutrition-rules.json` 保存由 109 年 12 月 28 日修訂版官方文件逐頁核對的國小營養建議量、食物內容目標值、階段值與 ±8% 週間容許範圍。`scripts/build_database.py` 會先驗證日期、餐別、必填欄位、關聯及重複資料，再以原子替換方式產生 `data/lunch.db`。
 
 ## 本機 API
 
-- `GET /api/dashboard?date=2026-10-01&mealType=meat`：指定葷食或素食（`vegetarian`）的今日、當週、營養基準判讀、趨勢與食材溯源資料
+- `GET /api/dashboard?date=2026-10-01&mealType=meat&schoolId=193609`：忠信國小完整菜單；其他六校代碼回傳該校同日官方實際供餐紀錄
+- `GET /api/schools`：只回傳行政區與學校名冊，供尚未選校時建立選單；不回傳午餐內容
 - `GET /api/menus`：原始文章與圖片清單
 - `GET /api/health`：伺服器狀態
 
@@ -218,7 +268,7 @@ data/lunch.db
 python3 scripts/build_static_site.py
 ```
 
-輸出位於 `dist/`，包含手機版網站、葷素兩種結構化資料快照，以及每週的菜單總表、葷食用量明細與素食用量明細原圖。公開版不依賴本機 Python 或 SQLite 服務。
+輸出位於 `dist/`，包含手機版網站、葷素兩種結構化資料快照、西區六校已校讀的同日官方紀錄，以及每週的菜單總表、葷食用量明細與素食用量明細原圖。公開版不依賴本機 Python 或 SQLite 服務。
 
 ## 抓取策略
 
@@ -232,7 +282,7 @@ python3 scripts/build_static_site.py
 
 - 校園食材平臺 OpenAPI 的每月資料於次月 6 日執行排程，因此無法用來即時確認當月供餐內容。例如 2026 年 9 月資料於 2026 年 10 月 6 日更新，2026 年 10 月資料則於 2026 年 11 月 6 日更新；資料發布後才能回補該日的正式紀錄。
 - 若已取得校園食材登錄平臺的同日學校頁面，會先以人工校讀截圖補入當日追溯資料，並保留供餐日期與校讀來源；菜名、食材名稱與設計用量仍以忠信國小餐單及用量明細為準。2026-10-06 原餐單僅寫「水果」，同日平臺頁面已補充為「芭樂」。
-- 菜單圖片的中文字體與注音裝飾容易造成 OCR 誤讀，因此目前 6 週的葷食與素食菜名、營養數字、菜內材料與設計用量均經人工視覺校讀；原始明細圖仍保留供逐項核對。
+- 菜單圖片的中文字體與注音裝飾容易造成 OCR 誤讀，因此目前 7 週的葷食與素食菜名、營養數字、菜內材料與設計用量均經人工視覺校讀；原始明細圖仍保留供逐項核對。
 - 校園食材平臺資料沒有葷素欄位；同日比對會再用所選餐別的菜內明細篩選，避免把葷食材料誤列到素食。歷史匹配只代表過去同名菜色或相符食材曾出現過的供應紀錄，不代表今日實際使用的食材、產地、供應商或批次，介面不得將其標示為今日溯源。
 - 食譜明細表的色塊只代表供餐廠商在原表上的分類或文字宣稱；正式供應商、認證編號與認證經營者只取自校園食材平臺及其官方連結。
 - 若素食明細原表列出可能含動物性來源的材料（例如柴魚），系統會忠實保留並供核對，不會自行改寫來源資料。

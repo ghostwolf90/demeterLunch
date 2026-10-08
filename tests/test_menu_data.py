@@ -53,17 +53,17 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertEqual(card["category"], "吃得更懂")
         self.assertTrue(card["source"]["url"].endswith("newsId=6200"))
 
-    def test_reviewed_data_covers_six_weeks_and_both_meal_types(self) -> None:
+    def test_reviewed_data_covers_seven_weeks_and_both_meal_types(self) -> None:
         weeks = load_reviewed_weeks(PARSED_ROOT)
-        self.assertEqual(len(weeks), 6)
-        self.assertEqual(sum(len(week["days"]) for week in weeks), 27)
+        self.assertEqual(len(weeks), 7)
+        self.assertEqual(sum(len(week["days"]) for week in weeks), 32)
         self.assertEqual(
             sum(
                 len(day["variants"])
                 for week in weeks
                 for day in week["days"]
             ),
-            54,
+            64,
         )
 
     def test_fruit_is_served_once_on_tuesday_and_thursday(self) -> None:
@@ -73,10 +73,14 @@ class ReviewedMenuTests(unittest.TestCase):
                 expected_servings = 1 if day["weekday"] in {"星期二", "星期四"} else 0
                 for variant in day["variants"].values():
                     self.assertEqual(variant["nutrition"]["fruitServings"], expected_servings)
-                    expected_fruit = (
-                        "芭樂"
-                        if day["date"] == "2026-10-06"
-                        else ("水果" if expected_servings else None)
+                    named_fruit = {
+                        "2026-10-06": "芭樂",
+                        "2026-10-13": "藍莓",
+                        "2026-10-15": "香蕉",
+                    }
+                    expected_fruit = named_fruit.get(
+                        day["date"],
+                        "水果" if expected_servings else None,
                     )
                     self.assertEqual(
                         variant["meal"]["fruit"],
@@ -91,9 +95,9 @@ class ReviewedMenuTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "lunch.db"
             stats = build_database(PARSED_ROOT, database)
-            self.assertEqual(stats["days"], 27)
-            self.assertEqual(stats["variants"], 54)
-            self.assertEqual(stats["recipeIngredients"], 900)
+            self.assertEqual(stats["days"], 32)
+            self.assertEqual(stats["variants"], 64)
+            self.assertEqual(stats["recipeIngredients"], 1047)
             with sqlite3.connect(database) as connection:
                 row = connection.execute(
                     """
@@ -134,8 +138,8 @@ class ReviewedMenuTests(unittest.TestCase):
                 stats["traceableIngredients"], expected_traceability_count
             )
             self.assertEqual(traceability_count, expected_traceability_count)
-            self.assertEqual(recipe_dish_count, 312)
-            self.assertEqual(recipe_ingredient_count, 900)
+            self.assertEqual(recipe_dish_count, 367)
+            self.assertEqual(recipe_ingredient_count, 1047)
 
     def test_reviewed_traceability_links_dishes_suppliers_and_certifications(self) -> None:
         weeks = load_reviewed_weeks(PARSED_ROOT)
@@ -231,6 +235,50 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertNotIn("豬骨", ingredient_names)
         self.assertIn("芭樂", ingredient_names)
 
+    def test_october_seventh_uses_reviewed_same_day_traceability(self) -> None:
+        dashboard = load_dashboard(
+            PROJECT_ROOT / "data" / "lunch.db",
+            "2026-10-07",
+            "meat",
+        )
+        traceability = dashboard["traceability"]
+
+        self.assertEqual(traceability["status"], "verified")
+        self.assertEqual(traceability["dataDate"], "2026-10-07")
+        self.assertEqual(traceability["ingredientCount"], 15)
+        self.assertEqual(traceability["markedIngredientCount"], 13)
+        pork = next(
+            dish for dish in traceability["dishes"] if dish["name"] == "紅糟豬排"
+        )
+        pork_chop = pork["ingredients"][0]
+        self.assertEqual(pork_chop["name"], "豬大排")
+        self.assertEqual(
+            pork_chop["producer"]["name"], "香里食品企業股份有限公司"
+        )
+        self.assertEqual(pork_chop["platformMark"], "臺灣優良農產品(CAS)")
+
+    def test_october_seventh_vegetarian_traceability_excludes_meat_rows(self) -> None:
+        dashboard = load_dashboard(
+            PROJECT_ROOT / "data" / "lunch.db",
+            "2026-10-07",
+            "vegetarian",
+        )
+        traceability = dashboard["traceability"]
+        ingredient_names = {
+            ingredient["name"]
+            for dish in traceability["dishes"]
+            for ingredient in dish["ingredients"]
+        }
+
+        self.assertEqual(traceability["status"], "verified")
+        self.assertEqual(traceability["ingredientCount"], 14)
+        self.assertEqual(traceability["markedIngredientCount"], 9)
+        self.assertIn("素排", ingredient_names)
+        self.assertNotIn("豬大排", ingredient_names)
+        self.assertNotIn("豬絞肉", ingredient_names)
+        self.assertNotIn("蝦仁", ingredient_names)
+        self.assertNotIn("雞蛋", ingredient_names)
+
     def test_dashboard_selects_day_and_creates_dinner_idea(self) -> None:
         dashboard = load_dashboard(PROJECT_ROOT / "data" / "lunch.db", "2026-10-01")
         self.assertEqual(dashboard["selected"]["meal"]["mainDish"], "可樂豬腳")
@@ -244,7 +292,7 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertIsNone(dashboard["traceability"]["dataDate"])
         self.assertGreater(len(dashboard["traceability"]["dishes"]), 0)
         self.assertIn("僅供來源參考", dashboard["traceability"]["notice"])
-        self.assertEqual(dashboard["totalDays"], 27)
+        self.assertEqual(dashboard["totalDays"], 32)
 
     def test_dashboard_switches_to_vegetarian_menu_and_detail_image(self) -> None:
         dashboard = load_dashboard(

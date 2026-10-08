@@ -8,6 +8,12 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from .fatrace_daily import FatraceDailyError, load_school_registry
+from .school_meal_data import (
+    SchoolMealValidationError,
+    load_reviewed_school_meals,
+)
+
 
 class DataValidationError(ValueError):
     """Raised when a reviewed menu file does not match the expected schema."""
@@ -360,6 +366,17 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
         day["date"] for week in weeks for day in week["days"]
     }
     traceability_packages = load_reviewed_traceability(parsed_root, available_dates)
+    try:
+        official_school_meals = load_reviewed_school_meals(parsed_root)
+    except SchoolMealValidationError as exc:
+        raise DataValidationError(str(exc)) from exc
+    registry_path = (
+        parsed_root.parent / "reference" / "taichung-active-elementary-schools.json"
+    )
+    try:
+        school_registry = load_school_registry(registry_path) if registry_path.is_file() else []
+    except FatraceDailyError as exc:
+        raise DataValidationError(str(exc)) from exc
     database_path.parent.mkdir(parents=True, exist_ok=True)
     handle, temporary_name = tempfile.mkstemp(
         prefix=f".{database_path.name}.", suffix=".tmp", dir=database_path.parent
@@ -475,8 +492,13 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
             traceability_count = _insert_traceability(
                 connection, traceability_packages
             )
+            official_counts = _insert_official_school_meals(
+                connection,
+                official_school_meals,
+                school_registry,
+            )
             connection.execute(
-                "INSERT INTO metadata (key, value) VALUES ('schema_version', '4')"
+                "INSERT INTO metadata (key, value) VALUES ('schema_version', '5')"
             )
             connection.execute(
                 "INSERT INTO metadata (key, value) VALUES ('generated_at', datetime('now'))"
@@ -492,6 +514,200 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
         "items": item_count,
         "recipeIngredients": recipe_ingredient_count,
         "traceableIngredients": traceability_count,
+        **official_counts,
+    }
+
+
+def _insert_official_school_meals(
+    connection: sqlite3.Connection,
+    records: list[dict[str, Any]],
+    registry: list[Any],
+) -> dict[str, int]:
+    registry_order = {
+        school.fatrace_school_id: position
+        for position, school in enumerate(registry)
+    }
+    for position, school in enumerate(registry):
+        connection.execute(
+            """
+            INSERT INTO schools (
+                id, city, district, level, name, full_name,
+                source_url, display_order
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                school.fatrace_school_id,
+                school.city,
+                school.district,
+                school.level,
+                school.name,
+                school.full_name,
+                "https://fatraceschool.k12ea.gov.tw/frontend/search.html",
+                position,
+            ),
+        )
+
+    meal_count = 0
+    dish_count = 0
+    ingredient_count = 0
+    certification_count = 0
+    for record in records:
+        school = record["school"]
+        school_id = int(school["fatraceSchoolId"])
+        connection.execute(
+            """
+            INSERT INTO schools (
+                id, city, district, level, name, full_name,
+                source_url, display_order
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                city = excluded.city,
+                district = excluded.district,
+                level = excluded.level,
+                name = excluded.name,
+                full_name = excluded.full_name,
+                display_order = excluded.display_order
+            """,
+            (
+                school_id,
+                school["city"],
+                school["district"],
+                school["level"],
+                school["name"],
+                school["fullName"],
+                "https://fatraceschool.k12ea.gov.tw/frontend/search.html",
+                registry_order.get(school_id, 999),
+            ),
+        )
+        review = record["review"]
+        source = record["source"]
+        connection.execute(
+            """
+            INSERT INTO official_meal_days (
+                school_id, meal_date, status, fetched_at,
+                source_name, source_url, source_scope, content_hash,
+                review_status, reviewed_at, reviewed_by,
+                review_method, review_note, no_meal_reasons_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                school_id,
+                record["mealDate"],
+                record["status"],
+                record["fetchedAt"],
+                source["name"],
+                source["url"],
+                source.get("scope"),
+                record["contentHash"],
+                review["status"],
+                review["reviewedAt"],
+                review["reviewedBy"],
+                review["method"],
+                review.get("note"),
+                json.dumps(record.get("noMealReasons", []), ensure_ascii=False),
+            ),
+        )
+        for service_position, service in enumerate(record["services"]):
+            for meal_position, meal in enumerate(service["meals"]):
+                cursor = connection.execute(
+                    """
+                    INSERT INTO official_meals (
+                        school_id, meal_date, service_position, service_id,
+                        service_label, meal_position, batch_data_id,
+                        menu_type, menu_type_name, kitchen_id, kitchen_name,
+                        uploaded_at, nutrition_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        school_id,
+                        record["mealDate"],
+                        service_position,
+                        service["serviceId"],
+                        service["label"],
+                        meal_position,
+                        str(meal["batchDataId"]),
+                        meal["menuType"],
+                        meal.get("menuTypeName"),
+                        meal["kitchenId"],
+                        meal["kitchenName"],
+                        meal["uploadedAt"],
+                        json.dumps(meal.get("nutrition", {}), ensure_ascii=False),
+                    ),
+                )
+                official_meal_id = int(cursor.lastrowid)
+                meal_count += 1
+                for dish_position, dish in enumerate(meal["dishes"]):
+                    cursor = connection.execute(
+                        """
+                        INSERT INTO official_dishes (
+                            official_meal_id, position, dish_id,
+                            dish_batch_data_id, name, category, image_url
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            official_meal_id,
+                            dish_position,
+                            str(dish["dishId"]),
+                            str(dish["dishBatchDataId"]),
+                            dish["name"],
+                            dish["category"],
+                            dish.get("imageUrl"),
+                        ),
+                    )
+                    official_dish_id = int(cursor.lastrowid)
+                    dish_count += 1
+                    for ingredient_position, ingredient in enumerate(
+                        dish.get("ingredients", [])
+                    ):
+                        cursor = connection.execute(
+                            """
+                            INSERT INTO official_ingredients (
+                                official_dish_id, position, name, standard_name,
+                                product_name, manufacturer, origin,
+                                supplier_name, stock_date
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                official_dish_id,
+                                ingredient_position,
+                                ingredient["name"],
+                                ingredient.get("standardName"),
+                                ingredient.get("productName"),
+                                ingredient.get("manufacturer"),
+                                ingredient.get("origin"),
+                                ingredient.get("supplierName"),
+                                ingredient.get("stockDate"),
+                            ),
+                        )
+                        official_ingredient_id = int(cursor.lastrowid)
+                        ingredient_count += 1
+                        for certification_position, certification in enumerate(
+                            ingredient.get("certifications", [])
+                        ):
+                            connection.execute(
+                                """
+                                INSERT INTO official_ingredient_certifications (
+                                    official_ingredient_id, position, name,
+                                    certification_id
+                                ) VALUES (?, ?, ?, ?)
+                                """,
+                                (
+                                    official_ingredient_id,
+                                    certification_position,
+                                    certification["name"],
+                                    certification.get("id"),
+                                ),
+                            )
+                            certification_count += 1
+
+    school_count = connection.execute("SELECT COUNT(*) FROM schools").fetchone()[0]
+    return {
+        "schools": int(school_count),
+        "officialMealDays": len(records),
+        "officialMeals": meal_count,
+        "officialDishes": dish_count,
+        "officialIngredients": ingredient_count,
+        "officialCertifications": certification_count,
     }
 
 
@@ -788,6 +1004,86 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             certification_id TEXT REFERENCES certifications(id),
             UNIQUE(menu_date, dish_position, ingredient_position)
         );
+        CREATE TABLE schools (
+            id INTEGER PRIMARY KEY,
+            city TEXT NOT NULL,
+            district TEXT NOT NULL,
+            level TEXT NOT NULL,
+            name TEXT NOT NULL,
+            full_name TEXT NOT NULL,
+            source_url TEXT NOT NULL,
+            display_order INTEGER NOT NULL,
+            UNIQUE(city, district, name)
+        );
+        CREATE TABLE official_meal_days (
+            school_id INTEGER NOT NULL REFERENCES schools(id),
+            meal_date TEXT NOT NULL,
+            status TEXT NOT NULL CHECK (status IN ('available', 'no_meal')),
+            fetched_at TEXT NOT NULL,
+            source_name TEXT NOT NULL,
+            source_url TEXT NOT NULL,
+            source_scope TEXT,
+            content_hash TEXT NOT NULL,
+            review_status TEXT NOT NULL CHECK (review_status = 'reviewed'),
+            reviewed_at TEXT NOT NULL,
+            reviewed_by TEXT NOT NULL,
+            review_method TEXT NOT NULL,
+            review_note TEXT,
+            no_meal_reasons_json TEXT NOT NULL,
+            PRIMARY KEY (school_id, meal_date)
+        );
+        CREATE TABLE official_meals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            school_id INTEGER NOT NULL,
+            meal_date TEXT NOT NULL,
+            service_position INTEGER NOT NULL,
+            service_id INTEGER NOT NULL,
+            service_label TEXT NOT NULL,
+            meal_position INTEGER NOT NULL,
+            batch_data_id TEXT NOT NULL,
+            menu_type INTEGER NOT NULL,
+            menu_type_name TEXT,
+            kitchen_id INTEGER NOT NULL,
+            kitchen_name TEXT NOT NULL,
+            uploaded_at TEXT NOT NULL,
+            nutrition_json TEXT NOT NULL,
+            FOREIGN KEY (school_id, meal_date)
+                REFERENCES official_meal_days(school_id, meal_date),
+            UNIQUE(school_id, meal_date, batch_data_id)
+        );
+        CREATE TABLE official_dishes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            official_meal_id INTEGER NOT NULL REFERENCES official_meals(id),
+            position INTEGER NOT NULL,
+            dish_id TEXT NOT NULL,
+            dish_batch_data_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            image_url TEXT,
+            UNIQUE(official_meal_id, position)
+        );
+        CREATE TABLE official_ingredients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            official_dish_id INTEGER NOT NULL REFERENCES official_dishes(id),
+            position INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            standard_name TEXT,
+            product_name TEXT,
+            manufacturer TEXT,
+            origin TEXT,
+            supplier_name TEXT,
+            stock_date TEXT,
+            UNIQUE(official_dish_id, position)
+        );
+        CREATE TABLE official_ingredient_certifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            official_ingredient_id INTEGER NOT NULL
+                REFERENCES official_ingredients(id),
+            position INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            certification_id TEXT,
+            UNIQUE(official_ingredient_id, position)
+        );
         CREATE INDEX menu_items_menu_idx ON menu_items(menu_id, position);
         CREATE INDEX daily_menus_week_idx ON daily_menus(week_id, meal_type, date);
         CREATE INDEX daily_menus_date_idx ON daily_menus(date, meal_type);
@@ -796,5 +1092,13 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             ON dish_ingredients(menu_date, dish_position, ingredient_position);
         CREATE INDEX dish_ingredients_supplier_idx
             ON dish_ingredients(supplier_business_id, menu_date);
+        CREATE INDEX official_meal_days_date_idx
+            ON official_meal_days(meal_date, school_id);
+        CREATE INDEX official_meals_school_date_idx
+            ON official_meals(school_id, meal_date, service_position, meal_position);
+        CREATE INDEX official_dishes_meal_idx
+            ON official_dishes(official_meal_id, position);
+        CREATE INDEX official_ingredients_dish_idx
+            ON official_ingredients(official_dish_id, position);
         """
     )

@@ -32,7 +32,9 @@ def main() -> int:
         f"Built {args.database} from {stats['weeks']} weeks, "
         f"{stats['days']} days, {stats['items']} menu items, "
         f"{stats['recipeIngredients']} reviewed recipe ingredients and "
-        f"{stats['traceableIngredients']} official traceability ingredients."
+        f"{stats['traceableIngredients']} official traceability ingredients; "
+        f"{stats['officialMealDays']} reviewed school-day records across "
+        f"{stats['schools']} schools."
     )
     return 0
 

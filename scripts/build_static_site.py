@@ -16,6 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.dashboard import load_dashboard  # noqa: E402
 from src.menu_data import build_database  # noqa: E402
+from src.school_dashboard import load_school_meal_catalog  # noqa: E402
 
 
 def build_static_site(
@@ -49,10 +50,13 @@ def build_static_site(
         for meal_type in ("meat", "vegetarian")
     }
     latest = {meal_type: values[dates[-1]] for meal_type, values in dashboards.items()}
+    official_school_meals = load_school_meal_catalog(database_path)
+    generated_at = datetime.now(timezone.utc).isoformat()
     payload = {
-        "schemaVersion": 4,
-        "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "schemaVersion": 5,
+        "generatedAt": generated_at,
         "nutritionStandard": latest["meat"]["nutritionStandard"],
+        "officialSchoolMeals": official_school_meals,
         "variants": {
             meal_type: {
                 "days": [values[day]["selected"] for day in dates],
@@ -83,6 +87,18 @@ def build_static_site(
     data_output.mkdir(parents=True, exist_ok=True)
     (data_output / "site-data.json").write_text(
         json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    (data_output / "schools.json").write_text(
+        json.dumps(
+            {
+                "schemaVersion": 1,
+                "generatedAt": generated_at,
+                "schools": official_school_meals["schools"],
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ),
         encoding="utf-8",
     )
     if not news_path.is_file():

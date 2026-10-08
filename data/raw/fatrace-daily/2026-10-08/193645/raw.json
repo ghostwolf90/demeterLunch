@@ -1,0 +1,1449 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "西屯區",
+    "level": "國小",
+    "name": "重慶國小",
+    "fullName": "臺中市西屯區重慶國小",
+    "fatraceSchoolId": 193645
+  },
+  "mealDate": "2026-10-08",
+  "fetchedAt": "2026-10-09T00:16:58.738784+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=193645&period=2026-10-08",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 193645,
+        "SchoolName": "臺中市西屯區重慶國小",
+        "ConuntyId": 27,
+        "AreaId": 131474,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 2315,
+          "KitchenName": "佳愛餐盒食品廠",
+          "KitchenType": "005",
+          "Address": "臺中市北區健行路42號",
+          "Tel": "22377266",
+          "Fax": "22358812",
+          "Nutritionist": "沈國雄",
+          "Chef": "廖國鈞",
+          "HACCP": "",
+          "Qualifier": "廖國鈞",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "87604225",
+          "Email": "nutrientlunch@gmail.com",
+          "offering": []
+        },
+        {
+          "KitchenId": 2927,
+          "KitchenName": "臺中市西屯區重慶國小",
+          "KitchenType": "007",
+          "Address": "臺中巿西屯區重慶路358號",
+          "Tel": "0423123517",
+          "Fax": "0423123703",
+          "Nutritionist": "馮維亭",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "qualifier",
+          "Insurement": "insurement",
+          "PicturePath": "-",
+          "CompanyId": "B193645",
+          "Email": "cglunch@mail.cges.tc.edu.tw",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 2315,
+              "KitchenName": "佳愛餐盒食品廠",
+              "KitchenType": "005",
+              "Address": "臺中市北區健行路42號",
+              "Tel": "22377266",
+              "Fax": "22358812",
+              "Nutritionist": "沈國雄",
+              "Chef": "廖國鈞",
+              "HACCP": "",
+              "Qualifier": "廖國鈞",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "87604225",
+              "Email": "nutrientlunch@gmail.com",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "14724489942401604",
+                  "KitchenId": 2315,
+                  "KitchenName": "佳愛餐盒食品廠",
+                  "SchoolId": 193645,
+                  "SchoolCode": "193645",
+                  "SchoolName": "臺中市西屯區重慶國小",
+                  "MenuDate": "2026/10/08",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-08T01:10:01.000Z",
+                  "TypeGrains": "6.35",
+                  "TypeOil": "0.06",
+                  "TypeVegetable": "1.54",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2.97",
+                  "Calorie": "632"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "14724489942401604",
+                  "KitchenId": 2315,
+                  "KitchenName": "佳愛餐盒食品廠",
+                  "SchoolId": 193645,
+                  "SchoolCode": "193645",
+                  "SchoolName": "臺中市西屯區重慶國小",
+                  "MenuDate": "2026/10/08",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-08T01:10:01.000Z",
+                  "TypeGrains": "6.35",
+                  "TypeOil": "0.06",
+                  "TypeVegetable": "1.54",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2.97",
+                  "Calorie": "632"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791421801009210",
+                      "BatchDataId": "14724489942401604",
+                      "DishName": "小米藜麥飯",
+                      "DishType": "主食",
+                      "DishId": "1790671756061896",
+                      "UpdateDateTime": "2026-10-08T01:10:01.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 2315,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2315//2315_1790671756061896."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791423580026266",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "1790671756061896",
+                          "IngredientId": "1791357842051372",
+                          "IngredientName": "白米",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1567865,
+                          "SupplierCompanyId": "22608851",
+                          "SupplierName": "億東企業股份有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "億東企業股份有限公司（斗南廠）",
+                          "IngredientQuantity": "38.7",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "2610020051006201"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "A-122608851-00000-0",
+                              "fdacompany_Name": "億東企業股份有限公司",
+                              "fdabusinessId": "22608851",
+                              "fdaaddress": "台北市萬華區西昌街142號8樓之5",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "F-122608851-00004-9",
+                              "fdacompany_Name": "億東企業股份有限公司",
+                              "fdabusinessId": "22608851",
+                              "fdaaddress": "新北市泰山區新五路1段116號",
+                              "fdaregType": "販售場所"
+                            },
+                            {
+                              "fdaCompanyId": "N-122608851-00009-2",
+                              "fdacompany_Name": "億東企業股份有限公司",
+                              "fdabusinessId": "22608851",
+                              "fdaaddress": "彰化縣竹塘鄉土庫村東陽路一段374-5號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "P-122608851-00001-6",
+                              "fdacompany_Name": "億東企業股份有限公司",
+                              "fdabusinessId": "22608851",
+                              "fdaaddress": "雲林縣西螺鎮福田里社口六八之三九號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "P-122608851-00002-7",
+                              "fdacompany_Name": "億東企業股份有限公司",
+                              "fdabusinessId": "22608851",
+                              "fdaaddress": "雲林縣二崙鄉崙西村中山路三五七號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "U-122608851-00008-8",
+                              "fdacompany_Name": "億東企業股份有限公司",
+                              "fdabusinessId": "22608851",
+                              "fdaaddress": "花蓮縣鳳林鎮正義路9號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "白米"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026263",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "1790671756061896",
+                          "IngredientId": "1791421905014525",
+                          "IngredientName": "小米",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 3004434,
+                          "SupplierCompanyId": "42885333",
+                          "SupplierName": "旭安國際有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "旭安國際有限公司",
+                          "IngredientQuantity": "6.45",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [
+                            {
+                              "id": "959436555",
+                              "countryId": "66",
+                              "name": "烏克蘭"
+                            }
+                          ],
+                          "IngredientSourceNameList": "烏克蘭",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-142885333-00000-5",
+                              "fdacompany_Name": "旭安國際有限公司",
+                              "fdabusinessId": "42885333",
+                              "fdaaddress": "台中市北屯區旅順路二段181號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-142885333-00001-6",
+                              "fdacompany_Name": "旭安國際有限公司",
+                              "fdabusinessId": "42885333",
+                              "fdaaddress": "台中市西屯區環中路一段2088-7號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "小米"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026270",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "1790671756061896",
+                          "IngredientId": "1791421905014529",
+                          "IngredientName": "紅藜麥",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 3004434,
+                          "SupplierCompanyId": "42885333",
+                          "SupplierName": "旭安國際有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "旭安國際有限公司",
+                          "IngredientQuantity": "2.15",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [
+                            {
+                              "id": "959436579",
+                              "countryId": "54",
+                              "name": "秘魯"
+                            }
+                          ],
+                          "IngredientSourceNameList": "秘魯",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-142885333-00000-5",
+                              "fdacompany_Name": "旭安國際有限公司",
+                              "fdabusinessId": "42885333",
+                              "fdaaddress": "台中市北屯區旅順路二段181號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-142885333-00001-6",
+                              "fdacompany_Name": "旭安國際有限公司",
+                              "fdabusinessId": "42885333",
+                              "fdaaddress": "台中市西屯區環中路一段2088-7號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "紅藜"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791421801009214",
+                      "BatchDataId": "14724489942401604",
+                      "DishName": "泰式打拋魚",
+                      "DishType": "主菜",
+                      "DishId": "1790671610050457",
+                      "UpdateDateTime": "2026-10-08T01:10:01.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 2315,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2315//2315_1790671610050457."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791423580026261",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "1790671610050457",
+                          "IngredientId": "1791421904014493",
+                          "IngredientName": "水鯊魚",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 257523,
+                          "SupplierCompanyId": "96869252",
+                          "SupplierName": "展昇生鮮企業股份有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "展昇生鮮企業股份有限公司",
+                          "IngredientQuantity": "25.8",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "134713"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "P-196869252-00000-0",
+                          "fdacompany_Name": "展昇生鮮企業股份有限公司",
+                          "fdabusinessId": "96869252",
+                          "fdaaddress": "雲林縣斗六市斗工六路6號",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "P-196869252-00000-0",
+                              "fdacompany_Name": "展昇生鮮企業股份有限公司",
+                              "fdabusinessId": "96869252",
+                              "fdaaddress": "雲林縣斗六市斗工六路6號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "P-196869252-00001-1",
+                              "fdacompany_Name": "展昇生鮮企業股份有限公司",
+                              "fdabusinessId": "96869252",
+                              "fdaaddress": "雲林縣斗六市榴南里斗工六路6號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "P-196869252-00004-4",
+                              "fdacompany_Name": "展昇生鮮企業股份有限公司",
+                              "fdabusinessId": "96869252",
+                              "fdaaddress": "雲林縣斗六市斗工六路6號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "鯊魚"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026262",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "1790671610050457",
+                          "IngredientId": "1791421904014495",
+                          "IngredientName": "大蕃茄",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 325058,
+                          "SupplierCompanyId": "22486702",
+                          "SupplierName": "台中果菜運銷股份有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "黃富勇",
+                          "IngredientQuantity": "2.15",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "2609070123110790"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-122486702-00000-0",
+                          "fdacompany_Name": "台中果菜運銷股份有限公司",
+                          "fdabusinessId": "22486702",
+                          "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-122486702-00000-0",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區環中路一段2151號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-122486702-00001-1",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "大番茄"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026269",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "1790671610050457",
+                          "IngredientId": "1791421905014501",
+                          "IngredientName": "洋蔥",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 197501,
+                          "SupplierCompanyId": "70598311",
+                          "SupplierName": "佳佑農產有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "佳佑農產有限公司",
+                          "IngredientQuantity": "5.16",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [],
+                          "IngredientSourceNameList": "",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-202321118-00000-8",
+                              "fdacompany_Name": "佳佑農產有限公司",
+                              "fdabusinessId": "70598311",
+                              "fdaaddress": "台中市南屯區大同里大進街53號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-202321118-00001-9",
+                              "fdacompany_Name": "佳佑農產有限公司",
+                              "fdabusinessId": "70598311",
+                              "fdaaddress": "台中市東區南京六街10號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "洋蔥"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791421801009213",
+                      "BatchDataId": "14724489942401604",
+                      "DishName": "櫛瓜炒蛋2",
+                      "DishType": "副菜",
+                      "DishId": "14724489902253408",
+                      "UpdateDateTime": "2026-10-08T01:10:01.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 2315,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2315//2315_14724489902253408."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791423580026260",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "14724489902253408",
+                          "IngredientId": "1791421910010081",
+                          "IngredientName": "液蛋(加工)",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 2156242,
+                          "SupplierCompanyId": "12897240",
+                          "SupplierName": "祐牧企業股份有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "祐牧企業股份有限公司蛋品廠",
+                          "IngredientQuantity": "10.75",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "115102"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-112897240-00000-2",
+                              "fdacompany_Name": "祐牧企業股份有限公司",
+                              "fdabusinessId": "12897240",
+                              "fdaaddress": "台中市大肚區沙田路三段245巷68之8號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-112897240-00001-3",
+                              "fdacompany_Name": "祐牧企業股份有限公司",
+                              "fdabusinessId": "12897240",
+                              "fdaaddress": "台中市大肚區頂街里沙田路三段245巷75之5號1樓",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "液蛋(加工)"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026267",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "14724489902253408",
+                          "IngredientId": "1791421910010082",
+                          "IngredientName": "冷凍玉米粒",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 3566,
+                          "SupplierCompanyId": "10987478",
+                          "SupplierName": "東燕農產商行",
+                          "ProductName": "",
+                          "Manufacturer": "富士鮮品股份有限公司-二廠",
+                          "IngredientQuantity": "5.16",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "124501"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-200072590-00000-3",
+                              "fdacompany_Name": "東燕農產商行",
+                              "fdabusinessId": "10987478",
+                              "fdaaddress": "台中市北區建成里東成路29號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-200072590-00001-4",
+                              "fdacompany_Name": "東燕農產商行",
+                              "fdabusinessId": "10987478",
+                              "fdaaddress": "台中市北區建成里東成路29號1樓",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "冷凍玉米粒"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026271",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "14724489902253408",
+                          "IngredientId": "1791421910010083",
+                          "IngredientName": "胡蘿蔔",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 325058,
+                          "SupplierCompanyId": "22486702",
+                          "SupplierName": "台中果菜運銷股份有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "玉蘭農產有限公司",
+                          "IngredientQuantity": "4.3",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "2609215090019355"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-122486702-00000-0",
+                          "fdacompany_Name": "台中果菜運銷股份有限公司",
+                          "fdabusinessId": "22486702",
+                          "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-122486702-00000-0",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區環中路一段2151號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-122486702-00001-1",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "胡蘿蔔"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026274",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "14724489902253408",
+                          "IngredientId": "1791421910010084",
+                          "IngredientName": "甜椒",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 325058,
+                          "SupplierCompanyId": "22486702",
+                          "SupplierName": "台中果菜運銷股份有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "林玟妗",
+                          "IngredientQuantity": "0.86",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "2610010155500425"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-122486702-00000-0",
+                          "fdacompany_Name": "台中果菜運銷股份有限公司",
+                          "fdabusinessId": "22486702",
+                          "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-122486702-00000-0",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區環中路一段2151號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-122486702-00001-1",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "甜椒"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026276",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "14724489902253408",
+                          "IngredientId": "1791421911010085",
+                          "IngredientName": "櫛瓜",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 325058,
+                          "SupplierCompanyId": "22486702",
+                          "SupplierName": "台中果菜運銷股份有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "保證責任雲林縣新安果菜生產合作社(雲林縣西螺鎮)",
+                          "IngredientQuantity": "2.15",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1204000039"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-122486702-00000-0",
+                          "fdacompany_Name": "台中果菜運銷股份有限公司",
+                          "fdabusinessId": "22486702",
+                          "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-122486702-00000-0",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區環中路一段2151號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-122486702-00001-1",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "櫛瓜"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791421801009209",
+                      "BatchDataId": "14724489942401604",
+                      "DishName": "油菜5",
+                      "DishType": "蔬菜",
+                      "DishId": "14724489902253396",
+                      "UpdateDateTime": "2026-10-08T01:10:01.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 2315,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2315//2315_14724489902253396."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791423580026259",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "14724489902253396",
+                          "IngredientId": "1791421904014491",
+                          "IngredientName": "美白菇",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1053557,
+                          "SupplierCompanyId": "72324318",
+                          "SupplierName": "三發農產行",
+                          "ProductName": "",
+                          "Manufacturer": "陳衍宏",
+                          "IngredientQuantity": "0.86",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1101005718"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [],
+                          "standardIngredientName": "美白菇"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026268",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "14724489902253396",
+                          "IngredientId": "1791421904014499",
+                          "IngredientName": "油菜",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 154063,
+                          "SupplierCompanyId": "06228670",
+                          "SupplierName": "保證責任雲林縣庄西合作農場",
+                          "ProductName": "",
+                          "Manufacturer": "保證責任雲林縣庄西合作農場",
+                          "IngredientQuantity": "34.4",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "2610080035700504"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "P-106228670-00000-4",
+                          "fdacompany_Name": "保證責任雲林縣庄西合作農場",
+                          "fdabusinessId": "06228670",
+                          "fdaaddress": "雲林縣二崙鄉庄西村田底路2號",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "P-106228670-00000-4",
+                              "fdacompany_Name": "保證責任雲林縣庄西合作農場",
+                              "fdabusinessId": "06228670",
+                              "fdaaddress": "雲林縣二崙鄉庄西村７鄰田底路２號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "P-106228670-00001-5",
+                              "fdacompany_Name": "保證責任雲林縣庄西合作農場",
+                              "fdabusinessId": "06228670",
+                              "fdaaddress": "雲林縣崙背鄉水尾村新生路23-1號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "油菜"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026275",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "14724489902253396",
+                          "IngredientId": "1791421905014506",
+                          "IngredientName": "豬絞肉",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 3537,
+                          "SupplierCompanyId": "17180821",
+                          "SupplierName": "潘興豬肉舖",
+                          "ProductName": "",
+                          "Manufacturer": "劉界養豬場",
+                          "IngredientQuantity": "0.86",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "國產生鮮豬肉追溯碼",
+                              "CertificationId": "MJ070558"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-200172016-00000-7",
+                              "fdacompany_Name": "潘興豬肉鋪",
+                              "fdabusinessId": "17180821",
+                              "fdaaddress": "台中市北區錦洲里國豐街１０８號１樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-200172016-00001-8",
+                              "fdacompany_Name": "潘興豬肉鋪",
+                              "fdabusinessId": "17180821",
+                              "fdaaddress": "台中市北區太平路229號(東興市場)",
+                              "fdaregType": "販售場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-200172016-00002-9",
+                              "fdacompany_Name": "潘興豬肉鋪",
+                              "fdabusinessId": "17180821",
+                              "fdaaddress": "台中市北區太平路229號１樓",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "豬絞肉"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791421801009211",
+                      "BatchDataId": "14724489942401604",
+                      "DishName": "養氣牛蒡雞湯",
+                      "DishType": "湯品",
+                      "DishId": "1790671610050458",
+                      "UpdateDateTime": "2026-10-08T01:10:01.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 2315,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2315//2315_1790671610050458."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791423580026264",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "1790671610050458",
+                          "IngredientId": "1791421905014526",
+                          "IngredientName": "牛蒡",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 325058,
+                          "SupplierCompanyId": "22486702",
+                          "SupplierName": "台中果菜運銷股份有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "保證責任雲林縣新安果菜生產合作社(雲林縣西螺鎮)",
+                          "IngredientQuantity": "2.15",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1204000039"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-122486702-00000-0",
+                          "fdacompany_Name": "台中果菜運銷股份有限公司",
+                          "fdabusinessId": "22486702",
+                          "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-122486702-00000-0",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區環中路一段2151號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-122486702-00001-1",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "牛蒡"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026265",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "1790671610050458",
+                          "IngredientId": "1791421905014527",
+                          "IngredientName": "冬瓜",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 325058,
+                          "SupplierCompanyId": "22486702",
+                          "SupplierName": "台中果菜運銷股份有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "林錦標",
+                          "IngredientQuantity": "4.3",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1101004232"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-122486702-00000-0",
+                          "fdacompany_Name": "台中果菜運銷股份有限公司",
+                          "fdabusinessId": "22486702",
+                          "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-122486702-00000-0",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區環中路一段2151號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-122486702-00001-1",
+                              "fdacompany_Name": "台中果菜運銷股份有限公司",
+                              "fdabusinessId": "22486702",
+                              "fdaaddress": "台中市西屯區港尾里8鄰中清路二段1558號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "冬瓜"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026272",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "1790671610050458",
+                          "IngredientId": "1791421905014531",
+                          "IngredientName": "香菇",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1053557,
+                          "SupplierCompanyId": "72324318",
+                          "SupplierName": "三發農產行",
+                          "ProductName": "",
+                          "Manufacturer": "傅春穎",
+                          "IngredientQuantity": "2.15",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "0401003009"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [],
+                          "standardIngredientName": "香菇"
+                        },
+                        {
+                          "IngredientBatchId": "1791423580026273",
+                          "BatchDataId": "14724489942401604",
+                          "DishId": "1790671610050458",
+                          "IngredientId": "1791421905014532",
+                          "IngredientName": "骨腿",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 2011554,
+                          "SupplierCompanyId": "89815838",
+                          "SupplierName": "耀陞食品股份有限公司",
+                          "ProductName": "",
+                          "Manufacturer": "耀陞食品股份有限公司",
+                          "IngredientQuantity": "6.45",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "019604"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-189815838-00000-9",
+                              "fdacompany_Name": "耀陞食品股份有限公司",
+                              "fdabusinessId": "89815838",
+                              "fdaaddress": "台中市大肚區營埔里營埔一街2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-189815838-00001-0",
+                              "fdacompany_Name": "耀陞食品股份有限公司",
+                              "fdabusinessId": "89815838",
+                              "fdaaddress": "台中市大肚區營埔里營埔一街2號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "骨腿"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791421801009212",
+                      "BatchDataId": "14724489942401604",
+                      "DishName": "調味料",
+                      "DishId": "40772",
+                      "UpdateDateTime": "2026-10-08T01:10:01.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 2315,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kitchen": {
+              "KitchenId": 2927,
+              "KitchenName": "臺中市西屯區重慶國小",
+              "KitchenType": "007",
+              "Address": "臺中巿西屯區重慶路358號",
+              "Tel": "0423123517",
+              "Fax": "0423123703",
+              "Nutritionist": "馮維亭",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "qualifier",
+              "Insurement": "insurement",
+              "PicturePath": "-",
+              "CompanyId": "B193645",
+              "Email": "cglunch@mail.cges.tc.edu.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": []
+            },
+            "details": []
+          }
+        ]
+      }
+    ]
+  }
+}

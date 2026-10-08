@@ -13,6 +13,11 @@ from .nutrition_standards import (
     load_nutrition_rules,
     public_rule_metadata,
 )
+from .school_dashboard import (
+    DEFAULT_SCHOOL_ID,
+    load_school_meal_catalog,
+    load_school_meal_dashboard,
+)
 
 
 PROTEIN_LABELS = {
@@ -33,6 +38,13 @@ TRACEABILITY_INGREDIENT_ALIASES = {
     "蚵仔白菜": ("蚵白菜", "小白菜履歷蚵白菜"),
     "金針菇": ("金菇",),
     "豬絞肉": ("絞肉",),
+    "豬大排": ("生鮮豬排",),
+    "五穀米": ("多穀米",),
+    "冷凍青花菜": ("青花菜",),
+    "冷凍花椰菜": ("白花椰",),
+    "茭白筍": ("筊白筍",),
+    "雞蛋": ("蛋",),
+    "綠豆芽": ("豆芽菜",),
     "鯊魚": ("沙魚", "沙魚丁"),
     "黑木耳": ("木耳",),
     "豬上肩肉": ("排骨", "排骨丁"),
@@ -288,6 +300,41 @@ def load_dashboard(
         "dateRange": {"start": days[0]["date"], "end": days[-1]["date"]},
         "totalDays": len(days),
     }
+
+
+def load_site_dashboard(
+    database_path: Path,
+    selected_date: str | None = None,
+    meal_type: str = "meat",
+    school_id: int = DEFAULT_SCHOOL_ID,
+) -> dict[str, Any]:
+    catalog = load_school_meal_catalog(database_path)
+    if int(school_id) != DEFAULT_SCHOOL_ID:
+        return load_school_meal_dashboard(
+            database_path,
+            int(school_id),
+            selected_date,
+            catalog=catalog,
+            meal_type=meal_type,
+        )
+
+    dashboard = load_dashboard(database_path, selected_date, meal_type)
+    school = next(
+        item
+        for item in catalog["schools"]
+        if int(item["fatraceSchoolId"]) == DEFAULT_SCHOOL_ID
+    )
+    dashboard.update(
+        {
+            "viewMode": "detailed",
+            "school": school,
+            "schoolDirectory": catalog["schools"],
+            "officialRecord": catalog["records"]
+            .get(str(DEFAULT_SCHOOL_ID), {})
+            .get(dashboard["selected"]["date"]),
+        }
+    )
+    return dashboard
 
 
 def _build_traceability(

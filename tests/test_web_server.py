@@ -93,6 +93,25 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertNotIn("document.title =", app_js)
         self.assertNotIn('id="recipeSourceDetails"', index_html)
 
+    def test_site_exposes_west_district_school_selector_and_official_mode(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
+        app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="schoolSelect"', index_html)
+        self.assertIn('id="districtSelect"', index_html)
+        self.assertIn('id="favoriteSchoolButton"', index_html)
+        self.assertIn('id="officialSourceLink"', index_html)
+        self.assertIn('src="./official-diet.js"', index_html)
+        self.assertIn("officialDashboardFromStatic", app_js)
+        self.assertIn("依官方菜名的「素」字拆分主菜與副菜", app_js)
+        self.assertIn("不等同素食認證", app_js)
+        self.assertIn("schoolId=", app_js)
+        self.assertIn("demeter-favorite-school-id", app_js)
+        self.assertIn("renderNoSchoolSelected", app_js)
+        self.assertIn("fetchSchoolDirectory", app_js)
+        self.assertIn("initialize();", app_js)
+
     def test_site_exposes_grade_and_standard_controls(self) -> None:
         index_html = (
             Path(__file__).resolve().parents[1] / "web" / "index.html"
@@ -116,12 +135,17 @@ class SiteLayoutTests(unittest.TestCase):
     def test_dish_detail_uses_staged_apple_style_motion(self) -> None:
         project_root = Path(__file__).resolve().parents[1]
         app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
+        index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
         styles = (project_root / "web" / "styles.css").read_text(encoding="utf-8")
 
         self.assertIn("DISH_DETAIL_MOTION_MS = 360", app_js)
         self.assertIn('classList.add("is-visible")', app_js)
+        self.assertIn('id="dishDetailDialog" tabindex="-1"', index_html)
+        self.assertIn("dishDetailDialog.focus({ preventScroll: true })", app_js)
         self.assertIn('addEventListener("cancel"', app_js)
         self.assertIn(".dish-detail-dialog.is-visible", styles)
+        self.assertIn(".dish-detail-dialog:focus { outline: none; }", styles)
+        self.assertIn(".dish-detail-close:focus-visible", styles)
         self.assertIn("cubic-bezier(.32,.72,0,1)", styles)
         self.assertIn("prefers-reduced-motion: reduce", styles)
 

@@ -26,7 +26,11 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.admin_actions import AdminActionRunner  # noqa: E402
 from src.admin_status import load_admin_status  # noqa: E402
-from src.dashboard import load_dashboard  # noqa: E402
+from src.dashboard import load_site_dashboard  # noqa: E402
+from src.school_dashboard import (  # noqa: E402
+    DEFAULT_SCHOOL_ID,
+    load_school_meal_catalog,
+)
 
 
 def load_menus(data_root: Path) -> dict[str, object]:
@@ -107,6 +111,20 @@ def make_handler(
         def do_GET(self) -> None:  # noqa: N802
             request = urlsplit(self.path)
             path = unquote(request.path)
+            if path == "/api/schools":
+                try:
+                    catalog = load_school_meal_catalog(database_path)
+                except (OSError, ValueError) as exc:
+                    LOGGER.exception("Unable to load school directory")
+                    self._send_json({"error": str(exc)}, status=500)
+                    return
+                self._send_json(
+                    {
+                        "schemaVersion": 1,
+                        "schools": catalog["schools"],
+                    }
+                )
+                return
             if path == "/api/admin/status":
                 if not self._is_loopback_client():
                     self._send_json({"error": "Local access only"}, status=403)
@@ -131,8 +149,16 @@ def make_handler(
                 selected_date = query.get("date", [None])[0]
                 meal_type = query.get("mealType", ["meat"])[0]
                 try:
-                    dashboard = load_dashboard(database_path, selected_date, meal_type)
-                except (OSError, ValueError) as exc:
+                    school_id = int(
+                        query.get("schoolId", [str(DEFAULT_SCHOOL_ID)])[0]
+                    )
+                    dashboard = load_site_dashboard(
+                        database_path,
+                        selected_date,
+                        meal_type,
+                        school_id,
+                    )
+                except (OSError, TypeError, ValueError) as exc:
                     LOGGER.exception("Unable to load dashboard")
                     self._send_json({"error": str(exc)}, status=500)
                     return

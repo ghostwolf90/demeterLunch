@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="忠信國小每日午餐、營養資料與食材溯源" />
+    <meta name="description" content="臺中市西區國小每日午餐、營養資料與食材溯源" />
     <meta name="theme-color" content="#f5f0e7" />
     <title>好好吃飯</title>
     <script>
@@ -18,7 +18,7 @@
     <header class="topbar">
       <a class="brand today-link" href="#today" aria-label="回到今日菜單">
         <span class="brand-mark" aria-hidden="true">好</span>
-        <span><strong>好好吃飯</strong><small>忠信國小午餐助手</small></span>
+        <span><strong>好好吃飯</strong><small id="brandSchoolLabel">西區國小午餐助手</small></span>
       </a>
       <nav aria-label="主要導覽">
         <a class="today-link" href="#today">今日</a><a href="#week">本週</a><a href="#traceability">溯源</a><a href="#standard">基準</a><a href="#insights">趨勢</a><a href="./news.html">午餐觀察</a>
@@ -32,7 +32,19 @@
       <section class="intro" id="today">
         <div class="intro-copy">
           <p class="eyebrow">TODAY'S SCHOOL LUNCH</p>
-          <div class="meal-type-switch" role="group" aria-label="選擇午餐餐別">
+          <div class="school-picker">
+            <div class="school-field">
+              <label for="districtSelect">行政區</label>
+              <select id="districtSelect" aria-label="選擇行政區"></select>
+            </div>
+            <div class="school-field">
+              <label for="schoolSelect">國小</label>
+              <select id="schoolSelect" aria-describedby="schoolDataScope"></select>
+            </div>
+            <button class="favorite-school-button" id="favoriteSchoolButton" type="button" disabled>☆ 設為我的最愛</button>
+            <span id="schoolDataScope">選擇學校</span>
+          </div>
+          <div class="meal-type-switch" id="mealTypeSwitch" role="group" aria-label="選擇午餐餐別">
             <button id="mealTypeMeat" type="button" aria-pressed="true">葷食</button>
             <button id="mealTypeVegetarian" type="button" aria-pressed="false">素食</button>
           </div>
@@ -55,24 +67,25 @@
 
       <p class="sr-only" id="selectionAnnouncement" aria-live="polite" aria-atomic="true"></p>
 
-      <section class="today-grid">
-        <article class="menu-board card">
-          <div class="card-heading"><div><p class="kicker">SELECTED PLATE</p><h2>午餐內容</h2></div><span class="review-badge">✓ 已校讀</span></div>
+      <section class="today-grid" id="todayGrid">
+        <article class="menu-board card" id="menuBoard">
+          <div class="card-heading"><div><p class="kicker" id="menuKicker">SELECTED PLATE</p><h2 id="menuHeading">午餐內容</h2></div><span class="review-badge" id="reviewBadge">✓ 已校讀</span></div>
           <button class="main-dish" id="mainDishButton" type="button"><span>這餐主角</span><strong id="mainDish">—</strong></button>
           <p class="dish-count" id="dishCount">—</p>
           <div class="meal-list" id="mealList"></div>
           <div class="allergen-row" id="allergenRow"></div>
           <button class="detail-menu-action" id="openDetail" type="button">查看每道菜的食材與用量原表</button>
+          <a class="official-source-action" id="officialSourceLink" target="_blank" rel="noreferrer" hidden>查看教育部當日公開頁 ↗</a>
           <p class="detail-menu-note" id="mealTypeNote">用量為供餐廠商的每人食譜設計值，不代表實際攝取量。</p>
         </article>
 
-        <article class="nutrition-card card">
+        <article class="nutrition-card card" id="nutritionCard">
           <div class="card-heading"><div><p class="kicker">NUTRITION SNAPSHOT</p><h2>營養快照</h2></div><div class="calorie-orb"><strong id="calories">—</strong><span>kcal</span></div></div>
           <div class="nutrition-bars" id="nutritionBars"></div>
           <p class="source-note">份數與熱量照學校公布的營養分析登錄。</p>
         </article>
 
-        <article class="dinner-card card">
+        <article class="dinner-card card" id="dinnerCard">
           <div class="card-heading"><div><p class="kicker">DINNER IDEA</p><h2 id="dinnerTitle">這天晚餐，換個主角</h2></div></div>
           <div class="dinner-picks" id="dinnerPicks"></div>
           <p class="dinner-reason" id="dinnerReason"></p><ul id="dinnerNotes"></ul>
@@ -84,7 +97,7 @@
       <section class="traceability-section section" id="traceability">
         <article class="traceability-card card">
           <div class="card-heading">
-            <div><p class="kicker">SOURCE TO PLATE</p><h2>今日供餐食材追溯</h2></div>
+            <div><p class="kicker" id="traceabilityKicker">SOURCE TO PLATE</p><h2 id="traceabilityHeading">今日供餐食材追溯</h2></div>
             <span class="traceability-status" id="traceabilityStatus">讀取中</span>
           </div>
           <div class="traceability-intro">
@@ -219,7 +232,7 @@
       <section class="empty-state card" id="errorState" hidden><h2>暫時讀不到菜單</h2><p id="errorMessage"></p></section>
     </main>
 
-    <footer><strong>好好吃飯</strong><span>資料來源：忠信國小午餐網 · 僅供家庭餐食規劃參考</span></footer>
+    <footer><strong>好好吃飯</strong><span id="footerSource">資料來源：忠信國小午餐網 · 僅供家庭餐食規劃參考</span></footer>
 
     <nav class="mobile-nav" aria-label="手機版主要導覽">
       <a class="today-link" href="#today"><span aria-hidden="true">●</span>今日</a>
@@ -260,6 +273,7 @@
     </dialog>
     <script src="./date-context.js" defer></script>
     <script src="./number-format.js" defer></script>
-    <script src="./app.js" defer></script>
+    <script src="./official-diet.js" defer></script>
+    <script src="./app.js?v=20261008-labels" defer></script>
   </body>
 </html>
