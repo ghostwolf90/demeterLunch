@@ -977,6 +977,7 @@ function setViewMode(mode, { showOfficialMealTypes = false } = {}) {
   refs.menuKicker.textContent = official ? "OFFICIAL DAILY RECORD" : "SELECTED PLATE";
   refs.menuHeading.textContent = official ? "當日供餐紀錄" : "午餐內容";
   refs.reviewBadge.textContent = official ? "✓ 官方公開紀錄" : "✓ 已校讀";
+  refs.mainDishButton.firstElementChild.textContent = official ? "主菜" : "這餐主角";
   refs.traceabilityKicker.textContent = official ? "OFFICIAL INGREDIENT RECORD" : "SOURCE TO PLATE";
   refs.traceabilityHeading.textContent = official ? "教育部公開食材紀錄" : "今日供餐食材追溯";
   for (const link of document.querySelectorAll('a[href="#week"], a[href="#traceability"]')) {
@@ -1026,13 +1027,16 @@ function officialDishes(record, mealType = null) {
     }));
 }
 
+function officialMainDish(dishes) {
+  return dishes.find((dish) => dish.category === "主菜") || dishes[0] || null;
+}
+
 function renderOfficialMeal(dashboard) {
   const record = dashboard.record;
   const profile = OfficialDiet.profile(record);
   const dishes = officialDishes(record, profile.hasVariants ? state.mealType : null);
   const summary = OfficialDiet.summary(dishes);
-  const mainIndex = dishes.findIndex((dish) => dish.category === "主菜");
-  const heroIndex = mainIndex >= 0 ? mainIndex : 0;
+  const heroIndex = Math.max(0, dishes.indexOf(officialMainDish(dishes)));
   const heroDish = dishes[heroIndex];
   state.dishDetails = dishes;
   state.activeDishIndex = -1;
@@ -1179,6 +1183,8 @@ function renderOfficialWeek(dashboard) {
     const record = dashboard.records?.[date] || (date === dashboard.selectedDate ? dashboard.record : null);
     const profile = OfficialDiet.profile(record);
     const dishes = officialDishes(record, profile.hasVariants ? state.mealType : null);
+    const mainDish = officialMainDish(dishes);
+    const supportingDishes = dishes.filter((dish) => dish !== mainDish);
     const button = node("button", "day-card");
     button.type = "button";
     button.dataset.date = date;
@@ -1190,9 +1196,10 @@ function renderOfficialWeek(dashboard) {
     dateLine.append(node("span", "", weekday), node("strong", "", date.slice(-2)));
     button.append(
       dateLine,
-      node("h3", "", dishes[0]?.name || "無供餐紀錄"),
+      node("span", "day-dish-role", mainDish ? "主菜" : "供餐紀錄"),
+      node("h3", "", mainDish?.name || "無供餐紀錄"),
       node("span", "day-traceability verified", `${dishes.length} 道官方菜色`),
-      node("p", "", dishes.slice(1, 4).map((dish) => dish.name).join(" · ") || "—"),
+      node("p", "", supportingDishes.slice(0, 3).map((dish) => dish.name).join(" · ") || "—"),
     );
     button.addEventListener("click", () => loadDashboard(date, { announce: true, focusWeekDay: true }));
     refs.weekDays.append(button);

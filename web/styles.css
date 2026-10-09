@@ -153,7 +153,11 @@ button.meal-item:focus-visible { outline: 3px solid rgba(238,117,78,.26); outlin
 body[data-view-mode="official"] .today-grid { grid-template-columns: minmax(0, 1fr); }
 body[data-view-mode="official"] .official-menu-board { max-width: none; }
 body[data-view-mode="official"] .official-menu-board .meal-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-body[data-view-mode="official"] .official-menu-board .main-dish { max-width: 760px; }
+body[data-view-mode="official"] .official-menu-board .main-dish { max-width: 760px; min-height: 112px; padding: 22px 25px; display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: center; column-gap: 23px; transform: none; }
+body[data-view-mode="official"] .official-menu-board .main-dish:hover { transform: translateY(-2px); }
+body[data-view-mode="official"] .official-menu-board .main-dish:active { transform: scale(.985); }
+body[data-view-mode="official"] .official-menu-board .main-dish:disabled:hover { transform: none; }
+body[data-view-mode="official"] .official-menu-board .main-dish span { margin: 0; padding-right: 22px; border-right: 1px solid rgba(255,255,255,.34); }
 
 .traceability-card { padding: 28px; box-shadow: none; }
 .traceability-card .card-heading { align-items: center; }
@@ -320,6 +324,7 @@ body[data-view-mode="official"] .official-menu-board .main-dish { max-width: 760
 .day-card[aria-current="true"] { color: var(--white); border-color: var(--orange); background: var(--orange); box-shadow: 8px 9px 0 rgba(238,117,78,.18); }
 .day-date { display: flex; justify-content: space-between; align-items: center; margin-bottom: 27px; font-size: 11px; letter-spacing: .05em; opacity: .9; }
 .day-date strong { font-family: Georgia, serif; font-size: 29px; line-height: 1; }
+.day-dish-role { display: block; margin: -11px 0 7px; font-size: 10px; font-weight: 800; letter-spacing: .13em; opacity: .72; }
 .day-card h3 { min-height: 48px; margin: 0 0 16px; font-size: 17px; line-height: 1.4; }
 .day-traceability { width: fit-content; margin: -4px 0 12px; padding: 5px 8px; display: block; border-radius: 999px; font-size: 11px; font-weight: 750; }
 .day-traceability.verified { color: #306852; background: rgba(93,147,125,.15); }
@@ -511,6 +516,8 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   .today-grid, .family-grid, .insight-grid, .source-section, .news-preview-grid { grid-template-columns: minmax(0, 1fr); }
   .today-grid { gap: 12px; }
   body[data-view-mode="official"] .official-menu-board .meal-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body[data-view-mode="official"] .official-menu-board .main-dish { min-height: 0; padding: 17px; display: block; }
+  body[data-view-mode="official"] .official-menu-board .main-dish span { margin-bottom: 4px; padding-right: 0; border-right: 0; }
   .dinner-card { grid-column: auto; }
   .card { border-radius: 22px; box-shadow: 0 12px 35px rgba(47,54,56,.09); }
   .today-grid > article, .chart-card { padding: 20px; }

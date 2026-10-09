@@ -10,9 +10,10 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Iterable
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 from .http_client import HttpClient, RequestError
 
@@ -62,6 +63,7 @@ class NewsSource:
     source_type: str
     priority: int
     local: bool = False
+    fallback_url: str | None = None
 
 
 SOURCES = (
@@ -72,6 +74,7 @@ SOURCES = (
         source_type="官方公告",
         priority=4,
         local=True,
+        fallback_url="https://www.taichung.gov.tw/9962/Lpsimplelist",
     ),
     NewsSource(
         id="moe",
@@ -125,10 +128,49 @@ def fetch_news(
                 accept="application/rss+xml, application/atom+xml, application/xml, text/xml, */*;q=0.5",
             )
             parsed = parse_feed(response.data, source)
+            if not parsed:
+                raise ValueError("新聞動態沒有可讀條目")
             candidates.extend(parsed)
-            statuses.append({"id": source.id, "status": "ok", "items": str(len(parsed))})
-        except (RequestError, ET.ParseError, ValueError) as exc:
-            statuses.append({"id": source.id, "status": "failed", "error": str(exc)})
+            statuses.append(
+                {
+                    "id": source.id,
+                    "status": "ok",
+                    "items": str(len(parsed)),
+                    "format": "feed",
+                }
+            )
+        except (RequestError, ET.ParseError, ValueError) as feed_exc:
+            if not source.fallback_url:
+                statuses.append(
+                    {"id": source.id, "status": "failed", "error": str(feed_exc)}
+                )
+                continue
+            try:
+                response = client.get(
+                    source.fallback_url,
+                    max_bytes=2_000_000,
+                    accept="text/html, application/xhtml+xml;q=0.9, */*;q=0.5",
+                )
+                parsed = parse_news_list(response.text(), source, response.url)
+                if not parsed:
+                    raise ValueError("新聞列表沒有可讀條目")
+                candidates.extend(parsed)
+                statuses.append(
+                    {
+                        "id": source.id,
+                        "status": "ok",
+                        "items": str(len(parsed)),
+                        "format": "html-fallback",
+                    }
+                )
+            except (RequestError, ValueError) as html_exc:
+                statuses.append(
+                    {
+                        "id": source.id,
+                        "status": "failed",
+                        "error": f"feed: {feed_exc}; html: {html_exc}",
+                    }
+                )
 
     if not any(status["status"] == "ok" for status in statuses):
         raise RuntimeError("所有新聞來源目前都無法讀取")
@@ -185,23 +227,105 @@ def parse_feed(payload: bytes, source: NewsSource) -> list[dict[str, Any]]:
         published_at = parse_datetime(published)
         if not title or not url or published_at is None:
             continue
-        clean_title = clean_text(title)
-        canonical_url = canonicalize_url(url)
         items.append(
-            {
-                "id": hashlib.sha256(canonical_url.encode("utf-8")).hexdigest()[:16],
-                "title": clean_title,
-                "url": canonical_url,
-                "publishedAt": published_at.isoformat().replace("+00:00", "Z"),
-                "source": source.name,
-                "sourceId": source.id,
-                "sourceType": source.source_type,
-                "sourcePriority": source.priority,
-                "isLocal": source.local or any(term in clean_title for term in LOCAL_TERMS),
-                "summary": clean_text(summary),
-            }
+            build_source_item(title, url, published_at.isoformat(), source, summary)
         )
     return items
+
+
+def parse_news_list(
+    payload: str, source: NewsSource, base_url: str
+) -> list[dict[str, Any]]:
+    parser = TaichungNewsListParser(base_url)
+    parser.feed(payload)
+    parser.close()
+    return [
+        build_source_item(row["title"], row["url"], row["date"], source)
+        for row in parser.rows
+    ]
+
+
+def build_source_item(
+    title: str, url: str, published: str, source: NewsSource, summary: str = ""
+) -> dict[str, Any]:
+    published_at = parse_datetime(published)
+    if published_at is None:
+        raise ValueError(f"無法辨識新聞日期: {published}")
+    clean_title = clean_text(title)
+    canonical_url = canonicalize_url(url)
+    return {
+        "id": hashlib.sha256(canonical_url.encode("utf-8")).hexdigest()[:16],
+        "title": clean_title,
+        "url": canonical_url,
+        "publishedAt": published_at.isoformat().replace("+00:00", "Z"),
+        "source": source.name,
+        "sourceId": source.id,
+        "sourceType": source.source_type,
+        "sourcePriority": source.priority,
+        "isLocal": source.local or any(term in clean_title for term in LOCAL_TERMS),
+        "summary": clean_text(summary),
+    }
+
+
+class TaichungNewsListParser(HTMLParser):
+    def __init__(self, base_url: str) -> None:
+        super().__init__(convert_charrefs=True)
+        self.base_url = base_url
+        self.base_host = urlsplit(base_url).netloc.lower()
+        self.rows: list[dict[str, str]] = []
+        self._list_section_depth = 0
+        self._row: dict[str, str] | None = None
+        self._anchor_text: list[str] | None = None
+        self._time_text: list[str] | None = None
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        attributes = dict(attrs)
+        if tag == "section":
+            classes = (attributes.get("class") or "").split()
+            if self._list_section_depth or "listTable" in classes:
+                self._list_section_depth += 1
+            return
+        if not self._list_section_depth:
+            return
+        if tag == "tr":
+            self._row = {}
+        elif tag == "a" and self._row is not None:
+            href = (attributes.get("href") or "").strip()
+            resolved = urljoin(self.base_url, href)
+            if href and urlsplit(resolved).netloc.lower() == self.base_host:
+                self._row["url"] = resolved
+                self._anchor_text = []
+        elif tag == "time" and self._row is not None:
+            self._time_text = []
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "section" and self._list_section_depth:
+            self._list_section_depth -= 1
+            return
+        if not self._list_section_depth:
+            return
+        if tag == "a" and self._anchor_text is not None:
+            if self._row is not None:
+                self._row["title"] = clean_text("".join(self._anchor_text))
+            self._anchor_text = None
+        elif tag == "time" and self._time_text is not None:
+            if self._row is not None:
+                self._row["date"] = clean_text("".join(self._time_text))
+            self._time_text = None
+        elif tag == "tr" and self._row is not None:
+            if all(self._row.get(key) for key in ("title", "url", "date")):
+                self.rows.append(self._row)
+            self._row = None
+            self._anchor_text = None
+            self._time_text = None
+
+    def handle_data(self, data: str) -> None:
+        if self._anchor_text is not None:
+            self._anchor_text.append(data)
+        if self._time_text is not None:
+            self._time_text.append(data)
 
 
 def relevance_score(title: str, summary: str) -> int:
@@ -217,6 +341,12 @@ def relevance_score(title: str, summary: str) -> int:
 
 
 def classify_category(title: str, summary: str) -> str:
+    if any(term in title for term in FOOD_SAFETY_TERMS):
+        return "食安與供應"
+    if any(term in title for term in EDUCATION_TERMS):
+        return "食育現場"
+    if any(term in title for term in POLICY_TERMS):
+        return "營養與政策"
     text = f"{title} {summary}"
     if any(term in text for term in FOOD_SAFETY_TERMS):
         return "食安與供應"
