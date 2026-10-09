@@ -25,7 +25,7 @@ def load_school_meal_catalog(database_path: Path) -> dict[str, Any]:
             FROM schools s
             LEFT JOIN official_meal_days d ON d.school_id = s.id
             GROUP BY s.id
-            ORDER BY s.city, s.district, s.display_order, s.id
+            ORDER BY s.city, s.display_order, s.id
             """
         ).fetchall()
         days = connection.execute(

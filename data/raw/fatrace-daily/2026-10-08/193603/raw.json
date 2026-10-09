@@ -1,0 +1,1088 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "東區",
+    "level": "國小",
+    "name": "大智國小",
+    "fullName": "臺中市東區大智國小",
+    "fatraceSchoolId": 193603
+  },
+  "mealDate": "2026-10-08",
+  "fetchedAt": "2026-10-09T07:20:14.835156+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=193603&period=2026-10-08",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 193603,
+        "SchoolName": "臺中市東區大智國小",
+        "ConuntyId": 27,
+        "AreaId": 131469,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 2388,
+          "KitchenName": "臺中市東區大智國小",
+          "KitchenType": "006",
+          "Address": "臺中市東區大智路359號",
+          "Tel": "04-22825683*725",
+          "Fax": "04-22830705",
+          "Nutritionist": "大智國小午餐秘書歐博仁/營養師王儷穎",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "健康吃健康動",
+          "PicturePath": "-",
+          "CompanyId": "B193603",
+          "Email": "dzeslunch@ms1.dzes.tc.edu.tw",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 2388,
+              "KitchenName": "臺中市東區大智國小",
+              "KitchenType": "006",
+              "Address": "臺中市東區大智路359號",
+              "Tel": "04-22825683*725",
+              "Fax": "04-22830705",
+              "Nutritionist": "大智國小午餐秘書歐博仁/營養師王儷穎",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "健康吃健康動",
+              "PicturePath": "-",
+              "CompanyId": "B193603",
+              "Email": "dzeslunch@ms1.dzes.tc.edu.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1791418515087291",
+                  "KitchenId": 2388,
+                  "KitchenName": "臺中市東區大智國小",
+                  "SchoolId": 193603,
+                  "SchoolCode": "193603",
+                  "SchoolName": "臺中市東區大智國小",
+                  "MenuDate": "2026/10/08",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-08T00:19:25.000Z",
+                  "TypeGrains": "3.4",
+                  "TypeOil": "2.5",
+                  "TypeVegetable": "1.4",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2",
+                  "Calorie": "525"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1791418515087291",
+                  "KitchenId": 2388,
+                  "KitchenName": "臺中市東區大智國小",
+                  "SchoolId": 193603,
+                  "SchoolCode": "193603",
+                  "SchoolName": "臺中市東區大智國小",
+                  "MenuDate": "2026/10/08",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-08T00:19:25.000Z",
+                  "TypeGrains": "3.4",
+                  "TypeOil": "2.5",
+                  "TypeVegetable": "1.4",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2",
+                  "Calorie": "525"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791418765083175",
+                      "BatchDataId": "1791418515087291",
+                      "DishName": "健康飯",
+                      "DishType": "主食",
+                      "DishId": "1788138921087339",
+                      "UpdateDateTime": "2026-10-08T00:19:25.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 2388,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2388//2388_1788138921087339.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791419630091116",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1788138921087339",
+                          "IngredientId": "1788144550008293",
+                          "IngredientName": "糙米",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": "2026-09-23T16:00:00.000Z",
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "糙米",
+                          "Manufacturer": "李萬春",
+                          "IngredientQuantity": "10.5781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "2609240210701163"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "糙米"
+                        },
+                        {
+                          "IngredientBatchId": "1791419630091117",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1788138921087339",
+                          "IngredientId": "1788144550008294",
+                          "IngredientName": "白米",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": "2026-08-26T16:00:00.000Z",
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "白米",
+                          "Manufacturer": "臺中市霧峰區農會",
+                          "IngredientQuantity": "44.0754",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣有機農產品",
+                              "CertificationId": "1-006-101693"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "白米"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791418765083178",
+                      "BatchDataId": "1791418515087291",
+                      "DishName": "醬燒大排",
+                      "DishType": "主菜",
+                      "DishId": "1715557690017083",
+                      "UpdateDateTime": "2026-10-08T00:19:25.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 2388,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2388//2388_1715557690017083."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791419630091127",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1715557690017083",
+                          "IngredientId": "1715819910021355",
+                          "IngredientName": "醬燒大排",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": "2027-06-15T16:00:00.000Z",
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "醬燒大排",
+                          "Manufacturer": "強匠冷凍食品股份有限公司",
+                          "IngredientQuantity": "47.6014",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "024611"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "醬燒大排"
+                        },
+                        {
+                          "IngredientBatchId": "1791419630091126",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1715557690017083",
+                          "IngredientId": "1715819910021355",
+                          "IngredientName": "醬燒大排",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": "2027-06-29T16:00:00.000Z",
+                          "LotNumber": "2",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "醬燒大排",
+                          "Manufacturer": "強匠冷凍食品股份有限公司",
+                          "IngredientQuantity": "42.3124",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "024611"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "醬燒大排"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791418765083177",
+                      "BatchDataId": "1791418515087291",
+                      "DishName": "小瓜甜條",
+                      "DishType": "副菜",
+                      "DishId": "1725521062086590",
+                      "UpdateDateTime": "2026-10-08T00:19:25.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 2388,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2388//2388_1725521062086590.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791419630091121",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1725521062086590",
+                          "IngredientId": "1726099214089050",
+                          "IngredientName": "胡蘿蔔",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "胡蘿蔔",
+                          "Manufacturer": "廖宏洲",
+                          "IngredientQuantity": "5.289",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "2610080041200028"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "胡蘿蔔"
+                        },
+                        {
+                          "IngredientBatchId": "1791419630091122",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1725521062086590",
+                          "IngredientId": "1726099214089051",
+                          "IngredientName": "杏鮑菇",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": "2026-10-06T16:00:00.000Z",
+                          "ExpirationDate": "2026-10-09T16:00:00.000Z",
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "杏鮑菇",
+                          "Manufacturer": "莊明學",
+                          "IngredientQuantity": "7.9336",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1001004339"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "杏鮑菇"
+                        },
+                        {
+                          "IngredientBatchId": "1791419630091120",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1725521062086590",
+                          "IngredientId": "1726099214089053",
+                          "IngredientName": "花胡瓜",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "花胡瓜",
+                          "Manufacturer": "李樹華",
+                          "IngredientQuantity": "35.2603",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1201003539"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "花胡瓜"
+                        },
+                        {
+                          "IngredientBatchId": "1791419630091119",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1725521062086590",
+                          "IngredientId": "1791419630091115",
+                          "IngredientName": "天婦羅",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": "2026-08-11T16:00:00.000Z",
+                          "ExpirationDate": "2027-08-10T16:00:00.000Z",
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "天婦羅",
+                          "Manufacturer": "品豐國際企業有限公司",
+                          "IngredientQuantity": "10.5781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源水產品",
+                              "CertificationId": "0316600001"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "天婦羅"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791418765083174",
+                      "BatchDataId": "1791418515087291",
+                      "DishName": "季節時蔬",
+                      "DishType": "蔬菜",
+                      "DishId": "1788138921087342",
+                      "UpdateDateTime": "2026-10-08T00:19:25.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 2388,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2388//2388_1788138921087342.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791419630091118",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1788138921087342",
+                          "IngredientId": "1791419630091114",
+                          "IngredientName": "福山萵苣",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "福山萵苣",
+                          "Manufacturer": "林佳錦",
+                          "IngredientQuantity": "66.1131",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "2610060331903311"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "福山萵苣"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791418765083176",
+                      "BatchDataId": "1791418515087291",
+                      "DishName": "山藥雞湯",
+                      "DishType": "湯品",
+                      "DishId": "1714951099006315",
+                      "UpdateDateTime": "2026-10-08T00:19:25.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 2388,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2388//2388_1714951099006315."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791419630091123",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1714951099006315",
+                          "IngredientId": "1714953670008714",
+                          "IngredientName": "香菇",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": "2026-10-06T16:00:00.000Z",
+                          "ExpirationDate": "2026-10-09T16:00:00.000Z",
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "香菇",
+                          "Manufacturer": "范家豪",
+                          "IngredientQuantity": "7.9336",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1101000625"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "香菇"
+                        },
+                        {
+                          "IngredientBatchId": "1791419630091125",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1714951099006315",
+                          "IngredientId": "1714953670008715",
+                          "IngredientName": "山藥",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": "2026-10-10T16:00:00.000Z",
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "山藥",
+                          "Manufacturer": "雲林縣義庄合作農場",
+                          "IngredientQuantity": "13.2226",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1203000010"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "山藥"
+                        },
+                        {
+                          "IngredientBatchId": "1791419630091124",
+                          "BatchDataId": "1791418515087291",
+                          "DishId": "1714951099006315",
+                          "IngredientId": "1714953670008716",
+                          "IngredientName": "骨腿",
+                          "StockDate": "2026-10-07T16:00:00.000Z",
+                          "ManufactureDate": "2026-10-05T16:00:00.000Z",
+                          "ExpirationDate": "2026-10-10T16:00:00.000Z",
+                          "LotNumber": "1",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1841637,
+                          "SupplierCompanyId": "16728409",
+                          "SupplierName": "怡饗美食股份有限公司",
+                          "ProductName": "骨腿",
+                          "Manufacturer": "台灣卜蜂企業股份有限公司",
+                          "IngredientQuantity": "13.2226",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "011603"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-116728409-00000-6",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00001-7",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區協和里工業區十路11之1號",
+                              "fdaregType": "工廠/製造場所"
+                            },
+                            {
+                              "fdaCompanyId": "B-116728409-00003-9",
+                              "fdacompany_Name": "怡饗美食股份有限公司",
+                              "fdabusinessId": "16728409",
+                              "fdaaddress": "台中市西屯區工業區十路11號之1",
+                              "fdaregType": "餐飲場所"
+                            }
+                          ],
+                          "standardIngredientName": "骨腿"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

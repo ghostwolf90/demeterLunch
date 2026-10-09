@@ -62,14 +62,16 @@ class TaichungSchoolRegistryTests(unittest.TestCase):
         }
         self.assertEqual(citywide_west, existing_west)
 
-    def test_active_registry_contains_three_published_districts(self) -> None:
+    def test_active_registry_contains_all_published_districts(self) -> None:
         schools = load_school_registry(ACTIVE_REGISTRY)
+        full_schools = load_school_registry(FULL_REGISTRY)
 
-        self.assertEqual(len(schools), 27)
-        self.assertEqual(
-            {school.district for school in schools},
-            {"東區", "西區", "西屯區"},
-        )
+        self.assertEqual(len(schools), 243)
+        self.assertEqual(len({school.district for school in schools}), 29)
+        full_ids = {school.fatrace_school_id for school in full_schools}
+        active_ids = {school.fatrace_school_id for school in schools}
+        self.assertEqual(active_ids - full_ids, {64743078})
+        self.assertTrue(full_ids.issubset(active_ids))
         self.assertEqual(
             sum(school.district == "西區" for school in schools),
             6,
@@ -82,6 +84,16 @@ class TaichungSchoolRegistryTests(unittest.TestCase):
             sum(school.district == "東區" for school in schools),
             6,
         )
+        self.assertEqual(
+            sum(school.district == "南區" for school in schools),
+            6,
+        )
+        mingde = next(
+            school for school in schools if school.fatrace_school_id == 64743078
+        )
+        self.assertEqual(mingde.district, "南區")
+        self.assertEqual(mingde.level, "高中附設國小")
+        self.assertEqual(mingde.name, "私立明德高中附設國小")
         self.assertIn(
             (64742519, "私立麗喆國(中)小"),
             {(school.fatrace_school_id, school.name) for school in schools},

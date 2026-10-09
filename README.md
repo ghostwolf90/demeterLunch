@@ -175,9 +175,9 @@ http://127.0.0.1:8000/admin/
 
 後台的「下載並整合」按鈕可手動執行與每月排程相同的本機流程。按下後會要求確認，再依序下載、驗證、整合、重建 SQLite、執行測試並重建 `dist/`；執行期間不可重複啟動。若官方資料尚未發布或更新失敗，既有有效資料會保留。公開 Site 的部署需要短效雲端憑證，因此不由本機網頁保存或直接執行；後台可複製一段發布請求，交由 Codex 讀取線上最新 Site 原始碼後安全發布。
 
-## 西區六校每日公開紀錄
+## 多校每日公開紀錄
 
-`scripts/fetch_school_meals.py` 會依 `data/reference/taichung-active-elementary-schools.json` 的教育部查詢代碼，從校園食材登錄平臺公開頁面使用的唯讀接口，依序收集目前啟用的西區、西屯區與東區國小當日或歷史實際供餐紀錄：
+`scripts/fetch_school_meals.py` 會依 `data/reference/taichung-active-elementary-schools.json` 的教育部查詢代碼，從校園食材登錄平臺公開頁面使用的唯讀接口，依序收集臺中市 29 個行政區、243 所國小的當日或歷史實際供餐紀錄：
 
 ```bash
 python3 scripts/fetch_school_meals.py --date 2026-10-08 --district 西區
@@ -209,7 +209,7 @@ python3 scripts/build_static_site.py
 
 只有 `available` 或官方明確標示的 `no_meal` 才能晉升。流程會核對學校代碼、完整校名、來源網址日期、供餐批次、菜色、食材、內容雜湊與校讀資訊；`not_published` 不會進入公開資料。reviewed JSON 保存於 `data/parsed/schools/fatrace/<fatraceSchoolId>/YYYY-MM-DD.json`，並作為 SQLite 與靜態網站的來源真相。
 
-SQLite 會把啟用學校的名冊、供餐日、餐次、菜色、食材與認證拆成關聯資料表；公開網站則提供可擴充的行政區與學校選單。`data/reference/taichung-elementary-schools.json` 保存教育部公開清單中的臺中市 29 個行政區、242 所國小及 School ID，`data/reference/taichung-elementary-schools.md` 則提供方便人工檢查的行政區清單；兩份資料均以一次行政區查詢與一次全市國小名冊查詢整理，沒有逐號掃描 School ID。`data/reference/taichung-active-elementary-schools.json` 是網站目前啟用的子集，包含西區 6 所、西屯區 15 所與東區 6 所國小。使用者可把一間學校設為「我的最愛」並保存在自己的瀏覽器；下次進站只會優先讀取那間學校。沒有設定最愛時，網站停在選校畫面，不會先讀取任何學校的午餐資料。忠信國小保留校方週菜單、營養分析、葷素餐與家庭晚餐建議等完整體驗；其餘學校目前顯示教育部同日實際供餐公開紀錄。當同日紀錄同時包含一個有「素」字與一個沒有「素」字的主菜時，網站會開放葷食／素食切換：主菜、副菜依名稱的「素」字分組，主食、蔬菜、湯品與附餐列為共用。這只是方便閱讀的菜名分組，不等同素食認證，仍須以官方食材明細判斷內容。指定日期沒有紀錄時不會退回較早日期冒充今天。
+SQLite 會把啟用學校的名冊、供餐日、餐次、菜色、食材與認證拆成關聯資料表；公開網站則提供可擴充的行政區與學校選單。`data/reference/taichung-elementary-schools.json` 保存教育部公開清單中的臺中市 29 個行政區、242 所國小及 School ID，`data/reference/taichung-elementary-schools.md` 則提供方便人工檢查的行政區清單；兩份資料均以一次行政區查詢與一次全市國小名冊查詢整理，沒有逐號掃描 School ID。`data/reference/taichung-active-elementary-schools.json` 是網站目前啟用的名冊，另納入教育部分類為「高中職／五專」的臺中市南區私立明德高中附設國小，因此共涵蓋 29 個行政區、243 所學校。使用者可把一間學校設為「我的最愛」並保存在自己的瀏覽器；下次進站只會優先讀取那間學校。沒有設定最愛時，網站停在選校畫面，不會先讀取任何學校的午餐資料。忠信國小保留校方週菜單、營養分析、葷素餐與家庭晚餐建議等完整體驗；其餘學校目前顯示教育部同日實際供餐公開紀錄。當同日紀錄同時包含一個有「素」字與一個沒有「素」字的主菜時，網站會開放葷食／素食切換：主菜、副菜依名稱的「素」字分組，主食、蔬菜、湯品與附餐列為共用。這只是方便閱讀的菜名分組，不等同素食認證，仍須以官方食材明細判斷內容。指定日期沒有紀錄時不會退回較早日期冒充今天。
 
 平常可用一條指令完成收集、校讀、資料庫重建、測試、JavaScript 檢查與靜態網站重建：
 

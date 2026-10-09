@@ -46,7 +46,7 @@ class ReviewedSchoolMealTests(unittest.TestCase):
             row["fatraceSchoolId"] for row in registry["schools"]
         }
 
-        self.assertEqual(len(records), 21)
+        self.assertEqual(len(records), 243)
         self.assertEqual(
             {record["school"]["fatraceSchoolId"] for record in records},
             expected_ids,
@@ -98,12 +98,12 @@ class ReviewedSchoolMealTests(unittest.TestCase):
                 )
             }
 
-        self.assertEqual(counts["schools"], 21)
-        self.assertEqual(counts["official_meal_days"], 21)
-        self.assertEqual(counts["official_meals"], 22)
-        self.assertEqual(counts["official_dishes"], 169)
-        self.assertEqual(counts["official_ingredients"], 445)
-        self.assertEqual(counts["official_ingredient_certifications"], 326)
+        self.assertEqual(counts["schools"], 243)
+        self.assertEqual(counts["official_meal_days"], 243)
+        self.assertEqual(counts["official_meals"], 306)
+        self.assertEqual(counts["official_dishes"], 2033)
+        self.assertEqual(counts["official_ingredients"], 5382)
+        self.assertEqual(counts["official_ingredient_certifications"], 3936)
 
     def test_official_dashboard_never_falls_back_to_an_earlier_day(self) -> None:
         available = load_school_meal_dashboard(DATABASE, 193608, "2026-10-08")
@@ -133,7 +133,8 @@ class ReviewedSchoolMealTests(unittest.TestCase):
         dashboard = load_site_dashboard(DATABASE, "2026-10-08", "meat", 193609)
 
         self.assertEqual(catalog["defaultSchoolId"], 193609)
-        self.assertEqual(len(catalog["schools"]), 21)
+        self.assertEqual(len(catalog["schools"]), 243)
+        self.assertEqual(catalog["schools"][0]["district"], "西區")
         self.assertEqual(dashboard["viewMode"], "detailed")
         self.assertEqual(dashboard["school"]["name"], "忠信國小")
         self.assertEqual(dashboard["officialRecord"]["summary"]["dishCount"], 8)

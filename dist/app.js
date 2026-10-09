@@ -407,6 +407,7 @@ function openDishDetail(index, trigger) {
   window.cancelAnimationFrame(state.dishDetailOpenFrame);
   refs.dishDetailDialog.classList.remove("is-visible", "is-closing");
   refs.dishDetailDialog.showModal();
+  refs.dishDetailDialog.focus({ preventScroll: true });
   refs.dishDetailDialog.getBoundingClientRect();
   state.dishDetailOpenFrame = window.requestAnimationFrame(() => {
     state.dishDetailOpenFrame = 0;
