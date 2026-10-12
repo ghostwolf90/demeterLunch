@@ -20,7 +20,7 @@ def _run(command: list[str]) -> int:
     return result.returncode
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Collect, review and optionally rebuild the active school-meal site."
     )
@@ -29,8 +29,14 @@ def main() -> int:
         type=date.fromisoformat,
         default=datetime.now(TAIPEI).date(),
     )
-    parser.add_argument("--school", action="append", default=[])
-    parser.add_argument("--district", default="西區")
+    scope = parser.add_mutually_exclusive_group()
+    scope.add_argument("--school", action="append", default=[])
+    scope.add_argument("--district", default="西區")
+    scope.add_argument(
+        "--all-schools",
+        action="store_true",
+        help="收集啟用名冊中的所有學校，不套用預設的西區篩選",
+    )
     parser.add_argument(
         "--registry",
         type=Path,
@@ -43,11 +49,16 @@ def main() -> int:
     parser.add_argument("--interval", type=float, default=1.2)
     parser.add_argument("--retries", type=int, default=2)
     parser.add_argument(
+        "--skip-ingredients",
+        action="store_true",
+        help="只收集菜色，不逐道查詢食材",
+    )
+    parser.add_argument(
         "--verify-and-build",
         action="store_true",
         help="完成後重建 SQLite、執行測試、檢查 JavaScript 並重建 dist",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     fetch = [
         sys.executable,
@@ -56,8 +67,6 @@ def main() -> int:
         args.date.isoformat(),
         "--registry",
         str(args.registry),
-        "--district",
-        args.district,
         "--timeout",
         str(args.timeout),
         "--interval",
@@ -65,10 +74,18 @@ def main() -> int:
         "--retries",
         str(args.retries),
     ]
-    for school in args.school:
-        fetch.extend(["--school", school])
-    if _run(fetch) != 0:
-        return 1
+    if args.all_schools:
+        print("收集範圍：臺中市啟用名冊全部學校", flush=True)
+    elif args.school:
+        for school in args.school:
+            fetch.extend(["--school", school])
+    else:
+        fetch.extend(["--district", args.district])
+    if args.skip_ingredients:
+        fetch.append("--skip-ingredients")
+    fetch_status = _run(fetch)
+    if fetch_status != 0:
+        return fetch_status
 
     report_path = (
         PROJECT_ROOT

@@ -5,6 +5,7 @@ import argparse
 import json
 import logging
 import sys
+import time
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -28,6 +29,7 @@ TAIPEI = ZoneInfo("Asia/Taipei")
 
 
 def main() -> int:
+    started_monotonic = time.monotonic()
     parser = argparse.ArgumentParser(
         description="Collect public daily meal records for registered schools."
     )
@@ -155,9 +157,14 @@ def main() -> int:
         if args.registry.is_relative_to(PROJECT_ROOT)
         else str(args.registry)
     )
+    completed_at = datetime.now(TAIPEI).isoformat()
+    duration_seconds = round(time.monotonic() - started_monotonic, 3)
     report = {
         "schemaVersion": 1,
         "checkedAt": checked_at,
+        "completedAt": completed_at,
+        "durationSeconds": duration_seconds,
+        "averageSecondsPerSchool": round(duration_seconds / len(results), 3),
         "mealDate": args.date.isoformat(),
         "registry": registry_label,
         "includeIngredients": not args.skip_ingredients,
@@ -177,6 +184,12 @@ def main() -> int:
     report_path = args.output_dir / args.date.isoformat() / "report.json"
     write_json_atomic(report_path, report)
     print(json.dumps(report, ensure_ascii=False, indent=2))
+    logger.info(
+        "Completed %s schools in %.1f seconds (average %.1f seconds per school)",
+        len(results),
+        duration_seconds,
+        duration_seconds / len(results),
+    )
     return 2 if failed else 0
 
 

@@ -1,0 +1,2425 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "梧棲區",
+    "level": "國小",
+    "name": "中正國小",
+    "fullName": "臺中市梧棲區中正國小",
+    "fatraceSchoolId": 64663
+  },
+  "mealDate": "2026-10-12",
+  "fetchedAt": "2026-10-12T21:43:45.101972+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=64663&period=2026-10-12",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 64663,
+        "SchoolName": "臺中市梧棲區中正國小",
+        "ConuntyId": 27,
+        "AreaId": 131492,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1406,
+          "KitchenName": "臺中市梧棲區中正國小",
+          "KitchenType": "006",
+          "Address": "臺中市梧棲區中央路2段15號",
+          "Tel": "04-26560844",
+          "Fax": "04-26577665",
+          "Nutritionist": "黃佳琳",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "0",
+          "PicturePath": "-",
+          "CompanyId": "B064663",
+          "Email": "t21356@st.tc.edu.tw",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1406,
+              "KitchenName": "臺中市梧棲區中正國小",
+              "KitchenType": "006",
+              "Address": "臺中市梧棲區中央路2段15號",
+              "Tel": "04-26560844",
+              "Fax": "04-26577665",
+              "Nutritionist": "黃佳琳",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "0",
+              "PicturePath": "-",
+              "CompanyId": "B064663",
+              "Email": "t21356@st.tc.edu.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1791439173037995",
+                  "KitchenId": 1406,
+                  "KitchenName": "臺中市梧棲區中正國小",
+                  "SchoolId": 64663,
+                  "SchoolCode": "064663",
+                  "SchoolName": "臺中市梧棲區中正國小",
+                  "MenuDate": "2026/10/12",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-08T05:59:40.000Z",
+                  "TypeGrains": "2.46",
+                  "TypeOil": "0.01",
+                  "TypeVegetable": "1.18",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "0.86",
+                  "Calorie": "227"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1791439173037995",
+                  "KitchenId": 1406,
+                  "KitchenName": "臺中市梧棲區中正國小",
+                  "SchoolId": 64663,
+                  "SchoolCode": "064663",
+                  "SchoolName": "臺中市梧棲區中正國小",
+                  "MenuDate": "2026/10/12",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-08T05:59:40.000Z",
+                  "TypeGrains": "2.46",
+                  "TypeOil": "0.01",
+                  "TypeVegetable": "1.18",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "0.86",
+                  "Calorie": "227"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038051",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "玉米飯",
+                      "DishType": "主食",
+                      "DishId": "1435623565301108",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1435623565301108."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791768612098830",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1435623565301108",
+                          "IngredientId": "1775102496065546",
+                          "IngredientName": "白米",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "白米",
+                          "Manufacturer": "農糧署",
+                          "IngredientQuantity": "61.4643",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [
+                            {
+                              "id": "960672283",
+                              "countryId": "1",
+                              "name": "臺灣"
+                            }
+                          ],
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "白米"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098831",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1435623565301108",
+                          "IngredientId": "1775521302060337",
+                          "IngredientName": "冷凍玉米粒",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "冷凍玉米粒",
+                          "Manufacturer": "保證責任雲林縣雜糧加工運銷合作社",
+                          "IngredientQuantity": "17.5612",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1204000025"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "冷凍玉米粒"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038060",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "番茄魚",
+                      "DishType": "主菜",
+                      "DishId": "1791439173037990",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 1406,
+                      "PicturePath": ""
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791768612098832",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037990",
+                          "IngredientId": "1791768595006581",
+                          "IngredientName": "鯰魚",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "鯰魚",
+                          "Manufacturer": "大台中食品有限公司(廖福興)",
+                          "IngredientQuantity": "149.2705",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源水產品",
+                              "CertificationId": "0416601583"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "鬍鯰"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098833",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037990",
+                          "IngredientId": "1791768595006582",
+                          "IngredientName": "番茄",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "番茄",
+                          "Manufacturer": "展鮮農產生技股份有限公司西螺一廠",
+                          "IngredientQuantity": "35.1225",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "26010102986"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "大番茄"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098834",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037990",
+                          "IngredientId": "1791768595006583",
+                          "IngredientName": "洋蔥",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "洋蔥",
+                          "Manufacturer": "保證責任彰化縣青農果菜生產合作社",
+                          "IngredientQuantity": "21.9515",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1004000033"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "洋蔥"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098859",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037990",
+                          "IngredientId": "1791768595006602",
+                          "IngredientName": "豆腐",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "豆腐",
+                          "Manufacturer": "榮洲",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [],
+                          "IngredientSourceNameList": "",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "豆腐"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038054",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "(素)番茄豆腐蛋",
+                      "DishType": "主菜",
+                      "DishId": "1791439173037991",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 13,
+                      "KitchenId": 1406,
+                      "PicturePath": ""
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791768612098848",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037991",
+                          "IngredientId": "1791768595006591",
+                          "IngredientName": "雞蛋",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "雞蛋",
+                          "Manufacturer": "維新畜牧場第二場",
+                          "IngredientQuantity": "2.6342",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "洗選鮮蛋噴印溯源",
+                              "CertificationId": "C11109261007c"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "雞蛋"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098849",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037991",
+                          "IngredientId": "1791768595006592",
+                          "IngredientName": "番茄",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "番茄",
+                          "Manufacturer": "展鮮農產生技股份有限公司西螺一廠",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "26010102986"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "大番茄"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098862",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037991",
+                          "IngredientId": "1791768595006604",
+                          "IngredientName": "豆腐",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "豆腐",
+                          "Manufacturer": "榮洲",
+                          "IngredientQuantity": "2.1073",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [],
+                          "IngredientSourceNameList": "",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "豆腐"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038057",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "(素)紅燒素魚排",
+                      "DishType": "主菜",
+                      "DishId": "1760147407021524",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 14,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1760147407021524."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791768612098860",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1760147407021524",
+                          "IngredientId": "1791768595006603",
+                          "IngredientName": "素排",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "素排",
+                          "Manufacturer": "米加",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [],
+                          "IngredientSourceNameList": "",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "素排"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038055",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "泰式寬冬粉",
+                      "DishType": "副菜",
+                      "DishId": "1702017317093653",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1702017317093653."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791768612098839",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1702017317093653",
+                          "IngredientId": "1702259500032108",
+                          "IngredientName": "小黃瓜",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "小黃瓜",
+                          "Manufacturer": "陳明勝",
+                          "IngredientQuantity": "13.1709",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1301001549"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "花胡瓜"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098838",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1702017317093653",
+                          "IngredientId": "1702259500032110",
+                          "IngredientName": "木耳",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "木耳",
+                          "Manufacturer": "魏瑞琪-大鑫農場",
+                          "IngredientQuantity": "4.3903",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1301002096"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "木耳"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098835",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1702017317093653",
+                          "IngredientId": "1702259500032111",
+                          "IngredientName": "寬粉",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "寬粉",
+                          "Manufacturer": "四通",
+                          "IngredientQuantity": "10.5367",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [
+                            {
+                              "id": "960672303",
+                              "countryId": "1",
+                              "name": "臺灣"
+                            }
+                          ],
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "寬粉"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098836",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1702017317093653",
+                          "IngredientId": "1743465910057179",
+                          "IngredientName": "阿根廷魷",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "阿根廷魷",
+                          "Manufacturer": "高雄市梓官區漁會",
+                          "IngredientQuantity": "13.1709",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "133810"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "阿根廷魷"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098837",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1702017317093653",
+                          "IngredientId": "1791768595006584",
+                          "IngredientName": "綠豆芽",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "綠豆芽",
+                          "Manufacturer": "余景煌",
+                          "IngredientQuantity": "13.1709",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1201001623"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "綠豆芽"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038056",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "(素)泰式寬冬粉",
+                      "DishType": "副菜",
+                      "DishId": "1791439173037992",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 17,
+                      "KitchenId": 1406,
+                      "PicturePath": ""
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791768612098850",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037992",
+                          "IngredientId": "1791768595006593",
+                          "IngredientName": "寬粉",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "寬粉",
+                          "Manufacturer": "四通",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [
+                            {
+                              "id": "960672363",
+                              "countryId": "1",
+                              "name": "臺灣"
+                            }
+                          ],
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "寬粉"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098851",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037992",
+                          "IngredientId": "1791768595006594",
+                          "IngredientName": "綠豆芽",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "綠豆芽",
+                          "Manufacturer": "余景煌",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1201001623"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "綠豆芽"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098852",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037992",
+                          "IngredientId": "1791768595006595",
+                          "IngredientName": "木耳",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "木耳",
+                          "Manufacturer": "魏瑞琪-大鑫農場",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1301002096"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "木耳"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098853",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037992",
+                          "IngredientId": "1791768595006596",
+                          "IngredientName": "小黃瓜",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "小黃瓜",
+                          "Manufacturer": "陳明勝",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1301001549"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "花胡瓜"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038058",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "(素)塔香海茸",
+                      "DishType": "副菜",
+                      "DishId": "1742539919042477",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 18,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1742539919042477."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791768612098847",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1742539919042477",
+                          "IngredientId": "1742867796010379",
+                          "IngredientName": "胡蘿蔔",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "胡蘿蔔",
+                          "Manufacturer": "保證責任彰化縣永靖合作農場",
+                          "IngredientQuantity": "0.1756",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "121502"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "胡蘿蔔"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098861",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1742539919042477",
+                          "IngredientId": "1742867796010380",
+                          "IngredientName": "海帶",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "海帶",
+                          "Manufacturer": "兆軒食品有限公司",
+                          "IngredientQuantity": "4.3903",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [],
+                          "IngredientSourceNameList": "",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "海帶"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038059",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "(素)鮮筍鮮菇湯",
+                      "DishType": "副菜",
+                      "DishId": "1791439173037993",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 19,
+                      "KitchenId": 1406,
+                      "PicturePath": ""
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791768612098854",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037993",
+                          "IngredientId": "1791768595006597",
+                          "IngredientName": "麻竹筍",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "麻竹筍",
+                          "Manufacturer": "保證責任彰化縣永靖合作農場",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "121502"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "麻竹筍"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098855",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037993",
+                          "IngredientId": "1791768595006598",
+                          "IngredientName": "胡蘿蔔",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "胡蘿蔔",
+                          "Manufacturer": "保證責任彰化縣永靖合作農場",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "121502"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "胡蘿蔔"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098856",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037993",
+                          "IngredientId": "1791768595006599",
+                          "IngredientName": "秀珍菇",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "秀珍菇",
+                          "Manufacturer": "黃麗香",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1001001312"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "秀珍菇"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098857",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037993",
+                          "IngredientId": "1791768595006600",
+                          "IngredientName": "金針菇",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "金針菇",
+                          "Manufacturer": "大田生技農場",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1003000002"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "金針菇"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098858",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037993",
+                          "IngredientId": "1791768595006601",
+                          "IngredientName": "芹菜",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "芹菜",
+                          "Manufacturer": "劉皇甫",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1201003601"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "芹菜"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038050",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "空心菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1432167058100685",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1432167058100685."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791768612098840",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1432167058100685",
+                          "IngredientId": "1750989063081049",
+                          "IngredientName": "空心菜",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "空心菜",
+                          "Manufacturer": "保證責任彰化縣青農果菜生產合作社",
+                          "IngredientQuantity": "79.0256",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "00993346602859"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "蕹菜"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038052",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "鮮筍鮮菇湯",
+                      "DishType": "湯品",
+                      "DishId": "1791439173037994",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 1406,
+                      "PicturePath": ""
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1791768612098841",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037994",
+                          "IngredientId": "1791768595006585",
+                          "IngredientName": "麻竹筍",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "麻竹筍",
+                          "Manufacturer": "保證責任彰化縣永靖合作農場",
+                          "IngredientQuantity": "28.098",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "121502"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "麻竹筍"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098842",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037994",
+                          "IngredientId": "1791768595006586",
+                          "IngredientName": "胡蘿蔔",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "胡蘿蔔",
+                          "Manufacturer": "保證責任彰化縣永靖合作農場",
+                          "IngredientQuantity": "5.2684",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "121502"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "胡蘿蔔"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098843",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037994",
+                          "IngredientId": "1791768595006587",
+                          "IngredientName": "秀珍菇",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "秀珍菇",
+                          "Manufacturer": "黃麗香",
+                          "IngredientQuantity": "5.2684",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1001001312"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "秀珍菇"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098844",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037994",
+                          "IngredientId": "1791768595006588",
+                          "IngredientName": "金針菇",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "金針菇",
+                          "Manufacturer": "大田生技農場",
+                          "IngredientQuantity": "8.7806",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1003000002"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "金針菇"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098845",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037994",
+                          "IngredientId": "1791768595006589",
+                          "IngredientName": "豬龍骨",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "豬龍骨",
+                          "Manufacturer": "泰安食品股份有限公司",
+                          "IngredientQuantity": "10.5367",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "016902"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "豬骨"
+                        },
+                        {
+                          "IngredientBatchId": "1791768612098846",
+                          "BatchDataId": "1791439173037995",
+                          "DishId": "1791439173037994",
+                          "IngredientId": "1791768595006590",
+                          "IngredientName": "芹菜",
+                          "StockDate": "2026-10-11T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 169799,
+                          "SupplierCompanyId": "28778086",
+                          "SupplierName": "新濱食品有限公司",
+                          "ProductName": "芹菜",
+                          "Manufacturer": "劉皇甫",
+                          "IngredientQuantity": "0.8781",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1201003601"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": "B-128778086-00000-5",
+                          "fdacompany_Name": "新濱食品有限公司",
+                          "fdabusinessId": "28778086",
+                          "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                          "fdaregType": "公司/商業登記",
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-128778086-00000-5",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區九德里中華路229號1樓",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-128778086-00001-6",
+                              "fdacompany_Name": "新濱食品有限公司",
+                              "fdabusinessId": "28778086",
+                              "fdaaddress": "台中市烏日區學田路八巷3號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "芹菜"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1791439180038053",
+                      "BatchDataId": "1791439173037995",
+                      "DishName": "調味料",
+                      "DishId": "77787",
+                      "UpdateDateTime": "2026-10-08T05:59:40.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 1406,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

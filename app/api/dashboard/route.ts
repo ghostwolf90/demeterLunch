@@ -6,6 +6,19 @@ type RecordRow = {
   record_json: string;
 };
 
+type PublicMealRecord = {
+  source?: { url?: string };
+  [key: string]: unknown;
+};
+
+type SchoolMealAsset = {
+  records?: Record<string, PublicMealRecord>;
+};
+
+type SiteAssetsEnv = Cloudflare.Env & {
+  ASSETS?: Fetcher;
+};
+
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
@@ -15,17 +28,23 @@ export async function GET(request: Request) {
   const mealType = url.searchParams.get("mealType") === "vegetarian" ? "vegetarian" : "meat";
   const school = findSchool(schoolId);
   if (!school) return Response.json({ error: "找不到指定學校" }, { status: 404 });
-  if (!env.DB) return Response.json({ error: "雲端資料庫尚未連接" }, { status: 503 });
 
-  const query = await env.DB
-    .prepare(
-      "SELECT meal_date, record_json FROM official_meal_records WHERE school_id = ? ORDER BY meal_date",
-    )
-    .bind(schoolId)
-    .all<RecordRow>();
-  const records = Object.fromEntries(
-    query.results.map((row) => [row.meal_date, JSON.parse(row.record_json)]),
-  );
+  const publishedRecords = await loadPublishedRecords(request, schoolId);
+  let databaseRecords: Record<string, PublicMealRecord> = {};
+  if (env.DB) {
+    const query = await env.DB
+      .prepare(
+        "SELECT meal_date, record_json FROM official_meal_records WHERE school_id = ? ORDER BY meal_date",
+      )
+      .bind(schoolId)
+      .all<RecordRow>();
+    databaseRecords = Object.fromEntries(
+      query.results.map((row) => [row.meal_date, JSON.parse(row.record_json)]),
+    );
+  }
+  // The deployed, reviewed snapshot is the publication baseline. Newer cloud
+  // refreshes in D1 override the same school/date without hiding other dates.
+  const records = { ...publishedRecords, ...databaseRecords };
   const dates = Object.keys(records).sort();
   const record = records[selectedDate] ?? null;
   const sourceUrl =
@@ -63,6 +82,23 @@ export async function GET(request: Request) {
     },
     { headers: { "cache-control": "public, max-age=60" } },
   );
+}
+
+async function loadPublishedRecords(request: Request, schoolId: number) {
+  const assets = (env as SiteAssetsEnv).ASSETS;
+  if (!assets) return {};
+  try {
+    const assetUrl = new URL(
+      `/data/school-meals/${encodeURIComponent(schoolId)}.json`,
+      request.url,
+    );
+    const response = await assets.fetch(new Request(assetUrl));
+    if (!response.ok) return {};
+    const payload = (await response.json()) as SchoolMealAsset;
+    return payload.records ?? {};
+  } catch {
+    return {};
+  }
 }
 
 function taipeiDate() {

@@ -45,11 +45,6 @@ class ReviewedSchoolMealTests(unittest.TestCase):
         expected_ids = {
             row["fatraceSchoolId"] for row in registry["schools"]
         }
-        expected_west_ids = {
-            row["fatraceSchoolId"]
-            for row in registry["schools"]
-            if row["district"] == "西區"
-        }
         records_by_date = {
             meal_date: [record for record in records if record["mealDate"] == meal_date]
             for meal_date in {record["mealDate"] for record in records}
@@ -63,14 +58,30 @@ class ReviewedSchoolMealTests(unittest.TestCase):
             },
             expected_ids,
         )
-        self.assertEqual(len(records_by_date["2026-10-12"]), 6)
-        self.assertEqual(
-            {
-                record["school"]["fatraceSchoolId"]
-                for record in records_by_date["2026-10-12"]
-            },
-            expected_west_ids,
-        )
+        for meal_date, daily_records in records_by_date.items():
+            actual_ids = {
+                record["school"]["fatraceSchoolId"] for record in daily_records
+            }
+            self.assertTrue(actual_ids.issubset(expected_ids))
+            report_path = (
+                PROJECT_ROOT
+                / "data"
+                / "raw"
+                / "fatrace-daily"
+                / meal_date
+                / "report.json"
+            )
+            if not report_path.is_file():
+                continue
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            if report.get("summary", {}).get("schools") != len(expected_ids):
+                continue
+            publishable_ids = {
+                result["fatraceSchoolId"]
+                for result in report["results"]
+                if result["recordStatus"] in {"available", "no_meal"}
+            }
+            self.assertEqual(actual_ids, publishable_ids)
         for record in records:
             school_id = record["school"]["fatraceSchoolId"]
             meal_date = record["mealDate"]

@@ -217,7 +217,32 @@ SQLite 會把啟用學校的名冊、供餐日、餐次、菜色、食材與認�
 python3 scripts/update_school_meals.py --date 2026-10-08 --verify-and-build
 ```
 
+若要一次收集啟用名冊中的全臺中市 29 個行政區、243 所學校，並自動完成上述驗證與建置，可執行：
+
+```bash
+python3 scripts/update_all_taichung_schools.py
+```
+
+指定日期或只先抓菜色的範例：
+
+```bash
+python3 scripts/update_all_taichung_schools.py --date 2026-10-08
+python3 scripts/update_all_taichung_schools.py --skip-ingredients
+```
+
+日期預設為臺北時區當天。完整模式會逐道查詢食材，執行期間請保持網路連線並避免電腦休眠；`--skip-ingredients` 只收集菜色，速度較快。每次執行會把開始、完成時間、總秒數與每校平均秒數寫入當日 `report.json`，並在終端顯示耗時摘要。任一學校收集失敗時指令會以非零狀態結束，不會繼續重建可部署快照；重新執行即可利用已儲存的有效資料再次收集。
+
 若官方尚未發布，指令會以 pending 狀態結束並保留既有有效資料。它不會自動部署公開 Site；部署仍須先取得同一個 Site 的最新原始碼，避免蓋掉線上排程剛寫入的新聞或監測狀態。
+
+取得 Sites 短效憑證並同步最新原始碼後，Codex 可以用下列指令把指定日期的本機 raw 與 reviewed 資料安全疊加到部署 checkout，並自動完成資料庫、測試與 Worker 建置：
+
+```bash
+python3 scripts/prepare_site_publish.py \
+  --date 2026-10-12 \
+  --site-checkout /path/to/fresh-site-checkout
+```
+
+這支腳本不儲存 Sites 憑證，也不會用過期的本機 Site 副本直接覆蓋線上原始碼。正式推送與部署由 Codex 使用當次短效憑證完成；因此手動抓取後只需請 Codex「發布最新資料」，不需再手動執行校讀、測試與建置指令。
 
 這條每日資料線與每月 OpenAPI 不同。它只代表平臺公開查詢頁當下可見的實際供餐紀錄，不能提供下週預定菜單；下週資料仍須由各校公告、Atom/RSS 或菜單圖片取得。收集器預設使用 20 秒逾時、有限次重試、描述性 User-Agent 與 1.2 秒請求間隔。若只想先驗證菜色、不逐道查詢食材，可加上 `--skip-ingredients`。
 
