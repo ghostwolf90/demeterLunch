@@ -45,20 +45,40 @@ class ReviewedSchoolMealTests(unittest.TestCase):
         expected_ids = {
             row["fatraceSchoolId"] for row in registry["schools"]
         }
+        expected_west_ids = {
+            row["fatraceSchoolId"]
+            for row in registry["schools"]
+            if row["district"] == "西區"
+        }
+        records_by_date = {
+            meal_date: [record for record in records if record["mealDate"] == meal_date]
+            for meal_date in {record["mealDate"] for record in records}
+        }
 
-        self.assertEqual(len(records), 243)
+        self.assertEqual(len(records_by_date["2026-10-08"]), 243)
         self.assertEqual(
-            {record["school"]["fatraceSchoolId"] for record in records},
+            {
+                record["school"]["fatraceSchoolId"]
+                for record in records_by_date["2026-10-08"]
+            },
             expected_ids,
+        )
+        self.assertEqual(len(records_by_date["2026-10-12"]), 6)
+        self.assertEqual(
+            {
+                record["school"]["fatraceSchoolId"]
+                for record in records_by_date["2026-10-12"]
+            },
+            expected_west_ids,
         )
         for record in records:
             school_id = record["school"]["fatraceSchoolId"]
-            self.assertEqual(record["mealDate"], "2026-10-08")
+            meal_date = record["mealDate"]
             self.assertEqual(record["review"]["status"], "reviewed")
             self.assertEqual(
                 record["source"]["url"],
                 "https://fatraceschool.k12ea.gov.tw/frontend/search.html"
-                f"?school={school_id}&period=2026-10-08",
+                f"?school={school_id}&period={meal_date}",
             )
 
     def test_promote_candidate_is_idempotent_and_rejects_tampering(self) -> None:
@@ -85,6 +105,36 @@ class ReviewedSchoolMealTests(unittest.TestCase):
             validate_reviewed_school_meal(tampered, Path("tampered.json"))
 
     def test_sqlite_contains_normalized_school_meal_records(self) -> None:
+        records = load_reviewed_school_meals(PARSED_ROOT)
+        expected_counts = {
+            "official_meal_days": len(records),
+            "official_meals": sum(
+                len(service["meals"])
+                for record in records
+                for service in record["services"]
+            ),
+            "official_dishes": sum(
+                len(meal["dishes"])
+                for record in records
+                for service in record["services"]
+                for meal in service["meals"]
+            ),
+            "official_ingredients": sum(
+                len(dish["ingredients"])
+                for record in records
+                for service in record["services"]
+                for meal in service["meals"]
+                for dish in meal["dishes"]
+            ),
+            "official_ingredient_certifications": sum(
+                len(ingredient["certifications"])
+                for record in records
+                for service in record["services"]
+                for meal in service["meals"]
+                for dish in meal["dishes"]
+                for ingredient in dish["ingredients"]
+            ),
+        }
         with sqlite3.connect(DATABASE) as connection:
             counts = {
                 table: connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
@@ -99,11 +149,8 @@ class ReviewedSchoolMealTests(unittest.TestCase):
             }
 
         self.assertEqual(counts["schools"], 243)
-        self.assertEqual(counts["official_meal_days"], 243)
-        self.assertEqual(counts["official_meals"], 306)
-        self.assertEqual(counts["official_dishes"], 2033)
-        self.assertEqual(counts["official_ingredients"], 5382)
-        self.assertEqual(counts["official_ingredient_certifications"], 3936)
+        for table, expected in expected_counts.items():
+            self.assertEqual(counts[table], expected)
 
     def test_official_dashboard_never_falls_back_to_an_earlier_day(self) -> None:
         available = load_school_meal_dashboard(DATABASE, 193608, "2026-10-08")

@@ -221,6 +221,21 @@ python3 scripts/update_school_meals.py --date 2026-10-08 --verify-and-build
 
 這條每日資料線與每月 OpenAPI 不同。它只代表平臺公開查詢頁當下可見的實際供餐紀錄，不能提供下週預定菜單；下週資料仍須由各校公告、Atom/RSS 或菜單圖片取得。收集器預設使用 20 秒逾時、有限次重試、描述性 User-Agent 與 1.2 秒請求間隔。若只想先驗證菜色、不逐道查詢食材，可加上 `--skip-ingredients`。
 
+### Telegram 抓取通知
+
+雲端三批抓取與下午補抓會透過 Telegram 通知抓取開始、單校失敗、批次結束及全日總結。通知事件會先寫入 D1 的 `telegram_notifications`，用事件鍵避免排程重試造成重複訊息；通知失敗不會中斷午餐資料收集，下一次相同工具呼叫可再次嘗試。
+
+寫入工具以 Sites 提供的已驗證帳號信箱比對 `MCP_OWNER_EMAIL`，避免把每個 Site 都不同的使用者 ID 誤當成全域帳號 ID。15:30 補抓除了重試 `failed` 與 `not_published`，也會接手當天完全沒有執行紀錄的學校。
+
+若官方來源拒絕 Site 雲端出口，可暫時設定 `FATRACE_COLLECTION_PAUSED=true`。三批與補抓工具會回覆安全暫停且不送出來源請求，避免重複 403 與大量錯誤通知；改用可連線的抓取執行環境後再移除此設定。
+
+後端需要下列 Sites 環境變數；實際值只存於 Sites，不得寫入原始碼、排程提示或 `.openai/hosting.json`：
+
+```text
+TELEGRAM_BOT_TOKEN
+TELEGRAM_CHAT_ID
+```
+
 網站的日常分析讀取 `data/lunch.db`，原圖則從 `data/raw/` 提供。兩者都在本機，不需要安裝前端套件。按 `Ctrl+C` 可停止伺服器。
 
 ## 執行測試

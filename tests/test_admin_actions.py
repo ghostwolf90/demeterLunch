@@ -1,5 +1,6 @@
 import subprocess
 import tempfile
+import threading
 import time
 import unittest
 from pathlib import Path
@@ -21,9 +22,19 @@ class AdminActionRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             runner = AdminActionRunner(Path(directory))
             result = subprocess.CompletedProcess([], 0, stdout='{"status":"updated"}\n', stderr="")
-            with patch("src.admin_actions.subprocess.run", return_value=result):
+            started = threading.Event()
+            release = threading.Event()
+
+            def run_update(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+                started.set()
+                release.wait(timeout=1)
+                return result
+
+            with patch("src.admin_actions.subprocess.run", side_effect=run_update):
                 self.assertTrue(runner.start_update())
+                self.assertTrue(started.wait(timeout=1))
                 self.assertFalse(runner.start_update())
+                release.set()
                 state = self._wait(runner)
 
             self.assertEqual(state["status"], "succeeded")

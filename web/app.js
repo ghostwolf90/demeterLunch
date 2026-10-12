@@ -190,13 +190,16 @@ function officialDashboardFromStatic(data, selectedDate, schoolId, mealType) {
 
 async function fetchDashboard(date) {
   if (!state.schoolId) throw new Error("請先選擇學校");
-  if (isLocalApiAvailable()) {
+  if (state.schoolId !== DEFAULT_SCHOOL_ID || isLocalApiAvailable()) {
     try {
       const response = await fetch(`/api/dashboard?date=${encodeURIComponent(date)}&mealType=${encodeURIComponent(state.mealType)}&schoolId=${encodeURIComponent(state.schoolId)}`, { cache: "no-store" });
       const isJson = response.headers.get("content-type")?.includes("application/json");
-      if (response.ok && isJson) return await response.json();
+      if (response.ok && isJson) {
+        const dashboard = await response.json();
+        if (dashboard.record) return dashboard;
+      }
     } catch (error) {
-      console.info("Local API unavailable; using the static data snapshot.", error);
+      console.info("Live API unavailable; using the reviewed static snapshot.", error);
     }
   }
   if (!state.staticData) {
@@ -210,8 +213,13 @@ async function fetchDashboard(date) {
 }
 
 async function fetchSchoolDirectory() {
-  const endpoint = isLocalApiAvailable() ? "/api/schools" : "./data/schools.json";
-  const response = await fetch(endpoint, { cache: "no-store" });
+  let response;
+  try {
+    response = await fetch("/api/schools", { cache: "no-store" });
+  } catch (error) {
+    console.info("Live school directory unavailable; using the static snapshot.", error);
+  }
+  if (!response?.ok) response = await fetch("./data/schools.json", { cache: "no-store" });
   if (!response.ok) throw new Error(`無法讀取學校名冊（HTTP ${response.status}）`);
   const payload = await response.json();
   if (!Array.isArray(payload.schools)) throw new Error("學校名冊格式不正確");
@@ -219,8 +227,13 @@ async function fetchSchoolDirectory() {
 }
 
 async function fetchNews() {
-  const endpoint = isLocalApiAvailable() ? "/api/news" : "./data/news.json";
-  const response = await fetch(endpoint, { cache: "no-store" });
+  let response;
+  try {
+    response = await fetch("/api/news", { cache: "no-store" });
+  } catch (error) {
+    console.info("Live news endpoint unavailable; using the static snapshot.", error);
+  }
+  if (!response?.ok) response = await fetch("./data/news.json", { cache: "no-store" });
   if (!response.ok) throw new Error(`無法讀取午餐觀察（HTTP ${response.status}）`);
   return response.json();
 }

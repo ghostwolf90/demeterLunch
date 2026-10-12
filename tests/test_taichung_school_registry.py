@@ -23,6 +23,12 @@ ACTIVE_REGISTRY = (
     / "reference"
     / "taichung-active-elementary-schools.json"
 )
+REFRESH_GROUPS = (
+    PROJECT_ROOT
+    / "data"
+    / "reference"
+    / "taichung-school-refresh-groups.json"
+)
 
 
 class TaichungSchoolRegistryTests(unittest.TestCase):
@@ -98,6 +104,27 @@ class TaichungSchoolRegistryTests(unittest.TestCase):
             (64742519, "私立麗喆國(中)小"),
             {(school.fatrace_school_id, school.name) for school in schools},
         )
+
+    def test_refresh_groups_cover_each_school_once_in_three_equal_batches(self) -> None:
+        schools = load_school_registry(ACTIVE_REGISTRY)
+        payload = json.loads(REFRESH_GROUPS.read_text(encoding="utf-8"))
+        seen_districts: set[str] = set()
+        seen_ids: set[int] = set()
+
+        self.assertEqual(len(payload["groups"]), 3)
+        for group in payload["groups"]:
+            districts = set(group["districts"])
+            self.assertTrue(seen_districts.isdisjoint(districts))
+            selected = [school for school in schools if school.district in districts]
+            selected_ids = {school.fatrace_school_id for school in selected}
+            self.assertEqual(len(selected), group["expectedSchoolCount"])
+            self.assertEqual(len(selected), 81)
+            self.assertTrue(seen_ids.isdisjoint(selected_ids))
+            seen_districts.update(districts)
+            seen_ids.update(selected_ids)
+
+        self.assertEqual(seen_ids, {school.fatrace_school_id for school in schools})
+        self.assertEqual(seen_districts, {school.district for school in schools})
 
 
 if __name__ == "__main__":
