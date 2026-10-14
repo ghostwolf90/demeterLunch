@@ -77,7 +77,7 @@ export async function GET(request: Request) {
       mealType,
       mealTypeLabel: mealType === "vegetarian" ? "素食" : "葷食",
       dataNotice:
-        "教育部校園食材登錄平臺的當日或歷史實際供餐公開紀錄；若同時出現葷、素主菜，本站依菜名的「素」字拆分主菜與副菜，其他分類列為共用。",
+        "教育部校園食材登錄平臺的當日或歷史實際供餐公開紀錄；同日的主食、主菜中若同時出現有「素」字與未標示「素」的菜色，本站依菜名的「素」字拆分主食、主菜與副菜，其他分類列為共用。",
       catalogSchoolCount: allSchools().length,
     },
     { headers: { "cache-control": "public, max-age=60" } },

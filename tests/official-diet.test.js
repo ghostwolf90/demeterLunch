@@ -1,7 +1,8 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
+import test from "node:test";
+import assert from "node:assert/strict";
 
-const OfficialDiet = require("../web/official-diet.js");
+await import("../web/official-diet.js");
+const OfficialDiet = globalThis.OfficialDiet;
 
 function record(dishes) {
   return {
@@ -19,8 +20,16 @@ const mixedRecord = record([
   { name: "翡翠湯", category: "湯品", ingredients: [{ name: "豆腐" }] },
 ]);
 
-test("detects a vegetarian variant only when the main dishes contain both labels", () => {
+test("detects a vegetarian variant when staple or main dishes contain both labels", () => {
   assert.equal(OfficialDiet.profile(mixedRecord).hasVariants, true);
+  assert.equal(
+    OfficialDiet.profile(record([
+      { name: "家常炒麵", category: "主食", ingredients: [] },
+      { name: "家常炒麵(素)", category: "主食", ingredients: [] },
+      { name: "鄉村雞翅", category: "主菜", ingredients: [] },
+    ])).hasVariants,
+    true,
+  );
   assert.equal(
     OfficialDiet.profile(record([
       { name: "味噌鮮魚", category: "主菜", ingredients: [] },
@@ -38,6 +47,25 @@ test("splits main and side dishes by the vegetarian marker", () => {
   assert.deepEqual(
     OfficialDiet.filter(mixedRecord, "vegetarian").map((dish) => dish.name),
     ["胚芽飯", "(素)京醬豆腐", "青花炒素腰花", "高麗菜", "翡翠湯"],
+  );
+});
+
+test("splits paired staple dishes into meat and vegetarian menus", () => {
+  const stapleVariants = record([
+    { name: "家常炒麵", category: "主食", ingredients: [{ name: "油麵" }] },
+    { name: "家常炒麵(素)", category: "主食", ingredients: [{ name: "油麵" }] },
+    { name: "鄉村雞翅", category: "主菜", ingredients: [{ name: "雞翅" }] },
+    { name: "金菇海茸", category: "副菜", ingredients: [{ name: "金針菇" }] },
+    { name: "蚵白菜", category: "蔬菜", ingredients: [{ name: "白菜" }] },
+  ]);
+
+  assert.deepEqual(
+    OfficialDiet.filter(stapleVariants, "meat").map((dish) => dish.name),
+    ["家常炒麵", "鄉村雞翅", "金菇海茸", "蚵白菜"],
+  );
+  assert.deepEqual(
+    OfficialDiet.filter(stapleVariants, "vegetarian").map((dish) => dish.name),
+    ["家常炒麵(素)", "蚵白菜"],
   );
 });
 

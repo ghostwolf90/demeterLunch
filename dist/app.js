@@ -21,6 +21,11 @@ const state = {
   dishDetailOpenFrame: 0,
   dishDetailCloseTimer: 0,
   sourceImageRequestId: 0,
+  lastSourceTrigger: null,
+  dialogMotion: {
+    account: { openFrame: 0, closeTimer: 0, closePromise: null },
+    source: { openFrame: 0, closeTimer: 0, closePromise: null },
+  },
   account: {
     loading: true,
     authenticated: false,
@@ -38,6 +43,8 @@ const state = {
 
 const DISH_DETAIL_MOTION_MS = 360;
 const DISH_DETAIL_REDUCED_MOTION_MS = 160;
+const AUX_DIALOG_MOTION_MS = 320;
+const AUX_DIALOG_REDUCED_MOTION_MS = 160;
 const OTHER_FOOD_CONTEXT = "__other_food_context__";
 const EMAIL_REGISTRATION_ENABLED = true;
 
@@ -556,7 +563,7 @@ async function verifyEmailAuthCode() {
     if (!response.ok) throw new Error(payload.error || "驗證碼無法確認");
     resetEmailAuthForm();
     await loadAccount();
-    refs.accountDialog.close();
+    await closeAccountDialog();
     refs.passport.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
     setFormStatus(
@@ -587,12 +594,85 @@ function adultBirthDateMaximum() {
   return `${year}-${month}-${day}`;
 }
 
+function openStagedDialog(dialog, motion, focusTarget) {
+  if (dialog.open) return;
+  window.clearTimeout(motion.closeTimer);
+  window.cancelAnimationFrame(motion.openFrame);
+  motion.closePromise = null;
+  dialog.classList.remove("is-visible", "is-closing");
+  dialog.showModal();
+  focusTarget?.focus({ preventScroll: true });
+  dialog.getBoundingClientRect();
+  motion.openFrame = window.requestAnimationFrame(() => {
+    motion.openFrame = 0;
+    if (dialog.open) dialog.classList.add("is-visible");
+  });
+}
+
+function closeStagedDialog(dialog, motion, { immediate = false } = {}) {
+  if (!dialog.open) return Promise.resolve();
+  if (dialog.classList.contains("is-closing")) {
+    return motion.closePromise || Promise.resolve();
+  }
+
+  window.cancelAnimationFrame(motion.openFrame);
+  motion.openFrame = 0;
+  window.clearTimeout(motion.closeTimer);
+
+  motion.closePromise = new Promise((resolve) => {
+    const finish = () => {
+      window.clearTimeout(motion.closeTimer);
+      dialog.removeEventListener("transitionend", handleTransitionEnd);
+      dialog.classList.remove("is-visible", "is-closing");
+      if (dialog.open) dialog.close();
+      motion.closePromise = null;
+      resolve();
+    };
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const finishProperty = reducedMotion ? "opacity" : "transform";
+    const handleTransitionEnd = (event) => {
+      if (event.target === dialog && event.propertyName === finishProperty) finish();
+    };
+
+    if (immediate) {
+      finish();
+      return;
+    }
+
+    dialog.classList.add("is-closing");
+    dialog.classList.remove("is-visible");
+    dialog.addEventListener("transitionend", handleTransitionEnd);
+    motion.closeTimer = window.setTimeout(
+      finish,
+      (reducedMotion ? AUX_DIALOG_REDUCED_MOTION_MS : AUX_DIALOG_MOTION_MS) + 80,
+    );
+  });
+
+  return motion.closePromise;
+}
+
 function openAccountDialog(trigger) {
   if (!state.account.authenticated && !EMAIL_REGISTRATION_ENABLED) return;
   state.lastAccountTrigger = trigger || document.activeElement;
-  if (!refs.accountDialog.open) refs.accountDialog.showModal();
+  openStagedDialog(
+    refs.accountDialog,
+    state.dialogMotion.account,
+    refs.closeAccountDialog,
+  );
   refs.accountDialog.querySelector(".account-dialog-shell")?.scrollTo({ top: 0 });
-  refs.closeAccountDialog.focus({ preventScroll: true });
+}
+
+function closeAccountDialog(options) {
+  return closeStagedDialog(refs.accountDialog, state.dialogMotion.account, options);
+}
+
+function openSourceDialog(trigger) {
+  state.lastSourceTrigger = trigger || document.activeElement;
+  openStagedDialog(refs.sourceDialog, state.dialogMotion.source, refs.closeSource);
+}
+
+function closeSourceDialog(options) {
+  return closeStagedDialog(refs.sourceDialog, state.dialogMotion.source, options);
 }
 
 function setDashboardStatus(status, message) {
@@ -688,7 +768,7 @@ function officialDashboardFromStatic(data, selectedDate, schoolId, mealType) {
     sourceUrl: record?.source?.url || sourceUrl,
     mealType,
     mealTypeLabel: mealType === "vegetarian" ? "素食" : "葷食",
-    dataNotice: "教育部校園食材登錄平臺的當日或歷史實際供餐公開紀錄；若同時出現葷、素主菜，本站依菜名的「素」字拆分主菜與副菜，其他分類列為共用。",
+    dataNotice: "教育部校園食材登錄平臺的當日或歷史實際供餐公開紀錄；同日的主食、主菜中若同時出現有「素」字與未標示「素」的菜色，本站依菜名的「素」字拆分主食、主菜與副菜，其他分類列為共用。",
   };
 }
 
@@ -1343,7 +1423,7 @@ function renderArchive(dashboard) {
 function renderSource(day) {
   refs.sourceArticle.hidden = !day.source.url;
   if (day.source.url) refs.sourceArticle.href = day.source.url;
-  const openImage = (kind) => {
+  const openImage = (kind, trigger) => {
     const isDetail = kind === "detail";
     const image = isDetail ? day.source.detailImage : day.source.image;
     const label = isDetail
@@ -1360,7 +1440,7 @@ function renderSource(day) {
     refs.dialogTitle.textContent = `第 ${day.week} 週${label}`;
     refs.sourceDialog.dataset.kind = kind;
     setSourceImageState("loading", `正在載入第 ${day.week} 週${label}…`);
-    refs.sourceDialog.showModal();
+    openSourceDialog(trigger);
     refs.sourceImage.onload = async () => {
       try {
         await refs.sourceImage.decode();
@@ -1379,8 +1459,8 @@ function renderSource(day) {
     };
     refs.sourceImage.src = image;
   };
-  refs.openSource.onclick = () => openImage("summary");
-  refs.openDetail.onclick = () => openImage("detail");
+  refs.openSource.onclick = () => openImage("summary", refs.openSource);
+  refs.openDetail.onclick = () => openImage("detail", refs.openDetail);
 }
 
 function setSourceImageState(status, message) {
@@ -1463,7 +1543,7 @@ function renderSchoolContext(dashboard) {
     refs.footerSource.textContent = complete
       ? "資料來源：忠信國小午餐網、教育部校園食材登錄平臺 · 僅供家庭餐食規劃參考"
       : OfficialDiet.profile(dashboard.record).hasVariants
-        ? `資料來源：教育部校園食材登錄平臺（${dashboard.school.fullName}）· 主副菜依「素」字標示分組`
+        ? `資料來源：教育部校園食材登錄平臺（${dashboard.school.fullName}）· 主食、主副菜依「素」字標示分組`
         : `資料來源：教育部校園食材登錄平臺（${dashboard.school.fullName}）· 完整官方紀錄`;
   }
 }
@@ -1596,8 +1676,8 @@ function renderOfficialMeal(dashboard) {
     refs.mealList.append(item);
   });
   refs.allergenRow.textContent = profile.hasVariants
-    ? "依官方菜名的「素」字拆分主菜與副菜；主食、蔬菜、湯品與附餐列為兩種分組共用。"
-    : "這一天沒有同時出現葷、素主菜，因此保留官方完整菜色，不另外拆分。";
+    ? "依官方菜名的「素」字拆分主食、主菜與副菜；蔬菜、湯品與附餐列為兩種分組共用。"
+    : "這一天的主食或主菜沒有同時出現有「素」字與未標示「素」的菜色，因此保留官方完整菜色，不另外拆分。";
   refs.mealTypeNote.textContent = profile.hasVariants
     ? "這是依菜名標示所做的分組，不等同素食認證；共用菜色是否含動物性食材，仍以展開後的官方食材明細為準。"
     : "食材、產地、供應商與標章照同日官方公開紀錄呈現；不代表孩子實際攝取量。";
@@ -1665,8 +1745,8 @@ function renderOfficialTraceability(dashboard) {
   refs.traceabilityStatus.textContent = `同日官方資料 · ${summary.ingredientCount} 項`;
   refs.traceabilityStatus.classList.add("verified");
   refs.traceabilityNotice.textContent = profile.hasVariants
-    ? `${record.mealDate} 的主菜與副菜依官方菜名的「素」字分組；主食、蔬菜、湯品與附餐共用，食材內容仍以官方明細為準。`
-    : `${record.mealDate} 的菜色與食材直接整理自教育部公開頁；未發現可配對的葷、素主菜，因此不拆分。`;
+    ? `${record.mealDate} 的主食、主菜與副菜依官方菜名的「素」字分組；蔬菜、湯品與附餐共用，食材內容仍以官方明細為準。`
+    : `${record.mealDate} 的菜色與食材直接整理自教育部公開頁；主食或主菜未發現可配對的葷、素菜色，因此不拆分。`;
   refs.traceabilitySummary.textContent = `${summary.dishCount} 道菜 · ${summary.ingredientCount} 項食材 · ${summary.certifiedIngredientCount} 項附標章／溯源標示`;
 
   for (const dish of dishes) {
@@ -1842,14 +1922,21 @@ async function loadDashboard(date, { announce = false, focusWeekDay = false } = 
   }
 }
 
-refs.closeSource.addEventListener("click", () => refs.sourceDialog.close());
+refs.closeSource.addEventListener("click", () => closeSourceDialog());
 refs.sourceDialog.addEventListener("click", (event) => {
-  if (event.target === refs.sourceDialog) refs.sourceDialog.close();
+  if (event.target === refs.sourceDialog) closeSourceDialog();
+});
+refs.sourceDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeSourceDialog();
 });
 refs.sourceDialog.addEventListener("close", () => {
   state.sourceImageRequestId += 1;
   refs.sourceImage.onload = null;
   refs.sourceImage.onerror = null;
+  const trigger = state.lastSourceTrigger;
+  state.lastSourceTrigger = null;
+  if (trigger?.isConnected) trigger.focus();
 });
 
 refs.closeDishDetail.addEventListener("click", () => closeDishDetail());
@@ -1958,9 +2045,13 @@ refs.standardTransitional.addEventListener("click", () => selectStandardMode("tr
 
 refs.accountButton.addEventListener("click", () => openAccountDialog(refs.accountButton));
 refs.passportUnlock.addEventListener("click", () => openAccountDialog(refs.passportUnlock));
-refs.closeAccountDialog.addEventListener("click", () => refs.accountDialog.close());
+refs.closeAccountDialog.addEventListener("click", () => closeAccountDialog());
 refs.accountDialog.addEventListener("click", (event) => {
-  if (event.target === refs.accountDialog) refs.accountDialog.close();
+  if (event.target === refs.accountDialog) closeAccountDialog();
+});
+refs.accountDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeAccountDialog();
 });
 refs.accountDialog.addEventListener("close", () => {
   const trigger = state.lastAccountTrigger;
@@ -2114,6 +2205,57 @@ refs.encounterForm.addEventListener("submit", async (event) => {
   }
 });
 
+function setupMobileNavigation() {
+  const links = [...document.querySelectorAll('.mobile-nav a[href^="#"]')];
+  const sectionTargets = new Map([
+    ["today", "today"],
+    ["todayGrid", "today"],
+    ["week", "week"],
+    ["traceability", "traceability"],
+    ["passport", "passport"],
+    ["standard", "traceability"],
+    ["learn", "traceability"],
+    ["insights", "traceability"],
+    ["news", "traceability"],
+    ["source", "traceability"],
+  ]);
+  const sections = [...sectionTargets.keys()]
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+  let updateFrame = 0;
+
+  const setActive = (target) => {
+    for (const link of links) {
+      const isActive = link.hash === `#${target}`;
+      link.classList.toggle("active", isActive);
+      if (isActive) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    }
+  };
+  const update = () => {
+    updateFrame = 0;
+    const marker = Math.min(window.innerHeight * .34, 250);
+    let target = "today";
+    for (const section of sections) {
+      if (section.hidden || !section.getClientRects().length) continue;
+      if (section.getBoundingClientRect().top <= marker) {
+        target = sectionTargets.get(section.id);
+      }
+    }
+    setActive(target);
+  };
+  const queueUpdate = () => {
+    if (!updateFrame) updateFrame = window.requestAnimationFrame(update);
+  };
+
+  for (const link of links) {
+    link.addEventListener("click", () => setActive(link.hash.slice(1)));
+  }
+  window.addEventListener("scroll", queueUpdate, { passive: true });
+  window.addEventListener("resize", queueUpdate);
+  update();
+}
+
 for (const link of document.querySelectorAll("a.today-link")) {
   link.addEventListener("click", async (event) => {
     event.preventDefault();
@@ -2126,6 +2268,8 @@ for (const link of document.querySelectorAll("a.today-link")) {
     document.getElementById("today").scrollIntoView();
   });
 }
+
+setupMobileNavigation();
 
 async function initialize() {
   refs.authBirthDate.max = adultBirthDateMaximum();

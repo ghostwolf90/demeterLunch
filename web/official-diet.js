@@ -3,8 +3,9 @@
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root) root.OfficialDiet = api;
 })(typeof globalThis !== "undefined" ? globalThis : this, () => {
+  const VARIANT_CATEGORIES = ["主食", "主菜"];
   const SPLIT_CATEGORIES = new Set(["主菜", "副菜"]);
-  const SHARED_CATEGORIES = new Set(["主食", "蔬菜", "湯品", "附餐"]);
+  const SHARED_CATEGORIES = new Set(["蔬菜", "湯品", "附餐"]);
 
   function hasVegetarianMarker(name) {
     return String(name || "").includes("素");
@@ -21,13 +22,19 @@
 
   function profile(record) {
     const dishes = flatten(record);
-    const mainDishes = dishes.filter((dish) => dish.category === "主菜");
-    const hasVegetarianMain = mainDishes.some((dish) => hasVegetarianMarker(dish.name));
-    const hasMeatMain = mainDishes.some((dish) => !hasVegetarianMarker(dish.name));
+    const variantCategories = VARIANT_CATEGORIES.filter((category) => {
+      const candidates = dishes.filter((dish) => dish.category === category);
+      return candidates.some((dish) => hasVegetarianMarker(dish.name))
+        && candidates.some((dish) => !hasVegetarianMarker(dish.name));
+    });
+    const splitCategories = new Set(SPLIT_CATEGORIES);
+    if (dishes.some((dish) =>
+      dish.category === "主食" && hasVegetarianMarker(dish.name)
+    )) splitCategories.add("主食");
     return {
-      hasVariants: hasVegetarianMain && hasMeatMain,
-      hasVegetarianMain,
-      hasMeatMain,
+      hasVariants: variantCategories.length > 0,
+      variantCategories,
+      splitCategories,
       dishes,
     };
   }
@@ -39,7 +46,7 @@
     }
     return result.dishes.filter((dish) => {
       if (SHARED_CATEGORIES.has(dish.category)) return true;
-      if (!SPLIT_CATEGORIES.has(dish.category)) return true;
+      if (!result.splitCategories.has(dish.category)) return true;
       return mealType === "vegetarian"
         ? hasVegetarianMarker(dish.name)
         : !hasVegetarianMarker(dish.name);

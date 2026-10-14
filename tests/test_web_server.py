@@ -104,7 +104,7 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('id="officialSourceLink"', index_html)
         self.assertIn('src="./official-diet.js"', index_html)
         self.assertIn("officialDashboardFromStatic", app_js)
-        self.assertIn("依官方菜名的「素」字拆分主菜與副菜", app_js)
+        self.assertIn("依官方菜名的「素」字拆分主食、主菜與副菜", app_js)
         self.assertIn("不等同素食認證", app_js)
         self.assertIn("schoolId=", app_js)
         self.assertIn("demeter-favorite-school-id", app_js)
