@@ -7,12 +7,13 @@ import {
   authorizeManualPublisher,
   ManualPublishAuthError,
 } from "@/lib/manual-publish-auth";
+import { validateManualPublishBatchCounts } from "@/lib/manual-publish-bundle";
 import {
   parseJsonPreservingLargeIntegers,
   sha256Hex,
   stableStringify,
 } from "@/lib/json-transport";
-import { allSchools, findSchool } from "@/lib/schools";
+import { findSchool } from "@/lib/schools";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
       httpMetadata: { contentType: "application/json; charset=utf-8" },
       customMetadata: {
         mealDate: prepared.mealDate,
+        submittedSchools: String(prepared.schoolCount),
         reviewedRecords: String(prepared.records.length),
         method: "owner-manual-publish",
       },
@@ -124,6 +126,7 @@ export async function POST(request: Request) {
       {
         status: "published",
         mealDate: prepared.mealDate,
+        submittedSchools: prepared.schoolCount,
         reviewedRecords: prepared.records.length,
         notPublished: prepared.notPublished,
         created,
@@ -137,7 +140,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Manual meal publication failed", error);
     const message = error instanceof Error ? error.message : "發佈包驗證失敗";
-    const validationFailure = /不一致|無效|缺少|重複|不可發佈|尚未|必須|不正確/.test(message);
+    const validationFailure = /不一致|無效|缺少|重複|不可發佈|不得|尚未|必須|不正確/.test(message);
     return jsonError(
       validationFailure ? message : "Site 寫入失敗，既有資料已保留",
       validationFailure ? 400 : 500,
@@ -178,21 +181,11 @@ async function validateBundle(bundle: JsonObject) {
   const summary = objectValue(bundle.reportSummary, "reportSummary");
   const results = listValue(bundle.results, "results");
   const records = listValue(bundle.records, "records");
-  const schools = allSchools();
-  const expectedSchoolCount = integerValue(summary.schools, "summary.schools");
-  const available = integerValue(summary.available, "summary.available");
-  const noMeal = integerValue(summary.noMeal, "summary.noMeal");
-  const notPublished = integerValue(summary.notPublished, "summary.notPublished");
-  const failed = integerValue(summary.failed, "summary.failed");
-  if (
-    failed !== 0
-    || expectedSchoolCount !== schools.length
-    || results.length !== schools.length
-    || available + noMeal + notPublished !== schools.length
-    || records.length !== available + noMeal
-  ) {
-    throw new Error("發佈包不是完整且零失敗的全市抓取結果");
-  }
+  const counts = validateManualPublishBatchCounts(
+    summary,
+    results.length,
+    records.length,
+  );
 
   const resultStatuses = new Map<number, string>();
   for (const value of results) {
@@ -208,10 +201,6 @@ async function validateBundle(bundle: JsonObject) {
     }
     resultStatuses.set(schoolId, status);
   }
-  if (resultStatuses.size !== schools.length) {
-    throw new Error("results 缺少啟用學校");
-  }
-
   const preparedRecords: PreparedRecord[] = [];
   const recordIds = new Set<number>();
   for (const value of records) {
@@ -283,7 +272,12 @@ async function validateBundle(bundle: JsonObject) {
       throw new Error(`發佈包缺少 reviewed 紀錄：${schoolId}`);
     }
   }
-  return { mealDate, records: preparedRecords, notPublished };
+  return {
+    mealDate,
+    schoolCount: counts.schools,
+    records: preparedRecords,
+    notPublished: counts.notPublished,
+  };
 }
 
 function objectValue(value: unknown, label: string): JsonObject {

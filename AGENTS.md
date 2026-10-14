@@ -1,21 +1,21 @@
-# Project guidance
+# 專案指引
 
-- The project now includes the explicitly requested stage-three local product: reviewed structured menu data, SQLite, insights, a family dinner suggestion UI, free local sign-in, child profiles, and the One-Bite Passport.
-- Preserve the reviewed JSON as the source of truth for structured data; rebuild SQLite with `scripts/build_database.py` after changes.
-- Prefer the Atom feed; HTML crawling is a fallback only.
-- Preserve idempotency and do not replace valid stored data until a complete refreshed article has been downloaded.
-- Keep the default collection cutoff at 2026-09-01, including a menu week that overlaps that date.
-- Be respectful of the source site: always use timeouts, a descriptive User-Agent, bounded retries, and a request interval.
-- Run `python3 -m unittest discover -s tests -v` after changes.
-- Keep the browser-facing website code dependency-free and bind the local server to 127.0.0.1 by default.
-- Treat `web/` as the editable website source. After frontend or public-data changes, run `node --check web/app.js` and rebuild the deployable `dist/` snapshot with `python3 scripts/build_static_site.py`.
-- Store authenticated child profiles and food encounters in D1, not browser storage. Browser storage is only for device-local display preferences such as the selected meal type, grade group, comparison mode, or favorite school.
-- Keep the child's school explicit and account-owned. Switching the public school selector is browse-only and must never silently change the child's school or attach another school's menu to the child's passport.
-- Model a food encounter separately from its source dish. New school-lunch encounters must save `meal_context = school_lunch`, the selected `dish_name`, and the child-mentioned `food_name`; non-school encounters must use `meal_context = other` without a lunch dish.
-- Never infer or backfill a source dish for legacy encounters that did not record one. Label them as having no recorded dish source, preserve the actual date and school context, and do not highlight a menu dish merely because its name looks similar.
-- When changing D1 account schema, append a generated Drizzle migration with `npm run db:generate`; do not rewrite applied migrations. Verify TypeScript with `tsc --noEmit` and run the Worker tests in addition to the Python suite.
-- Keep the dish-detail dialog motion consistent with Apple-style sheets: stage the first rendered frame to prevent flashing, use a no-overshoot response around 0.3–0.4 seconds, animate the panel and backdrop together, and use symmetric enter/exit paths (right edge on desktop, bottom edge on mobile).
-- Preserve dialog accessibility when changing its motion: Escape, backdrop click, and the close button must animate out before closing; focus must return to the triggering dish; `prefers-reduced-motion` must use a short cross-fade without spatial movement.
-- Treat the campus ingredient OpenAPI as a delayed historical source: each month's data is scheduled for publication on the 6th of the following month, so current-month records are not available in real time. Never present an earlier matching record as traceability for today's meal. While official same-day data is pending, label matches as historical ingredient records or past meal references, show their actual meal dates and source, and state that they do not represent today's ingredients, origin, supplier, or batch; backfill the official same-day record after it is published.
-- Publish updates to the existing public Site “好好吃飯｜午餐助手” (`appgprj_6abdf96b7f608191942ee50447a69129`, slug `zhongxin-lunch-2026`); do not create a replacement Site or change its audience or schedules unless explicitly requested.
-- Before publishing, open the latest Site source and use it as the deployment base because its automations may have newer news or monitor state. Overlay the intended code changes, run all checks, rebuild `dist/`, and preserve unrelated remote data.
+- 本專案目前包含已明確要求的第三階段本機產品：經審核的結構化菜單資料、SQLite、洞察分析、家庭晚餐建議介面、免費本機登入、孩子資料，以及「一口護照」。
+- 經審核的 JSON 是結構化資料的唯一真實來源；資料異動後，請使用 `scripts/build_database.py` 重建 SQLite。
+- 優先使用 Atom 訂閱源；只有在無法使用時，才以 HTML 爬取作為備援。
+- 維持冪等性；在完整下載更新後的文章之前，不得取代已儲存且有效的資料。
+- 預設資料收集截止日維持在 2026-09-01，並包含與該日期重疊的菜單週。
+- 尊重來源網站：一律設定逾時、使用具描述性的 User-Agent、限制重試次數，並保留請求間隔。
+- 變更後執行 `python3 -m unittest discover -s tests -v`。
+- 瀏覽器端網站程式碼應維持零相依套件，且本機伺服器預設綁定於 127.0.0.1。
+- 將 `web/` 視為可編輯的網站原始碼。前端或公開資料變更後，執行 `node --check web/app.js`，並使用 `python3 scripts/build_static_site.py` 重建可部署的 `dist/` 快照。
+- 已登入使用者的孩子資料與食物相遇紀錄應儲存在 D1，不得儲存在瀏覽器儲存空間。瀏覽器儲存空間只能保存裝置本機的顯示偏好，例如所選餐別、年級群組、比較模式或最愛學校。
+- 孩子的學校必須明確設定，且屬於帳號資料。切換公開學校選擇器只能用來瀏覽，絕對不能在未告知的情況下變更孩子的學校，也不能將其他學校的菜單附加到孩子的一口護照。
+- 食物相遇紀錄與其來源菜色必須分開建模。新的學校午餐紀錄必須儲存 `meal_context = school_lunch`、所選的 `dish_name`，以及孩子提到的 `food_name`；非學校場合的紀錄必須使用 `meal_context = other`，且不得包含午餐菜色。
+- 對於未記錄來源菜色的舊有食物相遇紀錄，絕對不能推測或回填來源菜色。應標示為未記錄菜色來源、保留實際日期與學校情境，也不能只因名稱相似就反白顯示某道菜單菜色。
+- 變更 D1 帳號結構時，使用 `npm run db:generate` 新增產生的 Drizzle 遷移；不得改寫已套用的遷移。除了 Python 測試套件外，也要使用 `tsc --noEmit` 驗證 TypeScript，並執行 Worker 測試。
+- 菜色詳細資料對話框的動態效果應與 Apple 風格的面板一致：安排第一個渲染影格以避免閃爍、使用約 0.3–0.4 秒且不過衝的反應、讓面板與背景遮罩同步動畫，並使用對稱的進入與離開路徑（桌面版從右側邊緣，行動版從底部邊緣）。
+- 變更對話框動態效果時，必須維持無障礙功能：按 Escape、點擊背景遮罩及按下關閉按鈕時，都必須先播放離場動畫再關閉；焦點必須回到觸發對話框的菜色；`prefers-reduced-motion` 必須使用不含空間位移的短暫交叉淡化效果。
+- 將校園食材 OpenAPI 視為延遲提供的歷史資料來源：每月資料預定於次月 6 日發布，因此無法即時取得當月紀錄。絕對不能將較早且相符的紀錄當成今日午餐的追溯資料。等待官方同日資料期間，應將相符資料標示為歷史食材紀錄或過去餐點參考，顯示其實際供餐日期與來源，並註明它們不代表今日的食材、產地、供應商或批次；官方同日紀錄發布後再行回填。
+- 將更新發布到既有的公開 Site「好好吃飯｜午餐助手」（`appgprj_6abdf96b7f608191942ee50447a69129`，slug 為 `zhongxin-lunch-2026`）；除非使用者明確要求，否則不得建立替代 Site，也不得變更其受眾或排程。
+- 發布前，先開啟最新的 Site 原始碼，並以其作為部署基礎，因為其中的自動化程序可能包含較新的消息或監控狀態。疊加預定的程式碼變更、執行所有檢查、重建 `dist/`，並保留不相關的遠端資料。

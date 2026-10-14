@@ -235,6 +235,66 @@ data/raw/fatrace-daily/YYYY-MM-DD/report.json
 
 `raw.json` 保存官方接口的完整回應；`candidate.json` 是統一格式的待校讀候選資料。候選資料固定標示 `review.status: pending`，不會自動進入 reviewed `data/parsed/`、SQLite 或公開網站。若官方明確回傳不供餐設定，狀態為 `no_meal`；空菜單且沒有官方原因則標示 `not_published`，不可解讀為今日沒有供餐。既有 `available` 或 `no_meal` 紀錄不會被後續空回應覆蓋。
 
+### 每日操作流程
+
+單校、多校與全市資料都會經過「抓取 → 校讀 → 發布」。發布器會依當次 `report.json` 的學校數量建立批次，可以是 1 校、數校或全市 243 校；批次內不能有抓取失敗，且 `available` 或 `no_meal` 必須有對應的 reviewed JSON。部分批次只會 upsert 該批次的學校紀錄，不會刪除或覆蓋其他學校的資料。
+
+#### 忠信國小：三步驟發布（最常用）
+
+只想直接照做：把下面三行**依序執行**即可。
+
+```bash
+python3 scripts/fetch_school_meals.py --date 2026-10-14 --school 忠信國小
+python3 scripts/review_school_meals.py --date 2026-10-14
+python3 scripts/publish_school_meals.py --date 2026-10-14
+```
+
+> 三行的日期必須相同。要處理其他日期時，把三行中的 `2026-10-14` 一起換掉。
+
+每一行在做什麼：
+
+1. **抓取**：`fetch_school_meals.py` 從官方來源下載忠信國小當日午餐，產生待校讀資料；這一步還不會發布。
+2. **校讀**：`review_school_meals.py` 檢查抓取結果，並產生可發布的 reviewed JSON；這一步也還不會發布。
+3. **發布**：`publish_school_meals.py` 將當次已校讀的資料寫入公開 Site。單校批次只更新該校，不會刪除或覆蓋其他學校的資料。
+
+想在正式發布前先檢查資料，可選擇執行：
+
+```bash
+python3 scripts/publish_school_meals.py --date 2026-10-14 --dry-run
+```
+
+`--dry-run` 只驗證發布資料，不會寫入公開 Site。正式發布成功時會顯示 `"status": "published"` 與 `"submittedSchools": 1`。
+
+若也要更新本機 SQLite 與 `dist/`，可再執行：
+
+```bash
+python3 scripts/build_database.py
+python3 -m unittest discover -s tests -v
+node --check web/app.js
+python3 scripts/build_static_site.py
+```
+
+多校流程相同；抓取時可重複使用 `--school 學校名稱`，後續校讀與發布指令不變。
+
+#### 抓取全市後直接發布（正式流程）
+
+完成一次手動發布憑證設定後，使用下列單一指令抓取全市 243 校，並自動完成校讀、測試、建置與發布：
+
+```bash
+python3 scripts/update_all_taichung_schools.py --date 2026-10-14 --publish
+```
+
+若全市資料已經抓取、校讀並建置完成，可先驗證發布包，再正式發布：
+
+```bash
+python3 scripts/publish_school_meals.py --date 2026-10-14 --dry-run
+python3 scripts/publish_school_meals.py --date 2026-10-14
+```
+
+`--dry-run` 只驗證本機資料，不會寫入公開 Site。正式發布成功時會顯示 `"status": "published"`；重複發布相同內容時為冪等操作，記錄會顯示為 `unchanged`。
+
+> 注意：`fetch_school_meals.py` 每次執行都會以該次的抓取範圍重建當日 `report.json`。發布器只會發布當前報告所列的學校；既有其他學校紀錄不會被刪除。
+
 確認候選資料的學校、日期與內容後，執行結構校讀與晉升：
 
 ```bash
@@ -270,19 +330,7 @@ python3 scripts/update_all_taichung_schools.py --skip-ingredients
 
 若官方尚未發布，指令會以 pending 狀態結束並保留既有有效資料。當日仍有抓取失敗時不會發佈，重新執行即可利用已保存的有效資料補抓。
 
-完成一次手動發佈憑證設定後，可以用單一指令完成全市抓取、校讀、測試、建置及直接寫入公開 Site：
-
-```bash
-python3 scripts/update_all_taichung_schools.py --date 2026-10-13 --publish
-```
-
-若資料已經抓取及校讀完成，只要執行：
-
-```bash
-python3 scripts/publish_school_meals.py --date 2026-10-13
-```
-
-指令會先核對全市報告必須為零失敗、reviewed JSON 數量、學校代碼、日期、來源網址與內容雜湊，再以本機 `.secrets/site_publish_token` 的私密憑證透過 HTTPS 寫入 Site 的 D1 與 R2。憑證目錄已被 Git 忽略，指令不會顯示或上傳憑證內容。重複發佈同一天是冪等操作；相同內容會標示為 `unchanged`。可先加上 `--dry-run` 只驗證本機資料而不發佈。
+正式發布會先核對當次報告必須為零失敗、reviewed JSON 數量、學校代碼、日期、來源網址與內容雜湊，再以本機 `.secrets/site_publish_token` 的私密憑證透過 HTTPS 寫入 Site 的 D1 與 R2。憑證目錄已被 Git 忽略，指令不會顯示或上傳憑證內容。
 
 `prepare_site_publish.py` 保留給需要更新網站程式碼的 Sites 版本部署；日常午餐資料發佈不再需要 Sites Git 短效憑證或 Codex。
 

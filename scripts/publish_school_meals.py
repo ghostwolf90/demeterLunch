@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import socket
+import ssl
 import sys
 import time
 import urllib.error
@@ -61,8 +62,12 @@ def build_publish_bundle(project_root: Path, meal_date: date) -> dict[str, Any]:
         raise ManualPublishError("當日仍有抓取失敗的學校，拒絕發佈")
 
     expected = int(summary.get("available", 0)) + int(summary.get("noMeal", 0))
-    if int(summary.get("schools", 0)) != len(results):
+    school_count = int(summary.get("schools", 0))
+    not_published = int(summary.get("notPublished", 0))
+    if school_count < 1 or school_count != len(results):
         raise ManualPublishError("抓取報告的學校總數與 results 不一致")
+    if expected + not_published != school_count:
+        raise ManualPublishError("抓取報告的狀態統計與學校總數不一致")
 
     report_results: list[dict[str, Any]] = []
     reviewed_records: list[dict[str, Any]] = []
@@ -93,6 +98,11 @@ def build_publish_bundle(project_root: Path, meal_date: date) -> dict[str, Any]:
             / str(school_id)
             / f"{date_text}.json"
         )
+        if not record_path.is_file():
+            raise ManualPublishError(
+                f"找不到已校讀紀錄：{record_path}；"
+                f"請先執行 python3 scripts/review_school_meals.py --date {date_text}"
+            )
         record = _read_json(record_path)
         if not isinstance(record, dict):
             raise ManualPublishError(f"reviewed 紀錄不是物件：{record_path}")
@@ -191,6 +201,7 @@ def publish_bundle(
     endpoint = f"{site_url.rstrip('/')}/api/admin/publish"
     if not endpoint.startswith("https://"):
         raise ManualPublishError("公開 Site 發佈網址必須使用 HTTPS")
+    ssl_context = _verified_ssl_context()
 
     for attempt in range(retries + 1):
         request = urllib.request.Request(
@@ -205,7 +216,11 @@ def publish_bundle(
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
+            with urllib.request.urlopen(
+                request,
+                timeout=timeout,
+                context=ssl_context,
+            ) as response:
                 payload = json.loads(response.read().decode("utf-8"))
             if not isinstance(payload, dict) or payload.get("status") != "published":
                 raise ManualPublishError("Site 回傳了無效的發佈結果")
@@ -221,6 +236,31 @@ def publish_bundle(
     raise ManualPublishError("Site 發佈失敗")
 
 
+def _verified_ssl_context() -> ssl.SSLContext:
+    certificate_files: list[Path] = []
+    try:
+        import certifi
+
+        certificate_files.append(Path(certifi.where()))
+    except ImportError:
+        pass
+
+    default_file = ssl.get_default_verify_paths().cafile
+    if default_file:
+        certificate_files.append(Path(default_file))
+    certificate_files.extend(
+        [
+            Path("/etc/ssl/cert.pem"),
+            Path("/opt/homebrew/etc/openssl@3/cert.pem"),
+            Path("/usr/local/etc/openssl@3/cert.pem"),
+        ]
+    )
+    for certificate_file in certificate_files:
+        if certificate_file.is_file():
+            return ssl.create_default_context(cafile=str(certificate_file))
+    return ssl.create_default_context()
+
+
 def _http_error_message(exc: urllib.error.HTTPError) -> str:
     try:
         payload = json.loads(exc.read().decode("utf-8"))
@@ -233,7 +273,7 @@ def _http_error_message(exc: urllib.error.HTTPError) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="將本機已校讀的全臺中市同日午餐直接發佈到既有 Site。"
+        description="將本機已校讀的單校或多校同日午餐發佈到既有 Site。"
     )
     parser.add_argument(
         "--date",
@@ -256,6 +296,7 @@ def main(argv: list[str] | None = None) -> int:
             result = {
                 "status": "ready",
                 "mealDate": bundle["mealDate"],
+                "submittedSchools": bundle["reportSummary"]["schools"],
                 "reviewedRecords": len(bundle["records"]),
                 "siteUrl": args.site_url,
             }

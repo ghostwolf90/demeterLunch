@@ -1,17 +1,24 @@
 from __future__ import annotations
 
 import json
+import ssl
 import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
 
-from scripts.publish_school_meals import ManualPublishError, build_publish_bundle
+from scripts.publish_school_meals import (
+    ManualPublishError,
+    _verified_ssl_context,
+    build_publish_bundle,
+)
 from src.fatrace_daily import candidate_fingerprint
 
 
 class PublishSchoolMealsTests(unittest.TestCase):
-    def _fixture(self, root: Path, *, failed: int = 0) -> None:
+    def _fixture(
+        self, root: Path, *, failed: int = 0, include_second_school: bool = True
+    ) -> None:
         report = root / "data/raw/fatrace-daily/2026-10-13/report.json"
         report.parent.mkdir(parents=True)
         report.write_text(
@@ -19,10 +26,10 @@ class PublishSchoolMealsTests(unittest.TestCase):
                 {
                     "mealDate": "2026-10-13",
                     "summary": {
-                        "schools": 2,
+                        "schools": 2 if include_second_school else 1,
                         "available": 1,
                         "noMeal": 0,
-                        "notPublished": 1 - failed,
+                        "notPublished": (1 - failed) if include_second_school else 0,
                         "failed": failed,
                     },
                     "results": [
@@ -31,12 +38,20 @@ class PublishSchoolMealsTests(unittest.TestCase):
                             "fatraceSchoolId": 193609,
                             "recordStatus": "available",
                         },
-                        {
-                            "school": "平等國小",
-                            "fatraceSchoolId": 64764,
-                            "recordStatus": "failed" if failed else "not_published",
-                        },
-                    ],
+                    ]
+                    + (
+                        [
+                            {
+                                "school": "平等國小",
+                                "fatraceSchoolId": 64764,
+                                "recordStatus": (
+                                    "failed" if failed else "not_published"
+                                ),
+                            }
+                        ]
+                        if include_second_school
+                        else []
+                    ),
                 }
             ),
             encoding="utf-8",
@@ -99,7 +114,7 @@ class PublishSchoolMealsTests(unittest.TestCase):
         record["contentHash"] = candidate_fingerprint(record)
         reviewed.write_text(json.dumps(record), encoding="utf-8")
 
-    def test_builds_complete_reviewed_bundle(self) -> None:
+    def test_builds_multi_school_reviewed_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self._fixture(root)
@@ -114,6 +129,17 @@ class PublishSchoolMealsTests(unittest.TestCase):
         self.assertEqual(len(bundle["records"][0]["recordSha256"]), 64)
         self.assertNotIn("token", json.dumps(bundle).lower())
 
+    def test_builds_single_school_reviewed_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._fixture(root, include_second_school=False)
+
+            bundle = build_publish_bundle(root, date(2026, 10, 13))
+
+        self.assertEqual(bundle["reportSummary"]["schools"], 1)
+        self.assertEqual(len(bundle["results"]), 1)
+        self.assertEqual(len(bundle["records"]), 1)
+
     def test_rejects_report_with_failures(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -121,6 +147,12 @@ class PublishSchoolMealsTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ManualPublishError, "仍有抓取失敗"):
                 build_publish_bundle(root, date(2026, 10, 13))
+
+    def test_https_context_keeps_certificate_verification_enabled(self) -> None:
+        context = _verified_ssl_context()
+
+        self.assertTrue(context.check_hostname)
+        self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
 
 
 if __name__ == "__main__":
