@@ -112,6 +112,71 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("fetchSchoolDirectory", app_js)
         self.assertIn("initialize();", app_js)
 
+    def test_food_passport_is_visible_but_gated_until_free_login(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
+        app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="passport"', index_html)
+        self.assertIn('id="passportLocked"', index_html)
+        self.assertLess(
+            index_html.index('id="traceability"'),
+            index_html.index('id="passport"'),
+        )
+        self.assertLess(
+            index_html.index('id="passport"'),
+            index_html.index('id="standard"'),
+        )
+        self.assertIn("免費登入後開啟", index_html)
+        self.assertIn('id="passportUnlock" type="button" aria-disabled="false"', index_html)
+        self.assertIn("家長 Email", index_html)
+        self.assertIn('id="authBirthDate"', index_html)
+        self.assertIn("只用來確認已滿 18 歲；完整生日不會保存", index_html)
+        self.assertIn("此帳號不由孩子自行使用", index_html)
+        self.assertNotIn("signin-with-chatgpt", index_html)
+        self.assertNotIn("我已滿 13 歲", index_html)
+        self.assertIn('id="requestAuthCode" type="submit" aria-disabled="false"', index_html)
+        self.assertIn("驗證碼會寄到你的信箱，10 分鐘內有效", index_html)
+        self.assertIn("const EMAIL_REGISTRATION_ENABLED = true", app_js)
+        self.assertIn('fetch("/api/auth/request-code"', app_js)
+        self.assertIn('fetch("/api/auth/verify-code"', app_js)
+        self.assertIn('fetch("/api/auth/sign-out"', app_js)
+        self.assertIn('fetch("/api/account"', app_js)
+        self.assertIn('fetch("/api/account/child"', app_js)
+        self.assertIn('fetch("/api/account/encounters"', app_js)
+        self.assertIn('id="cancelChildEdit"', index_html)
+        self.assertIn('id="childSchool"', index_html)
+        self.assertIn('id="passportSchoolNotice"', index_html)
+        self.assertIn("這裡只切換公開午餐", app_js)
+        self.assertIn('node("details", "encounter-item")', app_js)
+        self.assertIn("encounterMealSnapshot", app_js)
+        self.assertIn("不會拿別天的內容代替", app_js)
+        self.assertIn("來源菜色：", app_js)
+        self.assertIn("舊紀錄未記錄菜色來源", app_js)
+        self.assertIn('input.name = "dishSource"', app_js)
+        self.assertIn("mealContext", app_js)
+        self.assertIn("dishName", app_js)
+        self.assertIn("今天午餐從哪一道菜開始記？", index_html)
+        self.assertIn("家裡／其他地方吃到", app_js)
+        self.assertIn("孩子的營養午餐紀錄", index_html)
+        self.assertIn("家裡或其他場合也能另外記錄", index_html)
+        self.assertIn("孩子午餐紀錄所屬學校", index_html)
+        self.assertIn("儲存午餐紀錄", index_html)
+        self.assertIn("refs.encounterForm.hidden = mismatch || missing", app_js)
+        self.assertIn("if (!isViewingChildSchool())", app_js)
+        self.assertIn("請先回到孩子就讀學校，再新增午餐紀錄", app_js)
+        self.assertIn("if (state.account.child) renderPassportFoodChoices()", app_js)
+        self.assertIn("if (state.account.child) refs.encounterForm.hidden = true", app_js)
+
+    def test_passport_copy_avoids_eating_pressure(self) -> None:
+        index_html = (
+            Path(__file__).resolve().parents[1] / "web" / "index.html"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("不要求吃光", index_html)
+        self.assertIn("不把孩子貼上挑食標籤", index_html)
+        self.assertIn("不是分數，是經驗", index_html)
+
     def test_site_exposes_grade_and_standard_controls(self) -> None:
         index_html = (
             Path(__file__).resolve().parents[1] / "web" / "index.html"

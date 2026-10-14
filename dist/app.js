@@ -21,10 +21,25 @@ const state = {
   dishDetailOpenFrame: 0,
   dishDetailCloseTimer: 0,
   sourceImageRequestId: 0,
+  account: {
+    loading: true,
+    authenticated: false,
+    user: null,
+    child: null,
+    encounters: [],
+    error: null,
+  },
+  authChallengeId: null,
+  authEmail: null,
+  encounterMealCache: {},
+  editingChild: false,
+  lastAccountTrigger: null,
 };
 
 const DISH_DETAIL_MOTION_MS = 360;
 const DISH_DETAIL_REDUCED_MOTION_MS = 160;
+const OTHER_FOOD_CONTEXT = "__other_food_context__";
+const EMAIL_REGISTRATION_ENABLED = true;
 
 const roleLabels = {
   staple: "主食", main: "主菜", side_1: "副菜一", side_2: "副菜二",
@@ -43,6 +58,15 @@ const traceabilityStatusLabels = {
   matched_reference: "歷史來源參考",
   menu_claim: "菜單原表標示",
   unavailable: "來源待補",
+};
+
+const experienceLabels = {
+  seen: "第一次看到",
+  smelled: "願意聞一聞",
+  touched: "願意碰一下",
+  tasted: "舔或咬一口",
+  accepted: "可以接受",
+  liked: "喜歡",
 };
 
 const ids = [
@@ -68,10 +92,20 @@ const ids = [
   "standardPeriod", "standardBasis", "standardDescription", "standardSummary",
   "standardMetrics", "standardGuidance", "standardObservations", "standardMethod",
   "standardCoverage", "standardSource", "standardRevision",
-  "districtSelect", "schoolSelect", "favoriteSchoolButton", "schoolDataScope", "brandSchoolLabel", "footerSource",
+  "districtSelect", "schoolSelect", "favoriteSchoolButton", "schoolDataScope", "schoolBrowserNote", "brandSchoolLabel", "footerSource",
   "mealTypeSwitch", "menuBoard", "menuKicker", "menuHeading", "reviewBadge",
   "officialSourceLink", "nutritionCard", "dinnerCard", "standard", "learn",
   "week", "todayGrid", "traceability", "news", "insights", "source", "traceabilityKicker", "traceabilityHeading",
+  "passport", "passportLocked", "passportUnlock", "passportSetup", "childForm", "childNickname",
+  "childGradeGroup", "childSchool", "childFormSubmit", "cancelChildEdit", "childSetupKicker", "childSetupTitle",
+  "childSetupDescription", "childFormStatus", "passportWorkspace", "passportChildName", "passportChildSchool",
+  "passportSchoolNotice", "passportSchoolNoticeText", "returnChildSchool", "editChildButton",
+  "encounterForm", "passportFoodChoices", "customFoodName", "encounterPreparation", "encounterNote",
+  "encounterFormStatus", "encounterList", "accountButton", "accountAvatar", "accountButtonText",
+  "accountDialog", "closeAccountDialog", "accountSignedOutView", "accountSignedInView", "accountIdentity",
+  "emailAuthForm", "authEmail", "authBirthDate", "authCaregiverConfirmed", "requestAuthCode", "authRequestStatus",
+  "emailCodeStep", "authMaskedEmail", "emailCodeForm", "authCode", "verifyAuthCode", "authVerifyStatus",
+  "changeAuthEmail", "accountSignOut",
 ];
 const refs = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
 
@@ -89,6 +123,476 @@ function loadingState(message) {
   spinner.setAttribute("aria-hidden", "true");
   status.append(spinner, node("span", "", message));
   return status;
+}
+
+async function responsePayload(response) {
+  try {
+    return await response.json();
+  } catch {
+    return {};
+  }
+}
+
+function setFormStatus(element, message = "", status = "") {
+  element.textContent = message;
+  element.classList.toggle("is-error", status === "error");
+  element.classList.toggle("is-success", status === "success");
+}
+
+function selectedMealDate() {
+  if (state.dashboard?.viewMode === "officialDaily") return state.dashboard.selectedDate;
+  return state.dashboard?.selected?.date || localIsoDate();
+}
+
+function passportFoodOptions() {
+  return [...new Set(state.dishDetails
+    .map((dish) => dish?.name)
+    .filter((name) => typeof name === "string" && name.trim())
+    .map((name) => name.trim()))].slice(0, 8);
+}
+
+function schoolById(schoolId) {
+  return state.schoolDirectory.find(
+    (school) => Number(school.fatraceSchoolId) === Number(schoolId),
+  ) || null;
+}
+
+function populateChildSchoolSelect(preferredSchoolId) {
+  const selectedId = Number(preferredSchoolId) || Number(refs.childSchool.value) || Number(state.schoolId);
+  refs.childSchool.replaceChildren();
+  const placeholder = node(
+    "option",
+    "",
+    state.schoolDirectory.length ? "請選擇孩子就讀的國小" : "正在讀取學校名冊…",
+  );
+  placeholder.value = "";
+  refs.childSchool.append(placeholder);
+
+  const groups = new Map();
+  for (const school of state.schoolDirectory) {
+    const label = `${school.city} · ${school.district}`;
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(school);
+  }
+  for (const [label, schools] of groups) {
+    const group = document.createElement("optgroup");
+    group.label = label;
+    for (const school of schools) {
+      const option = node("option", "", school.name);
+      option.value = String(school.fatraceSchoolId);
+      group.append(option);
+    }
+    refs.childSchool.append(group);
+  }
+  refs.childSchool.disabled = !state.schoolDirectory.length;
+  refs.childSchool.value = schoolById(selectedId) ? String(selectedId) : "";
+}
+
+function isViewingChildSchool() {
+  const childSchoolId = Number(state.account.child?.schoolId);
+  return Boolean(schoolById(childSchoolId) && Number(state.schoolId) === childSchoolId);
+}
+
+function renderPassportSchoolContext() {
+  const child = state.account.child;
+  if (!child) return;
+  const childSchool = schoolById(child.schoolId);
+  const viewingSchool = selectedSchool();
+  refs.passportChildSchool.textContent = childSchool?.name || "尚未設定";
+  refs.schoolBrowserNote.hidden = false;
+  refs.schoolBrowserNote.textContent = `這裡只切換公開午餐；${child.nickname}的午餐紀錄學校要到「孩子資料」更改。`;
+
+  const mismatch = Boolean(childSchool && !isViewingChildSchool());
+  const missing = !childSchool;
+  refs.passportSchoolNotice.hidden = !mismatch && !missing;
+  refs.encounterForm.hidden = mismatch || missing;
+  refs.returnChildSchool.hidden = missing;
+  if (missing) {
+    refs.passportSchoolNoticeText.textContent = `請先到「孩子資料」設定${child.nickname}就讀的國小，設定後才能新增午餐紀錄。`;
+  } else if (mismatch) {
+    refs.passportSchoolNoticeText.textContent = viewingSchool
+      ? `目前正在查看${viewingSchool.name}的公開午餐；${child.nickname}的午餐紀錄仍屬於${childSchool.name}。回到${childSchool.name}後才能新增紀錄。`
+      : `目前尚未顯示${childSchool.name}的午餐；回到孩子就讀學校後才能新增午餐紀錄。`;
+    refs.returnChildSchool.textContent = `查看${childSchool.name}午餐`;
+  }
+}
+
+function renderPassportFoodChoices() {
+  const previous = refs.passportFoodChoices.querySelector('input[name="dishSource"]:checked')?.value;
+  refs.passportFoodChoices.replaceChildren();
+  const child = state.account.child;
+  if (child) renderPassportSchoolContext();
+  const childSchool = child ? schoolById(child.schoolId) : null;
+  const viewingChildSchool = isViewingChildSchool();
+  if (child && !viewingChildSchool) {
+    refs.passportFoodChoices.append(node(
+      "p",
+      "encounter-empty",
+      childSchool
+        ? `切回${childSchool.name}後，這裡才會帶入孩子學校的午餐菜色。`
+        : "先到「孩子資料」設定就讀國小，才會帶入孩子學校的午餐菜色。",
+    ));
+    return;
+  } else if (!passportFoodOptions().length) {
+    refs.passportFoodChoices.append(node("p", "encounter-empty", "選好學校與日期後，這裡會帶入當天菜色；也可以直接輸入食物名稱。"));
+  }
+
+  const foods = child && viewingChildSchool ? passportFoodOptions() : [];
+  const choices = [
+    ...foods.map((food) => ({ value: food, label: food })),
+    { value: OTHER_FOOD_CONTEXT, label: "家裡／其他地方吃到" },
+  ];
+  choices.forEach(({ value, label: text }) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "dishSource";
+    input.value = value;
+    input.checked = value === previous;
+    label.append(input, node("span", "", text));
+    refs.passportFoodChoices.append(label);
+  });
+}
+
+function encounterOriginText(encounter) {
+  if (encounter.mealContext === "school_lunch" && encounter.dishName) {
+    return encounter.foodName === encounter.dishName
+      ? `記錄整道「${encounter.dishName}」`
+      : `來源菜色：${encounter.dishName}`;
+  }
+  if (encounter.mealContext === "other") return "家裡／其他地方吃到";
+  return "舊紀錄未記錄菜色來源";
+}
+
+function renderEncounterHistory() {
+  refs.encounterList.replaceChildren();
+  const encounters = state.account.encounters || [];
+  if (!encounters.length) {
+    refs.encounterList.append(node("p", "encounter-empty", "第一筆不需要是「喜歡」。願意看、聞或碰一下，都是值得留下的午餐經驗。"));
+    return;
+  }
+  for (const encounter of encounters) {
+    const item = node("details", "encounter-item");
+    const summary = document.createElement("summary");
+    const summaryBody = node("div", "encounter-summary");
+    const heading = document.createElement("header");
+    const time = document.createElement("time");
+    time.dateTime = encounter.mealDate;
+    time.textContent = formatDate(encounter.mealDate);
+    heading.append(node("strong", "", encounter.foodName), time);
+    summaryBody.append(
+      heading,
+      node("p", "encounter-stage", experienceLabels[encounter.experience] || "食物經驗"),
+      node("p", "encounter-origin", encounterOriginText(encounter)),
+    );
+    const detail = [encounter.preparation, encounter.note].filter(Boolean).join(" · ");
+    if (detail) summaryBody.append(node("p", "encounter-note", detail));
+    const expandLabel = node("span", "encounter-expand-label", "查看當天午餐");
+    summary.append(summaryBody, expandLabel);
+    const mealPreview = node("div", "encounter-meal-preview");
+    mealPreview.setAttribute("aria-live", "polite");
+    item.append(summary, mealPreview);
+    item.addEventListener("toggle", async () => {
+      expandLabel.textContent = item.open ? "收起當天午餐" : "查看當天午餐";
+      if (!item.open || mealPreview.dataset.loaded === "true") return;
+      mealPreview.dataset.loaded = "true";
+      mealPreview.replaceChildren(node("p", "encounter-meal-status", "正在整理當天菜單…"));
+      try {
+        renderEncounterMealPreview(mealPreview, await encounterMealSnapshot(encounter), encounter);
+      } catch (error) {
+        console.error("Unable to load encounter meal", error);
+        mealPreview.replaceChildren(node("p", "encounter-meal-status is-error", "當天菜單暫時無法讀取，請稍後再試。"));
+      }
+    });
+    refs.encounterList.append(item);
+  }
+}
+
+async function publicSiteData() {
+  if (state.staticData) return state.staticData;
+  const response = await fetch("./data/site-data.json", { cache: "no-store" });
+  if (!response.ok) throw new Error(`無法讀取公開版資料（HTTP ${response.status}）`);
+  state.staticData = await response.json();
+  return state.staticData;
+}
+
+function detailedMealItems(day) {
+  const meal = day?.meal;
+  if (!meal) return [];
+  return [
+    { role: "主食", name: meal.staple },
+    { role: "主菜", name: meal.mainDish },
+    ...(meal.sideDishes || []).map((name, index) => ({ role: `配菜 ${index + 1}`, name })),
+    { role: "湯品", name: meal.soup },
+    { role: "水果", name: meal.fruit },
+    { role: "飲品", name: meal.drink },
+  ].filter((item) => typeof item.name === "string" && item.name.trim());
+}
+
+async function encounterMealSnapshot(encounter) {
+  const schoolId = Number(encounter.schoolId || state.account.child?.schoolId);
+  const mealType = encounter.mealType === "vegetarian" ? "vegetarian" : "meat";
+  const cacheKey = `${schoolId}:${encounter.mealDate}:${mealType}`;
+  if (state.encounterMealCache[cacheKey]) return state.encounterMealCache[cacheKey];
+
+  const school = schoolById(schoolId);
+  const snapshot = {
+    schoolName: school?.name || "孩子當時的學校",
+    mealTypeLabel: mealType === "vegetarian" ? "素食" : "葷食",
+    items: [],
+    missing: false,
+  };
+  if (!schoolId) {
+    snapshot.missing = true;
+    state.encounterMealCache[cacheKey] = snapshot;
+    return snapshot;
+  }
+
+  const data = await publicSiteData();
+  if (schoolId === DEFAULT_SCHOOL_ID) {
+    const day = data.variants?.[mealType]?.days?.find((candidate) => candidate.date === encounter.mealDate);
+    snapshot.items = detailedMealItems(day);
+    snapshot.missing = !day;
+  } else {
+    let record = null;
+    try {
+      const response = await fetch(`/api/dashboard?date=${encodeURIComponent(encounter.mealDate)}&mealType=${encodeURIComponent(mealType)}&schoolId=${encodeURIComponent(schoolId)}`, { cache: "no-store" });
+      if (response.ok && response.headers.get("content-type")?.includes("application/json")) {
+        record = (await response.json()).record || null;
+      }
+    } catch (error) {
+      console.info("Live meal preview unavailable; using the reviewed static snapshot.", error);
+    }
+    record ||= data.officialSchoolMeals?.records?.[String(schoolId)]?.[encounter.mealDate] || null;
+    const profile = OfficialDiet.profile(record);
+    snapshot.items = OfficialDiet.filter(record, profile.hasVariants ? mealType : null).map((dish) => ({
+      role: dish.category || "菜色",
+      name: dish.name,
+    }));
+    snapshot.missing = !record;
+  }
+  state.encounterMealCache[cacheKey] = snapshot;
+  return snapshot;
+}
+
+function sameFood(left, right) {
+  const normalize = (value) => String(value || "").replace(/[\s＋+、，,]/g, "");
+  const a = normalize(left);
+  const b = normalize(right);
+  return Boolean(a && b && (a.includes(b) || b.includes(a)));
+}
+
+function renderEncounterMealPreview(container, snapshot, encounter) {
+  container.replaceChildren();
+  const heading = node("div", "encounter-meal-heading");
+  heading.append(
+    node("strong", "", `${snapshot.schoolName}當天午餐`),
+    node("span", "", `${formatDate(encounter.mealDate)} · ${snapshot.mealTypeLabel}`),
+  );
+  container.append(heading);
+  const linkedDish = encounter.mealContext === "school_lunch" ? encounter.dishName : null;
+  const relation = linkedDish
+    ? encounter.foodName === linkedDish
+      ? `這筆記錄的是整道「${linkedDish}」。`
+      : `這筆記錄的是「${encounter.foodName}」，來源菜色是「${linkedDish}」。`
+    : encounter.mealContext === "other"
+      ? `「${encounter.foodName}」是在家裡或其他地方遇到，不屬於這份學校午餐。`
+      : `這是舊紀錄，當時沒有保存「${encounter.foodName}」的來源菜色，因此無法確認它屬於哪一道菜。`;
+  container.append(node("p", `encounter-relation${linkedDish ? " is-linked" : ""}`, relation));
+  if (snapshot.missing || !snapshot.items.length) {
+    container.append(node("p", "encounter-meal-status", "這一天沒有已收錄的同日菜單，不會拿別天的內容代替。"));
+    return;
+  }
+
+  const list = node("ul", "encounter-meal-list");
+  let linkedDishFound = false;
+  for (const mealItem of snapshot.items) {
+    const row = document.createElement("li");
+    if (linkedDish && sameFood(mealItem.name, linkedDish)) {
+      row.classList.add("is-recorded");
+      linkedDishFound = true;
+    }
+    row.append(node("span", "", mealItem.role), node("strong", "", mealItem.name));
+    list.append(row);
+  }
+  container.append(
+    list,
+    ...(linkedDish && !linkedDishFound
+      ? [node("p", "encounter-meal-status", `目前的同日菜單中找不到來源菜色「${linkedDish}」。`)]
+      : []),
+    node("p", "encounter-meal-source", "同日已校讀菜單 · 只還原餐點脈絡，不代表孩子實際吃到的份量"),
+  );
+}
+
+function renderAccount() {
+  const account = state.account;
+  const authenticated = Boolean(account.authenticated);
+  refs.accountButton.classList.toggle("is-authenticated", authenticated);
+  refs.accountAvatar.textContent = authenticated ? (account.child?.nickname?.slice(0, 1) || "家") : "家";
+  refs.accountButton.disabled = !authenticated && !EMAIL_REGISTRATION_ENABLED;
+  refs.accountButton.setAttribute("aria-disabled", String(refs.accountButton.disabled));
+  refs.accountButtonText.textContent = authenticated
+    ? account.child ? `${account.child.nickname}的午餐紀錄` : "建立午餐紀錄"
+    : EMAIL_REGISTRATION_ENABLED ? "登入／免費註冊" : "登入／免費註冊（準備中）";
+  refs.accountSignedOutView.hidden = authenticated;
+  refs.accountSignedInView.hidden = !authenticated;
+  renderEmailAuthStep();
+  if (authenticated) {
+    refs.accountIdentity.textContent = account.user?.email
+      ? `${account.user.displayName} · ${account.user.email}`
+      : `${account.user?.displayName || "家長"} · 免費會員`;
+  }
+
+  refs.passportLocked.hidden = authenticated;
+  refs.passportSetup.hidden = !authenticated || (Boolean(account.child) && !state.editingChild);
+  refs.passportWorkspace.hidden = !authenticated || !account.child || state.editingChild;
+  refs.schoolBrowserNote.hidden = !authenticated || !account.child;
+  if (authenticated && account.child) {
+    refs.passportChildName.textContent = account.child.nickname;
+    refs.childNickname.value = account.child.nickname;
+    refs.childGradeGroup.value = account.child.gradeGroup;
+    refs.childSetupKicker.textContent = "孩子資料";
+    refs.childSetupTitle.textContent = `更新${account.child.nickname}的午餐紀錄`;
+    refs.childSetupDescription.textContent = "就讀學校只會在這裡變更；上方選校只是查看其他學校的公開午餐。";
+    refs.childFormSubmit.textContent = "儲存孩子資料";
+    refs.cancelChildEdit.hidden = false;
+    populateChildSchoolSelect(account.child.schoolId);
+    renderPassportSchoolContext();
+    renderPassportFoodChoices();
+    renderEncounterHistory();
+  } else if (authenticated) {
+    refs.childSetupKicker.textContent = "先認識孩子";
+    refs.childSetupTitle.textContent = "午餐紀錄中要怎麼稱呼孩子？";
+    refs.childSetupDescription.textContent = "只需要暱稱、年級與就讀國小，不填生日或真實姓名；資料由登入的家長帳號保存。";
+    refs.childFormSubmit.textContent = "建立免費午餐紀錄";
+    refs.cancelChildEdit.hidden = true;
+    populateChildSchoolSelect(state.schoolId);
+  }
+}
+
+function renderEmailAuthStep() {
+  const awaitingCode = EMAIL_REGISTRATION_ENABLED && Boolean(state.authChallengeId);
+  refs.emailAuthForm.hidden = awaitingCode;
+  refs.emailCodeStep.hidden = !awaitingCode;
+  refs.requestAuthCode.disabled = !EMAIL_REGISTRATION_ENABLED;
+  refs.requestAuthCode.setAttribute("aria-disabled", String(!EMAIL_REGISTRATION_ENABLED));
+}
+
+async function loadAccount() {
+  try {
+    const response = await fetch("/api/account", { cache: "no-store", credentials: "same-origin" });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "家庭帳號暫時無法讀取");
+    state.account = { ...payload, loading: false, error: null };
+  } catch (error) {
+    state.account = {
+      loading: false,
+      authenticated: false,
+      user: null,
+      child: null,
+      encounters: [],
+      error: error instanceof Error ? error.message : "家庭帳號暫時無法讀取",
+    };
+  }
+  renderAccount();
+}
+
+async function requestEmailAuthCode() {
+  if (!EMAIL_REGISTRATION_ENABLED) {
+    setFormStatus(refs.authRequestStatus, "免費註冊準備中，目前尚未開放。", "error");
+    return;
+  }
+  if (!refs.emailAuthForm.reportValidity()) return;
+  refs.requestAuthCode.disabled = true;
+  setFormStatus(refs.authRequestStatus, "正在寄送驗證碼…", "loading");
+  try {
+    const email = refs.authEmail.value.trim();
+    const response = await fetch("/api/auth/request-code", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        email,
+        birthDate: refs.authBirthDate.value,
+        caregiverConfirmed: refs.authCaregiverConfirmed.checked,
+      }),
+    });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "驗證碼暫時無法寄出");
+    state.authChallengeId = payload.challengeId;
+    state.authEmail = email;
+    refs.authMaskedEmail.textContent = payload.maskedEmail || email;
+    refs.authCode.value = "";
+    setFormStatus(refs.authRequestStatus);
+    setFormStatus(refs.authVerifyStatus);
+    renderEmailAuthStep();
+    refs.authCode.focus();
+  } catch (error) {
+    setFormStatus(
+      refs.authRequestStatus,
+      error instanceof Error ? error.message : "驗證碼暫時無法寄出",
+      "error",
+    );
+  } finally {
+    refs.requestAuthCode.disabled = false;
+  }
+}
+
+async function verifyEmailAuthCode() {
+  if (!refs.emailCodeForm.reportValidity() || !state.authChallengeId) return;
+  refs.verifyAuthCode.disabled = true;
+  setFormStatus(refs.authVerifyStatus, "正在驗證…", "loading");
+  try {
+    const response = await fetch("/api/auth/verify-code", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        challengeId: state.authChallengeId,
+        code: refs.authCode.value,
+      }),
+    });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "驗證碼無法確認");
+    resetEmailAuthForm();
+    await loadAccount();
+    refs.accountDialog.close();
+    refs.passport.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    setFormStatus(
+      refs.authVerifyStatus,
+      error instanceof Error ? error.message : "驗證碼無法確認",
+      "error",
+    );
+  } finally {
+    refs.verifyAuthCode.disabled = false;
+  }
+}
+
+function resetEmailAuthForm() {
+  state.authChallengeId = null;
+  state.authEmail = null;
+  refs.emailAuthForm.reset();
+  refs.emailCodeForm.reset();
+  setFormStatus(refs.authRequestStatus);
+  setFormStatus(refs.authVerifyStatus);
+  renderEmailAuthStep();
+}
+
+function adultBirthDateMaximum() {
+  const today = new Date();
+  const year = today.getFullYear() - 18;
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function openAccountDialog(trigger) {
+  if (!state.account.authenticated && !EMAIL_REGISTRATION_ENABLED) return;
+  state.lastAccountTrigger = trigger || document.activeElement;
+  if (!refs.accountDialog.open) refs.accountDialog.showModal();
+  refs.accountDialog.querySelector(".account-dialog-shell")?.scrollTo({ top: 0 });
+  refs.closeAccountDialog.focus({ preventScroll: true });
 }
 
 function setDashboardStatus(status, message) {
@@ -1026,6 +1530,7 @@ function renderNoSchoolSelected() {
   for (const link of document.querySelectorAll('a[href="#week"], a[href="#traceability"], a[href="#standard"], a[href="#insights"]')) {
     link.hidden = true;
   }
+  if (state.account.child) renderPassportFoodChoices();
   setDashboardStatus("ready", "請先選擇學校");
 }
 
@@ -1244,6 +1749,7 @@ function renderOfficial(dashboard) {
     : `${date} 尚無已校讀紀錄，不會拿別天資料代替。`;
   refs.officialSourceLink.href = dashboard.sourceUrl;
   renderOfficialMeal(dashboard);
+  renderPassportFoodChoices();
   renderOfficialTraceability(dashboard);
   renderOfficialWeek(dashboard);
   const count = summary.dishCount;
@@ -1272,6 +1778,7 @@ function render(dashboard) {
     ? `指定日期沒有供餐資料，先顯示最近的 ${formatDate(day.date)}。`
     : `${dashboard.mealTypeLabel}：${day.meal.staple}、${day.meal.mainDish}；${day.meal.fruit ? `附餐 ${day.meal.fruit}；` : ""}食譜明細共 ${day.recipeDetails?.length || day.meal.sideDishes.length + 2} 道。`;
   renderMeal(day);
+  renderPassportFoodChoices();
   renderNutrition(day.nutrition);
   renderStandard(dashboard);
   renderTraceability(dashboard.traceability);
@@ -1401,6 +1908,7 @@ async function selectSchool(schoolId) {
   }
   if (nextSchoolId === state.schoolId && state.dashboard) return;
   state.schoolId = nextSchoolId;
+  if (state.account.child) refs.encounterForm.hidden = true;
   const selectedDate = state.dashboard?.viewMode === "officialDaily"
     ? state.dashboard.selectedDate
     : state.dashboard?.selected?.date;
@@ -1448,6 +1956,164 @@ refs.gradeUpper.addEventListener("click", () => selectGradeGroup("elementary_upp
 refs.standardTarget.addEventListener("click", () => selectStandardMode("target"));
 refs.standardTransitional.addEventListener("click", () => selectStandardMode("transitional"));
 
+refs.accountButton.addEventListener("click", () => openAccountDialog(refs.accountButton));
+refs.passportUnlock.addEventListener("click", () => openAccountDialog(refs.passportUnlock));
+refs.closeAccountDialog.addEventListener("click", () => refs.accountDialog.close());
+refs.accountDialog.addEventListener("click", (event) => {
+  if (event.target === refs.accountDialog) refs.accountDialog.close();
+});
+refs.accountDialog.addEventListener("close", () => {
+  const trigger = state.lastAccountTrigger;
+  state.lastAccountTrigger = null;
+  if (trigger?.isConnected) trigger.focus();
+});
+refs.emailAuthForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await requestEmailAuthCode();
+});
+refs.emailCodeForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await verifyEmailAuthCode();
+});
+refs.authCode.addEventListener("input", () => {
+  refs.authCode.value = refs.authCode.value.replace(/\D/g, "").slice(0, 6);
+});
+refs.changeAuthEmail.addEventListener("click", () => {
+  state.authChallengeId = null;
+  state.authEmail = null;
+  refs.emailCodeForm.reset();
+  setFormStatus(refs.authVerifyStatus);
+  renderEmailAuthStep();
+  refs.authEmail.focus();
+});
+refs.accountSignOut.addEventListener("click", async () => {
+  refs.accountSignOut.disabled = true;
+  try {
+    const response = await fetch("/api/auth/sign-out", {
+      method: "POST",
+      credentials: "same-origin",
+    });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "暫時無法登出");
+    resetEmailAuthForm();
+    await loadAccount();
+    refs.authEmail.focus();
+  } catch (error) {
+    refs.accountIdentity.textContent = error instanceof Error ? error.message : "暫時無法登出";
+  } finally {
+    refs.accountSignOut.disabled = false;
+  }
+});
+
+refs.editChildButton.addEventListener("click", () => {
+  const child = state.account.child;
+  if (!child) return;
+  state.editingChild = true;
+  setFormStatus(refs.childFormStatus);
+  renderAccount();
+  refs.childNickname.focus();
+});
+
+refs.cancelChildEdit.addEventListener("click", () => {
+  state.editingChild = false;
+  setFormStatus(refs.childFormStatus);
+  renderAccount();
+  refs.editChildButton.focus();
+});
+
+refs.returnChildSchool.addEventListener("click", async () => {
+  const schoolId = state.account.child?.schoolId;
+  if (!schoolId) return;
+  await selectSchool(schoolId);
+  refs.passport.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+refs.childForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const submit = refs.childForm.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  setFormStatus(refs.childFormStatus, "正在保存孩子資料…");
+  try {
+    const response = await fetch("/api/account/child", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        nickname: refs.childNickname.value,
+        gradeGroup: refs.childGradeGroup.value,
+        schoolId: refs.childSchool.value,
+      }),
+    });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "孩子資料暫時無法儲存");
+    const wasEditing = Boolean(state.account.child);
+    state.editingChild = false;
+    await loadAccount();
+    setFormStatus(refs.encounterFormStatus, wasEditing ? "孩子資料已更新。" : "已建立孩子的營養午餐紀錄。", "success");
+  } catch (error) {
+    setFormStatus(refs.childFormStatus, error instanceof Error ? error.message : "孩子資料暫時無法儲存", "error");
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+refs.encounterForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!isViewingChildSchool()) {
+    setFormStatus(refs.encounterFormStatus, "請先回到孩子就讀學校，再新增午餐紀錄。", "error");
+    if (!refs.returnChildSchool.hidden) refs.returnChildSchool.focus();
+    return;
+  }
+  const selectedSource = refs.passportFoodChoices.querySelector('input[name="dishSource"]:checked')?.value;
+  const mealContext = selectedSource === OTHER_FOOD_CONTEXT ? "other" : "school_lunch";
+  const dishName = mealContext === "school_lunch" ? selectedSource || null : null;
+  const foodName = refs.customFoodName.value.trim() || dishName || "";
+  const experience = new FormData(refs.encounterForm).get("experience");
+  if (!selectedSource) {
+    setFormStatus(refs.encounterFormStatus, "請先選擇來源菜色，或選擇家裡／其他地方。", "error");
+    refs.passportFoodChoices.querySelector("input")?.focus();
+    return;
+  }
+  if (!foodName) {
+    setFormStatus(refs.encounterFormStatus, "請輸入孩子在家裡或其他地方遇到的食物。", "error");
+    refs.customFoodName.focus();
+    return;
+  }
+  if (!experience) {
+    setFormStatus(refs.encounterFormStatus, "請選擇孩子這次的食物經驗。", "error");
+    return;
+  }
+  const submit = refs.encounterForm.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  setFormStatus(refs.encounterFormStatus, "正在儲存這筆紀錄…");
+  try {
+    const response = await fetch("/api/account/encounters", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        mealDate: selectedMealDate(),
+        mealType: state.mealType,
+        mealContext,
+        dishName,
+        foodName,
+        experience,
+        preparation: refs.encounterPreparation.value,
+        note: refs.encounterNote.value,
+      }),
+    });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "食物紀錄暫時無法儲存");
+    refs.encounterForm.reset();
+    setFormStatus(refs.encounterFormStatus, "已記下這次食物紀錄。", "success");
+    await loadAccount();
+  } catch (error) {
+    setFormStatus(refs.encounterFormStatus, error instanceof Error ? error.message : "食物紀錄暫時無法儲存", "error");
+  } finally {
+    submit.disabled = false;
+  }
+});
+
 for (const link of document.querySelectorAll("a.today-link")) {
   link.addEventListener("click", async (event) => {
     event.preventDefault();
@@ -1462,21 +2128,28 @@ for (const link of document.querySelectorAll("a.today-link")) {
 }
 
 async function initialize() {
+  refs.authBirthDate.max = adultBirthDateMaximum();
+  const accountRequest = loadAccount();
   setDashboardStatus("loading", "正在讀取學校名冊…");
   try {
     state.schoolDirectory = await fetchSchoolDirectory();
+    await accountRequest;
+    const childSchool = schoolById(state.account.child?.schoolId);
     const favorite = state.schoolDirectory.find(
       (school) => Number(school.fatraceSchoolId) === state.favoriteSchoolId,
     );
-    if (!favorite) {
+    const initialSchool = childSchool || favorite;
+    if (!initialSchool) {
       state.favoriteSchoolId = null;
       window.localStorage.removeItem("demeter-favorite-school-id");
+      renderAccount();
       renderNoSchoolSelected();
       return;
     }
-    state.schoolId = Number(favorite.fatraceSchoolId);
-    state.district = districtKey(favorite);
+    state.schoolId = Number(initialSchool.fatraceSchoolId);
+    state.district = districtKey(initialSchool);
     populateSchoolSelectors();
+    renderAccount();
     await loadDashboard(localIsoDate());
   } catch (error) {
     refs.errorState.hidden = false;

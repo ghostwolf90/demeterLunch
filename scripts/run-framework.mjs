@@ -6,6 +6,19 @@ const [command, ...args] = process.argv.slice(2);
 if (!["dev", "build"].includes(command)) throw new Error("Expected dev or build.");
 const managedLinux = readExecutionProfile() === "managed-linux";
 
+if (!managedLinux && command === "dev") {
+  const migration = spawnSync(process.execPath, [
+    "--import", "./scripts/sites-env.mjs",
+    "./node_modules/wrangler/bin/wrangler.js",
+    "d1", "migrations", "apply", "DB",
+    "--config", "wrangler.local.jsonc",
+    "--local",
+    "--persist-to", ".wrangler/state",
+  ], { stdio: ["ignore", "inherit", "inherit"] });
+  if (migration.error) throw migration.error;
+  if (migration.status !== 0) process.exit(migration.status ?? 1);
+}
+
 if (managedLinux && command === "build") {
   const result = spawnSync("bash", [
     fileURLToPath(new URL("./build-verified.sh", import.meta.url)), ...args,

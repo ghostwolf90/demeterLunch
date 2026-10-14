@@ -311,6 +311,58 @@ export function toPublicRecord(reviewed: JsonObject) {
   };
 }
 
+export async function validateReviewedRecordForImport(
+  value: unknown,
+  expectedSchool: School,
+  expectedMealDate: string,
+) {
+  const record = expectObject(value, "reviewed record");
+  if (record.schemaVersion !== 1 || record.recordType !== "official-daily-meal-record") {
+    throw new FatraceError("reviewed 紀錄版本或類型不正確");
+  }
+  if (record.mealDate !== expectedMealDate) {
+    throw new FatraceError("reviewed 紀錄日期與發佈日期不一致");
+  }
+  if (!["available", "no_meal"].includes(String(record.status))) {
+    throw new FatraceError(`reviewed 紀錄狀態不可發佈：${String(record.status)}`);
+  }
+
+  const school = expectObject(record.school, "school");
+  for (const [key, expected] of Object.entries(expectedSchool)) {
+    if (school[key] !== expected) {
+      throw new FatraceError(`學校資料不一致：${expectedSchool.fatraceSchoolId}.${key}`);
+    }
+  }
+  const review = expectObject(record.review, "review");
+  if (review.status !== "reviewed" || !cleanText(review.reviewedAt)) {
+    throw new FatraceError("紀錄尚未完成校讀");
+  }
+  const source = expectObject(record.source, "source");
+  let sourceUrl: URL;
+  try {
+    sourceUrl = new URL(String(source.url || ""));
+  } catch {
+    throw new FatraceError("官方來源網址無效");
+  }
+  if (
+    sourceUrl.origin !== API_ROOT
+    || sourceUrl.pathname !== "/frontend/search.html"
+    || sourceUrl.searchParams.get("school") !== String(expectedSchool.fatraceSchoolId)
+    || sourceUrl.searchParams.get("period") !== expectedMealDate
+  ) {
+    throw new FatraceError("官方來源網址的學校或日期不一致");
+  }
+  if (Number.isNaN(Date.parse(String(record.fetchedAt || "")))) {
+    throw new FatraceError("抓取時間無效");
+  }
+  if (!/^[a-f0-9]{64}$/.test(String(record.contentHash || ""))) {
+    throw new FatraceError("內容雜湊格式無效");
+  }
+
+  validateCandidate(record as CollectedSchoolMeal["candidate"]);
+  return record;
+}
+
 function validateCandidate(candidate: CollectedSchoolMeal["candidate"]) {
   requireIsoDate(candidate.mealDate);
   const services = expectList(candidate.services, "services");

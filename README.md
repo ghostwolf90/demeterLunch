@@ -120,6 +120,42 @@ data/news/state.json
 
 ## 開啟本機網站
 
+要預覽免費登入、一口護照營養午餐紀錄與本機 D1 私人資料，請使用 Node.js 22.13 以上：
+
+```bash
+EMAIL_AUTH_SECRET=local-preview-secret \
+EMAIL_AUTH_DEV_CODE=123456 \
+npm run dev
+```
+
+第一次啟動會自動套用 `drizzle/` 內尚未執行的本機 D1 遷移，然後在
+`http://127.0.0.1:5173/` 開啟網站。本機用任意有效 Email、成年生日及照顧者
+聲明註冊，再輸入上述 `EMAIL_AUTH_DEV_CODE` 即可完成測試；只有 loopback 網址
+可以使用這組本機驗證碼，不會寄信或建立外部帳號。完整生日只用來即時計算
+是否已滿 18 歲，不會寫入資料庫；孩子資料與
+營養午餐與其他場合的食物紀錄保存在 `.wrangler/state/` 的本機 D1，不寫入瀏覽器儲存空間。
+孩子的午餐紀錄會綁定一所就讀國小；網站上方仍可自由查看其他學校的公開午餐，但
+不會因此變更孩子的學校，也不會把別校菜色帶進孩子的紀錄。孩子資料編輯畫面
+可隨時取消返回。最近的午餐紀錄可展開查看該筆紀錄所屬學校、日期與餐別的
+完整同日菜單；沒有同日紀錄時不會拿其他日期代替。
+新增紀錄時會先保存來源菜色，再保存孩子提到的食物（例如「扣肉」來自
+「梅干扣肉」）；家裡或其他場合遇到的食物可另外標示。舊紀錄若未保存來源
+菜色，畫面會如實標示為「舊紀錄未記錄菜色來源」，不會依名稱猜測。
+
+若要測試 MAAC Go Email API，不要設定 `EMAIL_AUTH_DEV_CODE`，改用測試金鑰：
+
+```bash
+EMAIL_AUTH_SECRET=local-preview-secret \
+MAACGO_AUTH='Bearer sk_test_完整測試金鑰' \
+npm run dev
+```
+
+`sk_test_` 只會在 MAAC Go 留下寄送紀錄，不會把驗證碼送到真實信箱，也不會
+產生費用。正式寄送時改用 `sk_live_`；金鑰只放在本機環境或 Sites secret，
+不得提交到 Git。
+
+原有的純公開資料預覽仍可使用下列方式：
+
 macOS 可以直接雙擊專案根目錄的 `啟動午餐網站.command`。它會建立資料庫、啟動本機伺服器並開啟正確網址。
 
 請不要直接以 `file:///.../web/index.html` 開啟網頁檔案；網站需要由本機伺服器提供 API。若誤開 `index.html`，頁面會自動轉到 `http://127.0.0.1:8000/`。
@@ -232,17 +268,23 @@ python3 scripts/update_all_taichung_schools.py --skip-ingredients
 
 日期預設為臺北時區當天。完整模式會逐道查詢食材，執行期間請保持網路連線並避免電腦休眠；`--skip-ingredients` 只收集菜色，速度較快。每次執行會把開始、完成時間、總秒數與每校平均秒數寫入當日 `report.json`，並在終端顯示耗時摘要。任一學校收集失敗時指令會以非零狀態結束，不會繼續重建可部署快照；重新執行即可利用已儲存的有效資料再次收集。
 
-若官方尚未發布，指令會以 pending 狀態結束並保留既有有效資料。它不會自動部署公開 Site；部署仍須先取得同一個 Site 的最新原始碼，避免蓋掉線上排程剛寫入的新聞或監測狀態。
+若官方尚未發布，指令會以 pending 狀態結束並保留既有有效資料。當日仍有抓取失敗時不會發佈，重新執行即可利用已保存的有效資料補抓。
 
-取得 Sites 短效憑證並同步最新原始碼後，Codex 可以用下列指令把指定日期的本機 raw 與 reviewed 資料安全疊加到部署 checkout，並自動完成資料庫、測試與 Worker 建置：
+完成一次手動發佈憑證設定後，可以用單一指令完成全市抓取、校讀、測試、建置及直接寫入公開 Site：
 
 ```bash
-python3 scripts/prepare_site_publish.py \
-  --date 2026-10-12 \
-  --site-checkout /path/to/fresh-site-checkout
+python3 scripts/update_all_taichung_schools.py --date 2026-10-13 --publish
 ```
 
-這支腳本不儲存 Sites 憑證，也不會用過期的本機 Site 副本直接覆蓋線上原始碼。正式推送與部署由 Codex 使用當次短效憑證完成；因此手動抓取後只需請 Codex「發布最新資料」，不需再手動執行校讀、測試與建置指令。
+若資料已經抓取及校讀完成，只要執行：
+
+```bash
+python3 scripts/publish_school_meals.py --date 2026-10-13
+```
+
+指令會先核對全市報告必須為零失敗、reviewed JSON 數量、學校代碼、日期、來源網址與內容雜湊，再以本機 `.secrets/site_publish_token` 的私密憑證透過 HTTPS 寫入 Site 的 D1 與 R2。憑證目錄已被 Git 忽略，指令不會顯示或上傳憑證內容。重複發佈同一天是冪等操作；相同內容會標示為 `unchanged`。可先加上 `--dry-run` 只驗證本機資料而不發佈。
+
+`prepare_site_publish.py` 保留給需要更新網站程式碼的 Sites 版本部署；日常午餐資料發佈不再需要 Sites Git 短效憑證或 Codex。
 
 這條每日資料線與每月 OpenAPI 不同。它只代表平臺公開查詢頁當下可見的實際供餐紀錄，不能提供下週預定菜單；下週資料仍須由各校公告、Atom/RSS 或菜單圖片取得。收集器預設使用 20 秒逾時、有限次重試、描述性 User-Agent 與 1.2 秒請求間隔。若只想先驗證菜色、不逐道查詢食材，可加上 `--skip-ingredients`。
 
@@ -259,7 +301,16 @@ python3 scripts/prepare_site_publish.py \
 ```text
 TELEGRAM_BOT_TOKEN
 TELEGRAM_CHAT_ID
+EMAIL_AUTH_SECRET
+MAACGO_AUTH
+RESEND_API_KEY
+AUTH_EMAIL_FROM
 ```
+
+`EMAIL_AUTH_SECRET` 是用來雜湊驗證碼與產生帳號識別的隨機密鑰；優先使用
+`MAACGO_AUTH`（`Bearer sk_test_...` 或 `Bearer sk_live_...`）寄送登入驗證碼。
+`RESEND_API_KEY` 與 `AUTH_EMAIL_FROM` 保留為備援，且 `AUTH_EMAIL_FROM` 必須是
+寄信服務已驗證的寄件者。`EMAIL_AUTH_DEV_CODE` 僅限本機預覽，不得設定在公開 Site。
 
 網站的日常分析讀取 `data/lunch.db`，原圖則從 `data/raw/` 提供。兩者都在本機，不需要安裝前端套件。按 `Ctrl+C` 可停止伺服器。
 

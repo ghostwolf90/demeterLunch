@@ -84,6 +84,23 @@ class UpdateSchoolMealsTests(unittest.TestCase):
             ],
         )
 
+    def test_citywide_wrapper_can_publish_after_success(self) -> None:
+        with patch.object(
+            update_all_taichung_schools,
+            "update_school_meals",
+            return_value=0,
+        ), patch.object(
+            update_all_taichung_schools,
+            "publish_school_meals",
+            return_value=0,
+        ) as publish:
+            status = update_all_taichung_schools.main(
+                ["--date", "2026-10-13", "--publish"]
+            )
+
+        self.assertEqual(status, 0)
+        publish.assert_called_once_with(["--date", "2026-10-13"])
+
 
 if __name__ == "__main__":
     unittest.main()
