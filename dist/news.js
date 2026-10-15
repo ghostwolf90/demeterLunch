@@ -8,6 +8,9 @@ const refs = {
   newsList: document.getElementById("newsList"),
   newsEmpty: document.getElementById("newsEmpty"),
   sourcePolicy: document.getElementById("sourcePolicy"),
+  accountButton: document.getElementById("newsAccountButton"),
+  accountAvatar: document.getElementById("newsAccountAvatar"),
+  accountButtonText: document.getElementById("newsAccountButtonText"),
 };
 
 function setNewsStatus(status, message) {
@@ -103,4 +106,22 @@ async function loadNews() {
   }
 }
 
+async function loadAccountSummary() {
+  try {
+    const response = await fetch("/api/account", { cache: "no-store", credentials: "same-origin" });
+    if (!response.ok) return;
+    const account = await response.json();
+    if (!account.authenticated) return;
+
+    const label = account.child ? `${account.child.nickname}的午餐紀錄` : "建立午餐紀錄";
+    refs.accountButton.classList.add("is-authenticated");
+    refs.accountAvatar.textContent = account.child?.nickname?.slice(0, 1) || "家";
+    refs.accountButtonText.textContent = label;
+    refs.accountButton.title = label;
+  } catch {
+    // The static preview has no account API; keep the signed-out link usable.
+  }
+}
+
 loadNews();
+loadAccountSummary();

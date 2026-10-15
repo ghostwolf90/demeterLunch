@@ -1,0 +1,26 @@
+[Unit]
+Description=Demeter Atom menu collection
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=@REPO_DIR@/scripts/fetch_latest.py
+
+[Service]
+Type=oneshot
+User=@RUN_USER@
+Group=@RUN_GROUP@
+WorkingDirectory=@REPO_DIR@
+Environment=PYTHONUNBUFFERED=1
+Environment=TZ=Asia/Taipei
+Environment=PATH=@RUNTIME_PATH@
+RuntimeDirectory=demeter-school-meals
+RuntimeDirectoryMode=0750
+UMask=0077
+ExecStart="@FLOCK@" -n -E 75 /run/demeter-school-meals/atom.lock "@PYTHON@" "@REPO_DIR@/scripts/fetch_latest.py" --since 2026-09-01 --timeout 20 --interval 1.2
+TimeoutStartSec=30min
+SuccessExitStatus=75
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+NoNewPrivileges=true
+PrivateTmp=true
+

@@ -32,9 +32,8 @@ def main(argv: list[str] | None = None) -> int:
     publish = "--publish" in forwarded
     forwarded = [argument for argument in forwarded if argument != "--publish"]
     meal_date = _requested_date(forwarded)
-    status = update_school_meals(
-        ["--all-schools", "--verify-and-build", *forwarded]
-    )
+    scope = [] if "--retry-failed" in forwarded else ["--all-schools"]
+    status = update_school_meals([*scope, "--verify-and-build", *forwarded])
     if status != 0 or not publish:
         return status
     return publish_school_meals(["--date", meal_date.isoformat()])

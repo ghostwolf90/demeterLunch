@@ -101,6 +101,34 @@ class UpdateSchoolMealsTests(unittest.TestCase):
         self.assertEqual(status, 0)
         publish.assert_called_once_with(["--date", "2026-10-13"])
 
+    def test_retry_failed_forwards_without_another_scope_filter(self) -> None:
+        with patch.object(
+            update_all_taichung_schools,
+            "update_school_meals",
+            return_value=0,
+        ) as update:
+            status = update_all_taichung_schools.main(
+                ["--date", "2026-10-15", "--retry-failed"]
+            )
+
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            update.call_args.args[0],
+            ["--verify-and-build", "--date", "2026-10-15", "--retry-failed"],
+        )
+
+    def test_retry_failed_reaches_fetcher_without_district_filter(self) -> None:
+        with patch.object(update_school_meals, "_run", return_value=2) as run:
+            status = update_school_meals.main(
+                ["--date", "2026-10-15", "--retry-failed"]
+            )
+
+        self.assertEqual(status, 2)
+        fetch = run.call_args.args[0]
+        self.assertIn("--retry-failed", fetch)
+        self.assertNotIn("--district", fetch)
+        self.assertNotIn("--all-schools", fetch)
+
 
 if __name__ == "__main__":
     unittest.main()

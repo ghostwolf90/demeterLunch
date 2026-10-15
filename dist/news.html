@@ -21,10 +21,16 @@
         <span><strong>好好吃飯</strong><small>忠信國小午餐助手</small></span>
       </a>
       <nav aria-label="主要導覽">
-        <a href="./index.html#today">今日</a><a href="./index.html#week">本週</a><a href="./index.html#insights">趨勢</a><a class="active" href="./news.html" aria-current="page">午餐觀察</a>
+        <a href="./index.html#today">今日</a><a href="./index.html#week">本週</a><a href="./index.html#traceability">溯源</a><a href="./index.html#passport">午餐紀錄</a><a href="./index.html#standard">基準</a><a href="./index.html#insights">趨勢</a><a class="active" href="./news.html" aria-current="page">午餐觀察</a>
       </nav>
-      <div class="sync-pill is-loading" id="newsSync" role="status" aria-live="polite" aria-atomic="true">
-        <span class="status-dot" aria-hidden="true"></span><span id="newsSyncText">正在讀取消息…</span>
+      <div class="topbar-actions">
+        <div class="sync-pill is-loading" id="newsSync" role="status" aria-live="polite" aria-atomic="true">
+          <span class="status-dot" aria-hidden="true"></span><span id="newsSyncText">正在讀取消息…</span>
+        </div>
+        <a class="account-button" id="newsAccountButton" href="./index.html#passport" title="登入或建立免費家庭帳號">
+          <span class="account-avatar" id="newsAccountAvatar" aria-hidden="true">家</span>
+          <span id="newsAccountButtonText">登入／免費註冊</span>
+        </a>
       </div>
     </header>
 
@@ -72,6 +78,6 @@
       <a href="./index.html#insights"><span aria-hidden="true">↗</span>趨勢</a>
       <a class="active" href="./news.html" aria-current="page"><span aria-hidden="true">◉</span>觀察</a>
     </nav>
-    <script src="./news.js" defer></script>
+    <script src="./news.js?v=20261015-consistent-header" defer></script>
   </body>
 </html>

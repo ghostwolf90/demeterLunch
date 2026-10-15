@@ -1,0 +1,13 @@
+[Unit]
+Description=Run the Demeter citywide school meal collection on weekdays
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 13:07:00 Asia/Taipei
+Persistent=true
+AccuracySec=1min
+RandomizedDelaySec=2min
+Unit=demeter-school-meals@main.service
+
+[Install]
+WantedBy=timers.target
+

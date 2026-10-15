@@ -79,6 +79,26 @@ class SiteLayoutTests(unittest.TestCase):
             index_html.index('id="standard"'),
         )
 
+    def test_news_page_keeps_the_complete_desktop_navigation(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
+        news_html = (project_root / "web" / "news.html").read_text(encoding="utf-8")
+        expected_labels = ["今日", "本週", "溯源", "午餐紀錄", "基準", "趨勢", "午餐觀察"]
+
+        def primary_navigation_labels(html: str) -> list[str]:
+            navigation = re.search(
+                r'<nav aria-label="主要導覽">(.*?)</nav>',
+                html,
+                re.DOTALL,
+            )
+            self.assertIsNotNone(navigation)
+            return re.findall(r'<a[^>]*>([^<]+)</a>', navigation.group(1))
+
+        self.assertEqual(primary_navigation_labels(index_html), expected_labels)
+        self.assertEqual(primary_navigation_labels(news_html), expected_labels)
+        self.assertIn('href="./news.html" aria-current="page">午餐觀察</a>', news_html)
+        self.assertIn('id="newsAccountButton" href="./index.html#passport"', news_html)
+
     def test_site_exposes_meat_vegetarian_and_detail_controls(self) -> None:
         project_root = Path(__file__).resolve().parents[1]
         index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")

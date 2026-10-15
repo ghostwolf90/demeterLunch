@@ -1,0 +1,13 @@
+[Unit]
+Description=Check the Demeter Atom menu source every morning
+
+[Timer]
+OnCalendar=*-*-* 06:37:00 Asia/Taipei
+Persistent=true
+AccuracySec=1min
+RandomizedDelaySec=5min
+Unit=demeter-menu-atom.service
+
+[Install]
+WantedBy=timers.target
+

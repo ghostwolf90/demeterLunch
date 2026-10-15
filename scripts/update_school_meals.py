@@ -37,6 +37,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="收集啟用名冊中的所有學校，不套用預設的西區篩選",
     )
+    scope.add_argument(
+        "--retry-failed",
+        action="store_true",
+        help="只補抓既有同日報告中的 failed 學校並保留完整批次",
+    )
     parser.add_argument(
         "--registry",
         type=Path,
@@ -74,7 +79,10 @@ def main(argv: list[str] | None = None) -> int:
         "--retries",
         str(args.retries),
     ]
-    if args.all_schools:
+    if args.retry_failed:
+        print("收集範圍：既有報告中的 failed 學校", flush=True)
+        fetch.append("--retry-failed")
+    elif args.all_schools:
         print("收集範圍：臺中市啟用名冊全部學校", flush=True)
     elif args.school:
         for school in args.school:

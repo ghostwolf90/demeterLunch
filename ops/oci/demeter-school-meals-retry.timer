@@ -1,0 +1,13 @@
+[Unit]
+Description=Retry incomplete Demeter school meal records on weekdays
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 16:07:00 Asia/Taipei
+Persistent=true
+AccuracySec=1min
+RandomizedDelaySec=2min
+Unit=demeter-school-meals@retry.service
+
+[Install]
+WantedBy=timers.target
+

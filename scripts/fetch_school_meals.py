@@ -26,9 +26,101 @@ from src.http_client import HttpClient  # noqa: E402
 
 
 TAIPEI = ZoneInfo("Asia/Taipei")
+REPORT_STATUSES = ("available", "no_meal", "not_published", "failed")
 
 
-def main() -> int:
+def _load_retry_report(path: Path, meal_date: date) -> dict[str, object]:
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"無法讀取既有抓取報告：{path}") from exc
+    if not isinstance(report, dict) or report.get("mealDate") != meal_date.isoformat():
+        raise ValueError(f"既有抓取報告格式或日期不符：{path}")
+    results = report.get("results")
+    if not isinstance(results, list) or not results:
+        raise ValueError(f"既有抓取報告缺少 results：{path}")
+    seen: set[int] = set()
+    for result in results:
+        if not isinstance(result, dict):
+            raise ValueError(f"既有抓取報告包含無效結果：{path}")
+        school_id = int(result.get("fatraceSchoolId", 0))
+        if school_id <= 0 or school_id in seen:
+            raise ValueError(f"既有抓取報告包含無效或重複學校代碼：{school_id}")
+        if result.get("recordStatus") not in REPORT_STATUSES:
+            raise ValueError(f"既有抓取報告包含無效狀態：{school_id}")
+        seen.add(school_id)
+    return report
+
+
+def _merge_retry_report(
+    previous: dict[str, object], retry: dict[str, object]
+) -> dict[str, object]:
+    previous_results = previous.get("results")
+    retry_results = retry.get("results")
+    if not isinstance(previous_results, list) or not isinstance(retry_results, list):
+        raise ValueError("補抓報告缺少 results")
+
+    failed_ids = {
+        int(result.get("fatraceSchoolId", 0))
+        for result in previous_results
+        if isinstance(result, dict) and result.get("recordStatus") == "failed"
+    }
+    replacements = {
+        int(result.get("fatraceSchoolId", 0)): result
+        for result in retry_results
+        if isinstance(result, dict)
+    }
+    if set(replacements) != failed_ids:
+        raise ValueError("補抓結果與原報告的失敗學校不一致")
+
+    merged_results = [
+        replacements.get(int(result.get("fatraceSchoolId", 0)), result)
+        for result in previous_results
+        if isinstance(result, dict)
+    ]
+    summary = {
+        "schools": len(merged_results),
+        "available": sum(
+            result.get("recordStatus") == "available" for result in merged_results
+        ),
+        "noMeal": sum(
+            result.get("recordStatus") == "no_meal" for result in merged_results
+        ),
+        "notPublished": sum(
+            result.get("recordStatus") == "not_published"
+            for result in merged_results
+        ),
+        "failed": sum(
+            result.get("recordStatus") == "failed" for result in merged_results
+        ),
+    }
+    duration_seconds = round(
+        float(previous.get("durationSeconds") or 0)
+        + float(retry.get("durationSeconds") or 0),
+        3,
+    )
+    merged = dict(previous)
+    merged.update(
+        {
+            "completedAt": retry.get("completedAt"),
+            "durationSeconds": duration_seconds,
+            "averageSecondsPerSchool": round(
+                duration_seconds / len(merged_results), 3
+            ),
+            "summary": summary,
+            "results": merged_results,
+            "lastRetry": {
+                "checkedAt": retry.get("checkedAt"),
+                "completedAt": retry.get("completedAt"),
+                "durationSeconds": retry.get("durationSeconds"),
+                "schools": len(retry_results),
+            },
+        }
+    )
+    return merged
+
+
+def main(argv: list[str] | None = None) -> int:
     started_monotonic = time.monotonic()
     parser = argparse.ArgumentParser(
         description="Collect public daily meal records for registered schools."
@@ -58,6 +150,11 @@ def main() -> int:
         default=[],
         help="只收集指定校名或 fatraceSchoolId，可重複使用",
     )
+    parser.add_argument(
+        "--retry-failed",
+        action="store_true",
+        help="只補抓既有同日報告中的 failed 學校，並合併回完整報告",
+    )
     parser.add_argument("--city", help="只收集指定縣市")
     parser.add_argument("--district", help="只收集指定行政區")
     parser.add_argument("--timeout", type=float, default=20.0)
@@ -68,7 +165,7 @@ def main() -> int:
         action="store_true",
         help="只收集菜色、不逐道查詢食材",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     logging.basicConfig(
         level=logging.INFO,
@@ -76,8 +173,32 @@ def main() -> int:
     )
     logger = logging.getLogger(__name__)
 
+    if args.retry_failed and (args.school or args.city or args.district):
+        parser.error("--retry-failed 不可與 --school、--city 或 --district 同時使用")
+
+    report_path = args.output_dir / args.date.isoformat() / "report.json"
+    previous_report: dict[str, object] | None = None
+    if args.retry_failed:
+        try:
+            previous_report = _load_retry_report(report_path, args.date)
+        except ValueError as exc:
+            parser.error(str(exc))
+        failed_ids = {
+            int(result["fatraceSchoolId"])
+            for result in previous_report["results"]
+            if isinstance(result, dict) and result.get("recordStatus") == "failed"
+        }
+        if not failed_ids:
+            print("既有報告沒有 failed 學校，不需要補抓。")
+            return 0
+        requested = {str(school_id) for school_id in failed_ids}
+        print(f"只補抓 failed 學校：{len(requested)} 校", flush=True)
+    else:
+        requested = {
+            str(value).strip() for value in args.school if str(value).strip()
+        }
+
     schools = load_school_registry(args.registry)
-    requested = {str(value).strip() for value in args.school if str(value).strip()}
     if requested:
         schools = [
             school
@@ -151,7 +272,6 @@ def main() -> int:
                 }
             )
 
-    failed = [item for item in results if item["recordStatus"] == "failed"]
     registry_label = (
         str(args.registry.relative_to(PROJECT_ROOT))
         if args.registry.is_relative_to(PROJECT_ROOT)
@@ -159,7 +279,7 @@ def main() -> int:
     )
     completed_at = datetime.now(TAIPEI).isoformat()
     duration_seconds = round(time.monotonic() - started_monotonic, 3)
-    report = {
+    attempt_report: dict[str, object] = {
         "schemaVersion": 1,
         "checkedAt": checked_at,
         "completedAt": completed_at,
@@ -177,20 +297,37 @@ def main() -> int:
             "notPublished": sum(
                 item["recordStatus"] == "not_published" for item in results
             ),
-            "failed": len(failed),
+            "failed": sum(
+                item["recordStatus"] == "failed" for item in results
+            ),
         },
         "results": results,
     }
-    report_path = args.output_dir / args.date.isoformat() / "report.json"
+    try:
+        report = (
+            _merge_retry_report(previous_report, attempt_report)
+            if previous_report is not None
+            else attempt_report
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     write_json_atomic(report_path, report)
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    logger.info(
-        "Completed %s schools in %.1f seconds (average %.1f seconds per school)",
-        len(results),
-        duration_seconds,
-        duration_seconds / len(results),
-    )
-    return 2 if failed else 0
+    if previous_report is not None:
+        logger.info(
+            "Retried %s schools in %.1f seconds; merged report covers %s schools",
+            len(results),
+            duration_seconds,
+            report["summary"]["schools"],
+        )
+    else:
+        logger.info(
+            "Completed %s schools in %.1f seconds (average %.1f seconds per school)",
+            len(results),
+            duration_seconds,
+            duration_seconds / len(results),
+        )
+    return 2 if report["summary"]["failed"] else 0
 
 
 if __name__ == "__main__":

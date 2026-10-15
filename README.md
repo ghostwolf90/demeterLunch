@@ -333,6 +333,14 @@ python3 scripts/update_all_taichung_schools.py --skip-ingredients
 
 若官方尚未發布，指令會以 pending 狀態結束並保留既有有效資料。當日仍有抓取失敗時不會發佈，重新執行即可利用已保存的有效資料補抓。
 
+若全市報告只有少數 `failed`，可只補抓失敗學校並原子合併回原本的完整報告；成功後會自動校讀、重建 SQLite、執行測試、檢查 JavaScript 並重建 `dist/`：
+
+```bash
+python3 scripts/update_all_taichung_schools.py --date 2026-10-15 --retry-failed
+```
+
+補抓完成後，`report.json` 仍會保留原本全市學校，不會縮成單校報告。若補抓仍失敗，指令會維持非零狀態且不發布；稍後重複相同指令即可。也可在確認本機發布憑證已設定後加上 `--publish`，於補抓、驗證及建置全部成功後直接發布完整批次。
+
 正式發布會先核對當次報告必須為零失敗、reviewed JSON 數量、學校代碼、日期、來源網址與內容雜湊，再以本機 `.secrets/site_publish_token` 的私密憑證透過 HTTPS 寫入 Site 的 D1 與 R2。憑證目錄已被 Git 忽略，指令不會顯示或上傳憑證內容。
 
 `prepare_site_publish.py` 保留給需要更新網站程式碼的 Sites 版本部署；日常午餐資料發佈不再需要 Sites Git 短效憑證或 Codex。
