@@ -252,6 +252,19 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("grid-auto-columns: 1fr;", tablet_rules)
         self.assertIn("padding-bottom: calc(76px + env(safe-area-inset-bottom));", tablet_rules)
 
+    def test_school_picker_keeps_the_full_district_name_visible(self) -> None:
+        styles = (
+            Path(__file__).resolve().parents[1] / "web" / "styles.css"
+        ).read_text(encoding="utf-8")
+        tablet_rules = styles[
+            styles.index("@media (max-width: 1050px)"):
+            styles.index("@media (max-width: 720px)")
+        ]
+
+        self.assertIn("minmax(190px, .7fr) minmax(190px, 1fr) auto", styles)
+        self.assertIn("minmax(190px, .8fr) minmax(150px, 1fr)", tablet_rules)
+        self.assertIn(".favorite-school-button { grid-column: 1 / -1; }", tablet_rules)
+
     def test_brand_colors_meet_normal_text_contrast(self) -> None:
         styles = (
             Path(__file__).resolve().parents[1] / "web" / "styles.css"

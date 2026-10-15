@@ -96,7 +96,7 @@ body[data-view-mode] .intro { min-height: 340px; padding-block: 48px 36px; }
 body[data-view-mode] .intro h1 { font-size: clamp(50px, 6.2vw, 86px); }
 body[data-view-mode] .doodle { min-height: 245px; }
 .eyebrow, .kicker { margin: 0 0 11px; color: var(--orange); font-size: var(--text-xs); font-weight: 800; letter-spacing: .19em; }
-.school-picker { width: min(620px, 100%); margin: 0 0 14px; display: grid; grid-template-columns: minmax(115px, .55fr) minmax(190px, 1fr) auto; align-items: end; gap: 8px; }
+.school-picker { width: min(620px, 100%); margin: 0 0 14px; display: grid; grid-template-columns: minmax(190px, .7fr) minmax(190px, 1fr) auto; align-items: end; gap: 8px; }
 .school-field { display: grid; gap: 6px; }
 .school-picker label { color: var(--ink-soft); font-size: var(--text-xs); font-weight: 800; letter-spacing: .08em; }
 .school-picker select { min-width: 0; min-height: 44px; padding: 9px 38px 9px 14px; border: 1px solid var(--line); border-radius: 13px; color: var(--ink); background: rgba(255,253,248,.84); font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
@@ -670,6 +670,8 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   body.records-page { padding-bottom: 0; }
   .topbar { grid-template-columns: 1fr auto; }
   .topbar nav { display: none; }
+  .school-picker { grid-template-columns: minmax(190px, .8fr) minmax(150px, 1fr); }
+  .favorite-school-button { grid-column: 1 / -1; }
   .today-grid { grid-template-columns: 1fr 1fr; }
   .dinner-card { grid-column: 1 / -1; }
   .week-days { grid-template-columns: repeat(3, 1fr); }
@@ -724,9 +726,6 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   .eyebrow { margin-bottom: 8px; font-size: var(--text-xs); }
   .meal-type-switch { margin-bottom: 14px; }
   .meal-type-switch button { min-width: 70px; padding: 8px 14px; }
-  .school-picker { grid-template-columns: 1fr 1fr; align-items: end; }
-  .favorite-school-button { grid-column: 1 / -1; }
-  .school-picker > span { grid-column: 1 / -1; }
   .today-label { margin-bottom: 7px; font-size: 13px; }
   h1 { margin-bottom: 13px; font-size: clamp(42px, 12.5vw, 54px); line-height: 1; }
   .intro-note { font-size: 13px; line-height: 1.55; }
