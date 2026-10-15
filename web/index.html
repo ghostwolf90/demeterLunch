@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=20261014-ui-polish" />
+    <link rel="stylesheet" href="./styles.css?v=20261015-passport-history" />
   </head>
   <body>
     <header class="topbar">
@@ -132,8 +132,8 @@
             <small>免費註冊 · 不需密碼、不綁信用卡</small>
           </div>
           <div class="passport-preview" aria-label="登入後可記錄的午餐食物經驗">
-            <span>第一次看到</span><span>願意聞一聞</span><span>願意碰一下</span>
-            <span>舔或咬一口</span><span>可以接受</span><span>喜歡</span>
+            <span>今天不想嘗試</span><span>願意聞一聞</span><span>嘗了一口</span>
+            <span>不喜歡</span><span>下次願意再試</span><span>喜歡</span>
           </div>
         </article>
 
@@ -176,19 +176,36 @@
                 <label class="custom-food">食物名稱（可不填）<input id="customFoodName" maxlength="80" autocomplete="off" placeholder="例如：扣肉、紅蘿蔔絲" /><small>不填會記下整道菜；填寫時仍會保留上一步選的來源菜色。</small></label>
               </fieldset>
               <fieldset class="passport-fieldset">
-                <legend>3. 孩子怎麼說？</legend>
+                <legend>3. 這次孩子做到哪一步？</legend>
+                <p class="passport-field-hint">只記下今天實際發生的事，不是分數，也不用一路往下完成。</p>
                 <div class="experience-list" id="experienceChoices">
-                  <label><input type="radio" name="experience" value="seen" required /><span>第一次看到</span></label>
+                  <label><input type="radio" name="experience" value="not_tried" required /><span>今天不想嘗試</span></label>
+                  <label><input type="radio" name="experience" value="seen" /><span>看了一下</span></label>
                   <label><input type="radio" name="experience" value="smelled" /><span>願意聞一聞</span></label>
                   <label><input type="radio" name="experience" value="touched" /><span>願意碰一下</span></label>
-                  <label><input type="radio" name="experience" value="tasted" /><span>舔或咬一口</span></label>
-                  <label><input type="radio" name="experience" value="accepted" /><span>可以接受</span></label>
-                  <label><input type="radio" name="experience" value="liked" /><span>喜歡</span></label>
+                  <label><input type="radio" name="experience" value="tasted" /><span>嘗了一口</span></label>
+                  <label><input type="radio" name="experience" value="ate_some" /><span>有吃一些</span></label>
+                </div>
+                <label class="first-encounter-toggle"><input id="firstEncounter" type="checkbox" /><span>這是第一次遇到這個食物</span></label>
+              </fieldset>
+              <fieldset class="passport-fieldset">
+                <legend>4. 孩子的感受是？</legend>
+                <p class="passport-field-hint">可以複選；孩子沒有特別說，也可以略過。</p>
+                <div class="reaction-list" id="reactionChoices">
+                  <label><input type="checkbox" name="reaction" value="liked" /><span>喜歡</span></label>
+                  <label><input type="checkbox" name="reaction" value="okay" /><span>還可以</span></label>
+                  <label><input type="checkbox" name="reaction" value="disliked" /><span>不喜歡</span></label>
+                  <label><input type="checkbox" name="reaction" value="wants_more" /><span>想再吃</span></label>
+                  <label><input type="checkbox" name="reaction" value="willing_retry" /><span>下次願意再試</span></label>
+                  <label><input type="checkbox" name="reaction" value="avoid_next_time" /><span>下次不想吃</span></label>
+                  <label><input type="checkbox" name="reaction" value="no_comment" /><span>沒有特別說</span></label>
+                  <label><input type="checkbox" name="reaction" value="other" /><span>其他感受</span></label>
                 </div>
               </fieldset>
               <div class="passport-note-grid">
+                <label class="child-quote-field">孩子的原話（可不填）<textarea id="encounterChildQuote" maxlength="160" rows="2" placeholder="例如：軟軟的，我不喜歡"></textarea></label>
                 <label>喜歡／不喜歡哪種做法？<input id="encounterPreparation" maxlength="80" autocomplete="off" placeholder="例如：可以接受切絲炒蛋" /></label>
-                <label>家長的小筆記<textarea id="encounterNote" maxlength="240" rows="3" placeholder="不評論吃多少，只記下孩子怎麼說"></textarea></label>
+                <label>家長的小筆記<textarea id="encounterNote" maxlength="240" rows="3" placeholder="補充當時的情況，不評論吃多少"></textarea></label>
               </div>
               <div class="passport-submit-row">
                 <button type="submit">儲存午餐紀錄</button>
@@ -200,6 +217,7 @@
           <aside class="passport-history card">
             <div><p class="kicker">最近的午餐紀錄</p><h3>不是分數，是經驗</h3></div>
             <div class="encounter-list" id="encounterList"></div>
+            <a class="all-encounters-link" id="allEncounterRecords" href="./records.html" hidden>查看全部午餐紀錄</a>
           </aside>
         </div>
       </section>
@@ -416,6 +434,6 @@
     <script src="./date-context.js" defer></script>
     <script src="./number-format.js" defer></script>
     <script src="./official-diet.js" defer></script>
-    <script src="./app.js?v=20261014-ui-polish" defer></script>
+    <script src="./app.js?v=20261015-passport-history" defer></script>
   </body>
 </html>

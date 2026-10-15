@@ -32,6 +32,7 @@ const state = {
     user: null,
     child: null,
     encounters: [],
+    encounterCount: 0,
     error: null,
   },
   authChallengeId: null,
@@ -68,12 +69,25 @@ const traceabilityStatusLabels = {
 };
 
 const experienceLabels = {
-  seen: "第一次看到",
+  not_tried: "今天不想嘗試",
+  seen: "看了一下",
   smelled: "願意聞一聞",
   touched: "願意碰一下",
-  tasted: "舔或咬一口",
+  tasted: "嘗了一口",
+  ate_some: "有吃一些",
   accepted: "可以接受",
   liked: "喜歡",
+};
+
+const reactionLabels = {
+  liked: "喜歡",
+  okay: "還可以",
+  disliked: "不喜歡",
+  wants_more: "想再吃",
+  willing_retry: "下次願意再試",
+  avoid_next_time: "下次不想吃",
+  no_comment: "沒有特別說",
+  other: "其他感受",
 };
 
 const ids = [
@@ -107,8 +121,9 @@ const ids = [
   "childGradeGroup", "childSchool", "childFormSubmit", "cancelChildEdit", "childSetupKicker", "childSetupTitle",
   "childSetupDescription", "childFormStatus", "passportWorkspace", "passportChildName", "passportChildSchool",
   "passportSchoolNotice", "passportSchoolNoticeText", "returnChildSchool", "editChildButton",
-  "encounterForm", "passportFoodChoices", "customFoodName", "encounterPreparation", "encounterNote",
-  "encounterFormStatus", "encounterList", "accountButton", "accountAvatar", "accountButtonText",
+  "encounterForm", "passportFoodChoices", "customFoodName", "experienceChoices", "reactionChoices",
+  "firstEncounter", "encounterChildQuote", "encounterPreparation", "encounterNote",
+  "encounterFormStatus", "encounterList", "allEncounterRecords", "accountButton", "accountAvatar", "accountButtonText",
   "accountDialog", "closeAccountDialog", "accountSignedOutView", "accountSignedInView", "accountIdentity",
   "emailAuthForm", "authEmail", "authBirthDate", "authCaregiverConfirmed", "requestAuthCode", "authRequestStatus",
   "emailCodeStep", "authMaskedEmail", "emailCodeForm", "authCode", "verifyAuthCode", "authVerifyStatus",
@@ -273,7 +288,10 @@ function encounterOriginText(encounter) {
 
 function renderEncounterHistory() {
   refs.encounterList.replaceChildren();
-  const encounters = state.account.encounters || [];
+  const encounters = (state.account.encounters || []).slice(0, 5);
+  const encounterCount = Number(state.account.encounterCount) || encounters.length;
+  refs.allEncounterRecords.hidden = encounterCount <= 5;
+  refs.allEncounterRecords.textContent = `查看全部 ${encounterCount} 筆午餐紀錄`;
   if (!encounters.length) {
     refs.encounterList.append(node("p", "encounter-empty", "第一筆不需要是「喜歡」。願意看、聞或碰一下，都是值得留下的午餐經驗。"));
     return;
@@ -292,8 +310,17 @@ function renderEncounterHistory() {
       node("p", "encounter-stage", experienceLabels[encounter.experience] || "食物經驗"),
       node("p", "encounter-origin", encounterOriginText(encounter)),
     );
-    const detail = [encounter.preparation, encounter.note].filter(Boolean).join(" · ");
-    if (detail) summaryBody.append(node("p", "encounter-note", detail));
+    const reactionText = (encounter.reactions || [])
+      .map((reaction) => reactionLabels[reaction])
+      .filter(Boolean)
+      .join("、");
+    if (encounter.firstEncounter) {
+      summaryBody.append(node("p", "encounter-first", "第一次遇到這個食物"));
+    }
+    if (reactionText) summaryBody.append(node("p", "encounter-reactions", reactionText));
+    if (encounter.childQuote) summaryBody.append(node("p", "encounter-quote", `孩子說：「${encounter.childQuote}」`));
+    if (encounter.preparation) summaryBody.append(node("p", "encounter-note", `做法：${encounter.preparation}`));
+    if (encounter.note) summaryBody.append(node("p", "encounter-note", `家長筆記：${encounter.note}`));
     const expandLabel = node("span", "encounter-expand-label", "查看當天午餐");
     summary.append(summaryBody, expandLabel);
     const mealPreview = node("div", "encounter-meal-preview");
@@ -498,6 +525,7 @@ async function loadAccount() {
       user: null,
       child: null,
       encounters: [],
+      encounterCount: 0,
       error: error instanceof Error ? error.message : "家庭帳號暫時無法讀取",
     };
   }
@@ -2160,6 +2188,8 @@ refs.encounterForm.addEventListener("submit", async (event) => {
   const dishName = mealContext === "school_lunch" ? selectedSource || null : null;
   const foodName = refs.customFoodName.value.trim() || dishName || "";
   const experience = new FormData(refs.encounterForm).get("experience");
+  const reactions = [...refs.reactionChoices.querySelectorAll('input[name="reaction"]:checked')]
+    .map((input) => input.value);
   if (!selectedSource) {
     setFormStatus(refs.encounterFormStatus, "請先選擇來源菜色，或選擇家裡／其他地方。", "error");
     refs.passportFoodChoices.querySelector("input")?.focus();
@@ -2189,6 +2219,9 @@ refs.encounterForm.addEventListener("submit", async (event) => {
         dishName,
         foodName,
         experience,
+        reactions,
+        childQuote: refs.encounterChildQuote.value,
+        firstEncounter: refs.firstEncounter.checked,
         preparation: refs.encounterPreparation.value,
         note: refs.encounterNote.value,
       }),
@@ -2202,6 +2235,20 @@ refs.encounterForm.addEventListener("submit", async (event) => {
     setFormStatus(refs.encounterFormStatus, error instanceof Error ? error.message : "食物紀錄暫時無法儲存", "error");
   } finally {
     submit.disabled = false;
+  }
+});
+
+refs.reactionChoices.addEventListener("change", (event) => {
+  const changed = event.target.closest('input[name="reaction"]');
+  if (!changed?.checked) return;
+  const choices = [...refs.reactionChoices.querySelectorAll('input[name="reaction"]')];
+  if (changed.value === "no_comment") {
+    choices.forEach((choice) => {
+      if (choice !== changed) choice.checked = false;
+    });
+  } else {
+    const noComment = choices.find((choice) => choice.value === "no_comment");
+    if (noComment) noComment.checked = false;
   }
 });
 

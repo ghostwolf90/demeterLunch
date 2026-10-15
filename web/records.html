@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="按月份回看孩子每天留下的營養午餐食物經驗" />
+    <meta name="theme-color" content="#f5f0e7" />
+    <title>全部午餐紀錄｜好好吃飯</title>
+    <script>
+      if (window.location.protocol === "file:") {
+        window.location.replace("http://127.0.0.1:8000/records.html");
+      }
+    </script>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css?v=20261015-passport-history" />
+  </head>
+  <body class="records-page">
+    <header class="topbar records-topbar">
+      <a class="brand" href="./index.html#passport" aria-label="回到好好吃飯午餐紀錄">
+        <span class="brand-mark" aria-hidden="true">好</span>
+        <span><strong>好好吃飯</strong><small>午餐紀錄</small></span>
+      </a>
+      <a class="records-back" href="./index.html#passport">← 回到午餐助手</a>
+    </header>
+
+    <main class="records-main">
+      <section class="records-hero" aria-labelledby="recordsTitle">
+        <div>
+          <p class="kicker">ONE-BITE PASSPORT</p>
+          <h1 id="recordsTitle">全部午餐紀錄</h1>
+          <p id="recordsSummary">正在整理孩子每天留下的食物經驗。</p>
+        </div>
+        <label class="month-jump" id="monthJumpLabel" hidden>
+          跳到月份
+          <select id="monthJump"></select>
+        </label>
+      </section>
+
+      <div class="records-status loading-state" id="recordsStatus" role="status" aria-live="polite" aria-atomic="true">
+        <span class="loading-spinner" aria-hidden="true"></span><span>正在讀取午餐紀錄…</span>
+      </div>
+      <div class="records-content" id="recordsContent"></div>
+    </main>
+
+    <footer>
+      <strong>好好吃飯</strong>
+      <span>只呈現有留下紀錄的日子；不是分數，也不是打卡。</span>
+    </footer>
+
+    <script src="./official-diet.js" defer></script>
+    <script src="./records.js?v=20261015-passport-history" defer></script>
+  </body>
+</html>

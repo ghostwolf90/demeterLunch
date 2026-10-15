@@ -162,6 +162,15 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("家裡或其他場合也能另外記錄", index_html)
         self.assertIn("孩子午餐紀錄所屬學校", index_html)
         self.assertIn("儲存午餐紀錄", index_html)
+        self.assertIn("這次孩子做到哪一步？", index_html)
+        self.assertIn("今天不想嘗試", index_html)
+        self.assertIn("孩子的感受是？", index_html)
+        self.assertIn('name="reaction" value="disliked"', index_html)
+        self.assertIn('id="encounterChildQuote"', index_html)
+        self.assertIn('id="allEncounterRecords" href="./records.html"', index_html)
+        self.assertIn("encounterCount <= 5", app_js)
+        self.assertIn("reactions,", app_js)
+        self.assertIn("childQuote:", app_js)
         self.assertIn("refs.encounterForm.hidden = mismatch || missing", app_js)
         self.assertIn("if (!isViewingChildSchool())", app_js)
         self.assertIn("請先回到孩子就讀學校，再新增午餐紀錄", app_js)
@@ -176,6 +185,20 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("不要求吃光", index_html)
         self.assertIn("不把孩子貼上挑食標籤", index_html)
         self.assertIn("不是分數，是經驗", index_html)
+
+    def test_complete_lunch_records_page_groups_days_by_month(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        records_html = (project_root / "web" / "records.html").read_text(encoding="utf-8")
+        records_js = (project_root / "web" / "records.js").read_text(encoding="utf-8")
+
+        self.assertIn("全部午餐紀錄", records_html)
+        self.assertIn('id="monthJump"', records_html)
+        self.assertIn("只呈現有留下紀錄的日子", records_html)
+        self.assertIn('fetch("/api/account/encounters"', records_js)
+        self.assertIn("mealDate.slice(0, 7)", records_js)
+        self.assertIn("查看當天完整午餐", records_js)
+        self.assertIn("不會拿別天的內容代替", records_js)
+        self.assertIn("舊紀錄未記錄菜色來源", records_js)
 
     def test_site_exposes_grade_and_standard_controls(self) -> None:
         index_html = (

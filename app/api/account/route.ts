@@ -22,6 +22,9 @@ type EncounterRow = {
   dish_name: string | null;
   food_name: string;
   experience: string;
+  reactions: string | null;
+  child_quote: string | null;
+  first_encounter: number | null;
   preparation: string | null;
   note: string | null;
   created_at: string;
@@ -47,18 +50,29 @@ export async function GET(request: Request) {
       )
       .bind(user.id)
       .first<ChildRow>();
-    const encounters = child
-      ? await db
-          .prepare(
-            `SELECT id, meal_date, school_id, meal_type, meal_context, dish_name, food_name, experience, preparation, note, created_at
-             FROM food_encounters
-             WHERE auth_user_id = ? AND child_id = ?
-             ORDER BY created_at DESC, id DESC
-             LIMIT 12`,
-          )
-          .bind(user.id, child.id)
-          .all<EncounterRow>()
-      : { results: [] as EncounterRow[] };
+    const [encounters, encounterCount] = child
+      ? await Promise.all([
+          db
+            .prepare(
+              `SELECT id, meal_date, school_id, meal_type, meal_context, dish_name, food_name, experience,
+                      reactions, child_quote, first_encounter, preparation, note, created_at
+               FROM food_encounters
+               WHERE auth_user_id = ? AND child_id = ?
+               ORDER BY meal_date DESC, created_at DESC, id DESC
+               LIMIT 5`,
+            )
+            .bind(user.id, child.id)
+            .all<EncounterRow>(),
+          db
+            .prepare(
+              `SELECT COUNT(*) AS count
+               FROM food_encounters
+               WHERE auth_user_id = ? AND child_id = ?`,
+            )
+            .bind(user.id, child.id)
+            .first<{ count: number }>(),
+        ])
+      : [{ results: [] as EncounterRow[] }, { count: 0 }];
 
     return privateJson({
       authenticated: true,
@@ -85,10 +99,14 @@ export async function GET(request: Request) {
         dishName: item.dish_name,
         foodName: item.food_name,
         experience: item.experience,
+        reactions: parseReactions(item.reactions),
+        childQuote: item.child_quote,
+        firstEncounter: item.first_encounter === null ? null : item.first_encounter === 1,
         preparation: item.preparation,
         note: item.note,
         createdAt: item.created_at,
       })),
+      encounterCount: encounterCount?.count ?? 0,
     });
   } catch (error) {
     console.error("Unable to load private account data", error);
@@ -99,5 +117,17 @@ export async function GET(request: Request) {
       },
       { status: 503 },
     );
+  }
+}
+
+function parseReactions(value: string | null): string[] {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
+  } catch {
+    return [];
   }
 }
