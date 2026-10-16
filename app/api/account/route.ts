@@ -13,6 +13,10 @@ type ChildRow = {
   updated_at: string;
 };
 
+type AccountPreferenceRow = {
+  default_school_id: number | null;
+};
+
 type EncounterRow = {
   id: number;
   meal_date: string;
@@ -35,11 +39,21 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const user = await getAccountUser(request);
   if (!user) {
-    return privateJson({ authenticated: false, user: null, child: null, encounters: [] });
+    return privateJson({
+      authenticated: false,
+      user: null,
+      child: null,
+      defaultSchoolId: null,
+      encounters: [],
+    });
   }
 
   try {
     const db = accountDatabase();
+    const accountPreferences = await db
+      .prepare("SELECT default_school_id FROM parent_accounts WHERE auth_user_id = ? LIMIT 1")
+      .bind(user.id)
+      .first<AccountPreferenceRow>();
     const child = await db
       .prepare(
         `SELECT id, nickname, grade_group, school_id, created_at, updated_at
@@ -78,6 +92,7 @@ export async function GET(request: Request) {
       authenticated: true,
       user,
       plan: "free",
+      defaultSchoolId: accountPreferences?.default_school_id ?? null,
       child: child
         ? {
             id: child.id,

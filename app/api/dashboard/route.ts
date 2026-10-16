@@ -8,6 +8,7 @@ type RecordRow = {
 
 type PublicMealRecord = {
   source?: { url?: string };
+  schoolMenu?: unknown;
   [key: string]: unknown;
 };
 
@@ -44,7 +45,15 @@ export async function GET(request: Request) {
   }
   // The deployed, reviewed snapshot is the publication baseline. Newer cloud
   // refreshes in D1 override the same school/date without hiding other dates.
-  const records = { ...publishedRecords, ...databaseRecords };
+  const records = { ...publishedRecords };
+  for (const [mealDate, databaseRecord] of Object.entries(databaseRecords)) {
+    records[mealDate] = {
+      ...databaseRecord,
+      ...(publishedRecords[mealDate]?.schoolMenu
+        ? { schoolMenu: publishedRecords[mealDate].schoolMenu }
+        : {}),
+    };
+  }
   const dates = Object.keys(records).sort();
   const record = records[selectedDate] ?? null;
   const sourceUrl =
@@ -57,7 +66,7 @@ export async function GET(request: Request) {
     recordCount: dates.length,
     recordDates: dates,
     dateRange: dates.length ? { start: dates[0], end: dates.at(-1) } : null,
-    experience: schoolId === 193609 ? "complete" : "official_daily",
+    experience: [193609, 64754668].includes(schoolId) ? "complete" : "official_daily",
   };
 
   return Response.json(

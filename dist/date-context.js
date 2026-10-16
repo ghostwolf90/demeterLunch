@@ -24,6 +24,29 @@
     return utcDay(selectedDate) - utcDay(todayDate);
   }
 
+  function closestMealDate(availableDates, targetDate) {
+    if (!Array.isArray(availableDates) || !availableDates.length) return null;
+    let closest = null;
+    let closestOffset = null;
+    for (const date of new Set(availableDates)) {
+      let offset;
+      try {
+        offset = relativeDayOffset(date, targetDate);
+      } catch {
+        continue;
+      }
+      if (
+        closestOffset === null ||
+        Math.abs(offset) < Math.abs(closestOffset) ||
+        (Math.abs(offset) === Math.abs(closestOffset) && offset <= 0 && closestOffset > 0)
+      ) {
+        closest = date;
+        closestOffset = offset;
+      }
+    }
+    return closest;
+  }
+
   function mealMoment(selectedDate, todayDate) {
     const offset = relativeDayOffset(selectedDate, todayDate);
     if (offset === 0) return "今天中午，";
@@ -47,5 +70,5 @@
     return `${startLabel} ${startYear}–${endLabel} ${endYear} AT A GLANCE`;
   }
 
-  return { insightsPeriodLabel, mealMoment, relativeDayOffset };
+  return { closestMealDate, insightsPeriodLabel, mealMoment, relativeDayOffset };
 }));

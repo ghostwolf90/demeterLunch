@@ -197,6 +197,21 @@ class ReviewedSchoolMealTests(unittest.TestCase):
         self.assertEqual(dashboard["school"]["name"], "忠信國小")
         self.assertEqual(dashboard["officialRecord"]["summary"]["dishCount"], 8)
 
+    def test_catalog_adds_reviewed_nanxing_weekly_menu_without_replacing_official_record(self) -> None:
+        catalog = load_school_meal_catalog(DATABASE)
+        school = next(
+            item for item in catalog["schools"] if item["fatraceSchoolId"] == 64754668
+        )
+        record = catalog["records"]["64754668"]["2026-10-16"]
+
+        self.assertEqual(school["experience"], "complete")
+        self.assertEqual(record["source"]["name"], "教育部校園食材登錄平臺公開查詢頁")
+        self.assertEqual(record["schoolMenu"]["week"], 7)
+        self.assertEqual(
+            record["schoolMenu"]["nutritionSnapshots"][0]["nutrition"]["caloriesKcal"],
+            654,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

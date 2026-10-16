@@ -94,6 +94,7 @@ export const parentAccounts = sqliteTable("parent_accounts", {
   email: text("email"),
   emailNormalized: text("email_normalized"),
   displayName: text("display_name"),
+  defaultSchoolId: integer("default_school_id"),
   plan: text("plan").notNull().default("free"),
   adultVerifiedAt: text("adult_verified_at"),
   caregiverConfirmedAt: text("caregiver_confirmed_at"),

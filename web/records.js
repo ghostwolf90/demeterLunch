@@ -9,18 +9,25 @@ const state = {
 
 const experienceLabels = {
   not_tried: "今天不想嘗試",
-  seen: "看了一下",
-  smelled: "願意聞一聞",
-  touched: "願意碰一下",
-  tasted: "嘗了一口",
-  ate_some: "有吃一些",
+  not_eaten: "沒有吃",
+  seen: "看過，但沒有吃",
+  smelled: "聞過，但沒有吃",
+  touched: "碰過，但沒有吃",
+  tasted: "嚐了一口",
+  ate_some: "吃了一些",
+  ate_most: "吃了大部分",
+  finished: "吃完了",
+  ate_unknown: "有吃，份量不確定",
+  unknown: "不確定／孩子沒提到",
   accepted: "可以接受",
   liked: "喜歡",
 };
 
 const reactionLabels = {
+  loved: "很喜歡",
   liked: "喜歡",
-  okay: "還可以",
+  okay: "還好",
+  less_liked: "不太喜歡",
   disliked: "不喜歡",
   wants_more: "想再吃",
   willing_retry: "下次願意再試",

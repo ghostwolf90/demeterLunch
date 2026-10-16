@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=20261015-passport-history" />
+    <link rel="stylesheet" href="./styles.css?v=20261017-food-feedback" />
   </head>
   <body>
     <header class="topbar">
@@ -45,11 +45,14 @@
             </div>
             <div class="school-field">
               <label for="schoolSelect">國小</label>
-              <select id="schoolSelect" aria-describedby="schoolDataScope"></select>
+              <select id="schoolSelect" aria-describedby="schoolDataScope schoolBrowserNote"></select>
             </div>
-            <button class="favorite-school-button" id="favoriteSchoolButton" type="button" disabled>☆ 設為我的最愛</button>
-            <span id="schoolDataScope">選擇學校</span>
-            <small class="school-browser-note" id="schoolBrowserNote" hidden></small>
+            <button class="default-school-button" id="defaultSchoolButton" type="button" disabled>☆ 設為預設學校</button>
+            <span id="schoolDataScope" role="status" aria-live="polite">選擇學校</span>
+            <div class="school-browser-note" id="schoolBrowserNote" hidden>
+              <span id="schoolBrowserNoteText"></span>
+              <button id="editChildFromSchoolPicker" type="button">更改孩子資料</button>
+            </div>
           </div>
           <div class="meal-type-switch" id="mealTypeSwitch" role="group" aria-label="選擇午餐餐別">
             <button id="mealTypeMeat" type="button" aria-pressed="true">葷食</button>
@@ -82,14 +85,18 @@
           <div class="meal-list" id="mealList"></div>
           <div class="allergen-row" id="allergenRow"></div>
           <button class="detail-menu-action" id="openDetail" type="button">查看供餐廠商食譜原表</button>
-          <a class="official-source-action" id="officialSourceLink" target="_blank" rel="noreferrer" hidden>查看教育部當日公開頁 ↗</a>
+          <div class="official-source-actions">
+            <button class="official-source-action school-menu-source" id="schoolMenuSourceButton" type="button" hidden>檢視校方週菜單</button>
+            <button class="official-source-action school-menu-source" id="schoolMenuNutritionButton" type="button" hidden>查看份量與營養表</button>
+            <a class="official-source-action" id="officialSourceLink" target="_blank" rel="noreferrer" hidden>查看教育部當日公開頁 ↗</a>
+          </div>
           <p class="detail-menu-note" id="mealTypeNote">用量為供餐廠商的每人食譜設計值，不代表實際攝取量。</p>
         </article>
 
         <article class="nutrition-card card" id="nutritionCard">
-          <div class="card-heading"><div><p class="kicker">NUTRITION SNAPSHOT</p><h2>營養快照</h2></div><div class="calorie-orb"><strong id="calories">—</strong><span>kcal</span></div></div>
+          <div class="card-heading"><div><p class="kicker">NUTRITION SNAPSHOT</p><h2>營養快照</h2></div><div class="calorie-orb"><strong id="calories">—</strong><span id="calorieUnit">kcal</span></div></div>
           <div class="nutrition-bars" id="nutritionBars"></div>
-          <p class="source-note">份數與熱量照學校公布的營養分析登錄。</p>
+          <p class="source-note" id="nutritionSourceNote">份數與熱量照學校公布的營養分析登錄。</p>
         </article>
 
         <article class="dinner-card card" id="dinnerCard">
@@ -132,8 +139,8 @@
             <small>免費註冊 · 不需密碼、不綁信用卡</small>
           </div>
           <div class="passport-preview" aria-label="登入後可記錄的午餐食物經驗">
-            <span>今天不想嘗試</span><span>願意聞一聞</span><span>嘗了一口</span>
-            <span>不喜歡</span><span>下次願意再試</span><span>喜歡</span>
+            <span>沒有吃</span><span>嚐了一口</span><span>吃了一些</span>
+            <span>吃完了</span><span>還好</span><span>很喜歡</span>
           </div>
         </article>
 
@@ -176,30 +183,46 @@
                 <label class="custom-food">食物名稱（可不填）<input id="customFoodName" maxlength="80" autocomplete="off" placeholder="例如：扣肉、紅蘿蔔絲" /><small>不填會記下整道菜；填寫時仍會保留上一步選的來源菜色。</small></label>
               </fieldset>
               <fieldset class="passport-fieldset">
-                <legend>3. 這次孩子做到哪一步？</legend>
-                <p class="passport-field-hint">只記下今天實際發生的事，不是分數，也不用一路往下完成。</p>
+                <legend>3. 這次午餐，孩子有吃這個食物嗎？</legend>
+                <p class="passport-field-hint">選最接近今天情況的一項就好；沒有好壞，也不代表孩子喜不喜歡。</p>
                 <div class="experience-list" id="experienceChoices">
-                  <label><input type="radio" name="experience" value="not_tried" required /><span>今天不想嘗試</span></label>
-                  <label><input type="radio" name="experience" value="seen" /><span>看了一下</span></label>
-                  <label><input type="radio" name="experience" value="smelled" /><span>願意聞一聞</span></label>
-                  <label><input type="radio" name="experience" value="touched" /><span>願意碰一下</span></label>
-                  <label><input type="radio" name="experience" value="tasted" /><span>嘗了一口</span></label>
-                  <label><input type="radio" name="experience" value="ate_some" /><span>有吃一些</span></label>
+                  <label><input type="radio" name="experience" value="not_eaten" required /><span>沒有吃</span></label>
+                  <label><input type="radio" name="experience" value="tasted" /><span>嚐了一口</span></label>
+                  <label><input type="radio" name="experience" value="ate_some" /><span>吃了一些</span></label>
+                  <label><input type="radio" name="experience" value="ate_most" /><span>吃了大部分</span></label>
+                  <label><input type="radio" name="experience" value="finished" /><span>吃完了</span></label>
+                  <label><input type="radio" name="experience" value="ate_unknown" /><span>有吃，但不記得多少</span></label>
+                  <label><input type="radio" name="experience" value="unknown" /><span>不確定／孩子沒提到</span></label>
                 </div>
-                <label class="first-encounter-toggle"><input id="firstEncounter" type="checkbox" /><span>這是第一次遇到這個食物</span></label>
+                <div class="no-eat-details" id="noEatDetails" hidden>
+                  <p id="noEatDetailsLabel">如果有注意到，孩子有接觸到它嗎？（可不填）</p>
+                  <div class="contact-list" role="radiogroup" aria-labelledby="noEatDetailsLabel">
+                    <label><input type="radio" name="noEatContact" value="seen" /><span>看了看</span></label>
+                    <label><input type="radio" name="noEatContact" value="smelled" /><span>聞了聞</span></label>
+                    <label><input type="radio" name="noEatContact" value="touched" /><span>碰了碰</span></label>
+                    <label><input type="radio" name="noEatContact" value="not_eaten" /><span>沒有接觸</span></label>
+                    <label><input type="radio" name="noEatContact" value="unknown" /><span>不確定</span></label>
+                  </div>
+                </div>
+                <div class="familiarity-question">
+                  <p id="familiarityLabel">孩子以前吃過這個食物嗎？（可不填）</p>
+                  <div class="familiarity-list" role="radiogroup" aria-labelledby="familiarityLabel">
+                    <label><input type="radio" name="familiarity" value="first" /><span>第一次吃</span></label>
+                    <label><input type="radio" name="familiarity" value="previous" /><span>以前吃過</span></label>
+                    <label><input type="radio" name="familiarity" value="unknown" /><span>不確定</span></label>
+                  </div>
+                </div>
               </fieldset>
               <fieldset class="passport-fieldset">
-                <legend>4. 孩子的感受是？</legend>
-                <p class="passport-field-hint">可以複選；孩子沒有特別說，也可以略過。</p>
+                <legend>4. 孩子對這個食物的感覺如何？（可不填）</legend>
+                <p class="passport-field-hint">和吃了多少分開記；孩子沒有提到，也可以略過。</p>
                 <div class="reaction-list" id="reactionChoices">
-                  <label><input type="checkbox" name="reaction" value="liked" /><span>喜歡</span></label>
-                  <label><input type="checkbox" name="reaction" value="okay" /><span>還可以</span></label>
-                  <label><input type="checkbox" name="reaction" value="disliked" /><span>不喜歡</span></label>
-                  <label><input type="checkbox" name="reaction" value="wants_more" /><span>想再吃</span></label>
-                  <label><input type="checkbox" name="reaction" value="willing_retry" /><span>下次願意再試</span></label>
-                  <label><input type="checkbox" name="reaction" value="avoid_next_time" /><span>下次不想吃</span></label>
-                  <label><input type="checkbox" name="reaction" value="no_comment" /><span>沒有特別說</span></label>
-                  <label><input type="checkbox" name="reaction" value="other" /><span>其他感受</span></label>
+                  <label><input type="radio" name="reaction" value="loved" /><span>很喜歡</span></label>
+                  <label><input type="radio" name="reaction" value="liked" /><span>喜歡</span></label>
+                  <label><input type="radio" name="reaction" value="okay" /><span>還好</span></label>
+                  <label><input type="radio" name="reaction" value="less_liked" /><span>不太喜歡</span></label>
+                  <label><input type="radio" name="reaction" value="disliked" /><span>不喜歡</span></label>
+                  <label><input type="radio" name="reaction" value="no_comment" /><span>不確定／孩子沒提到</span></label>
                 </div>
               </fieldset>
               <div class="passport-note-grid">
@@ -361,6 +384,7 @@
           <span class="account-dialog-mark" aria-hidden="true">家</span>
           <p class="kicker">免費家庭帳號</p>
           <h2 id="accountDialogTitle">替孩子留下<br />沒有壓力的營養午餐紀錄</h2>
+          <p class="account-intent-notice" id="accountIntentNotice" role="status" hidden></p>
           <p>使用家長 Email 收取六位數驗證碼，不需要 ChatGPT，也不需要設定密碼。今天吃什麼、營養與食材資訊一直都能免費查看。</p>
           <ul><li>免費版可建立 1 位孩子</li><li>記下午餐菜色與孩子實際提到的食物</li><li>家裡或其他場合的食物也能另外記錄</li><li>不綁信用卡，不以吃光作為獎勵</li></ul>
           <form class="account-auth-form" id="emailAuthForm">
@@ -434,6 +458,6 @@
     <script src="./date-context.js" defer></script>
     <script src="./number-format.js" defer></script>
     <script src="./official-diet.js" defer></script>
-    <script src="./app.js?v=20261015-passport-history" defer></script>
+    <script src="./app.js?v=20261017-food-feedback" defer></script>
   </body>
 </html>

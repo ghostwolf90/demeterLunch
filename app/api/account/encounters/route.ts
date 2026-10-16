@@ -8,10 +8,12 @@ import {
 } from "@/lib/account-auth";
 
 const experiences = new Set([
-  "not_tried", "seen", "smelled", "touched", "tasted", "ate_some", "accepted", "liked",
+  "not_tried", "not_eaten", "seen", "smelled", "touched", "tasted", "ate_some", "ate_most",
+  "finished", "ate_unknown", "unknown", "accepted", "liked",
 ]);
 const reactionOptions = new Set([
-  "liked", "okay", "disliked", "wants_more", "willing_retry", "avoid_next_time", "no_comment", "other",
+  "loved", "liked", "okay", "less_liked", "disliked", "wants_more", "willing_retry",
+  "avoid_next_time", "no_comment", "other",
 ]);
 const mealTypes = new Set(["meat", "vegetarian"]);
 const mealContexts = new Set(["school_lunch", "other"]);
@@ -108,7 +110,7 @@ export async function POST(request: Request) {
   const dishName = optionalText(record.dishName, 80);
   const reactions = validReactions(record.reactions);
   const childQuote = optionalText(record.childQuote, 160);
-  const firstEncounter = record.firstEncounter === true;
+  const firstEncounter = optionalBoolean(record.firstEncounter);
   const preparation = optionalText(record.preparation, 80);
   const note = optionalText(record.note, 240);
   if (!isoDatePattern.test(mealDate)) {
@@ -125,6 +127,9 @@ export async function POST(request: Request) {
   }
   if (reactions.includes("no_comment") && reactions.length > 1) {
     return privateJson({ error: "「沒有特別說」不能和其他感受一起選擇" }, { status: 400 });
+  }
+  if (firstEncounter === undefined) {
+    return privateJson({ error: "是否第一次吃的選項不正確" }, { status: 400 });
   }
   if (!mealTypes.has(mealType)) {
     return privateJson({ error: "午餐餐別不正確" }, { status: 400 });
@@ -171,7 +176,7 @@ export async function POST(request: Request) {
         experience,
         JSON.stringify(reactions),
         childQuote,
-        firstEncounter ? 1 : 0,
+        firstEncounter === null ? null : firstEncounter ? 1 : 0,
         preparation,
         note,
         now,
@@ -210,4 +215,9 @@ function optionalText(value: unknown, maxLength: number): string | null | undefi
   if (typeof value !== "string") return undefined;
   const text = value.trim();
   return text.length <= maxLength ? text || null : undefined;
+}
+
+function optionalBoolean(value: unknown): boolean | null | undefined {
+  if (value === null || value === undefined) return null;
+  return typeof value === "boolean" ? value : undefined;
 }

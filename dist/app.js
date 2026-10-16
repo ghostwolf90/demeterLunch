@@ -1,14 +1,12 @@
 const savedMealType = window.localStorage.getItem("demeter-meal-type");
 const savedGradeGroup = window.localStorage.getItem("demeter-grade-group");
 const savedStandardMode = window.localStorage.getItem("demeter-standard-mode");
-const savedFavoriteSchoolId = Number(window.localStorage.getItem("demeter-favorite-school-id"));
 const DEFAULT_SCHOOL_ID = 193609;
 const state = {
   dashboard: null,
   loading: false,
   staticData: null,
   schoolId: null,
-  favoriteSchoolId: Number.isInteger(savedFavoriteSchoolId) ? savedFavoriteSchoolId : null,
   schoolDirectory: [],
   district: null,
   newsLoaded: false,
@@ -31,6 +29,7 @@ const state = {
     authenticated: false,
     user: null,
     child: null,
+    defaultSchoolId: null,
     encounters: [],
     encounterCount: 0,
     error: null,
@@ -39,7 +38,9 @@ const state = {
   authEmail: null,
   encounterMealCache: {},
   editingChild: false,
+  pendingDefaultSchoolId: null,
   lastAccountTrigger: null,
+  schoolDataScopeTimer: 0,
 };
 
 const DISH_DETAIL_MOTION_MS = 360;
@@ -70,18 +71,25 @@ const traceabilityStatusLabels = {
 
 const experienceLabels = {
   not_tried: "今天不想嘗試",
-  seen: "看了一下",
-  smelled: "願意聞一聞",
-  touched: "願意碰一下",
-  tasted: "嘗了一口",
-  ate_some: "有吃一些",
+  not_eaten: "沒有吃",
+  seen: "看過，但沒有吃",
+  smelled: "聞過，但沒有吃",
+  touched: "碰過，但沒有吃",
+  tasted: "嚐了一口",
+  ate_some: "吃了一些",
+  ate_most: "吃了大部分",
+  finished: "吃完了",
+  ate_unknown: "有吃，份量不確定",
+  unknown: "不確定／孩子沒提到",
   accepted: "可以接受",
   liked: "喜歡",
 };
 
 const reactionLabels = {
+  loved: "很喜歡",
   liked: "喜歡",
-  okay: "還可以",
+  okay: "還好",
+  less_liked: "不太喜歡",
   disliked: "不喜歡",
   wants_more: "想再吃",
   willing_retry: "下次願意再試",
@@ -92,7 +100,7 @@ const reactionLabels = {
 
 const ids = [
   "dashboard", "syncStatus", "syncStatusText", "todayLabel", "mealMoment", "heroDish", "introNote", "mainDish", "mealList",
-  "allergenRow", "calories", "nutritionBars", "dinnerTitle", "dinnerPicks",
+  "allergenRow", "calories", "calorieUnit", "nutritionBars", "nutritionSourceNote", "dinnerTitle", "dinnerPicks",
   "dinnerReason", "dinnerNotes", "disclaimer", "weekLabel", "weekDays",
   "previousWeek", "nextWeek", "averageCalories", "averageVegetables",
   "fruitDays", "fruitDaysContext", "friedDays", "friedDaysContext", "proteinBars", "calorieChart", "trendRange",
@@ -113,18 +121,18 @@ const ids = [
   "standardPeriod", "standardBasis", "standardDescription", "standardSummary",
   "standardMetrics", "standardGuidance", "standardObservations", "standardMethod",
   "standardCoverage", "standardSource", "standardRevision",
-  "districtSelect", "schoolSelect", "favoriteSchoolButton", "schoolDataScope", "schoolBrowserNote", "brandSchoolLabel", "footerSource",
+  "districtSelect", "schoolSelect", "defaultSchoolButton", "schoolDataScope", "schoolBrowserNote", "schoolBrowserNoteText", "editChildFromSchoolPicker", "brandSchoolLabel", "footerSource",
   "mealTypeSwitch", "menuBoard", "menuKicker", "menuHeading", "reviewBadge",
-  "officialSourceLink", "nutritionCard", "dinnerCard", "standard", "learn",
+  "officialSourceLink", "schoolMenuSourceButton", "schoolMenuNutritionButton", "nutritionCard", "dinnerCard", "standard", "learn",
   "week", "todayGrid", "traceability", "news", "insights", "source", "traceabilityKicker", "traceabilityHeading",
   "passport", "passportLocked", "passportUnlock", "passportSetup", "childForm", "childNickname",
   "childGradeGroup", "childSchool", "childFormSubmit", "cancelChildEdit", "childSetupKicker", "childSetupTitle",
   "childSetupDescription", "childFormStatus", "passportWorkspace", "passportChildName", "passportChildSchool",
   "passportSchoolNotice", "passportSchoolNoticeText", "returnChildSchool", "editChildButton",
-  "encounterForm", "passportFoodChoices", "customFoodName", "experienceChoices", "reactionChoices",
-  "firstEncounter", "encounterChildQuote", "encounterPreparation", "encounterNote",
+  "encounterForm", "passportFoodChoices", "customFoodName", "experienceChoices", "noEatDetails", "reactionChoices",
+  "encounterChildQuote", "encounterPreparation", "encounterNote",
   "encounterFormStatus", "encounterList", "allEncounterRecords", "accountButton", "accountAvatar", "accountButtonText",
-  "accountDialog", "closeAccountDialog", "accountSignedOutView", "accountSignedInView", "accountIdentity",
+  "accountDialog", "closeAccountDialog", "accountSignedOutView", "accountSignedInView", "accountIdentity", "accountIntentNotice",
   "emailAuthForm", "authEmail", "authBirthDate", "authCaregiverConfirmed", "requestAuthCode", "authRequestStatus",
   "emailCodeStep", "authMaskedEmail", "emailCodeForm", "authCode", "verifyAuthCode", "authVerifyStatus",
   "changeAuthEmail", "accountSignOut",
@@ -221,11 +229,12 @@ function renderPassportSchoolContext() {
   const childSchool = schoolById(child.schoolId);
   const viewingSchool = selectedSchool();
   refs.passportChildSchool.textContent = childSchool?.name || "尚未設定";
-  refs.schoolBrowserNote.hidden = false;
-  refs.schoolBrowserNote.textContent = `這裡只切換公開午餐；${child.nickname}的午餐紀錄學校要到「孩子資料」更改。`;
-
   const mismatch = Boolean(childSchool && !isViewingChildSchool());
   const missing = !childSchool;
+  refs.schoolBrowserNote.hidden = !mismatch;
+  refs.schoolBrowserNoteText.textContent = mismatch
+    ? `僅切換公開午餐；${child.nickname}的學校仍是${childSchool.name}。`
+    : "";
   refs.passportSchoolNotice.hidden = !mismatch && !missing;
   refs.encounterForm.hidden = mismatch || missing;
   refs.returnChildSchool.hidden = missing;
@@ -480,7 +489,7 @@ function renderAccount() {
   refs.passportLocked.hidden = authenticated;
   refs.passportSetup.hidden = !authenticated || (Boolean(account.child) && !state.editingChild);
   refs.passportWorkspace.hidden = !authenticated || !account.child || state.editingChild;
-  refs.schoolBrowserNote.hidden = !authenticated || !account.child;
+  refs.schoolBrowserNote.hidden = true;
   if (authenticated && account.child) {
     refs.passportChildName.textContent = account.child.nickname;
     refs.childNickname.value = account.child.nickname;
@@ -502,6 +511,7 @@ function renderAccount() {
     refs.cancelChildEdit.hidden = true;
     populateChildSchoolSelect(state.schoolId);
   }
+  renderDefaultSchoolButton();
 }
 
 function renderEmailAuthStep() {
@@ -524,6 +534,7 @@ async function loadAccount() {
       authenticated: false,
       user: null,
       child: null,
+      defaultSchoolId: null,
       encounters: [],
       encounterCount: 0,
       error: error instanceof Error ? error.message : "家庭帳號暫時無法讀取",
@@ -591,8 +602,19 @@ async function verifyEmailAuthCode() {
     if (!response.ok) throw new Error(payload.error || "驗證碼無法確認");
     resetEmailAuthForm();
     await loadAccount();
+    const pendingDefaultSchoolId = state.pendingDefaultSchoolId;
+    if (pendingDefaultSchoolId) {
+      try {
+        await persistDefaultSchool(pendingDefaultSchoolId);
+        setSchoolDataScope("已設為預設學校，會隨帳號同步。", { temporary: true });
+      } catch (error) {
+        setSchoolDataScope(error instanceof Error ? error.message : "預設學校暫時無法更新");
+      }
+    }
     await closeAccountDialog();
-    refs.passport.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!pendingDefaultSchoolId) {
+      refs.passport.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   } catch (error) {
     setFormStatus(
       refs.authVerifyStatus,
@@ -679,9 +701,18 @@ function closeStagedDialog(dialog, motion, { immediate = false } = {}) {
   return motion.closePromise;
 }
 
+function renderAccountIntentNotice() {
+  const school = schoolById(state.pendingDefaultSchoolId);
+  refs.accountIntentNotice.hidden = !school;
+  refs.accountIntentNotice.textContent = school
+    ? `登入後會將${school.name}設為預設學校。`
+    : "";
+}
+
 function openAccountDialog(trigger) {
   if (!state.account.authenticated && !EMAIL_REGISTRATION_ENABLED) return;
   state.lastAccountTrigger = trigger || document.activeElement;
+  renderAccountIntentNotice();
   openStagedDialog(
     refs.accountDialog,
     state.dialogMotion.account,
@@ -742,12 +773,15 @@ function isLocalApiAvailable() {
     ["127.0.0.1", "localhost"].includes(window.location.hostname);
 }
 
-function dashboardFromStatic(data, selectedDate, mealType) {
+function dashboardFromStatic(data, selectedDate, mealType, preferClosest = false) {
   const variant = data.variants[mealType];
   const official = data.officialSchoolMeals || { schools: [], records: {} };
   const school = official.schools.find((item) => Number(item.fatraceSchoolId) === DEFAULT_SCHOOL_ID);
-  const exact = variant.days.find((day) => day.date === selectedDate);
-  const earlier = variant.days.filter((day) => day.date <= selectedDate);
+  const targetDate = preferClosest
+    ? LunchDateContext.closestMealDate(variant.days.map((day) => day.date), selectedDate) || selectedDate
+    : selectedDate;
+  const exact = variant.days.find((day) => day.date === targetDate);
+  const earlier = variant.days.filter((day) => day.date <= targetDate);
   const active = exact || earlier.at(-1) || variant.days[0];
   return {
     viewMode: "detailed",
@@ -759,7 +793,7 @@ function dashboardFromStatic(data, selectedDate, mealType) {
     mealTypeLabel: mealType === "meat" ? "葷食" : "素食",
     availableMealTypes: ["meat", "vegetarian"],
     requestedDate: selectedDate,
-    isFallback: !exact,
+    isFallback: active.date !== selectedDate,
     week: variant.days.filter((day) => day.weekId === active.weekId),
     nutritionStandard: data.nutritionStandard,
     nutritionAssessments: variant.nutritionAssessments?.[active.date],
@@ -800,7 +834,26 @@ function officialDashboardFromStatic(data, selectedDate, schoolId, mealType) {
   };
 }
 
-async function fetchDashboard(date) {
+function closestOfficialDashboard(dashboard, requestedDate) {
+  const selectedDate = LunchDateContext.closestMealDate(
+    dashboard.availableDates,
+    requestedDate,
+  );
+  const record = selectedDate
+    ? dashboard.records?.[selectedDate] || (selectedDate === dashboard.selectedDate ? dashboard.record : null)
+    : null;
+  if (!selectedDate || !record) return dashboard;
+  return {
+    ...dashboard,
+    requestedDate,
+    selectedDate,
+    record,
+    isMissing: false,
+    sourceUrl: record.source?.url || `https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=${encodeURIComponent(dashboard.school.fatraceSchoolId)}&period=${encodeURIComponent(selectedDate)}`,
+  };
+}
+
+async function fetchDashboard(date, { preferClosest = false } = {}) {
   if (!state.schoolId) throw new Error("請先選擇學校");
   if (state.schoolId !== DEFAULT_SCHOOL_ID || isLocalApiAvailable()) {
     try {
@@ -809,6 +862,10 @@ async function fetchDashboard(date) {
       if (response.ok && isJson) {
         const dashboard = await response.json();
         if (dashboard.record) return dashboard;
+        if (preferClosest) {
+          const closest = closestOfficialDashboard(dashboard, date);
+          if (closest.record) return closest;
+        }
       }
     } catch (error) {
       console.info("Live API unavailable; using the reviewed static snapshot.", error);
@@ -819,9 +876,11 @@ async function fetchDashboard(date) {
     if (!response.ok) throw new Error(`無法讀取公開版資料（HTTP ${response.status}）`);
     state.staticData = await response.json();
   }
-  return state.schoolId === DEFAULT_SCHOOL_ID
-    ? dashboardFromStatic(state.staticData, date, state.mealType)
-    : officialDashboardFromStatic(state.staticData, date, state.schoolId, state.mealType);
+  if (state.schoolId === DEFAULT_SCHOOL_ID) {
+    return dashboardFromStatic(state.staticData, date, state.mealType, preferClosest);
+  }
+  const dashboard = officialDashboardFromStatic(state.staticData, date, state.schoolId, state.mealType);
+  return preferClosest ? closestOfficialDashboard(dashboard, date) : dashboard;
 }
 
 async function fetchSchoolDirectory() {
@@ -972,7 +1031,9 @@ function renderDishDetail() {
   const ingredients = Array.isArray(dish.ingredients) ? dish.ingredients : [];
   refs.dishDetailRole.textContent = dish.category || roleLabels[dish.role] || "菜色";
   refs.dishDetailTitle.textContent = dish.name;
-  refs.dishDetailCount.textContent = `食譜明細共 ${ingredients.length} 項`;
+  refs.dishDetailCount.textContent = dish.schoolMenu?.servingText
+    ? `校方設計每份 ${dish.schoolMenu.servingText} · 官方食材 ${ingredients.length} 項`
+    : `食譜明細共 ${ingredients.length} 項`;
   refs.dishDetailIngredients.replaceChildren();
 
   if (!ingredients.length) {
@@ -1009,7 +1070,9 @@ function renderDishDetail() {
   }
 
   refs.dishDetailNote.textContent = dish.officialRecord
-    ? "食材名稱、產地、供應商與標章照教育部當日公開紀錄呈現；官方頁面沒有提供每人用量。"
+    ? dish.schoolMenu?.servingText
+      ? "每份設計重量來自校方週菜單；食材名稱、產地、供應商與標章來自教育部同日公開紀錄。"
+      : "食材名稱、產地、供應商與標章照教育部當日公開紀錄呈現；官方頁面沒有提供每人用量。"
     : state.mealType === "vegetarian"
     ? "素食菜單可能含蛋、奶；用量為供餐廠商的食譜設計值，不代表實際攝取量。"
     : "用量為供餐廠商的食譜設計值，不代表實際攝取量。";
@@ -1077,9 +1140,7 @@ function closeDishDetail({ immediate = false } = {}) {
   );
 }
 
-function renderNutrition(nutrition) {
-  refs.calories.textContent = LunchNumberFormat.sourceCalories(nutrition.caloriesKcal);
-  refs.nutritionBars.replaceChildren();
+function nutritionEntries(nutrition, { includeMilk = false } = {}) {
   const entries = [
     ["全穀雜糧", nutrition.wholeGrainsServings, 6],
     ["豆魚蛋肉", nutrition.proteinServings, 5],
@@ -1087,15 +1148,66 @@ function renderNutrition(nutrition) {
     ["油脂堅果", nutrition.oilsNutsServings, 4],
     ["水果", nutrition.fruitServings, 2],
   ];
-  for (const [label, value, scale] of entries) {
+  if (includeMilk) entries.splice(4, 0, ["乳品", nutrition.milkServings, 2]);
+  return entries;
+}
+
+function appendNutritionRows(container, nutrition, options = {}) {
+  const fragment = document.createDocumentFragment();
+  for (const [label, value, scale] of nutritionEntries(nutrition, options)) {
+    const unavailable = value === null || value === undefined || value === "";
+    const numericValue = unavailable ? null : Number(value);
+    const displayValue = Number.isFinite(numericValue) ? numericValue : null;
     const row = node("div", "nutrition-row");
+    row.classList.toggle("is-unavailable", displayValue === null);
     const track = node("div", "bar-track");
     const fill = node("div", "bar-fill");
-    fill.style.width = `${Math.min(100, (value / scale) * 100)}%`;
+    fill.style.width = displayValue === null ? "0%" : `${Math.min(100, (displayValue / scale) * 100)}%`;
     track.append(fill);
-    row.append(node("span", "", label), track, node("strong", "", `${value} 份`));
-    refs.nutritionBars.append(row);
+    row.append(node("span", "", label), track, node("strong", "", displayValue === null ? "未提供" : `${displayValue} 份`));
+    fragment.append(row);
   }
+  container.append(fragment);
+}
+
+function renderNutrition(nutrition) {
+  refs.calories.textContent = LunchNumberFormat.sourceCalories(nutrition.caloriesKcal);
+  refs.calorieUnit.textContent = "kcal";
+  refs.nutritionBars.classList.remove("has-multiple-snapshots");
+  refs.nutritionBars.replaceChildren();
+  appendNutritionRows(refs.nutritionBars, nutrition);
+  refs.nutritionSourceNote.textContent = "份數與熱量照學校公布的營養分析登錄。";
+}
+
+function renderOfficialNutrition(snapshots) {
+  refs.nutritionBars.replaceChildren();
+  refs.nutritionBars.classList.toggle("has-multiple-snapshots", snapshots.length > 1);
+  if (snapshots.length === 1) {
+    const snapshot = snapshots[0];
+    refs.calories.textContent = LunchNumberFormat.sourceCalories(snapshot.nutrition.caloriesKcal);
+    refs.calorieUnit.textContent = "kcal";
+    appendNutritionRows(refs.nutritionBars, snapshot.nutrition, { includeMilk: true });
+  } else {
+    refs.calories.textContent = `${snapshots.length} 筆`;
+    refs.calorieUnit.textContent = "分列";
+    for (const snapshot of snapshots) {
+      const section = node("section", "nutrition-snapshot");
+      const heading = node("div", "nutrition-snapshot-heading");
+      heading.append(
+        node("strong", "", snapshot.kitchenName),
+        node("span", "", `${LunchNumberFormat.sourceCalories(snapshot.nutrition.caloriesKcal)} kcal`),
+      );
+      section.append(heading);
+      appendNutritionRows(section, snapshot.nutrition, { includeMilk: true });
+      refs.nutritionBars.append(section);
+    }
+  }
+  const schoolMenuSnapshots = snapshots.every((snapshot) => snapshot.sourceType === "school_weekly_menu");
+  refs.nutritionSourceNote.textContent = schoolMenuSnapshots
+    ? "低、高年級份數與熱量照校方週菜單分列；原表未刊載乳品份數，本站不推定為 0。"
+    : snapshots.length > 1
+      ? "教育部平臺同日有多筆供餐批次；份數與熱量依供餐廚房分列，不加總、不平均也不推估。"
+      : "份數與熱量照教育部平臺「六大類食物份數及熱量」同日登錄。";
 }
 
 function renderStandard(dashboard) {
@@ -1448,6 +1560,35 @@ function renderArchive(dashboard) {
   }
 }
 
+function openSourceImage({ image, label, filename, kind = "summary", trigger }) {
+  const requestId = ++state.sourceImageRequestId;
+  refs.sourceImage.onload = null;
+  refs.sourceImage.onerror = null;
+  refs.sourceImage.removeAttribute("src");
+  refs.sourceImage.alt = label;
+  refs.downloadSource.href = image;
+  refs.downloadSource.download = filename;
+  refs.dialogTitle.textContent = label;
+  refs.sourceDialog.dataset.kind = kind;
+  setSourceImageState("loading", `正在載入${label}…`);
+  openSourceDialog(trigger);
+  refs.sourceImage.onload = async () => {
+    try {
+      await refs.sourceImage.decode();
+    } catch (error) {
+      // The load event already confirms usable pixels when decode is unavailable.
+    }
+    if (requestId === state.sourceImageRequestId) setSourceImageState("ready", `${label}已載入`);
+  };
+  refs.sourceImage.onerror = () => {
+    if (requestId === state.sourceImageRequestId) {
+      refs.sourceImage.alt = "";
+      setSourceImageState("error", `${label}載入失敗，請稍後再試。`);
+    }
+  };
+  refs.sourceImage.src = image;
+}
+
 function renderSource(day) {
   refs.sourceArticle.hidden = !day.source.url;
   if (day.source.url) refs.sourceArticle.href = day.source.url;
@@ -1457,35 +1598,14 @@ function renderSource(day) {
     const label = isDetail
       ? `${day.mealType === "meat" ? "葷食" : "素食"}食譜用量明細`
       : "原始午餐菜單";
-    const requestId = ++state.sourceImageRequestId;
-    refs.sourceImage.onload = null;
-    refs.sourceImage.onerror = null;
-    refs.sourceImage.removeAttribute("src");
-    refs.sourceImage.alt = `第 ${day.week} 週${label}`;
-    refs.downloadSource.href = image;
     const imageExtension = image.match(/\.(png|jpe?g|webp)(?:\?|$)/i)?.[1] || "jpg";
-    refs.downloadSource.download = `week-${String(day.week).padStart(2, "0")}-${isDetail ? day.mealType : "menu"}.${imageExtension}`;
-    refs.dialogTitle.textContent = `第 ${day.week} 週${label}`;
-    refs.sourceDialog.dataset.kind = kind;
-    setSourceImageState("loading", `正在載入第 ${day.week} 週${label}…`);
-    openSourceDialog(trigger);
-    refs.sourceImage.onload = async () => {
-      try {
-        await refs.sourceImage.decode();
-      } catch (error) {
-        // The load event already confirms usable pixels when decode is unavailable.
-      }
-      if (requestId === state.sourceImageRequestId) {
-        setSourceImageState("ready", `${label}已載入`);
-      }
-    };
-    refs.sourceImage.onerror = () => {
-      if (requestId === state.sourceImageRequestId) {
-        refs.sourceImage.alt = "";
-        setSourceImageState("error", `${label}載入失敗，請稍後再試。`);
-      }
-    };
-    refs.sourceImage.src = image;
+    openSourceImage({
+      image,
+      label: `第 ${day.week} 週${label}`,
+      filename: `week-${String(day.week).padStart(2, "0")}-${isDetail ? day.mealType : "menu"}.${imageExtension}`,
+      kind,
+      trigger,
+    });
   };
   refs.openSource.onclick = () => openImage("summary", refs.openSource);
   refs.openDetail.onclick = () => openImage("detail", refs.openDetail);
@@ -1509,13 +1629,34 @@ function selectedSchool() {
   ) || null;
 }
 
-function renderFavoriteButton() {
+function schoolDataScopeText(dashboard = state.dashboard) {
+  if (!dashboard?.school) return "尚未選擇學校";
+  return dashboard.viewMode === "detailed" || dashboard.record?.schoolMenu
+    ? "完整菜單＋官方紀錄"
+    : "官方當日供餐紀錄";
+}
+
+function setSchoolDataScope(message, { temporary = false } = {}) {
+  window.clearTimeout(state.schoolDataScopeTimer);
+  state.schoolDataScopeTimer = 0;
+  refs.schoolDataScope.textContent = message;
+  refs.schoolDataScope.classList.toggle("is-feedback", temporary);
+  if (!temporary) return;
+  state.schoolDataScopeTimer = window.setTimeout(() => {
+    refs.schoolDataScope.textContent = schoolDataScopeText();
+    refs.schoolDataScope.classList.remove("is-feedback");
+    state.schoolDataScopeTimer = 0;
+  }, 2600);
+}
+
+function renderDefaultSchoolButton() {
   const school = selectedSchool();
-  const isFavorite = school && Number(school.fatraceSchoolId) === state.favoriteSchoolId;
-  refs.favoriteSchoolButton.disabled = !school;
-  refs.favoriteSchoolButton.classList.toggle("is-favorite", Boolean(isFavorite));
-  refs.favoriteSchoolButton.textContent = isFavorite ? "★ 我的最愛（可取消）" : "☆ 設為我的最愛";
-  refs.favoriteSchoolButton.setAttribute("aria-pressed", String(Boolean(isFavorite)));
+  const isDefault = school
+    && Number(school.fatraceSchoolId) === Number(state.account.defaultSchoolId);
+  refs.defaultSchoolButton.disabled = !school || state.account.loading;
+  refs.defaultSchoolButton.classList.toggle("is-default", Boolean(isDefault));
+  refs.defaultSchoolButton.textContent = isDefault ? "✓ 預設學校" : "☆ 設為預設學校";
+  refs.defaultSchoolButton.setAttribute("aria-pressed", String(Boolean(isDefault)));
 }
 
 function populateSchoolSelectors() {
@@ -1552,7 +1693,7 @@ function populateSchoolSelectors() {
     refs.schoolSelect.append(option);
   }
   refs.schoolSelect.value = activeSchool ? String(activeSchool.fatraceSchoolId) : "";
-  renderFavoriteButton();
+  renderDefaultSchoolButton();
 }
 
 function renderSchoolContext(dashboard) {
@@ -1564,12 +1705,13 @@ function renderSchoolContext(dashboard) {
     state.district = districtKey(dashboard.school);
     populateSchoolSelectors();
     refs.brandSchoolLabel.textContent = `${dashboard.school.name}午餐助手`;
-    const complete = dashboard.viewMode === "detailed";
-    refs.schoolDataScope.textContent = complete
-      ? "校方完整菜單＋教育部當日紀錄"
-      : "教育部當日實際供餐公開紀錄";
+    const schoolMenu = dashboard.record?.schoolMenu;
+    const complete = dashboard.viewMode === "detailed" || Boolean(schoolMenu);
+    setSchoolDataScope(schoolDataScopeText(dashboard));
     refs.footerSource.textContent = complete
-      ? "資料來源：忠信國小午餐網、教育部校園食材登錄平臺 · 僅供家庭餐食規劃參考"
+      ? schoolMenu
+        ? `資料來源：${schoolMenu.source.name}、教育部校園食材登錄平臺 · 僅供家庭餐食規劃參考`
+        : "資料來源：忠信國小午餐網、教育部校園食材登錄平臺 · 僅供家庭餐食規劃參考"
       : OfficialDiet.profile(dashboard.record).hasVariants
         ? `資料來源：教育部校園食材登錄平臺（${dashboard.school.fullName}）· 主食、主副菜依「素」字標示分組`
         : `資料來源：教育部校園食材登錄平臺（${dashboard.school.fullName}）· 完整官方紀錄`;
@@ -1598,6 +1740,8 @@ function setViewMode(mode, { showOfficialMealTypes = false } = {}) {
   refs.source.hidden = official;
   refs.openDetail.hidden = official;
   refs.officialSourceLink.hidden = !official;
+  refs.schoolMenuSourceButton.hidden = true;
+  refs.schoolMenuNutritionButton.hidden = true;
   refs.menuBoard.classList.toggle("official-menu-board", official);
   refs.menuKicker.textContent = official ? "OFFICIAL DAILY RECORD" : "SELECTED PLATE";
   refs.menuHeading.textContent = official ? "當日供餐紀錄" : "午餐內容";
@@ -1630,9 +1774,9 @@ function renderNoSchoolSelected() {
   refs.todayLabel.textContent = formatDate(localIsoDate(), { year: "numeric", weekday: "long" });
   refs.mealMoment.textContent = "今天想看，";
   refs.heroDish.textContent = "哪一間國小？";
-  refs.introNote.textContent = "先選行政區與學校；設成我的最愛後，下次進站才會優先讀取那間學校。";
+  refs.introNote.textContent = "先選行政區與學校；登入後可設為預設學校，下次進站會優先顯示。";
   refs.brandSchoolLabel.textContent = "臺中市國小午餐助手";
-  refs.schoolDataScope.textContent = "尚未選擇學校，不讀取午餐資料";
+  setSchoolDataScope("尚未選擇學校");
   refs.footerSource.textContent = "選擇學校後，才會讀取對應的公開午餐資料。";
   refs.errorState.hidden = true;
   for (const link of document.querySelectorAll('a[href="#week"], a[href="#traceability"], a[href="#standard"], a[href="#insights"]')) {
@@ -1645,6 +1789,7 @@ function renderNoSchoolSelected() {
 function officialDishes(record, mealType = null) {
   return OfficialDiet.filter(record, mealType).map((dish) => ({
       ...dish,
+      schoolMenu: OfficialDiet.schoolMenuDish(record, dish),
       officialRecord: true,
       ingredients: (dish.ingredients || []).map((ingredient) => ({
         ...ingredient,
@@ -1653,8 +1798,12 @@ function officialDishes(record, mealType = null) {
     }));
 }
 
-function officialMainDish(dishes) {
-  return dishes.find((dish) => dish.category === "主菜") || dishes[0] || null;
+function officialMainDish(dishes, record = null) {
+  const plannedMain = record?.schoolMenu?.dishes?.find((dish) => dish.category === "主菜");
+  const plannedMatch = plannedMain
+    ? dishes.find((dish) => dish.schoolMenu === plannedMain)
+    : null;
+  return plannedMatch || dishes.find((dish) => dish.category === "主菜") || dishes[0] || null;
 }
 
 function renderOfficialMeal(dashboard) {
@@ -1662,7 +1811,7 @@ function renderOfficialMeal(dashboard) {
   const profile = OfficialDiet.profile(record);
   const dishes = officialDishes(record, profile.hasVariants ? state.mealType : null);
   const summary = OfficialDiet.summary(dishes);
-  const heroIndex = Math.max(0, dishes.indexOf(officialMainDish(dishes)));
+  const heroIndex = Math.max(0, dishes.indexOf(officialMainDish(dishes, record)));
   const heroDish = dishes[heroIndex];
   state.dishDetails = dishes;
   state.activeDishIndex = -1;
@@ -1699,16 +1848,26 @@ function renderOfficialMeal(dashboard) {
     const item = node("button", "meal-item");
     item.type = "button";
     item.setAttribute("aria-label", `查看${dish.category}「${dish.name}」的官方食材紀錄`);
-    item.append(node("span", "", dish.category), node("strong", "", dish.name));
+    item.append(
+      node("span", "", dish.schoolMenu?.category || dish.category),
+      node("strong", "", dish.name),
+    );
+    if (dish.schoolMenu?.servingText) item.append(node("em", "", `校方每份 ${dish.schoolMenu.servingText}`));
     item.addEventListener("click", () => openDishDetail(index, item));
     refs.mealList.append(item);
   });
-  refs.allergenRow.textContent = profile.hasVariants
-    ? "依官方菜名的「素」字拆分主食、主菜與副菜；蔬菜、湯品與附餐列為兩種分組共用。"
-    : "這一天的主食或主菜沒有同時出現有「素」字與未標示「素」的菜色，因此保留官方完整菜色，不另外拆分。";
+  const monthDay = compactDate(record.mealDate);
+  const schoolAllergenNotes = record.schoolMenu?.allergenNotes?.filter((note) => note.includes(monthDay)) || [];
+  refs.allergenRow.textContent = schoolAllergenNotes.length
+    ? `校方過敏提醒：${schoolAllergenNotes.join(" ")}`
+    : profile.hasVariants
+      ? "依官方菜名的「素」字拆分主食、主菜與副菜；蔬菜、湯品與附餐列為兩種分組共用。"
+      : "這一天的主食或主菜沒有同時出現有「素」字與未標示「素」的菜色，因此保留官方完整菜色，不另外拆分。";
   refs.mealTypeNote.textContent = profile.hasVariants
     ? "這是依菜名標示所做的分組，不等同素食認證；共用菜色是否含動物性食材，仍以展開後的官方食材明細為準。"
-    : "食材、產地、供應商與標章照同日官方公開紀錄呈現；不代表孩子實際攝取量。";
+    : record.schoolMenu
+      ? "菜色與設計重量照校方週菜單；食材、產地、供應商與標章照同日教育部公開紀錄。"
+      : "食材、產地、供應商與標章照同日官方公開紀錄呈現；不代表孩子實際攝取量。";
 }
 
 function renderOfficialIngredient(ingredient) {
@@ -1796,20 +1955,18 @@ function renderOfficialTraceability(dashboard) {
 }
 
 function renderOfficialWeek(dashboard) {
-  const dates = dashboard.availableDates || [];
-  const selectedProfile = OfficialDiet.profile(dashboard.record);
-  const groupingLabel = selectedProfile.hasVariants
-    ? ` · ${state.mealType === "vegetarian" ? "素食" : "葷食"}`
-    : "";
-  refs.weekLabel.textContent = dates.length
-    ? `已收錄 ${dates.length} 個供餐日 · 只顯示同日紀錄${groupingLabel}`
-    : "尚未收錄供餐日";
+  const week = OfficialDiet.weekView(
+    dashboard.availableDates || [],
+    dashboard.selectedDate || localIsoDate(),
+  );
+  const dates = week.dates;
+  refs.weekLabel.textContent = `${compactDate(week.start)}–${compactDate(week.end)}`;
   refs.weekDays.replaceChildren();
   for (const date of dates) {
     const record = dashboard.records?.[date] || (date === dashboard.selectedDate ? dashboard.record : null);
     const profile = OfficialDiet.profile(record);
     const dishes = officialDishes(record, profile.hasVariants ? state.mealType : null);
-    const mainDish = officialMainDish(dishes);
+    const mainDish = officialMainDish(dishes, record);
     const supportingDishes = dishes.filter((dish) => dish !== mainDish);
     const button = node("button", "day-card");
     button.type = "button";
@@ -1830,14 +1987,13 @@ function renderOfficialWeek(dashboard) {
     button.addEventListener("click", () => loadDashboard(date, { announce: true, focusWeekDay: true }));
     refs.weekDays.append(button);
   }
-  const index = dates.indexOf(dashboard.selectedDate);
-  refs.previousWeek.disabled = index <= 0;
-  refs.nextWeek.disabled = index < 0 || index >= dates.length - 1;
-  refs.previousWeek.onclick = index > 0
-    ? () => loadDashboard(dates[index - 1], { announce: true })
+  refs.previousWeek.disabled = !week.previousDate;
+  refs.nextWeek.disabled = !week.nextDate;
+  refs.previousWeek.onclick = week.previousDate
+    ? () => loadDashboard(week.previousDate, { announce: true })
     : null;
-  refs.nextWeek.onclick = index >= 0 && index < dates.length - 1
-    ? () => loadDashboard(dates[index + 1], { announce: true })
+  refs.nextWeek.onclick = week.nextDate
+    ? () => loadDashboard(week.nextDate, { announce: true })
     : null;
 }
 
@@ -1845,18 +2001,46 @@ function renderOfficial(dashboard) {
   const profile = OfficialDiet.profile(dashboard.record);
   const dishes = officialDishes(dashboard.record, profile.hasVariants ? state.mealType : null);
   const summary = OfficialDiet.summary(dishes);
+  const nutritionSnapshots = OfficialDiet.nutritionSnapshots(dashboard.record);
+  const dinnerSuggestion = OfficialDiet.dinnerSuggestion(dashboard.record, state.mealType);
   renderSchoolContext(dashboard);
   setViewMode("officialDaily", { showOfficialMealTypes: profile.hasVariants });
+  refs.nutritionCard.hidden = nutritionSnapshots.length === 0;
+  refs.dinnerCard.hidden = !dinnerSuggestion;
   refs.mealTypeMeat.setAttribute("aria-pressed", String(state.mealType === "meat"));
   refs.mealTypeVegetarian.setAttribute("aria-pressed", String(state.mealType === "vegetarian"));
   const date = dashboard.selectedDate || localIsoDate();
   refs.todayLabel.textContent = formatDate(date, { year: "numeric", weekday: "long" });
   refs.mealMoment.textContent = dashboard.record ? `${dashboard.school.name}這天，` : `${dashboard.school.name}這天，`;
   refs.introNote.textContent = dashboard.record
-    ? `${profile.hasVariants ? `${state.mealType === "vegetarian" ? "素食" : "葷食"}：` : ""}${summary.dishCount} 道菜、${summary.ingredientCount} 項食材，來自同日教育部公開紀錄。`
+    ? dashboard.record.schoolMenu
+      ? `${profile.hasVariants ? `${state.mealType === "vegetarian" ? "素食" : "葷食"}：` : ""}校方完整菜單＋同日教育部食材紀錄。`
+      : `${profile.hasVariants ? `${state.mealType === "vegetarian" ? "素食" : "葷食"}：` : ""}${summary.dishCount} 道菜、${summary.ingredientCount} 項食材，來自同日教育部公開紀錄。`
     : `${date} 尚無已校讀紀錄，不會拿別天資料代替。`;
   refs.officialSourceLink.href = dashboard.sourceUrl;
+  const menuImages = dashboard.record?.schoolMenu?.source?.images;
+  refs.schoolMenuSourceButton.hidden = !menuImages?.overview;
+  refs.schoolMenuNutritionButton.hidden = !menuImages?.servingsNutrition;
+  refs.schoolMenuSourceButton.onclick = menuImages?.overview
+    ? () => openSourceImage({
+      image: menuImages.overview,
+      label: `${dashboard.school.name}第 ${dashboard.record.schoolMenu.week} 週校方菜單`,
+      filename: `${dashboard.school.name}-week-${dashboard.record.schoolMenu.week}-menu.jpg`,
+      trigger: refs.schoolMenuSourceButton,
+    })
+    : null;
+  refs.schoolMenuNutritionButton.onclick = menuImages?.servingsNutrition
+    ? () => openSourceImage({
+      image: menuImages.servingsNutrition,
+      label: `${dashboard.school.name}第 ${dashboard.record.schoolMenu.week} 週份量與營養表`,
+      filename: `${dashboard.school.name}-week-${dashboard.record.schoolMenu.week}-nutrition.jpg`,
+      kind: "detail",
+      trigger: refs.schoolMenuNutritionButton,
+    })
+    : null;
   renderOfficialMeal(dashboard);
+  if (nutritionSnapshots.length) renderOfficialNutrition(nutritionSnapshots);
+  if (dinnerSuggestion) renderDinner(dinnerSuggestion);
   renderPassportFoodChoices();
   renderOfficialTraceability(dashboard);
   renderOfficialWeek(dashboard);
@@ -1922,12 +2106,12 @@ function announceSelection(dashboard) {
   ].join("，");
 }
 
-async function loadDashboard(date, { announce = false, focusWeekDay = false } = {}) {
+async function loadDashboard(date, { announce = false, focusWeekDay = false, preferClosest = false } = {}) {
   if (state.loading) return;
   state.loading = true;
   setDashboardStatus("loading", state.dashboard ? "正在更新菜單…" : "正在讀取菜單…");
   try {
-    const payload = await fetchDashboard(date);
+    const payload = await fetchDashboard(date, { preferClosest });
     state.dashboard = payload;
     render(payload);
     if (!state.newsLoaded) loadNewsPreview();
@@ -2024,10 +2208,13 @@ async function selectSchool(schoolId) {
   if (nextSchoolId === state.schoolId && state.dashboard) return;
   state.schoolId = nextSchoolId;
   if (state.account.child) refs.encounterForm.hidden = true;
-  const selectedDate = state.dashboard?.viewMode === "officialDaily"
-    ? state.dashboard.selectedDate
-    : state.dashboard?.selected?.date;
-  await loadDashboard(selectedDate || localIsoDate(), { announce: true });
+  const preferClosest = !state.account.authenticated;
+  const selectedDate = preferClosest
+    ? localIsoDate()
+    : state.dashboard?.viewMode === "officialDaily"
+      ? state.dashboard.selectedDate
+      : state.dashboard?.selected?.date;
+  await loadDashboard(selectedDate || localIsoDate(), { announce: true, preferClosest });
 }
 
 refs.schoolSelect.addEventListener("change", () => selectSchool(refs.schoolSelect.value));
@@ -2036,20 +2223,45 @@ refs.districtSelect.addEventListener("change", () => {
   renderNoSchoolSelected();
   refs.schoolSelect.focus();
 });
-refs.favoriteSchoolButton.addEventListener("click", () => {
+async function persistDefaultSchool(schoolId) {
+  const isClearing = Number(state.account.defaultSchoolId) === schoolId;
+  refs.defaultSchoolButton.disabled = true;
+  try {
+    const response = await fetch("/api/account/default-school", {
+      method: isClearing ? "DELETE" : "PUT",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: isClearing ? undefined : JSON.stringify({ schoolId }),
+    });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "預設學校暫時無法更新");
+    state.account.defaultSchoolId = payload.defaultSchoolId ?? null;
+    return isClearing;
+  } finally {
+    renderDefaultSchoolButton();
+  }
+}
+
+refs.defaultSchoolButton.addEventListener("click", async () => {
   const school = selectedSchool();
   if (!school) return;
   const schoolId = Number(school.fatraceSchoolId);
-  if (state.favoriteSchoolId === schoolId) {
-    state.favoriteSchoolId = null;
-    window.localStorage.removeItem("demeter-favorite-school-id");
-    refs.schoolDataScope.textContent = "已取消我的最愛；目前畫面仍保留，重新進站時不會自動讀取。";
-  } else {
-    state.favoriteSchoolId = schoolId;
-    window.localStorage.setItem("demeter-favorite-school-id", String(schoolId));
-    refs.schoolDataScope.textContent = `已將${school.name}設為我的最愛；下次進站會優先讀取。`;
+  if (!state.account.authenticated) {
+    state.pendingDefaultSchoolId = schoolId;
+    openAccountDialog(refs.defaultSchoolButton);
+    return;
   }
-  renderFavoriteButton();
+  try {
+    const cleared = await persistDefaultSchool(schoolId);
+    setSchoolDataScope(
+      cleared ? "已取消預設學校。" : "已設為預設學校，會隨帳號同步。",
+      { temporary: true },
+    );
+  } catch (error) {
+    setSchoolDataScope(error instanceof Error ? error.message : "預設學校暫時無法更新");
+  } finally {
+    renderDefaultSchoolButton();
+  }
 });
 
 function selectGradeGroup(gradeGroup) {
@@ -2082,6 +2294,8 @@ refs.accountDialog.addEventListener("cancel", (event) => {
   closeAccountDialog();
 });
 refs.accountDialog.addEventListener("close", () => {
+  state.pendingDefaultSchoolId = null;
+  renderAccountIntentNotice();
   const trigger = state.lastAccountTrigger;
   state.lastAccountTrigger = null;
   if (trigger?.isConnected) trigger.focus();
@@ -2124,13 +2338,22 @@ refs.accountSignOut.addEventListener("click", async () => {
   }
 });
 
-refs.editChildButton.addEventListener("click", () => {
+function openChildEditor(focusTarget, { scroll = false } = {}) {
   const child = state.account.child;
   if (!child) return;
   state.editingChild = true;
   setFormStatus(refs.childFormStatus);
   renderAccount();
-  refs.childNickname.focus();
+  if (scroll) refs.passport.scrollIntoView({ behavior: "smooth", block: "start" });
+  focusTarget.focus();
+}
+
+refs.editChildButton.addEventListener("click", () => {
+  openChildEditor(refs.childNickname);
+});
+
+refs.editChildFromSchoolPicker.addEventListener("click", () => {
+  openChildEditor(refs.childSchool, { scroll: true });
 });
 
 refs.cancelChildEdit.addEventListener("click", () => {
@@ -2187,9 +2410,12 @@ refs.encounterForm.addEventListener("submit", async (event) => {
   const mealContext = selectedSource === OTHER_FOOD_CONTEXT ? "other" : "school_lunch";
   const dishName = mealContext === "school_lunch" ? selectedSource || null : null;
   const foodName = refs.customFoodName.value.trim() || dishName || "";
-  const experience = new FormData(refs.encounterForm).get("experience");
-  const reactions = [...refs.reactionChoices.querySelectorAll('input[name="reaction"]:checked')]
-    .map((input) => input.value);
+  const formData = new FormData(refs.encounterForm);
+  let experience = formData.get("experience");
+  if (experience === "not_eaten") experience = formData.get("noEatContact") || experience;
+  const reaction = formData.get("reaction");
+  const reactions = reaction ? [reaction] : [];
+  const familiarity = formData.get("familiarity");
   if (!selectedSource) {
     setFormStatus(refs.encounterFormStatus, "請先選擇來源菜色，或選擇家裡／其他地方。", "error");
     refs.passportFoodChoices.querySelector("input")?.focus();
@@ -2221,7 +2447,7 @@ refs.encounterForm.addEventListener("submit", async (event) => {
         experience,
         reactions,
         childQuote: refs.encounterChildQuote.value,
-        firstEncounter: refs.firstEncounter.checked,
+        firstEncounter: familiarity === "first" ? true : familiarity === "previous" ? false : null,
         preparation: refs.encounterPreparation.value,
         note: refs.encounterNote.value,
       }),
@@ -2229,6 +2455,7 @@ refs.encounterForm.addEventListener("submit", async (event) => {
     const payload = await responsePayload(response);
     if (!response.ok) throw new Error(payload.error || "食物紀錄暫時無法儲存");
     refs.encounterForm.reset();
+    updateNoEatDetails();
     setFormStatus(refs.encounterFormStatus, "已記下這次食物紀錄。", "success");
     await loadAccount();
   } catch (error) {
@@ -2238,19 +2465,17 @@ refs.encounterForm.addEventListener("submit", async (event) => {
   }
 });
 
-refs.reactionChoices.addEventListener("change", (event) => {
-  const changed = event.target.closest('input[name="reaction"]');
-  if (!changed?.checked) return;
-  const choices = [...refs.reactionChoices.querySelectorAll('input[name="reaction"]')];
-  if (changed.value === "no_comment") {
-    choices.forEach((choice) => {
-      if (choice !== changed) choice.checked = false;
+function updateNoEatDetails() {
+  const show = refs.experienceChoices.querySelector('input[name="experience"]:checked')?.value === "not_eaten";
+  refs.noEatDetails.hidden = !show;
+  if (!show) {
+    refs.noEatDetails.querySelectorAll('input[name="noEatContact"]').forEach((input) => {
+      input.checked = false;
     });
-  } else {
-    const noComment = choices.find((choice) => choice.value === "no_comment");
-    if (noComment) noComment.checked = false;
   }
-});
+}
+
+refs.experienceChoices.addEventListener("change", updateNoEatDetails);
 
 function setupMobileNavigation() {
   const links = [...document.querySelectorAll('.mobile-nav a[href^="#"]')];
@@ -2325,14 +2550,10 @@ async function initialize() {
   try {
     state.schoolDirectory = await fetchSchoolDirectory();
     await accountRequest;
+    const defaultSchool = schoolById(state.account.defaultSchoolId);
     const childSchool = schoolById(state.account.child?.schoolId);
-    const favorite = state.schoolDirectory.find(
-      (school) => Number(school.fatraceSchoolId) === state.favoriteSchoolId,
-    );
-    const initialSchool = childSchool || favorite;
+    const initialSchool = defaultSchool || childSchool;
     if (!initialSchool) {
-      state.favoriteSchoolId = null;
-      window.localStorage.removeItem("demeter-favorite-school-id");
       renderAccount();
       renderNoSchoolSelected();
       return;

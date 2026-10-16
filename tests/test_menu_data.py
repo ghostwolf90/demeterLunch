@@ -176,22 +176,6 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertEqual(cabbage["certification"]["operator"]["name"], "林珍綠")
         self.assertEqual(cabbage["certification"]["validUntil"], "2029-04-27")
 
-    def test_october_fifth_vegetarian_traceability_does_not_match_pork_blood(self) -> None:
-        dashboard = load_dashboard(
-            PROJECT_ROOT / "data" / "lunch.db",
-            "2026-10-05",
-            "vegetarian",
-        )
-        traceability = dashboard["traceability"]
-
-        self.assertEqual(traceability["status"], "verified")
-        bean_curd = next(
-            dish for dish in traceability["dishes"] if dish["name"] == "春水堂豆干"
-        )
-        ingredient_names = {item["name"] for item in bean_curd["ingredients"]}
-        self.assertEqual(ingredient_names, {"豆干", "杏鮑菇"})
-        self.assertNotIn("豬血糕", ingredient_names)
-
     def test_october_sixth_uses_same_day_platform_traceability_and_guava(self) -> None:
         dashboard = load_dashboard(
             PROJECT_ROOT / "data" / "lunch.db",
@@ -216,25 +200,6 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertEqual(swordfish["originCountry"], "臺灣")
         self.assertEqual(swordfish["supplier"]["name"], "昱品美食股份有限公司")
 
-    def test_october_sixth_vegetarian_traceability_excludes_meat_rows(self) -> None:
-        dashboard = load_dashboard(
-            PROJECT_ROOT / "data" / "lunch.db",
-            "2026-10-06",
-            "vegetarian",
-        )
-        traceability = dashboard["traceability"]
-        ingredient_names = {
-            ingredient["name"]
-            for dish in traceability["dishes"]
-            for ingredient in dish["ingredients"]
-        }
-
-        self.assertEqual(traceability["status"], "verified")
-        self.assertEqual(traceability["ingredientCount"], 16)
-        self.assertNotIn("肉絲", ingredient_names)
-        self.assertNotIn("豬骨", ingredient_names)
-        self.assertIn("芭樂", ingredient_names)
-
     def test_october_seventh_uses_reviewed_same_day_traceability(self) -> None:
         dashboard = load_dashboard(
             PROJECT_ROOT / "data" / "lunch.db",
@@ -257,27 +222,72 @@ class ReviewedMenuTests(unittest.TestCase):
         )
         self.assertEqual(pork_chop["platformMark"], "臺灣優良農產品(CAS)")
 
-    def test_october_seventh_vegetarian_traceability_excludes_meat_rows(self) -> None:
-        dashboard = load_dashboard(
-            PROJECT_ROOT / "data" / "lunch.db",
-            "2026-10-07",
-            "vegetarian",
+    def test_recent_vegetarian_traceability_excludes_meat_rows(self) -> None:
+        cases = (
+            {
+                "date": "2026-10-05",
+                "ingredient_count": None,
+                "marked_count": None,
+                "required": set(),
+                "forbidden": {"豬血糕"},
+                "dish": ("春水堂豆干", {"豆干", "杏鮑菇"}),
+            },
+            {
+                "date": "2026-10-06",
+                "ingredient_count": 16,
+                "marked_count": None,
+                "required": {"芭樂"},
+                "forbidden": {"肉絲", "豬骨"},
+                "dish": None,
+            },
+            {
+                "date": "2026-10-07",
+                "ingredient_count": 14,
+                "marked_count": 9,
+                "required": {"素排"},
+                "forbidden": {"豬大排", "豬絞肉", "蝦仁", "雞蛋"},
+                "dish": None,
+            },
         )
-        traceability = dashboard["traceability"]
-        ingredient_names = {
-            ingredient["name"]
-            for dish in traceability["dishes"]
-            for ingredient in dish["ingredients"]
-        }
 
-        self.assertEqual(traceability["status"], "verified")
-        self.assertEqual(traceability["ingredientCount"], 14)
-        self.assertEqual(traceability["markedIngredientCount"], 9)
-        self.assertIn("素排", ingredient_names)
-        self.assertNotIn("豬大排", ingredient_names)
-        self.assertNotIn("豬絞肉", ingredient_names)
-        self.assertNotIn("蝦仁", ingredient_names)
-        self.assertNotIn("雞蛋", ingredient_names)
+        for case in cases:
+            with self.subTest(date=case["date"]):
+                dashboard = load_dashboard(
+                    PROJECT_ROOT / "data" / "lunch.db",
+                    case["date"],
+                    "vegetarian",
+                )
+                traceability = dashboard["traceability"]
+                ingredient_names = {
+                    ingredient["name"]
+                    for dish in traceability["dishes"]
+                    for ingredient in dish["ingredients"]
+                }
+
+                self.assertEqual(traceability["status"], "verified")
+                if case["ingredient_count"] is not None:
+                    self.assertEqual(
+                        traceability["ingredientCount"],
+                        case["ingredient_count"],
+                    )
+                if case["marked_count"] is not None:
+                    self.assertEqual(
+                        traceability["markedIngredientCount"],
+                        case["marked_count"],
+                    )
+                self.assertTrue(case["required"].issubset(ingredient_names))
+                self.assertTrue(case["forbidden"].isdisjoint(ingredient_names))
+                if case["dish"] is not None:
+                    dish_name, expected_ingredients = case["dish"]
+                    dish = next(
+                        item
+                        for item in traceability["dishes"]
+                        if item["name"] == dish_name
+                    )
+                    self.assertEqual(
+                        {item["name"] for item in dish["ingredients"]},
+                        expected_ingredients,
+                    )
 
     def test_dashboard_selects_day_and_creates_dinner_idea(self) -> None:
         dashboard = load_dashboard(PROJECT_ROOT / "data" / "lunch.db", "2026-10-01")

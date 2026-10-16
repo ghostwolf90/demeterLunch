@@ -6,12 +6,17 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 
+from .school_weekly_data import weekly_menu_overlays
+
 
 DEFAULT_SCHOOL_ID = 193609
 PUBLIC_SEARCH_URL = "https://fatraceschool.k12ea.gov.tw/frontend/search.html"
 
 
-def load_school_meal_catalog(database_path: Path) -> dict[str, Any]:
+def load_school_meal_catalog(
+    database_path: Path,
+    parsed_root: Path | None = None,
+) -> dict[str, Any]:
     if not database_path.is_file():
         raise FileNotFoundError(f"結構化資料庫不存在：{database_path}")
     with sqlite3.connect(database_path) as connection:
@@ -154,6 +159,14 @@ def load_school_meal_catalog(database_path: Path) -> dict[str, Any]:
         }
         records.setdefault(str(row["school_id"]), {})[row["meal_date"]] = record
 
+    menu_overlays, complete_school_ids = weekly_menu_overlays(
+        parsed_root or database_path.parent / "parsed"
+    )
+    for (school_id, meal_date), school_menu in menu_overlays.items():
+        record = records.get(str(school_id), {}).get(meal_date)
+        if record is not None:
+            record["schoolMenu"] = school_menu
+
     directory = [
         {
             "fatraceSchoolId": row["id"],
@@ -171,7 +184,11 @@ def load_school_meal_catalog(database_path: Path) -> dict[str, Any]:
             if row["first_record_date"]
             else None,
             "recordDates": sorted(records.get(str(row["id"]), {})),
-            "experience": "complete" if row["id"] == DEFAULT_SCHOOL_ID else "official_daily",
+            "experience": (
+                "complete"
+                if row["id"] == DEFAULT_SCHOOL_ID or row["id"] in complete_school_ids
+                else "official_daily"
+            ),
         }
         for row in schools
     ]

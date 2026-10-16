@@ -17,6 +17,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.dashboard import load_dashboard  # noqa: E402
 from src.menu_data import build_database  # noqa: E402
 from src.school_dashboard import load_school_meal_catalog  # noqa: E402
+from src.school_weekly_data import weekly_menu_image_paths  # noqa: E402
 
 
 def build_static_site(
@@ -50,7 +51,7 @@ def build_static_site(
         for meal_type in ("meat", "vegetarian")
     }
     latest = {meal_type: values[dates[-1]] for meal_type, values in dashboards.items()}
-    official_school_meals = load_school_meal_catalog(database_path)
+    official_school_meals = load_school_meal_catalog(database_path, parsed_root)
     generated_at = datetime.now(timezone.utc).isoformat()
     payload = {
         "schemaVersion": 5,
@@ -123,6 +124,15 @@ def build_static_site(
         source = raw_root / relative
         if not source.is_file():
             raise FileNotFoundError(f"找不到原始菜單圖：{source}")
+        destination = data_output / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+        copied_images += 1
+
+    for relative in sorted(weekly_menu_image_paths(parsed_root)):
+        source = raw_root / relative
+        if not source.is_file():
+            raise FileNotFoundError(f"找不到校方週菜單原圖：{source}")
         destination = data_output / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)

@@ -1,0 +1,1 @@
+ALTER TABLE `parent_accounts` ADD `default_school_id` integer;

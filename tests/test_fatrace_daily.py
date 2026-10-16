@@ -14,18 +14,8 @@ from src.fatrace_daily import (
     FatraceDailyClient,
     FatraceDailyError,
     School,
-    load_school_registry,
 )
 from src.http_client import HttpResponse
-
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-REGISTRY = (
-    PROJECT_ROOT
-    / "data"
-    / "reference"
-    / "taichung-west-elementary-schools.json"
-)
 
 
 class _FakeHttpClient:
@@ -65,21 +55,6 @@ class FatraceDailyTests(unittest.TestCase):
             2026, 10, 8, 14, 0, tzinfo=ZoneInfo("Asia/Taipei")
         )
 
-    def test_registry_contains_the_six_west_district_schools(self) -> None:
-        schools = load_school_registry(REGISTRY)
-        self.assertEqual(len(schools), 6)
-        self.assertEqual(
-            {school.name: school.fatrace_school_id for school in schools},
-            {
-                "忠信國小": 193609,
-                "忠孝國小": 193608,
-                "大勇國小": 193644,
-                "中正國小": 193612,
-                "大同國小": 193610,
-                "忠明國小": 193611,
-            },
-        )
-
     def test_collects_and_normalizes_available_meal(self) -> None:
         def responder(url: str):
             parts = urlsplit(url)
@@ -110,6 +85,12 @@ class FatraceDailyTests(unittest.TestCase):
                             "KitchenId": 99,
                             "KitchenName": "測試廚房",
                             "Calorie": "650",
+                            "TypeGrains": "4.5",
+                            "TypeMeatBeans": "3.2",
+                            "TypeVegetable": "1.8",
+                            "TypeOil": "0.4",
+                            "TypeFruit": "1",
+                            "TypeMilk": "0.5",
                         }
                     ]
                 )
@@ -158,8 +139,21 @@ class FatraceDailyTests(unittest.TestCase):
 
         self.assertEqual(candidate["status"], "available")
         self.assertEqual(candidate["review"]["status"], "pending")
-        dish = candidate["services"][0]["meals"][0]["dishes"][0]
+        meal = candidate["services"][0]["meals"][0]
+        dish = meal["dishes"][0]
         self.assertEqual(len(candidate["services"][0]["meals"][0]["dishes"]), 1)
+        self.assertEqual(
+            meal["nutrition"],
+            {
+                "caloriesKcal": "650",
+                "wholeGrainsServings": "4.5",
+                "proteinServings": "3.2",
+                "vegetablesServings": "1.8",
+                "oilsNutsServings": "0.4",
+                "fruitServings": "1",
+                "milkServings": "0.5",
+            },
+        )
         self.assertEqual(dish["name"], "小米飯")
         self.assertEqual(dish["ingredients"][0]["name"], "白米")
         self.assertEqual(

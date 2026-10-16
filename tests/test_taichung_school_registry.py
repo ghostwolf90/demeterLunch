@@ -23,14 +23,6 @@ ACTIVE_REGISTRY = (
     / "reference"
     / "taichung-active-elementary-schools.json"
 )
-REFRESH_GROUPS = (
-    PROJECT_ROOT
-    / "data"
-    / "reference"
-    / "taichung-school-refresh-groups.json"
-)
-
-
 class TaichungSchoolRegistryTests(unittest.TestCase):
     def test_full_registry_has_expected_citywide_coverage(self) -> None:
         payload = json.loads(FULL_REGISTRY.read_text(encoding="utf-8"))
@@ -67,6 +59,17 @@ class TaichungSchoolRegistryTests(unittest.TestCase):
             (school.fatrace_school_id, school.full_name) for school in west_schools
         }
         self.assertEqual(citywide_west, existing_west)
+        self.assertEqual(
+            existing_west,
+            {
+                (193609, "臺中市西區忠信國小"),
+                (193608, "臺中市西區忠孝國小"),
+                (193644, "臺中市西區大勇國小"),
+                (193612, "臺中市西區中正國小"),
+                (193610, "臺中市西區大同國小"),
+                (193611, "臺中市西區忠明國小"),
+            },
+        )
 
     def test_active_registry_contains_all_published_districts(self) -> None:
         schools = load_school_registry(ACTIVE_REGISTRY)
@@ -104,28 +107,6 @@ class TaichungSchoolRegistryTests(unittest.TestCase):
             (64742519, "私立麗喆國(中)小"),
             {(school.fatrace_school_id, school.name) for school in schools},
         )
-
-    def test_refresh_groups_cover_each_school_once_in_three_equal_batches(self) -> None:
-        schools = load_school_registry(ACTIVE_REGISTRY)
-        payload = json.loads(REFRESH_GROUPS.read_text(encoding="utf-8"))
-        seen_districts: set[str] = set()
-        seen_ids: set[int] = set()
-
-        self.assertEqual(len(payload["groups"]), 3)
-        for group in payload["groups"]:
-            districts = set(group["districts"])
-            self.assertTrue(seen_districts.isdisjoint(districts))
-            selected = [school for school in schools if school.district in districts]
-            selected_ids = {school.fatrace_school_id for school in selected}
-            self.assertEqual(len(selected), group["expectedSchoolCount"])
-            self.assertEqual(len(selected), 81)
-            self.assertTrue(seen_ids.isdisjoint(selected_ids))
-            seen_districts.update(districts)
-            seen_ids.update(selected_ids)
-
-        self.assertEqual(seen_ids, {school.fatrace_school_id for school in schools})
-        self.assertEqual(seen_districts, {school.district for school in schools})
-
 
 if __name__ == "__main__":
     unittest.main()

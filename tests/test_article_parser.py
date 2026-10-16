@@ -18,35 +18,49 @@ class TitleParserTests(unittest.TestCase):
             )
         )
 
-    def test_standard_title(self) -> None:
-        parsed = parse_title("115學年度第1學期第2週0907-0911菜單及營養素分析")
-        self.assertEqual(parsed.school_year, 115)
-        self.assertEqual(parsed.semester, 1)
-        self.assertEqual(parsed.week, 2)
-        self.assertEqual(parsed.start_date.isoformat(), "2026-09-07")
-        self.assertEqual(parsed.end_date.isoformat(), "2026-09-11")
+    def test_supported_title_date_variants(self) -> None:
+        cases = (
+            (
+                "115學年度第1學期第2週0907-0911菜單及營養素分析",
+                {
+                    "school_year": 115,
+                    "semester": 1,
+                    "week": 2,
+                    "start_date": "2026-09-07",
+                    "end_date": "2026-09-11",
+                },
+            ),
+            (
+                "115學年度第1學期第5週0929-1002菜單及營養素分析",
+                {"start_date": "2026-09-29", "end_date": "2026-10-02"},
+            ),
+            (
+                "115學年度第1學期第18週1229-0102菜單及營養素分析",
+                {"start_date": "2026-12-29", "end_date": "2027-01-02"},
+            ),
+            (
+                "114學年度第二學期第3週0224-0227菜單及營養素分析",
+                {"start_date": "2026-02-24", "end_date": "2026-02-27"},
+            ),
+            (
+                "114學年度第1學期第20-21週0112-16菜單及營養素分析",
+                {
+                    "week": 20,
+                    "week_end": 21,
+                    "start_date": "2026-01-12",
+                    "end_date": "2026-01-16",
+                },
+            ),
+        )
 
-    def test_cross_month(self) -> None:
-        parsed = parse_title("115學年度第1學期第5週0929-1002菜單及營養素分析")
-        self.assertEqual(parsed.start_date.isoformat(), "2026-09-29")
-        self.assertEqual(parsed.end_date.isoformat(), "2026-10-02")
-
-    def test_cross_year(self) -> None:
-        parsed = parse_title("115學年度第1學期第18週1229-0102菜單及營養素分析")
-        self.assertEqual(parsed.start_date.isoformat(), "2026-12-29")
-        self.assertEqual(parsed.end_date.isoformat(), "2027-01-02")
-
-    def test_second_semester_uses_next_calendar_year(self) -> None:
-        parsed = parse_title("114學年度第二學期第3週0224-0227菜單及營養素分析")
-        self.assertEqual(parsed.start_date.isoformat(), "2026-02-24")
-        self.assertEqual(parsed.end_date.isoformat(), "2026-02-27")
-
-    def test_short_end_date_and_week_range(self) -> None:
-        parsed = parse_title("114學年度第1學期第20-21週0112-16菜單及營養素分析")
-        self.assertEqual(parsed.week, 20)
-        self.assertEqual(parsed.week_end, 21)
-        self.assertEqual(parsed.start_date.isoformat(), "2026-01-12")
-        self.assertEqual(parsed.end_date.isoformat(), "2026-01-16")
+        for title, expected in cases:
+            with self.subTest(title=title):
+                parsed = parse_title(title)
+                for field, value in expected.items():
+                    actual = getattr(parsed, field)
+                    if field.endswith("_date"):
+                        actual = actual.isoformat()
+                    self.assertEqual(actual, value)
 
     def test_invalid_title(self) -> None:
         with self.assertRaises(TitleParseError):

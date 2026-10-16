@@ -1,7 +1,12 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { insightsPeriodLabel, mealMoment, relativeDayOffset } = require("../web/date-context.js");
+const {
+  closestMealDate,
+  insightsPeriodLabel,
+  mealMoment,
+  relativeDayOffset,
+} = require("../web/date-context.js");
 
 test("uses relative labels for yesterday, today, and tomorrow", () => {
   assert.equal(mealMoment("2026-09-30", "2026-10-01"), "昨天中午，");
@@ -16,6 +21,14 @@ test("uses the weekday for dates farther away", () => {
 
 test("calculates day offsets across month boundaries", () => {
   assert.equal(relativeDayOffset("2026-10-01", "2026-09-30"), 1);
+});
+
+test("selects the available meal date closest to today", () => {
+  const dates = ["2026-10-12", "2026-10-14", "2026-10-15"];
+  assert.equal(closestMealDate(dates, "2026-10-16"), "2026-10-15");
+  assert.equal(closestMealDate(dates, "2026-10-13"), "2026-10-12");
+  assert.equal(closestMealDate(dates, "2026-10-01"), "2026-10-12");
+  assert.equal(closestMealDate([], "2026-10-16"), null);
 });
 
 test("labels insight ranges from their actual months", () => {

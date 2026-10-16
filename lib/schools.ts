@@ -37,6 +37,6 @@ export function publicSchoolDirectory() {
   return schools.map((school) => ({
     ...school,
     sourceUrl: "https://fatraceschool.k12ea.gov.tw/frontend/search.html",
-    experience: school.fatraceSchoolId === 193609 ? "complete" : "official_daily",
+    experience: [193609, 64754668].includes(school.fatraceSchoolId) ? "complete" : "official_daily",
   }));
 }
