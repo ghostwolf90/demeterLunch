@@ -41,6 +41,7 @@ const state = {
   pendingDefaultSchoolId: null,
   lastAccountTrigger: null,
   schoolDataScopeTimer: 0,
+  sampleRequestId: 0,
 };
 
 const DISH_DETAIL_MOTION_MS = 360;
@@ -122,6 +123,7 @@ const ids = [
   "standardMetrics", "standardGuidance", "standardObservations", "standardMethod",
   "standardCoverage", "standardSource", "standardRevision",
   "districtSelect", "schoolSelect", "defaultSchoolButton", "schoolDataScope", "schoolBrowserNote", "schoolBrowserNoteText", "editChildFromSchoolPicker", "brandSchoolLabel", "footerSource",
+  "sampleModeBanner", "sampleModeDate", "sampleSelectSchool",
   "mealTypeSwitch", "menuBoard", "menuKicker", "menuHeading", "reviewBadge",
   "officialSourceLink", "schoolMenuSourceButton", "schoolMenuNutritionButton", "nutritionCard", "dinnerCard", "standard", "learn",
   "week", "todayGrid", "traceability", "news", "insights", "source", "traceabilityKicker", "traceabilityHeading",
@@ -808,6 +810,22 @@ function dashboardFromStatic(data, selectedDate, mealType, preferClosest = false
   };
 }
 
+function sampleDashboardFromStatic(data, selectedDate, mealType) {
+  const variant = data.variants?.[mealType];
+  const today = localIsoDate();
+  const sampleWeek = LunchSampleDashboard.selectSampleWeek(variant?.days || [], today);
+  if (!sampleWeek) throw new Error("目前沒有足夠的已校讀資料可建立功能範例");
+  const hasSelectedDate = variant.days.some((day) => day.date === selectedDate && day.date <= today);
+  const activeDate = hasSelectedDate ? selectedDate : sampleWeek.selectedDate;
+  const dashboard = dashboardFromStatic(data, activeDate, mealType);
+  return {
+    ...dashboard,
+    archive: dashboard.archive.filter((week) => week.endDate <= today),
+    isSample: true,
+    sampleWeek,
+  };
+}
+
 function officialDashboardFromStatic(data, selectedDate, schoolId, mealType) {
   const catalog = data.officialSchoolMeals;
   if (!catalog) throw new Error("公開版資料尚未包含跨校午餐紀錄");
@@ -1459,7 +1477,7 @@ function renderHomeRecipe(recipe) {
 
 function renderWeek(dashboard) {
   const active = dashboard.selected;
-  refs.weekLabel.textContent = `第 ${active.week} 週 · ${compactDate(active.weekStartDate)}–${compactDate(active.weekEndDate)}`;
+  refs.weekLabel.textContent = `${dashboard.isSample ? "功能範例 · " : ""}第 ${active.week} 週 · ${compactDate(active.weekStartDate)}–${compactDate(active.weekEndDate)}`;
   refs.weekDays.replaceChildren();
   for (const day of dashboard.week) {
     const button = node("button", "day-card");
@@ -1485,7 +1503,8 @@ function renderWeek(dashboard) {
       node("span", `day-traceability ${traceabilityClass}`, traceabilityLabel),
       node("p", "", sides),
     );
-    button.addEventListener("click", () => loadDashboard(day.date, {
+    const selectDate = dashboard.isSample ? loadSampleDashboard : loadDashboard;
+    button.addEventListener("click", () => selectDate(day.date, {
       announce: true,
       focusWeekDay: true,
     }));
@@ -1495,11 +1514,12 @@ function renderWeek(dashboard) {
   const archiveIndex = dashboard.archive.findIndex((week) => week.id === active.weekId);
   refs.previousWeek.disabled = archiveIndex < 0 || archiveIndex >= dashboard.archive.length - 1;
   refs.nextWeek.disabled = archiveIndex <= 0;
-  refs.previousWeek.onclick = () => loadDashboard(
+  const selectDate = dashboard.isSample ? loadSampleDashboard : loadDashboard;
+  refs.previousWeek.onclick = () => selectDate(
     dashboard.archive[archiveIndex + 1].startDate,
     { announce: true },
   );
-  refs.nextWeek.onclick = () => loadDashboard(
+  refs.nextWeek.onclick = () => selectDate(
     dashboard.archive[archiveIndex - 1].startDate,
     { announce: true },
   );
@@ -1555,7 +1575,8 @@ function renderArchive(dashboard) {
       node("strong", "", `W${String(week.week).padStart(2, "0")}`),
       (() => { const wrap = node("span"); wrap.append(node("span", "", `${compactDate(week.startDate)}–${compactDate(week.endDate)}`), node("small", "", `${week.dayCount} 個供餐日 · 已校讀`)); return wrap; })()
     );
-    button.addEventListener("click", () => loadDashboard(week.startDate, { announce: true }));
+    const selectDate = dashboard.isSample ? loadSampleDashboard : loadDashboard;
+    button.addEventListener("click", () => selectDate(week.startDate, { announce: true }));
     refs.archiveList.append(button);
   }
 }
@@ -1630,6 +1651,7 @@ function selectedSchool() {
 }
 
 function schoolDataScopeText(dashboard = state.dashboard) {
+  if (dashboard?.isSample) return "功能範例 · 尚未選校";
   if (!dashboard?.school) return "尚未選擇學校";
   return dashboard.viewMode === "detailed" || dashboard.record?.schoolMenu
     ? "完整菜單＋官方紀錄"
@@ -1720,7 +1742,9 @@ function renderSchoolContext(dashboard) {
 
 function setViewMode(mode, { showOfficialMealTypes = false } = {}) {
   const official = mode === "officialDaily";
-  document.body.dataset.viewMode = official ? "official" : "detailed";
+  const sample = mode === "sample";
+  document.body.dataset.viewMode = official ? "official" : sample ? "sample" : "detailed";
+  refs.sampleModeBanner.hidden = !sample;
   refs.week.hidden = false;
   refs.todayGrid.hidden = false;
   refs.traceability.hidden = false;
@@ -1743,12 +1767,12 @@ function setViewMode(mode, { showOfficialMealTypes = false } = {}) {
   refs.schoolMenuSourceButton.hidden = true;
   refs.schoolMenuNutritionButton.hidden = true;
   refs.menuBoard.classList.toggle("official-menu-board", official);
-  refs.menuKicker.textContent = official ? "OFFICIAL DAILY RECORD" : "SELECTED PLATE";
-  refs.menuHeading.textContent = official ? "當日供餐紀錄" : "午餐內容";
-  refs.reviewBadge.textContent = official ? "✓ 官方公開紀錄" : "✓ 已校讀";
+  refs.menuKicker.textContent = official ? "OFFICIAL DAILY RECORD" : sample ? "SAMPLE PLATE" : "SELECTED PLATE";
+  refs.menuHeading.textContent = official ? "當日供餐紀錄" : sample ? "範例午餐內容" : "午餐內容";
+  refs.reviewBadge.textContent = official ? "✓ 官方公開紀錄" : sample ? "功能範例" : "✓ 已校讀";
   refs.mainDishButton.firstElementChild.textContent = official ? "主菜" : "這餐主角";
   refs.traceabilityKicker.textContent = official ? "OFFICIAL INGREDIENT RECORD" : "SOURCE TO PLATE";
-  refs.traceabilityHeading.textContent = official ? "教育部公開食材紀錄" : "今日供餐食材追溯";
+  refs.traceabilityHeading.textContent = official ? "教育部公開食材紀錄" : sample ? "範例供餐食材追溯" : "今日供餐食材追溯";
   for (const link of document.querySelectorAll('a[href="#week"], a[href="#traceability"]')) {
     link.hidden = false;
   }
@@ -1757,12 +1781,13 @@ function setViewMode(mode, { showOfficialMealTypes = false } = {}) {
   }
 }
 
-function renderNoSchoolSelected() {
+async function renderNoSchoolSelected() {
   state.schoolId = null;
   state.dashboard = null;
   populateSchoolSelectors();
   document.body.dataset.viewMode = "empty";
   refs.mealTypeSwitch.hidden = true;
+  refs.sampleModeBanner.hidden = true;
   refs.week.hidden = true;
   refs.todayGrid.hidden = true;
   refs.traceability.hidden = true;
@@ -1783,7 +1808,8 @@ function renderNoSchoolSelected() {
     link.hidden = true;
   }
   if (state.account.child) renderPassportFoodChoices();
-  setDashboardStatus("ready", "請先選擇學校");
+  setDashboardStatus("loading", "正在準備功能範例…");
+  await loadSampleDashboard();
 }
 
 function officialDishes(record, mealType = null) {
@@ -2054,8 +2080,15 @@ function render(dashboard) {
     renderOfficial(dashboard);
     return;
   }
-  renderSchoolContext(dashboard);
-  setViewMode("detailed");
+  if (dashboard.isSample) {
+    populateSchoolSelectors();
+    refs.brandSchoolLabel.textContent = "臺中市國小午餐助手";
+    setSchoolDataScope("功能範例 · 尚未選校");
+    refs.footerSource.textContent = "功能範例使用已校讀公開菜單；實際日期照頁面顯示，不代表今日或任何未選學校的供餐。";
+  } else {
+    renderSchoolContext(dashboard);
+  }
+  setViewMode(dashboard.isSample ? "sample" : "detailed");
   const day = dashboard.selected;
   state.mealType = dashboard.mealType;
   refs.mealTypeMeat.setAttribute("aria-pressed", String(state.mealType === "meat"));
@@ -2064,14 +2097,19 @@ function render(dashboard) {
     ? "素食菜單可能含蛋、奶；用量為供餐廠商的每人食譜設計值，不代表實際攝取量。"
     : "用量為供餐廠商的每人食譜設計值，不代表實際攝取量。";
   const formatted = formatDate(day.date, { year: "numeric", weekday: "long" });
-  refs.todayLabel.textContent = formatted;
-  refs.mealMoment.textContent = LunchDateContext.mealMoment(day.date, localIsoDate());
-  refs.introNote.textContent = dashboard.isFallback
+  refs.todayLabel.textContent = dashboard.isSample ? `功能範例 · ${formatted}` : formatted;
+  refs.mealMoment.textContent = dashboard.isSample ? "先看一週，" : LunchDateContext.mealMoment(day.date, localIsoDate());
+  refs.introNote.textContent = dashboard.isSample
+    ? "先體驗一週菜單、午餐內容、營養快照、晚餐搭配與食材溯源；選擇學校後會換成該校公開資料。"
+    : dashboard.isFallback
     ? `指定日期沒有供餐資料，先顯示最近的 ${formatDate(day.date)}。`
     : `${dashboard.mealTypeLabel}：${day.meal.staple}、${day.meal.mainDish}；${day.meal.fruit ? `附餐 ${day.meal.fruit}；` : ""}食譜明細共 ${day.recipeDetails?.length || day.meal.sideDishes.length + 2} 道。`;
   renderMeal(day);
   renderPassportFoodChoices();
   renderNutrition(day.nutrition);
+  if (dashboard.isSample) {
+    refs.nutritionSourceNote.textContent = "功能範例取自已校讀菜單；數值不代表今日或未選學校。";
+  }
   renderStandard(dashboard);
   renderTraceability(dashboard.traceability);
   renderDinner(dashboard.dinnerSuggestion);
@@ -2081,7 +2119,10 @@ function render(dashboard) {
   renderInsights(dashboard.insights, dashboard);
   renderArchive(dashboard);
   renderSource(day);
-  setDashboardStatus("ready", `已整理 ${dashboard.totalDays} 個供餐日`);
+  if (dashboard.isSample) {
+    refs.sampleModeDate.textContent = `目前示範 ${formatDate(day.weekStartDate, { year: "numeric" })}至${formatDate(day.weekEndDate)}的已校讀菜單；溯源卡保留實際資料日期，不代表今日食材、產地、供應商或批次。`;
+  }
+  setDashboardStatus("ready", dashboard.isSample ? "功能範例 · 選校後顯示該校資料" : `已整理 ${dashboard.totalDays} 個供餐日`);
   refs.errorState.hidden = true;
 }
 
@@ -2100,10 +2141,32 @@ function announceSelection(dashboard) {
   }
   const day = dashboard.selected;
   refs.selectionAnnouncement.textContent = [
+    dashboard.isSample ? "功能範例" : null,
     formatDate(day.date, { year: "numeric", weekday: "long" }),
     `${dashboard.mealTypeLabel}午餐`,
     day.meal.mainDish,
-  ].join("，");
+  ].filter(Boolean).join("，");
+}
+
+async function loadSampleDashboard(date, { announce = false, focusWeekDay = false } = {}) {
+  const requestId = ++state.sampleRequestId;
+  setDashboardStatus("loading", state.dashboard?.isSample ? "正在更新功能範例…" : "正在準備功能範例…");
+  try {
+    const data = await publicSiteData();
+    if (requestId !== state.sampleRequestId || state.schoolId) return;
+    const payload = sampleDashboardFromStatic(data, date, state.mealType);
+    state.dashboard = payload;
+    render(payload);
+    if (!state.newsLoaded) loadNewsPreview();
+    if (focusWeekDay) {
+      refs.weekDays.querySelector(`.day-card[data-date="${payload.selected.date}"]`)?.focus({ preventScroll: true });
+    }
+    if (announce) announceSelection(payload);
+  } catch (error) {
+    if (requestId !== state.sampleRequestId || state.schoolId) return;
+    console.error("Unable to prepare the sample dashboard", error);
+    setDashboardStatus("ready", "請先選擇學校");
+  }
 }
 
 async function loadDashboard(date, { announce = false, focusWeekDay = false, preferClosest = false } = {}) {
@@ -2190,6 +2253,10 @@ async function selectMealType(mealType) {
   state.mealType = mealType;
   window.localStorage.setItem("demeter-meal-type", mealType);
   const selectedDate = state.dashboard?.selected?.date || localIsoDate();
+  if (state.dashboard?.isSample) {
+    await loadSampleDashboard(selectedDate, { announce: true });
+    return;
+  }
   await loadDashboard(selectedDate, { announce: true });
 }
 
@@ -2197,12 +2264,13 @@ refs.mealTypeMeat.addEventListener("click", () => selectMealType("meat"));
 refs.mealTypeVegetarian.addEventListener("click", () => selectMealType("vegetarian"));
 
 async function selectSchool(schoolId) {
+  state.sampleRequestId += 1;
   const nextSchoolId = Number(schoolId);
   const exists = state.schoolDirectory.some(
     (school) => Number(school.fatraceSchoolId) === nextSchoolId,
   );
   if (!exists) {
-    renderNoSchoolSelected();
+    await renderNoSchoolSelected();
     return;
   }
   if (nextSchoolId === state.schoolId && state.dashboard) return;
@@ -2218,10 +2286,14 @@ async function selectSchool(schoolId) {
 }
 
 refs.schoolSelect.addEventListener("change", () => selectSchool(refs.schoolSelect.value));
-refs.districtSelect.addEventListener("change", () => {
+refs.districtSelect.addEventListener("change", async () => {
   state.district = refs.districtSelect.value;
-  renderNoSchoolSelected();
+  await renderNoSchoolSelected();
   refs.schoolSelect.focus();
+});
+refs.sampleSelectSchool.addEventListener("click", () => {
+  refs.schoolSelect.scrollIntoView({ behavior: "smooth", block: "center" });
+  refs.schoolSelect.focus({ preventScroll: true });
 });
 async function persistDefaultSchool(schoolId) {
   const isClearing = Number(state.account.defaultSchoolId) === schoolId;
@@ -2475,7 +2547,57 @@ function updateNoEatDetails() {
   }
 }
 
+function enableRadioDeselection(container) {
+  let pointerInput = null;
+  let pointerWasChecked = false;
+  let selectedInput = container.querySelector('input[type="radio"]:checked');
+
+  container.addEventListener("pointerdown", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    pointerInput = target?.matches('input[type="radio"]')
+      ? target
+      : target?.closest("label")?.querySelector('input[type="radio"]') || null;
+    pointerWasChecked = Boolean(pointerInput?.checked);
+  });
+  container.addEventListener("pointercancel", () => {
+    pointerInput = null;
+    pointerWasChecked = false;
+  });
+  container.addEventListener("click", (event) => {
+    const input = event.target instanceof Element && event.target.matches('input[type="radio"]')
+      ? event.target
+      : null;
+    if (!input || !container.contains(input)) return;
+    const virtualRepeat = !pointerInput && event.detail === 0 && selectedInput === input;
+    if ((pointerInput === input && pointerWasChecked) || virtualRepeat) {
+      input.checked = false;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    pointerInput = null;
+    pointerWasChecked = false;
+  });
+  container.addEventListener("keydown", (event) => {
+    const input = event.target instanceof Element && event.target.matches('input[type="radio"]')
+      ? event.target
+      : null;
+    if (!input?.checked || (event.key !== " " && event.key !== "Spacebar")) return;
+    event.preventDefault();
+    input.checked = false;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  container.addEventListener("change", () => {
+    selectedInput = container.querySelector('input[type="radio"]:checked');
+  });
+}
+
 refs.experienceChoices.addEventListener("change", updateNoEatDetails);
+[
+  refs.passportFoodChoices,
+  refs.experienceChoices,
+  refs.noEatDetails,
+  refs.encounterForm.querySelector(".familiarity-list"),
+  refs.reactionChoices,
+].forEach(enableRadioDeselection);
 
 function setupMobileNavigation() {
   const links = [...document.querySelectorAll('.mobile-nav a[href^="#"]')];
@@ -2555,7 +2677,7 @@ async function initialize() {
     const initialSchool = defaultSchool || childSchool;
     if (!initialSchool) {
       renderAccount();
-      renderNoSchoolSelected();
+      await renderNoSchoolSelected();
       return;
     }
     state.schoolId = Number(initialSchool.fatraceSchoolId);

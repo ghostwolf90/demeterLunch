@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=20261017-food-feedback" />
+    <link rel="stylesheet" href="./styles.css?v=20261017-sample-preview" />
   </head>
   <body>
     <header class="topbar">
@@ -66,6 +66,14 @@
           <span class="doodle-sun">☀</span><span class="doodle-bowl">🥣</span>
           <svg viewBox="0 0 320 210"><path d="M22 142c52-65 96 62 151-6s94 22 126-34"/><path d="M46 179c59-38 107 30 165-23"/></svg>
         </div>
+      </section>
+
+      <section class="sample-mode-banner" id="sampleModeBanner" aria-labelledby="sampleModeTitle" hidden>
+        <div>
+          <span class="sample-mode-label">功能範例</span>
+          <p><strong id="sampleModeTitle">還沒選學校，也能先把午餐助手看完整。</strong><span id="sampleModeDate">以下使用已校讀菜單示範，不代表今日或任何未選學校的實際供餐。</span></p>
+        </div>
+        <button id="sampleSelectSchool" type="button">選擇我的學校</button>
       </section>
 
       <section class="week-section section" id="week" aria-label="本週菜單日期選擇">
@@ -175,7 +183,7 @@
             <form id="encounterForm">
               <fieldset class="passport-fieldset">
                 <legend>1. 今天午餐從哪一道菜開始記？</legend>
-                <p class="passport-field-hint">先選來源菜色，之後回看才知道「扣肉」原本藏在哪一道菜裡。</p>
+                <p class="passport-field-hint">先選來源菜色，之後回看才知道「扣肉」原本藏在哪一道菜裡；再次按已選菜色可以取消。</p>
                 <div class="food-choice-list" id="passportFoodChoices"></div>
               </fieldset>
               <fieldset class="passport-fieldset">
@@ -184,7 +192,7 @@
               </fieldset>
               <fieldset class="passport-fieldset">
                 <legend>3. 這次午餐，孩子有吃這個食物嗎？</legend>
-                <p class="passport-field-hint">選最接近今天情況的一項就好；沒有好壞，也不代表孩子喜不喜歡。</p>
+                <p class="passport-field-hint">選最接近今天情況的一項就好；沒有好壞，也不代表孩子喜不喜歡。再次按已選項目可以取消。</p>
                 <div class="experience-list" id="experienceChoices">
                   <label><input type="radio" name="experience" value="not_eaten" required /><span>沒有吃</span></label>
                   <label><input type="radio" name="experience" value="tasted" /><span>嚐了一口</span></label>
@@ -195,7 +203,7 @@
                   <label><input type="radio" name="experience" value="unknown" /><span>不確定／孩子沒提到</span></label>
                 </div>
                 <div class="no-eat-details" id="noEatDetails" hidden>
-                  <p id="noEatDetailsLabel">如果有注意到，孩子有接觸到它嗎？（可不填）</p>
+                  <p id="noEatDetailsLabel">如果有注意到，孩子有接觸到它嗎？（可不填，再按一次可取消）</p>
                   <div class="contact-list" role="radiogroup" aria-labelledby="noEatDetailsLabel">
                     <label><input type="radio" name="noEatContact" value="seen" /><span>看了看</span></label>
                     <label><input type="radio" name="noEatContact" value="smelled" /><span>聞了聞</span></label>
@@ -205,7 +213,7 @@
                   </div>
                 </div>
                 <div class="familiarity-question">
-                  <p id="familiarityLabel">孩子以前吃過這個食物嗎？（可不填）</p>
+                  <p id="familiarityLabel">孩子以前吃過這個食物嗎？（可不填，再按一次可取消）</p>
                   <div class="familiarity-list" role="radiogroup" aria-labelledby="familiarityLabel">
                     <label><input type="radio" name="familiarity" value="first" /><span>第一次吃</span></label>
                     <label><input type="radio" name="familiarity" value="previous" /><span>以前吃過</span></label>
@@ -214,7 +222,7 @@
                 </div>
               </fieldset>
               <fieldset class="passport-fieldset">
-                <legend>4. 孩子對這個食物的感覺如何？（可不填）</legend>
+                <legend>4. 孩子對這個食物的感覺如何？（可不填，再按一次可取消）</legend>
                 <p class="passport-field-hint">和吃了多少分開記；孩子沒有提到，也可以略過。</p>
                 <div class="reaction-list" id="reactionChoices">
                   <label><input type="radio" name="reaction" value="loved" /><span>很喜歡</span></label>
@@ -458,6 +466,7 @@
     <script src="./date-context.js" defer></script>
     <script src="./number-format.js" defer></script>
     <script src="./official-diet.js" defer></script>
-    <script src="./app.js?v=20261017-food-feedback" defer></script>
+    <script src="./sample-dashboard.js" defer></script>
+    <script src="./app.js?v=20261017-sample-preview" defer></script>
   </body>
 </html>

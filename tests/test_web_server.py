@@ -218,6 +218,9 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("請先回到孩子就讀學校，再新增午餐紀錄", app_js)
         self.assertIn("if (state.account.child) renderPassportFoodChoices()", app_js)
         self.assertIn("if (state.account.child) refs.encounterForm.hidden = true", app_js)
+        self.assertIn("enableRadioDeselection", app_js)
+        self.assertIn('event.key !== "Spacebar"', app_js)
+        self.assertIn("再次按已選項目可以取消", index_html)
 
     def test_passport_copy_avoids_eating_pressure(self) -> None:
         index_html = (
