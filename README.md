@@ -364,12 +364,16 @@ EMAIL_AUTH_SECRET
 MAACGO_AUTH
 RESEND_API_KEY
 AUTH_EMAIL_FROM
+SENTRY_DSN
 ```
 
 `EMAIL_AUTH_SECRET` 是用來雜湊驗證碼與產生帳號識別的隨機密鑰；優先使用
 `MAACGO_AUTH`（`Bearer sk_test_...` 或 `Bearer sk_live_...`）寄送登入驗證碼。
 `RESEND_API_KEY` 與 `AUTH_EMAIL_FROM` 保留為備援，且 `AUTH_EMAIL_FROM` 必須是
 寄信服務已驗證的寄件者。`EMAIL_AUTH_DEV_CODE` 僅限本機預覽，不得設定在公開 Site。
+`SENTRY_DSN` 可覆寫程式內的公開 Worker DSN；監控預設不傳送個人資料、會移除
+請求內容與登入資料，並只抽樣 10% 的效能追蹤。Source map 上傳使用的
+`SENTRY_AUTH_TOKEN` 是機密，不得寫入原始碼或公開環境變數。
 
 網站的日常分析讀取 `data/lunch.db`，原圖則從 `data/raw/` 提供。兩者都在本機，不需要安裝前端套件。按 `Ctrl+C` 可停止伺服器。
 

@@ -1,4 +1,5 @@
 import vinext from "vinext";
+import { sentryCloudflareVitePlugin } from "@sentry/cloudflare/vite";
 import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json";
 import { readExecutionProfile } from "./scripts/execution-profile.mjs";
@@ -20,6 +21,7 @@ const localAuthVars = Object.fromEntries(
     "MAACGO_API_KEY",
     "RESEND_API_KEY",
     "AUTH_EMAIL_FROM",
+    "SENTRY_DSN",
     "MANUAL_PUBLISH_TOKEN",
   ]
     .flatMap((key) => process.env[key] ? [[key, process.env[key]]] : []),
@@ -79,6 +81,9 @@ export default defineConfig(async ({ command }) => {
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         inspectorPort: false,
         config: localBindingConfig,
+      }),
+      sentryCloudflareVitePlugin({
+        wranglerConfigPath: "./wrangler.local.jsonc",
       }),
     ],
   };

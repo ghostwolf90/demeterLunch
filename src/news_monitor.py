@@ -53,6 +53,9 @@ FOOD_SAFETY_TERMS = (
 )
 POLICY_TERMS = ("專法", "免費", "補助", "經費", "政策", "標準", "採購", "自治條例")
 EDUCATION_TERMS = ("食農", "食育", "飲食教育", "惜食", "產地")
+BLOCKED_URLS = {
+    "https://www.taichung.gov.tw/3388745/post",
+}
 
 
 @dataclass(frozen=True)
@@ -82,6 +85,13 @@ SOURCES = (
         url="https://www.moe.gov.tw/Rss_News.aspx?n=9E7AC85F1954DDA8",
         source_type="官方公告",
         priority=4,
+    ),
+    NewsSource(
+        id="ner-education",
+        name="國立教育廣播電臺",
+        url="https://webapi.ner.gov.tw/nerwebFront/api/RSS/NewsRSS",
+        source_type="新聞報導",
+        priority=3,
     ),
     NewsSource(
         id="cna-politics",
@@ -177,6 +187,8 @@ def fetch_news(
 
     relevant: list[dict[str, Any]] = []
     for item in candidates:
+        if canonicalize_url(item["url"]) in BLOCKED_URLS:
+            continue
         published = parse_datetime(item.get("publishedAt"))
         if published is None or published < cutoff or published > current + timedelta(days=1):
             continue

@@ -4,6 +4,7 @@ import unittest
 from datetime import datetime, timezone
 
 from src.news_monitor import (
+    SOURCES,
     NewsSource,
     classify_category,
     fetch_news,
@@ -95,7 +96,7 @@ class NewsMonitorTests(unittest.TestCase):
         )
         html = """
         <section class="listTable"><table><tbody><tr>
-          <td>1</td><td><a href="/3388745/post">中市免費營養午餐有新消息</a></td>
+          <td>1</td><td><a href="/3389999/post">中市免費營養午餐有新消息</a></td>
           <td>教育局</td><td><time>2026-10-08</time></td>
         </tr></tbody></table></section>
         """.encode()
@@ -136,6 +137,26 @@ class NewsMonitorTests(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(client.requested, [source.url])
         self.assertEqual(statuses[0]["format"], "feed")
+
+    def test_official_education_news_feed_is_monitored(self) -> None:
+        sources = {source.id: source for source in SOURCES}
+        self.assertEqual(
+            sources["ner-education"].url,
+            "https://webapi.ner.gov.tw/nerwebFront/api/RSS/NewsRSS",
+        )
+
+    def test_blocked_story_is_not_republished(self) -> None:
+        payload = """<rss><channel><item>
+        <title>中市免費營養午餐滿意度</title>
+        <link>https://www.taichung.gov.tw/3388745/post</link>
+        <pubDate>Thu, 08 Oct 2026 01:00:00 GMT</pubDate>
+        </item></channel></rss>""".encode()
+        items, _statuses = fetch_news(
+            StubClient(payload),
+            now=datetime(2026, 10, 17, 12, tzinfo=timezone.utc),
+            sources=(SOURCE,),
+        )
+        self.assertEqual(items, [])
 
     def test_relevance_avoids_unrelated_lunch_word(self) -> None:
         self.assertEqual(relevance_score("白宮午餐會討論科技", ""), 0)

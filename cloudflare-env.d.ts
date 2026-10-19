@@ -8,6 +8,7 @@ declare namespace Cloudflare {
     MAACGO_API_KEY?: string;
     RESEND_API_KEY?: string;
     AUTH_EMAIL_FROM?: string;
+    SENTRY_DSN?: string;
     MANUAL_PUBLISH_TOKEN?: string;
   }
 }
