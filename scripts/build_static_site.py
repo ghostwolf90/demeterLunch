@@ -20,6 +20,16 @@ from src.school_dashboard import load_school_meal_catalog  # noqa: E402
 from src.school_weekly_data import weekly_menu_image_paths  # noqa: E402
 
 
+def _seo_school_manifest(schools: list[dict], records: dict[str, dict]) -> dict:
+    """Return only official school IDs that have reviewed public meal content."""
+    school_ids = sorted(
+        int(school["fatraceSchoolId"])
+        for school in schools
+        if records.get(str(school["fatraceSchoolId"]))
+    )
+    return {"schemaVersion": 1, "schoolIds": school_ids}
+
+
 def build_static_site(
     *,
     web_root: Path,
@@ -97,6 +107,39 @@ def build_static_site(
                 "generatedAt": generated_at,
                 "schools": official_school_meals["schools"],
             },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ),
+        encoding="utf-8",
+    )
+    school_meals_output = data_output / "school-meals"
+    school_meals_output.mkdir(parents=True, exist_ok=True)
+    school_directory_by_id = {
+        str(school["fatraceSchoolId"]): school
+        for school in official_school_meals["schools"]
+    }
+    for school_id, records in official_school_meals.get("records", {}).items():
+        (school_meals_output / f"{school_id}.json").write_text(
+            json.dumps(
+                {
+                    "schemaVersion": 1,
+                    "schoolId": int(school_id),
+                    "experience": school_directory_by_id.get(school_id, {}).get(
+                        "experience", "official_daily"
+                    ),
+                    "records": records,
+                },
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+            encoding="utf-8",
+        )
+    (data_output / "seo-schools.json").write_text(
+        json.dumps(
+            _seo_school_manifest(
+                official_school_meals["schools"],
+                official_school_meals.get("records", {}),
+            ),
             ensure_ascii=False,
             separators=(",", ":"),
         ),

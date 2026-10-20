@@ -30,6 +30,10 @@ const localAuthVars = Object.fromEntries(
 const localBindingConfig = {
   main: "./build/sites-worker.ts",
   compatibility_flags: ["nodejs_compat"],
+  assets: {
+    binding: "ASSETS",
+    directory: "./public",
+  },
   vars: localAuthVars,
   d1_databases: d1
     ? [

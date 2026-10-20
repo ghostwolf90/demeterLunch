@@ -1,0 +1,96 @@
+.school-public-page { min-height: 100vh; color: var(--ink); background: var(--paper); }
+.school-public-page a { color: inherit; }
+.school-public-topbar { position: sticky; top: 0; z-index: 10; background: rgba(245,240,231,.92); backdrop-filter: blur(16px); }
+.school-public-topbar nav a[aria-current="page"] { color: var(--orange); }
+.school-public-main { width: min(1120px, calc(100% - 44px)); margin: 0 auto; padding: 42px 0 90px; }
+.school-breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--ink-soft); font-size: 12px; }
+.school-breadcrumbs a { text-decoration: underline; text-underline-offset: 3px; }
+.school-hero { padding: 66px 0 48px; display: grid; grid-template-columns: minmax(0, 1fr) 260px; align-items: end; gap: 48px; }
+.school-hero h1, .school-directory-hero h1 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(46px, 7vw, 84px); line-height: .98; letter-spacing: -.045em; }
+.school-hero h1 em, .school-directory-hero h1 em { color: var(--orange); font-style: normal; }
+.school-hero-copy, .school-directory-hero > p:last-child { max-width: 720px; margin: 26px 0 0; color: var(--ink-soft); line-height: 1.85; }
+.school-id-card { padding: 24px; display: grid; gap: 8px; border: 1px solid var(--line); border-radius: 24px; background: var(--white); box-shadow: 0 14px 34px rgba(21,52,71,.08); }
+.school-id-card span, .school-id-card small { color: var(--ink-soft); font-size: 11px; }
+.school-id-card strong { font-size: 31px; letter-spacing: .04em; }
+.school-status-card { padding: 25px 28px; display: grid; grid-template-columns: minmax(210px,.7fr) minmax(0,1.3fr); align-items: center; gap: 30px; }
+.school-status-card h2, .school-info-grid h2, .school-empty-card h2 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; }
+.school-status-copy { padding-left: 28px; border-left: 1px solid var(--line); }
+.school-status-copy strong { font-size: 18px; }
+.school-status-copy p { margin: 8px 0 0; color: var(--ink-soft); line-height: 1.7; }
+.school-status-card.is-available { border-color: rgba(57,107,90,.34); background: rgba(57,107,90,.07); }
+.school-status-card.is-pending { border-color: rgba(241,200,74,.42); background: rgba(241,200,74,.1); }
+.school-menu-section { padding: 75px 0 8px; }
+.school-section-heading { margin-bottom: 20px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.school-section-heading h2 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(35px, 5vw, 56px); line-height: 1.05; }
+.school-section-heading > p { margin: 0; color: var(--ink-soft); text-align: right; font-size: 11px; line-height: 1.7; }
+.school-date-warning { margin: 0 0 20px; padding: 14px 16px; border: 1px solid rgba(241,200,74,.5); border-radius: 14px; color: #6f5c1e; background: rgba(241,200,74,.14); line-height: 1.7; }
+.school-meal-groups { display: grid; gap: 18px; }
+.school-meal-card { padding: 29px; }
+.school-meal-card header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.school-meal-card h3 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: 30px; }
+.school-calorie { flex: 0 0 auto; padding: 10px 13px; border-radius: 14px; color: var(--green); background: rgba(57,107,90,.1); font-size: 11px; }
+.school-calorie strong { font-size: 22px; }
+.school-dish-list { margin: 25px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; list-style: none; }
+.school-dish-list li { min-width: 0; padding: 15px; display: grid; grid-template-columns: 56px minmax(0,1fr); gap: 11px; border-radius: 15px; background: rgba(245,240,231,.72); }
+.school-dish-list li > span { color: var(--orange); font-size: 11px; font-weight: 850; }
+.school-dish-list strong, .school-dish-list small { display: block; }
+.school-dish-list strong { line-height: 1.45; }
+.school-dish-list small { margin-top: 6px; color: var(--ink-soft); font-size: 10px; line-height: 1.6; }
+.school-nutrition { margin: 22px 0 0; padding-top: 18px; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; border-top: 1px solid var(--line); }
+.school-nutrition div { padding: 10px; border-radius: 12px; background: rgba(57,107,90,.06); text-align: center; }
+.school-nutrition dt, .school-nutrition dd { margin: 0; font-size: 10px; }
+.school-nutrition dt { color: var(--ink-soft); }
+.school-nutrition dd { margin-top: 4px; font-weight: 850; }
+.school-info-grid { padding-top: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.school-info-grid > article { padding: 29px; }
+.school-info-grid p { color: var(--ink-soft); line-height: 1.75; }
+.school-source-details { margin: 20px 0; display: grid; gap: 10px; }
+.school-source-details div { padding-top: 10px; display: grid; grid-template-columns: 90px 1fr; gap: 14px; border-top: 1px solid var(--line); }
+.school-source-details dt, .school-source-details dd { margin: 0; font-size: 11px; line-height: 1.6; }
+.school-source-details dt { color: var(--ink-soft); }
+.school-source-details dd { font-weight: 750; }
+.school-date-list { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+.school-date-list time { padding: 8px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); font-size: 11px; }
+.school-weekly-note { margin-bottom: 0; }
+.school-next-actions { padding-top: 34px; display: flex; flex-wrap: wrap; gap: 11px; }
+.school-next-actions a { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.school-empty-card { padding: 38px; }
+.school-not-found { width: min(700px, calc(100% - 40px)); margin: 14vh auto; padding: 42px; border: 1px solid var(--line); border-radius: 25px; background: var(--white); }
+.school-not-found h1 { font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(38px,7vw,60px); }
+.school-directory-hero { max-width: 860px; padding: 70px 0 38px; }
+.district-jump { padding: 18px; display: flex; flex-wrap: wrap; gap: 8px; border: 1px solid var(--line); border-radius: 20px; background: var(--white); }
+.district-jump a { padding: 8px 11px; border-radius: 999px; background: var(--paper); font-size: 11px; font-weight: 800; text-decoration: none; }
+.school-directory-groups { padding-top: 26px; display: grid; gap: 35px; }
+.school-directory-group { scroll-margin-top: 100px; }
+.school-directory-group > header { margin-bottom: 12px; display: flex; align-items: baseline; gap: 10px; }
+.school-directory-group h2 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: 28px; }
+.school-directory-group header span { color: var(--ink-soft); font-size: 11px; }
+.school-link-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
+.school-link-grid a { min-width: 0; padding: 16px; display: block; border: 1px solid var(--line); border-radius: 15px; background: var(--white); text-decoration: none; transition: border-color 140ms ease, transform 140ms ease; }
+.school-link-grid a:hover { border-color: var(--orange); transform: translateY(-2px); }
+.school-link-grid strong, .school-link-grid small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.school-link-grid small { margin-top: 5px; color: var(--ink-soft); font-size: 10px; }
+@media (max-width: 760px) {
+  .school-public-topbar nav { display: none; }
+  .school-public-main { width: min(100% - 28px, 1120px); padding-top: 28px; }
+  .school-hero { padding: 46px 0 34px; grid-template-columns: 1fr; gap: 25px; }
+  .school-id-card { width: min(100%, 300px); }
+  .school-status-card { padding: 21px; grid-template-columns: 1fr; gap: 17px; }
+  .school-status-copy { padding: 16px 0 0; border-top: 1px solid var(--line); border-left: 0; }
+  .school-menu-section { padding-top: 54px; }
+  .school-section-heading { align-items: flex-start; flex-direction: column; }
+  .school-section-heading > p { text-align: left; }
+  .school-meal-card { padding: 21px; }
+  .school-dish-list, .school-info-grid { grid-template-columns: 1fr; }
+  .school-nutrition { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .school-link-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .school-directory-hero { padding-top: 48px; }
+}
+@media (max-width: 460px) {
+  .school-dish-list li { grid-template-columns: 49px minmax(0,1fr); }
+  .school-link-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .school-link-grid a { transition: none; }
+  .school-link-grid a:hover { transform: none; }
+}
