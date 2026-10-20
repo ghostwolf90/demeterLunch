@@ -1,0 +1,1208 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "外埔區",
+    "level": "國小",
+    "name": "水美國小",
+    "fullName": "臺中市外埔區水美國小",
+    "fatraceSchoolId": 64634
+  },
+  "mealDate": "2026-10-20",
+  "fetchedAt": "2026-10-20T11:07:10.076482+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=64634&period=2026-10-20",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 64634,
+        "SchoolName": "臺中市外埔區水美國小",
+        "ConuntyId": 27,
+        "AreaId": 131495,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1400,
+          "KitchenName": "臺中市外埔區水美國小",
+          "KitchenType": "006",
+          "Address": "臺中市外埔區水美里二崁路390巷63號",
+          "Tel": "04-26876508",
+          "Fax": "04-26874373",
+          "Nutritionist": "吳珮綺",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "B064634",
+          "Email": "lunch@smes.tc.edu.tw",
+          "offering": []
+        },
+        {
+          "KitchenId": 2331,
+          "KitchenName": "吉米食品有限公司",
+          "KitchenType": "005",
+          "Address": "臺中市外埔區長生路263、265號",
+          "Tel": "04-26835936",
+          "Fax": "04-26837536",
+          "Nutritionist": "賴佳瑩",
+          "Chef": "溫誼臻",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "79965111",
+          "Email": "j0008@jimmyfood.com.tw",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1400,
+              "KitchenName": "臺中市外埔區水美國小",
+              "KitchenType": "006",
+              "Address": "臺中市外埔區水美里二崁路390巷63號",
+              "Tel": "04-26876508",
+              "Fax": "04-26874373",
+              "Nutritionist": "吳珮綺",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "B064634",
+              "Email": "lunch@smes.tc.edu.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1792047599030583",
+                  "KitchenId": 1400,
+                  "KitchenName": "臺中市外埔區水美國小",
+                  "SchoolId": 64634,
+                  "SchoolCode": "064634",
+                  "SchoolName": "臺中市外埔區水美國小",
+                  "MenuDate": "2026/10/20",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-19T02:54:08.000Z",
+                  "TypeGrains": "5.74",
+                  "TypeOil": "0",
+                  "TypeVegetable": "2.02",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0.56",
+                  "TypeMeatBeans": "2.89",
+                  "Calorie": "616"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1792047599030583",
+                  "KitchenId": 1400,
+                  "KitchenName": "臺中市外埔區水美國小",
+                  "SchoolId": 64634,
+                  "SchoolCode": "064634",
+                  "SchoolName": "臺中市外埔區水美國小",
+                  "MenuDate": "2026/10/20",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-19T02:54:08.000Z",
+                  "TypeGrains": "5.74",
+                  "TypeOil": "0",
+                  "TypeVegetable": "2.02",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0.56",
+                  "TypeMeatBeans": "2.89",
+                  "Calorie": "616"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792378448040156",
+                      "BatchDataId": "1792047599030583",
+                      "DishName": "糙米飯",
+                      "DishType": "主食",
+                      "DishId": "45207",
+                      "UpdateDateTime": "2026-10-19T02:54:09.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 1400,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1400//1400_45207."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792462221030791",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "45207",
+                          "IngredientId": "1662030212015936",
+                          "IngredientName": "糙粳米",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "糙粳米",
+                          "Manufacturer": "美順",
+                          "IngredientQuantity": "2.4",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [
+                            {
+                              "id": "967609473",
+                              "countryId": "1",
+                              "name": "臺灣"
+                            }
+                          ],
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "糙粳米"
+                        },
+                        {
+                          "IngredientBatchId": "1792462221030792",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "45207",
+                          "IngredientId": "1662030212015937",
+                          "IngredientName": "白米",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "白米",
+                          "Manufacturer": "宇進實業股份有限公司",
+                          "IngredientQuantity": "10",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "26100701555"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "白米"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792378448040161",
+                      "BatchDataId": "1792047599030583",
+                      "DishName": "泡菜雞丁",
+                      "DishType": "主菜",
+                      "DishId": "1792047599030580",
+                      "UpdateDateTime": "2026-10-19T02:54:09.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 1400,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1400//1400_1792047599030580."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792462221030793",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1792047599030580",
+                          "IngredientId": "1792047634016286",
+                          "IngredientName": "雞胸肉",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "雞胸肉",
+                          "Manufacturer": "耀陞食品股份有限公司",
+                          "IngredientQuantity": "12.3",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "019604"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "雞胸肉"
+                        },
+                        {
+                          "IngredientBatchId": "1792462221030794",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1792047599030580",
+                          "IngredientId": "1792047634016287",
+                          "IngredientName": "結球白菜",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "結球白菜",
+                          "Manufacturer": "保證責任雲林縣崙東果菜生產合作社(雲林縣二崙鄉)",
+                          "IngredientQuantity": "3.1",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1204000054"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "包心白菜"
+                        },
+                        {
+                          "IngredientBatchId": "1792462221030795",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1792047599030580",
+                          "IngredientId": "1792047634016288",
+                          "IngredientName": "胡蘿蔔",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "胡蘿蔔",
+                          "Manufacturer": "正暘農產股份有限公司",
+                          "IngredientQuantity": "0.6",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "00990599636707"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "胡蘿蔔"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792378448040159",
+                      "BatchDataId": "1792047599030583",
+                      "DishName": "小瓜肉片",
+                      "DishType": "副菜",
+                      "DishId": "1792047599030581",
+                      "UpdateDateTime": "2026-10-19T02:54:09.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 1400,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1400//1400_1792047599030581."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792462221030796",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1792047599030581",
+                          "IngredientId": "1792047634016289",
+                          "IngredientName": "花胡瓜",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "花胡瓜",
+                          "Manufacturer": "保證責任雲林縣崙東果菜生產合作社(雲林縣二崙鄉)",
+                          "IngredientQuantity": "6.7",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1204000054"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "花胡瓜"
+                        },
+                        {
+                          "IngredientBatchId": "1792462221030797",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1792047599030581",
+                          "IngredientId": "1792047634016290",
+                          "IngredientName": "豬大里肌",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "豬大里肌",
+                          "Manufacturer": "和榮意食品有限公司",
+                          "IngredientQuantity": "1.5",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "013502"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "豬大里肌"
+                        },
+                        {
+                          "IngredientBatchId": "1792462221030798",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1792047599030581",
+                          "IngredientId": "1792047634016291",
+                          "IngredientName": "胡蘿蔔",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "胡蘿蔔",
+                          "Manufacturer": "正暘農產股份有限公司",
+                          "IngredientQuantity": "0.7",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "00990599636707"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "胡蘿蔔"
+                        },
+                        {
+                          "IngredientBatchId": "1792462221030799",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1792047599030581",
+                          "IngredientId": "1792047634016292",
+                          "IngredientName": "香菇",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "香菇",
+                          "Manufacturer": "吳奇鴻-奇鴻農場",
+                          "IngredientQuantity": "0.6",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "0401007926"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "香菇"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792378448040155",
+                      "BatchDataId": "1792047599030583",
+                      "DishName": "有機荷葉白菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1666249918057964",
+                      "UpdateDateTime": "2026-10-19T02:54:09.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 1400,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1400//1400_1666249918057964."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792462221030800",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1666249918057964",
+                          "IngredientId": "1675425597013019",
+                          "IngredientName": "荷葉白菜",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "荷葉白菜",
+                          "Manufacturer": "連聖徨(聖娸農場)",
+                          "IngredientQuantity": "10.9",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣有機農產品",
+                              "CertificationId": "1-003-931059"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "荷葉白菜"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792378448040157",
+                      "BatchDataId": "1792047599030583",
+                      "DishName": "冬菜粉絲湯",
+                      "DishType": "湯品",
+                      "DishId": "1792047599030582",
+                      "UpdateDateTime": "2026-10-19T02:54:09.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 1400,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1400//1400_1792047599030582."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792462221030801",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1792047599030582",
+                          "IngredientId": "1792047634016293",
+                          "IngredientName": "豬後腿肉",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "豬後腿肉",
+                          "Manufacturer": "和榮意食品有限公司",
+                          "IngredientQuantity": "1.5",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "013502"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "豬後腿肉"
+                        },
+                        {
+                          "IngredientBatchId": "1792462221030802",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1792047599030582",
+                          "IngredientId": "1792047634016294",
+                          "IngredientName": "冬粉",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "冬粉",
+                          "Manufacturer": "來佑新有限公司",
+                          "IngredientQuantity": "0.6",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [
+                            {
+                              "id": "967609517",
+                              "countryId": "1",
+                              "name": "臺灣"
+                            }
+                          ],
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "冬粉"
+                        },
+                        {
+                          "IngredientBatchId": "1792462221030803",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1792047599030582",
+                          "IngredientId": "1792047634016296",
+                          "IngredientName": "胡蘿蔔",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "胡蘿蔔",
+                          "Manufacturer": "正暘農產股份有限公司",
+                          "IngredientQuantity": "0.6",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "00990599636707"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "胡蘿蔔"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792378448040160",
+                      "BatchDataId": "1792047599030583",
+                      "DishName": "火龍果",
+                      "DishType": "附餐",
+                      "DishId": "1569215214374666",
+                      "UpdateDateTime": "2026-10-19T02:54:09.000Z",
+                      "DishOrder": 24,
+                      "KitchenId": 1400,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1400//1400_1569215214374666."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792462221030804",
+                          "BatchDataId": "1792047599030583",
+                          "DishId": "1569215214374666",
+                          "IngredientId": "1569301640245004",
+                          "IngredientName": "火龍果",
+                          "StockDate": "2026-10-19T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 1625354,
+                          "SupplierCompanyId": "79965111",
+                          "SupplierName": "吉米食品有限公司",
+                          "ProductName": "火龍果",
+                          "Manufacturer": "陳嬿竹",
+                          "IngredientQuantity": "7.1",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1401000952"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-179965111-00000-8",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路265號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-179965111-00001-9",
+                              "fdacompany_Name": "吉米食品有限公司",
+                              "fdabusinessId": "79965111",
+                              "fdaaddress": "台中市外埔區鐵山里長生路263、265號",
+                              "fdaregType": "工廠/製造場所"
+                            }
+                          ],
+                          "standardIngredientName": "紅龍果"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792378448040158",
+                      "BatchDataId": "1792047599030583",
+                      "DishName": "調味料",
+                      "DishId": "77738",
+                      "UpdateDateTime": "2026-10-19T02:54:09.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 1400,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kitchen": {
+              "KitchenId": 2331,
+              "KitchenName": "吉米食品有限公司",
+              "KitchenType": "005",
+              "Address": "臺中市外埔區長生路263、265號",
+              "Tel": "04-26835936",
+              "Fax": "04-26837536",
+              "Nutritionist": "賴佳瑩",
+              "Chef": "溫誼臻",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "79965111",
+              "Email": "j0008@jimmyfood.com.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": []
+            },
+            "details": []
+          }
+        ]
+      }
+    ]
+  }
+}
