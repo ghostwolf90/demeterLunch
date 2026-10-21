@@ -28,3 +28,12 @@
 - 將更新發布到既有的公開 Site「好好吃飯｜午餐助手」（`appgprj_6abdf96b7f608191942ee50447a69129`，slug 為 `zhongxin-lunch-2026`）；除非使用者明確要求，否則不得建立替代 Site，也不得變更其受眾或排程。
 - 發布前，先開啟最新的 Site 原始碼，並以其作為部署基礎，因為其中的自動化程序可能包含較新的消息或監控狀態。疊加預定的程式碼變更、執行所有檢查、重建 `dist/`，並保留不相關的遠端資料。
 - 公司信箱 `bit_lai@mail.chungyo.net` 無法寄信到外部網域；郵件測試時只能將它作為收件端，不得作為寄件端。客服信件應由已設定的 `support@haohaofood.cc` 寄出。
+
+## Browser Automation Restrictions
+
+- Do not launch or control local GUI browsers.
+- Do not use Playwright, Puppeteer, Selenium, or CDP.
+- Do not access existing browser sessions or profiles.
+- Prefer curl, HTTP requests, static analysis, and automated tests.
+- Browser-dependent checks must be reported for manual verification.
+- Never override these restrictions without explicit user approval.
