@@ -1,0 +1,238 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "后里區",
+    "level": "國小",
+    "name": "內埔國小",
+    "fullName": "臺中市后里區內埔國小",
+    "fatraceSchoolId": 64609
+  },
+  "mealDate": "2026-10-21",
+  "fetchedAt": "2026-10-21T09:53:47.218209+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=64609&period=2026-10-21",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 64609,
+        "SchoolName": "臺中市后里區內埔國小",
+        "ConuntyId": 27,
+        "AreaId": 131481,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1388,
+          "KitchenName": "臺中市后里區內埔國小",
+          "KitchenType": "006",
+          "Address": "臺中市后里區文化路30號",
+          "Tel": "04-25562003",
+          "Fax": "04-25564479",
+          "Nutritionist": "張彩敏",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "B064609",
+          "Email": "chiaming62@yahoo.com.tw",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1388,
+              "KitchenName": "臺中市后里區內埔國小",
+              "KitchenType": "006",
+              "Address": "臺中市后里區文化路30號",
+              "Tel": "04-25562003",
+              "Fax": "04-25564479",
+              "Nutritionist": "張彩敏",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "B064609",
+              "Email": "chiaming62@yahoo.com.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1792374334016236",
+                  "KitchenId": 1388,
+                  "KitchenName": "臺中市后里區內埔國小",
+                  "SchoolId": 64609,
+                  "SchoolCode": "064609",
+                  "SchoolName": "臺中市后里區內埔國小",
+                  "MenuDate": "2026/10/21",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-19T01:45:35.000Z",
+                  "TypeGrains": "2.91",
+                  "TypeOil": "0",
+                  "TypeVegetable": "1.26",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "3.62",
+                  "Calorie": "514"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1792374334016236",
+                  "KitchenId": 1388,
+                  "KitchenName": "臺中市后里區內埔國小",
+                  "SchoolId": 64609,
+                  "SchoolCode": "064609",
+                  "SchoolName": "臺中市后里區內埔國小",
+                  "MenuDate": "2026/10/21",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-19T01:45:35.000Z",
+                  "TypeGrains": "2.91",
+                  "TypeOil": "0",
+                  "TypeVegetable": "1.26",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "3.62",
+                  "Calorie": "514"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792374334016238",
+                      "BatchDataId": "1792374334016236",
+                      "DishName": "西班牙海鮮飯",
+                      "DishType": "主食",
+                      "DishId": "1552549422149506",
+                      "UpdateDateTime": "2026-10-19T01:45:35.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 1388,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1388//1388_1552549422149506.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792374334016241",
+                      "BatchDataId": "1792374334016236",
+                      "DishName": "五香滷雞翅",
+                      "DishType": "主菜",
+                      "DishId": "1792374334016235",
+                      "UpdateDateTime": "2026-10-19T01:45:35.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 1388,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1388//1388_1792374334016235."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792374334016237",
+                      "BatchDataId": "1792374334016236",
+                      "DishName": "有機蔬菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1448872327129726",
+                      "UpdateDateTime": "2026-10-19T01:45:35.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 1388,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1388//1388_1448872327129726.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792374334016239",
+                      "BatchDataId": "1792374334016236",
+                      "DishName": "洋芋玉米湯",
+                      "DishType": "湯品",
+                      "DishId": "1728958376005012",
+                      "UpdateDateTime": "2026-10-19T01:45:35.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 1388,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1388//1388_1728958376005012.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792374334016240",
+                      "BatchDataId": "1792374334016236",
+                      "DishName": "調味料",
+                      "DishId": "30763",
+                      "UpdateDateTime": "2026-10-19T01:45:35.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 1388,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "南屯區",
+    "level": "國小",
+    "name": "南屯國小",
+    "fullName": "臺中市南屯區南屯國小",
+    "fatraceSchoolId": 193627
+  },
+  "mealDate": "2026-10-21",
+  "fetchedAt": "2026-10-21T09:26:13.377087+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=193627&period=2026-10-21",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 193627,
+        "SchoolName": "臺中市南屯區南屯國小",
+        "ConuntyId": 27,
+        "AreaId": 131475,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1383,
+          "KitchenName": "臺中市南屯區南屯國小",
+          "KitchenType": "006",
+          "Address": "臺中市南屯區黎明路一段968號",
+          "Tel": "04-2389-4238",
+          "Fax": "04-2382-2070",
+          "Nutritionist": "林佳蓉/梁靜芳",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "B193627",
+          "Email": "chiazone@gmail.com",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1383,
+              "KitchenName": "臺中市南屯區南屯國小",
+              "KitchenType": "006",
+              "Address": "臺中市南屯區黎明路一段968號",
+              "Tel": "04-2389-4238",
+              "Fax": "04-2382-2070",
+              "Nutritionist": "林佳蓉/梁靜芳",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "B193627",
+              "Email": "chiazone@gmail.com",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1792041410008443",
+                  "KitchenId": 1383,
+                  "KitchenName": "臺中市南屯區南屯國小",
+                  "SchoolId": 193627,
+                  "SchoolCode": "193627",
+                  "SchoolName": "臺中市南屯區南屯國小",
+                  "MenuDate": "2026/10/21",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-15T05:16:51.000Z",
+                  "TypeGrains": "3.97",
+                  "TypeOil": "0.04",
+                  "TypeVegetable": "1.79",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2.99",
+                  "Calorie": "634"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1792041410008443",
+                  "KitchenId": 1383,
+                  "KitchenName": "臺中市南屯區南屯國小",
+                  "SchoolId": 193627,
+                  "SchoolCode": "193627",
+                  "SchoolName": "臺中市南屯區南屯國小",
+                  "MenuDate": "2026/10/21",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-15T05:16:51.000Z",
+                  "TypeGrains": "3.97",
+                  "TypeOil": "0.04",
+                  "TypeVegetable": "1.79",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2.99",
+                  "Calorie": "634"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792041410008445",
+                      "BatchDataId": "1792041410008443",
+                      "DishName": "滑蛋麵線糊",
+                      "DishType": "主食",
+                      "DishId": "1726467077026477",
+                      "UpdateDateTime": "2026-10-15T05:16:51.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 1383,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1383//1383_1726467077026477."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792041410008450",
+                      "BatchDataId": "1792041410008443",
+                      "DishName": "梅干豆包",
+                      "DishType": "主菜",
+                      "DishId": "1792041410008432",
+                      "UpdateDateTime": "2026-10-15T05:16:51.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 1383,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1383//1383_1792041410008432."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792041410008448",
+                      "BatchDataId": "1792041410008443",
+                      "DishName": "梅干控肉",
+                      "DishType": "副菜",
+                      "DishId": "1620596649333469",
+                      "UpdateDateTime": "2026-10-15T05:16:51.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 1383,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1383//1383_1620596649333469."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792041410008449",
+                      "BatchDataId": "1792041410008443",
+                      "DishName": "櫛瓜起司烤蛋",
+                      "DishType": "副菜",
+                      "DishId": "1792041410008433",
+                      "UpdateDateTime": "2026-10-15T05:16:51.000Z",
+                      "DishOrder": 17,
+                      "KitchenId": 1383,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1383//1383_1792041410008433."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792041410008444",
+                      "BatchDataId": "1792041410008443",
+                      "DishName": "有機味美菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1552874876149203",
+                      "UpdateDateTime": "2026-10-15T05:16:51.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 1383,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1383//1383_1552874876149203."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792041410008446",
+                      "BatchDataId": "1792041410008443",
+                      "DishName": "紅麴刈包",
+                      "DishType": "湯品",
+                      "DishId": "1792041410008434",
+                      "UpdateDateTime": "2026-10-15T05:16:51.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 1383,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1383//1383_1792041410008434."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792041410008447",
+                      "BatchDataId": "1792041410008443",
+                      "DishName": "調味料",
+                      "DishId": "38968",
+                      "UpdateDateTime": "2026-10-15T05:16:51.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 1383,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

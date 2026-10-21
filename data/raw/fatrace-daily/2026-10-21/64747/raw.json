@@ -1,0 +1,921 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "東勢區",
+    "level": "國小",
+    "name": "新盛國小",
+    "fullName": "臺中市東勢區新盛國小",
+    "fatraceSchoolId": 64747
+  },
+  "mealDate": "2026-10-21",
+  "fetchedAt": "2026-10-21T09:57:43.363952+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=64747&period=2026-10-21",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 64747,
+        "SchoolName": "臺中市東勢區新盛國小",
+        "ConuntyId": 27,
+        "AreaId": 131483,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1470,
+          "KitchenName": "臺中市東勢區新盛國小",
+          "KitchenType": "006",
+          "Address": "臺中市東勢區新盛里新盛街342號",
+          "Tel": "04-25876642",
+          "Fax": "04-25870213",
+          "Nutritionist": "留碧敏",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "B064747",
+          "Email": "piminliu@msn.com",
+          "offering": []
+        },
+        {
+          "KitchenId": 41767,
+          "KitchenName": "芫儂食品股份有限公司",
+          "KitchenType": "005",
+          "Address": "台中市西屯區廣福路272巷2號",
+          "Tel": "04-27070265",
+          "Fax": "27070058",
+          "Nutritionist": "黃建銘",
+          "Chef": "胡斯雲",
+          "HACCP": "",
+          "Qualifier": "胡斯雲",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "27799719",
+          "Email": "yuannong1167@gmail.com",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1470,
+              "KitchenName": "臺中市東勢區新盛國小",
+              "KitchenType": "006",
+              "Address": "臺中市東勢區新盛里新盛街342號",
+              "Tel": "04-25876642",
+              "Fax": "04-25870213",
+              "Nutritionist": "留碧敏",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "B064747",
+              "Email": "piminliu@msn.com",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1792116459006107",
+                  "KitchenId": 1470,
+                  "KitchenName": "臺中市東勢區新盛國小",
+                  "SchoolId": 64747,
+                  "SchoolCode": "064747",
+                  "SchoolName": "臺中市東勢區新盛國小",
+                  "MenuDate": "2026/10/21",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-16T02:07:39.000Z",
+                  "TypeGrains": "3.67",
+                  "TypeOil": "0.62",
+                  "TypeVegetable": "2.13",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "0.64",
+                  "Calorie": "319"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1792116459006107",
+                  "KitchenId": 1470,
+                  "KitchenName": "臺中市東勢區新盛國小",
+                  "SchoolId": 64747,
+                  "SchoolCode": "064747",
+                  "SchoolName": "臺中市東勢區新盛國小",
+                  "MenuDate": "2026/10/21",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-16T02:07:39.000Z",
+                  "TypeGrains": "3.67",
+                  "TypeOil": "0.62",
+                  "TypeVegetable": "2.13",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "0.64",
+                  "Calorie": "319"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792116459006109",
+                      "BatchDataId": "1792116459006107",
+                      "DishName": "什錦麵疙瘩",
+                      "DishType": "主食",
+                      "DishId": "1726216899007792",
+                      "UpdateDateTime": "2026-10-16T02:07:39.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 1470,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1470//1470_1726216899007792.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792545565019808",
+                          "BatchDataId": "1792116459006107",
+                          "DishId": "1726216899007792",
+                          "IngredientId": "1726622477046208",
+                          "IngredientName": "肉絲",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 4193694,
+                          "SupplierCompanyId": "27799719",
+                          "SupplierName": "芫儂食品股份有限公司",
+                          "ProductName": "上肉絲台優農立大",
+                          "Manufacturer": "立大",
+                          "IngredientQuantity": "6",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "010202"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-127799719-00000-0",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-127799719-00001-1",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "肉絲"
+                        },
+                        {
+                          "IngredientBatchId": "1792545565019810",
+                          "BatchDataId": "1792116459006107",
+                          "DishId": "1726216899007792",
+                          "IngredientId": "1726622477046209",
+                          "IngredientName": "大骨",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 4193694,
+                          "SupplierCompanyId": "27799719",
+                          "SupplierName": "芫儂食品股份有限公司",
+                          "ProductName": "正大骨台優農香里",
+                          "Manufacturer": "香里",
+                          "IngredientQuantity": "3",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "015202"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-127799719-00000-0",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-127799719-00001-1",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "大骨"
+                        },
+                        {
+                          "IngredientBatchId": "1792545565019807",
+                          "BatchDataId": "1792116459006107",
+                          "DishId": "1726216899007792",
+                          "IngredientId": "1726622477046210",
+                          "IngredientName": "高麗菜",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 4193694,
+                          "SupplierCompanyId": "27799719",
+                          "SupplierName": "芫儂食品股份有限公司",
+                          "ProductName": "履歷高麗菜",
+                          "Manufacturer": "員農-蔡暘威",
+                          "IngredientQuantity": "27",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "產銷履歷",
+                              "CertificationId": "00991510608374"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-127799719-00000-0",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-127799719-00001-1",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "甘藍"
+                        },
+                        {
+                          "IngredientBatchId": "1792545565019809",
+                          "BatchDataId": "1792116459006107",
+                          "DishId": "1726216899007792",
+                          "IngredientId": "1726622477046211",
+                          "IngredientName": "紅蘿蔔",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 4193694,
+                          "SupplierCompanyId": "27799719",
+                          "SupplierName": "芫儂食品股份有限公司",
+                          "ProductName": "紅蘿蔔去皮追溯",
+                          "Manufacturer": "蔡沛辰-新",
+                          "IngredientQuantity": "1",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "0401006003"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-127799719-00000-0",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-127799719-00001-1",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "胡蘿蔔"
+                        },
+                        {
+                          "IngredientBatchId": "1792545565019816",
+                          "BatchDataId": "1792116459006107",
+                          "DishId": "1726216899007792",
+                          "IngredientId": "1726622477046212",
+                          "IngredientName": "麵疙瘩",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 4193694,
+                          "SupplierCompanyId": "27799719",
+                          "SupplierName": "芫儂食品股份有限公司",
+                          "ProductName": "麵疙瘩",
+                          "Manufacturer": "上力",
+                          "IngredientQuantity": "48",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [],
+                          "IngredientSourceNameList": "",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-127799719-00000-0",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-127799719-00001-1",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "麵疙瘩(中式)"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792116459006112",
+                      "BatchDataId": "1792116459006107",
+                      "DishName": "烤雞腿",
+                      "DishType": "副菜",
+                      "DishId": "1694160632070039",
+                      "UpdateDateTime": "2026-10-16T02:07:39.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 1470,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1470//1470_1694160632070039.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792545565019811",
+                          "BatchDataId": "1792116459006107",
+                          "DishId": "1694160632070039",
+                          "IngredientId": "1694598182034685",
+                          "IngredientName": "雞腿",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 4193694,
+                          "SupplierCompanyId": "27799719",
+                          "SupplierName": "芫儂食品股份有限公司",
+                          "ProductName": "雞腿六台優農",
+                          "Manufacturer": "耀陞",
+                          "IngredientQuantity": "1",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣優良農產品(CAS)",
+                              "CertificationId": "019603"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-127799719-00000-0",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-127799719-00001-1",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "骨腿"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792116459006108",
+                      "BatchDataId": "1792116459006107",
+                      "DishName": "有機小白菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1598837131204640",
+                      "UpdateDateTime": "2026-10-16T02:07:39.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 1470,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1470//1470_1598837131204640.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792545565019812",
+                          "BatchDataId": "1792116459006107",
+                          "DishId": "1598837131204640",
+                          "IngredientId": "1661760986007000",
+                          "IngredientName": "小白菜",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 4193694,
+                          "SupplierCompanyId": "27799719",
+                          "SupplierName": "芫儂食品股份有限公司",
+                          "ProductName": "小白菜有機",
+                          "Manufacturer": "員農-邱松榮",
+                          "IngredientQuantity": "36",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣有機農產品",
+                              "CertificationId": "1-008-180306"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-127799719-00000-0",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-127799719-00001-1",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "小白菜"
+                        },
+                        {
+                          "IngredientBatchId": "1792545565019813",
+                          "BatchDataId": "1792116459006107",
+                          "DishId": "1598837131204640",
+                          "IngredientId": "1699590004081234",
+                          "IngredientName": "木耳",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 4193694,
+                          "SupplierCompanyId": "27799719",
+                          "SupplierName": "芫儂食品股份有限公司",
+                          "ProductName": "木耳朵追溯",
+                          "Manufacturer": "陳鏘謙(彥廷農場)",
+                          "IngredientQuantity": "1",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "溯源農糧產品",
+                              "CertificationId": "1301000274"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-127799719-00000-0",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-127799719-00001-1",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "木耳"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792116459006110",
+                      "BatchDataId": "1792116459006107",
+                      "DishName": "雜糧饅頭",
+                      "DishType": "湯品",
+                      "DishId": "1449458138169714",
+                      "UpdateDateTime": "2026-10-16T02:07:39.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 1470,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1470//1470_1449458138169714.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792545565019814",
+                          "BatchDataId": "1792116459006107",
+                          "DishId": "1449458138169714",
+                          "IngredientId": "1649209599008584",
+                          "IngredientName": "南瓜",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 4193694,
+                          "SupplierCompanyId": "27799719",
+                          "SupplierName": "芫儂食品股份有限公司",
+                          "ProductName": "南瓜雜糧小饅頭巧好",
+                          "Manufacturer": "桂冠",
+                          "IngredientQuantity": "1",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [],
+                          "IngredientSourceNameList": "",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-127799719-00000-0",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-127799719-00001-1",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "南瓜"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792116459006113",
+                      "BatchDataId": "1792116459006107",
+                      "DishName": "海苔片",
+                      "DishType": "附餐",
+                      "DishId": "1791429264075890",
+                      "UpdateDateTime": "2026-10-16T02:07:39.000Z",
+                      "DishOrder": 24,
+                      "KitchenId": 1470,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1470//1470_1791429264075890."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792545565019815",
+                          "BatchDataId": "1792116459006107",
+                          "DishId": "1791429264075890",
+                          "IngredientId": "1791429498010115",
+                          "IngredientName": "海苔",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 4193694,
+                          "SupplierCompanyId": "27799719",
+                          "SupplierName": "芫儂食品股份有限公司",
+                          "ProductName": "海苔片小束",
+                          "Manufacturer": "台暉食品",
+                          "IngredientQuantity": "1",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": [],
+                          "IngredientSourceNameList": "",
+                          "Certification": [
+                            {
+                              "SourceCertification": "",
+                              "CertificationId": ""
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [
+                            {
+                              "fdaCompanyId": "B-127799719-00000-0",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "公司/商業登記"
+                            },
+                            {
+                              "fdaCompanyId": "B-127799719-00001-1",
+                              "fdacompany_Name": "芫儂食品股份有限公司",
+                              "fdabusinessId": "27799719",
+                              "fdaaddress": "台中市西屯區廣福里廣福路272巷2號",
+                              "fdaregType": "販售場所"
+                            }
+                          ],
+                          "standardIngredientName": "紫菜"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792116459006111",
+                      "BatchDataId": "1792116459006107",
+                      "DishName": "調味料",
+                      "DishId": "40456",
+                      "UpdateDateTime": "2026-10-16T02:07:39.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 1470,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kitchen": {
+              "KitchenId": 41767,
+              "KitchenName": "芫儂食品股份有限公司",
+              "KitchenType": "005",
+              "Address": "台中市西屯區廣福路272巷2號",
+              "Tel": "04-27070265",
+              "Fax": "27070058",
+              "Nutritionist": "黃建銘",
+              "Chef": "胡斯雲",
+              "HACCP": "",
+              "Qualifier": "胡斯雲",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "27799719",
+              "Email": "yuannong1167@gmail.com",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": []
+            },
+            "details": []
+          }
+        ]
+      }
+    ]
+  }
+}

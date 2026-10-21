@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "太平區",
+    "level": "國小",
+    "name": "頭汴國小",
+    "fullName": "臺中市太平區頭汴國小",
+    "fatraceSchoolId": 64727
+  },
+  "mealDate": "2026-10-21",
+  "fetchedAt": "2026-10-21T09:37:05.548449+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=64727&period=2026-10-21",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 64727,
+        "SchoolName": "臺中市太平區頭汴國小",
+        "ConuntyId": 27,
+        "AreaId": 131476,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1459,
+          "KitchenName": "臺中市太平區頭汴國小",
+          "KitchenType": "006",
+          "Address": "臺中市太平區北田路20號",
+          "Tel": "04-22703129",
+          "Fax": "04-22783133",
+          "Nutritionist": "林彥孜",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "少油少糖",
+          "PicturePath": "-",
+          "CompanyId": "B064727",
+          "Email": "dabao@tbps.tc.edu.tw",
+          "offering": []
+        },
+        {
+          "KitchenId": 47595,
+          "KitchenName": "新濱食品有限公司",
+          "KitchenType": "005",
+          "Address": "臺中市烏日區九德里中華路229號1樓",
+          "Tel": "04-23379228",
+          "Fax": "04-23379228",
+          "Nutritionist": "詹鎭陽",
+          "Chef": "無",
+          "HACCP": "",
+          "Qualifier": "無",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "28778086",
+          "Email": "awww679@hotmail.com",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1459,
+              "KitchenName": "臺中市太平區頭汴國小",
+              "KitchenType": "006",
+              "Address": "臺中市太平區北田路20號",
+              "Tel": "04-22703129",
+              "Fax": "04-22783133",
+              "Nutritionist": "林彥孜",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "少油少糖",
+              "PicturePath": "-",
+              "CompanyId": "B064727",
+              "Email": "dabao@tbps.tc.edu.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1792375609031788",
+                  "KitchenId": 1459,
+                  "KitchenName": "臺中市太平區頭汴國小",
+                  "SchoolId": 64727,
+                  "SchoolCode": "064727",
+                  "SchoolName": "臺中市太平區頭汴國小",
+                  "MenuDate": "2026/10/21",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-19T02:06:50.000Z",
+                  "TypeGrains": "4.74",
+                  "TypeOil": "0.59",
+                  "TypeVegetable": "1.4",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2.51",
+                  "Calorie": "570"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1792375609031788",
+                  "KitchenId": 1459,
+                  "KitchenName": "臺中市太平區頭汴國小",
+                  "SchoolId": 64727,
+                  "SchoolCode": "064727",
+                  "SchoolName": "臺中市太平區頭汴國小",
+                  "MenuDate": "2026/10/21",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-19T02:06:50.000Z",
+                  "TypeGrains": "4.74",
+                  "TypeOil": "0.59",
+                  "TypeVegetable": "1.4",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2.51",
+                  "Calorie": "570"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792375609031790",
+                      "BatchDataId": "1792375609031788",
+                      "DishName": "白米飯",
+                      "DishType": "主食",
+                      "DishId": "1634001257091959",
+                      "UpdateDateTime": "2026-10-19T02:06:50.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 1459,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1459//1459_1634001257091959."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": [
+                        {
+                          "IngredientBatchId": "1792375718039522",
+                          "BatchDataId": "1792375609031788",
+                          "DishId": "1634001257091959",
+                          "IngredientId": "1663718310078430",
+                          "IngredientName": "白米",
+                          "StockDate": "2026-10-20T16:00:00.000Z",
+                          "ManufactureDate": null,
+                          "ExpirationDate": null,
+                          "LotNumber": "",
+                          "Brand": "",
+                          "Origin": "",
+                          "menuId": null,
+                          "SupplierId": 2058115,
+                          "SupplierCompanyId": "60009005",
+                          "SupplierName": "農業部農糧署中區分署",
+                          "ProductName": "白米",
+                          "Manufacturer": "臺中市霧峰區農會",
+                          "IngredientQuantity": "8",
+                          "IngredientUnit": "KG",
+                          "IngredientAttr": 0,
+                          "IngredientSource": {
+                            "id": 0,
+                            "countryId": 1,
+                            "name": "臺灣"
+                          },
+                          "IngredientSourceNameList": "臺灣",
+                          "Certification": [
+                            {
+                              "SourceCertification": "臺灣有機農產品",
+                              "CertificationId": "1-006-301693"
+                            }
+                          ],
+                          "TypeGrains": "",
+                          "TypeOil": "",
+                          "TypeVegetable": "",
+                          "TypeMilk": "",
+                          "TypeFruit": "",
+                          "TypeMeatBeans": "",
+                          "Calorie": "",
+                          "fdaCompanyId": null,
+                          "fdacompany_Name": null,
+                          "fdabusinessId": null,
+                          "fdaaddress": null,
+                          "fdaregType": null,
+                          "fdaInfo": [],
+                          "standardIngredientName": "白米"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792375609031795",
+                      "BatchDataId": "1792375609031788",
+                      "DishName": "東坡豆腐",
+                      "DishType": "主菜",
+                      "DishId": "1572583916394723",
+                      "UpdateDateTime": "2026-10-19T02:06:50.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 1459,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1459//1459_1572583916394723."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792375609031793",
+                      "BatchDataId": "1792375609031788",
+                      "DishName": "番茄炒蛋",
+                      "DishType": "副菜",
+                      "DishId": "51172",
+                      "UpdateDateTime": "2026-10-19T02:06:50.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 1459,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1459//1459_51172."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792375609031789",
+                      "BatchDataId": "1792375609031788",
+                      "DishName": "鵝白菜",
+                      "DishType": "蔬菜",
+                      "DishId": "53877",
+                      "UpdateDateTime": "2026-10-19T02:06:50.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 1459,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1459//1459_53877."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792375609031791",
+                      "BatchDataId": "1792375609031788",
+                      "DishName": "綠豆薏仁湯",
+                      "DishType": "湯品",
+                      "DishId": "60434",
+                      "UpdateDateTime": "2026-10-19T02:06:50.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 1459,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1459//1459_60434."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792375609031794",
+                      "BatchDataId": "1792375609031788",
+                      "DishName": "堅果",
+                      "DishType": "附餐",
+                      "DishId": "1725426571041712",
+                      "UpdateDateTime": "2026-10-19T02:06:50.000Z",
+                      "DishOrder": 24,
+                      "KitchenId": 1459,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1459//1459_1725426571041712."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792375609031792",
+                      "BatchDataId": "1792375609031788",
+                      "DishName": "調味料",
+                      "DishId": "36946",
+                      "UpdateDateTime": "2026-10-19T02:06:50.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 1459,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kitchen": {
+              "KitchenId": 47595,
+              "KitchenName": "新濱食品有限公司",
+              "KitchenType": "005",
+              "Address": "臺中市烏日區九德里中華路229號1樓",
+              "Tel": "04-23379228",
+              "Fax": "04-23379228",
+              "Nutritionist": "詹鎭陽",
+              "Chef": "無",
+              "HACCP": "",
+              "Qualifier": "無",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "28778086",
+              "Email": "awww679@hotmail.com",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": []
+            },
+            "details": []
+          }
+        ]
+      }
+    ]
+  }
+}

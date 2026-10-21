@@ -1,0 +1,334 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "清水區",
+    "level": "國小",
+    "name": "清水國小",
+    "fullName": "臺中市清水區清水國小",
+    "fatraceSchoolId": 64652
+  },
+  "mealDate": "2026-10-21",
+  "fetchedAt": "2026-10-21T10:27:41.675570+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=64652&period=2026-10-21",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 64652,
+        "SchoolName": "臺中市清水區清水國小",
+        "ConuntyId": 27,
+        "AreaId": 131493,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1402,
+          "KitchenName": "臺中市清水區清水國小",
+          "KitchenType": "006",
+          "Address": "臺中市清水區光華路125號",
+          "Tel": "04-26222004",
+          "Fax": "04-26228699",
+          "Nutritionist": "朱倖槿",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "B064652",
+          "Email": "hsingchin621@gmail.com",
+          "offering": []
+        },
+        {
+          "KitchenId": 41767,
+          "KitchenName": "芫儂食品股份有限公司",
+          "KitchenType": "005",
+          "Address": "台中市西屯區廣福路272巷2號",
+          "Tel": "04-27070265",
+          "Fax": "27070058",
+          "Nutritionist": "黃建銘",
+          "Chef": "胡斯雲",
+          "HACCP": "",
+          "Qualifier": "胡斯雲",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "27799719",
+          "Email": "yuannong1167@gmail.com",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1402,
+              "KitchenName": "臺中市清水區清水國小",
+              "KitchenType": "006",
+              "Address": "臺中市清水區光華路125號",
+              "Tel": "04-26222004",
+              "Fax": "04-26228699",
+              "Nutritionist": "朱倖槿",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "B064652",
+              "Email": "hsingchin621@gmail.com",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1792136157001495",
+                  "KitchenId": 1402,
+                  "KitchenName": "臺中市清水區清水國小",
+                  "SchoolId": 64652,
+                  "SchoolCode": "064652",
+                  "SchoolName": "臺中市清水區清水國小",
+                  "MenuDate": "2026/10/21",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-16T07:35:57.000Z",
+                  "TypeGrains": "1.98",
+                  "TypeOil": "0.05",
+                  "TypeVegetable": "1.71",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "0.35",
+                  "Calorie": "201"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1792136157001495",
+                  "KitchenId": 1402,
+                  "KitchenName": "臺中市清水區清水國小",
+                  "SchoolId": 64652,
+                  "SchoolCode": "064652",
+                  "SchoolName": "臺中市清水區清水國小",
+                  "MenuDate": "2026/10/21",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-16T07:35:57.000Z",
+                  "TypeGrains": "1.98",
+                  "TypeOil": "0.05",
+                  "TypeVegetable": "1.71",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "0.35",
+                  "Calorie": "201"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792136157001497",
+                      "BatchDataId": "1792136157001495",
+                      "DishName": "散壽司",
+                      "DishType": "主食",
+                      "DishId": "1605498017188390",
+                      "UpdateDateTime": "2026-10-16T07:35:57.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 1402,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1402//1402_1605498017188390."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792136157001499",
+                      "BatchDataId": "1792136157001495",
+                      "DishName": "散壽司(素)",
+                      "DishType": "主食",
+                      "DishId": "1746846252027139",
+                      "UpdateDateTime": "2026-10-16T07:35:57.000Z",
+                      "DishOrder": 11,
+                      "KitchenId": 1402,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1402//1402_1746846252027139.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792136157001503",
+                      "BatchDataId": "1792136157001495",
+                      "DishName": "梅子珍雞",
+                      "DishType": "主菜",
+                      "DishId": "1593390735204492",
+                      "UpdateDateTime": "2026-10-16T07:35:57.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 1402,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1402//1402_1593390735204492."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792136157001501",
+                      "BatchDataId": "1792136157001495",
+                      "DishName": "梅子百頁豆腐(素)",
+                      "DishType": "主菜",
+                      "DishId": "1792136157001494",
+                      "UpdateDateTime": "2026-10-16T07:35:57.000Z",
+                      "DishOrder": 13,
+                      "KitchenId": 1402,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1402//1402_1792136157001494."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792136157001502",
+                      "BatchDataId": "1792136157001495",
+                      "DishName": "番茄炒蛋(素)",
+                      "DishType": "副菜",
+                      "DishId": "1730684071054595",
+                      "UpdateDateTime": "2026-10-16T07:35:57.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 1402,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1402//1402_1730684071054595.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792136157001496",
+                      "BatchDataId": "1792136157001495",
+                      "DishName": "蒜香空心菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1535504668211637",
+                      "UpdateDateTime": "2026-10-16T07:35:57.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 1402,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1402//1402_1535504668211637."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792136157001498",
+                      "BatchDataId": "1792136157001495",
+                      "DishName": "蕃茄元氣湯",
+                      "DishType": "湯品",
+                      "DishId": "55062",
+                      "UpdateDateTime": "2026-10-16T07:35:57.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 1402,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1402//1402_55062."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792136157001500",
+                      "BatchDataId": "1792136157001495",
+                      "DishName": "調味料",
+                      "DishId": "44342",
+                      "UpdateDateTime": "2026-10-16T07:35:57.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 1402,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kitchen": {
+              "KitchenId": 41767,
+              "KitchenName": "芫儂食品股份有限公司",
+              "KitchenType": "005",
+              "Address": "台中市西屯區廣福路272巷2號",
+              "Tel": "04-27070265",
+              "Fax": "27070058",
+              "Nutritionist": "黃建銘",
+              "Chef": "胡斯雲",
+              "HACCP": "",
+              "Qualifier": "胡斯雲",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "27799719",
+              "Email": "yuannong1167@gmail.com",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": []
+            },
+            "details": []
+          }
+        ]
+      }
+    ]
+  }
+}
