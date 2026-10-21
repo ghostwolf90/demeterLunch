@@ -62,22 +62,22 @@ class UpdateSchoolMealsTests(unittest.TestCase):
         self.assertEqual(fetch[fetch.index("--school") + 1], "信義國小")
         self.assertNotIn("--district", fetch)
 
-    def test_citywide_wrapper_enables_full_build_by_default(self) -> None:
+    def test_citywide_wrapper_defaults_to_auto_retry_workflow(self) -> None:
         with patch.object(
             update_all_taichung_schools,
-            "update_school_meals",
+            "run_cloud_school_meals",
             return_value=0,
-        ) as update:
+        ) as run_cloud:
             status = update_all_taichung_schools.main(
                 ["--date", "2026-10-12", "--skip-ingredients"]
             )
 
         self.assertEqual(status, 0)
         self.assertEqual(
-            update.call_args.args[0],
+            run_cloud.call_args.args[0],
             [
-                "--all-schools",
-                "--verify-and-build",
+                "--mode",
+                "retry",
                 "--date",
                 "2026-10-12",
                 "--skip-ingredients",
@@ -87,34 +87,45 @@ class UpdateSchoolMealsTests(unittest.TestCase):
     def test_citywide_wrapper_can_publish_after_success(self) -> None:
         with patch.object(
             update_all_taichung_schools,
-            "update_school_meals",
+            "run_cloud_school_meals",
             return_value=0,
-        ), patch.object(
-            update_all_taichung_schools,
-            "publish_school_meals",
-            return_value=0,
-        ) as publish:
+        ) as run_cloud:
             status = update_all_taichung_schools.main(
                 ["--date", "2026-10-13", "--publish"]
             )
 
         self.assertEqual(status, 0)
-        publish.assert_called_once_with(["--date", "2026-10-13"])
+        self.assertEqual(
+            run_cloud.call_args.args[0],
+            [
+                "--mode",
+                "retry",
+                "--date",
+                "2026-10-13",
+                "--publish",
+            ],
+        )
 
-    def test_retry_failed_forwards_without_another_scope_filter(self) -> None:
+    def test_refresh_all_forces_a_new_citywide_main_batch(self) -> None:
         with patch.object(
             update_all_taichung_schools,
-            "update_school_meals",
+            "run_cloud_school_meals",
             return_value=0,
-        ) as update:
+        ) as run_cloud:
             status = update_all_taichung_schools.main(
-                ["--date", "2026-10-15", "--retry-failed"]
+                ["--date", "2026-10-15", "--refresh-all", "--publish"]
             )
 
         self.assertEqual(status, 0)
         self.assertEqual(
-            update.call_args.args[0],
-            ["--verify-and-build", "--date", "2026-10-15", "--retry-failed"],
+            run_cloud.call_args.args[0],
+            [
+                "--mode",
+                "main",
+                "--date",
+                "2026-10-15",
+                "--publish",
+            ],
         )
 
     def test_retry_failed_reaches_fetcher_without_district_filter(self) -> None:

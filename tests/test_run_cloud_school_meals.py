@@ -68,6 +68,33 @@ class RunCloudSchoolMealsTests(unittest.TestCase):
         self.assertEqual(status, 0)
         run.assert_not_called()
 
+    def test_main_publishes_completed_schools_and_leaves_incomplete_for_retry(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._write_report(
+                root,
+                ["available", "no_meal", "failed", "not_published"],
+            )
+            with patch.object(run_cloud_school_meals, "PROJECT_ROOT", root), patch.object(
+                run_cloud_school_meals,
+                "_run",
+                side_effect=[2, 0, 0, 0, 0, 0, 0],
+            ) as run:
+                status = run_cloud_school_meals.main(
+                    ["--mode", "main", "--date", "2026-10-15", "--publish"]
+                )
+
+        self.assertEqual(status, 2)
+        publish = run.call_args_list[-1].args[0]
+        selected = [
+            publish[index + 1]
+            for index, value in enumerate(publish)
+            if value == "--school-id"
+        ]
+        self.assertEqual(selected, ["1000", "1001"])
+        self.assertNotIn("1002", selected)
+        self.assertNotIn("1003", selected)
+
     def test_archives_each_fetch_report(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
