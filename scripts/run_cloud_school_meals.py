@@ -77,6 +77,48 @@ def _chunks(values: list[int], size: int) -> list[list[int]]:
     return [values[index : index + size] for index in range(0, len(values), size)]
 
 
+def _print_chinese_summary(
+    *,
+    meal_date: date,
+    mode: str,
+    report: dict[str, Any] | None,
+    publish_requested: bool,
+    published_schools: int,
+    checked_schools: int,
+    outcome: str,
+    detail: str,
+) -> None:
+    results = report.get("results", []) if isinstance(report, dict) else []
+    counts = {
+        status: sum(
+            isinstance(item, dict) and item.get("recordStatus") == status
+            for item in results
+        )
+        for status in ("available", "no_meal", "not_published", "failed")
+    }
+    retry_count = counts["not_published"] + counts["failed"]
+    mode_label = "全市首輪" if mode == "main" else "補抓未完成學校"
+    if publish_requested and checked_schools == 0:
+        publish_label = "本次無需發布"
+    elif publish_requested:
+        publish_label = f"已發布 {published_schools} 校"
+    else:
+        publish_label = "未要求發布（僅完成收集、校讀與建置）"
+    print("\n＝＝＝＝＝ 午餐資料更新總結 ＝＝＝＝＝")
+    print(f"供餐日期：{meal_date.isoformat()}")
+    print(f"執行模式：{mode_label}")
+    print(f"本次檢查：{checked_schools} 校")
+    print(f"取得午餐資料：{counts['available']} 校")
+    print(f"官方註記無供餐：{counts['no_meal']} 校")
+    print(f"尚未發布資料：{counts['not_published']} 校")
+    print(f"抓取失敗：{counts['failed']} 校")
+    print(f"發布狀態：{publish_label}")
+    print(f"下次待重試：{retry_count} 校")
+    print(f"最終狀態：{outcome}")
+    print(f"說明：{detail}")
+    print("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝")
+
+
 def _fetch_command(
     meal_date: date,
     *,
@@ -126,6 +168,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--publish-chunk-size 必須介於 1 與 100")
 
     retry_ids: list[int] | None = None
+    previous: dict[str, Any] | None = None
     if args.mode == "retry":
         try:
             previous = _load_report(args.date)
@@ -136,6 +179,16 @@ def main(argv: list[str] | None = None) -> int:
             retry_ids = _school_ids_with_status(previous, INCOMPLETE_STATUSES)
             if not retry_ids:
                 print("當日沒有 failed 或 not_published 學校，不發出來源請求。")
+                _print_chinese_summary(
+                    meal_date=args.date,
+                    mode=args.mode,
+                    report=previous,
+                    publish_requested=args.publish,
+                    published_schools=0,
+                    checked_schools=0,
+                    outcome="已完成",
+                    detail="既有報告沒有待補抓學校，本次未發出來源請求。",
+                )
                 return 0
             print(f"補抓學校數：{len(retry_ids)}", flush=True)
 
@@ -150,6 +203,16 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     if fetch_status not in (0, 2):
+        _print_chinese_summary(
+            meal_date=args.date,
+            mode=args.mode,
+            report=previous,
+            publish_requested=args.publish,
+            published_schools=0,
+            checked_schools=len(retry_ids or []),
+            outcome="執行失敗",
+            detail=f"資料抓取程序異常結束，回傳代碼 {fetch_status}。",
+        )
         return fetch_status
 
     try:
@@ -157,12 +220,32 @@ def main(argv: list[str] | None = None) -> int:
         archive = _archive_report(args.date, args.mode)
         publishable_ids = _school_ids_with_status(report, PUBLISHABLE_STATUSES)
         incomplete_ids = _school_ids_with_status(report, INCOMPLETE_STATUSES)
-    except RuntimeError as exc:
-        parser.error(str(exc))
+    except (OSError, RuntimeError) as exc:
+        _print_chinese_summary(
+            meal_date=args.date,
+            mode=args.mode,
+            report=None,
+            publish_requested=args.publish,
+            published_schools=0,
+            checked_schools=len(retry_ids or []),
+            outcome="執行失敗",
+            detail=str(exc),
+        )
+        return 2
     print(f"抓取報告已備份：{archive.relative_to(PROJECT_ROOT)}")
 
     if not publishable_ids:
         print("官方尚無可發佈紀錄；既有 reviewed JSON、SQLite 與 Site 保持不變。")
+        _print_chinese_summary(
+            meal_date=args.date,
+            mode=args.mode,
+            report=report,
+            publish_requested=args.publish,
+            published_schools=0,
+            checked_schools=len(report["results"]),
+            outcome="等待資料",
+            detail="本次沒有可發布紀錄；尚未發布與失敗學校已保留，供下次重試。",
+        )
         return 2
 
     commands = [
@@ -175,8 +258,19 @@ def main(argv: list[str] | None = None) -> int:
     for command in commands:
         status = _run(command)
         if status != 0:
+            _print_chinese_summary(
+                meal_date=args.date,
+                mode=args.mode,
+                report=report,
+                publish_requested=args.publish,
+                published_schools=0,
+                checked_schools=len(report["results"]),
+                outcome="驗證或建置失敗",
+                detail=f"指令 {' '.join(command)} 回傳代碼 {status}，尚未發布。",
+            )
             return status
 
+    published_schools = 0
     if args.publish:
         for school_chunk in _chunks(publishable_ids, args.publish_chunk_size):
             command = [
@@ -189,7 +283,18 @@ def main(argv: list[str] | None = None) -> int:
                 command.extend(["--school-id", str(school_id)])
             status = _run(command)
             if status != 0:
+                _print_chinese_summary(
+                    meal_date=args.date,
+                    mode=args.mode,
+                    report=report,
+                    publish_requested=True,
+                    published_schools=published_schools,
+                    checked_schools=len(report["results"]),
+                    outcome="部分發布後中斷" if published_schools else "發布失敗",
+                    detail=f"發布程序回傳代碼 {status}；未完成學校仍保留供下次重試。",
+                )
                 return status
+            published_schools += len(school_chunk)
 
     print(
         json.dumps(
@@ -204,6 +309,22 @@ def main(argv: list[str] | None = None) -> int:
             ensure_ascii=False,
             indent=2,
         )
+    )
+    if incomplete_ids:
+        outcome = "部分完成"
+        detail = "可用資料已處理；尚未發布與失敗學校已保留，下一次執行同一指令會自動補抓。"
+    else:
+        outcome = "全部完成"
+        detail = "本批次沒有待補抓學校。"
+    _print_chinese_summary(
+        meal_date=args.date,
+        mode=args.mode,
+        report=report,
+        publish_requested=args.publish,
+        published_schools=published_schools,
+        checked_schools=len(report["results"]),
+        outcome=outcome,
+        detail=detail,
     )
     return 2 if incomplete_ids else 0
 

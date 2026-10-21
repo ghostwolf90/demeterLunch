@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import io
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from datetime import date
 from pathlib import Path
 from unittest.mock import patch
@@ -61,12 +63,17 @@ class RunCloudSchoolMealsTests(unittest.TestCase):
             with patch.object(run_cloud_school_meals, "PROJECT_ROOT", root), patch.object(
                 run_cloud_school_meals, "_run"
             ) as run:
-                status = run_cloud_school_meals.main(
-                    ["--mode", "retry", "--date", "2026-10-15"]
-                )
+                output = io.StringIO()
+                with redirect_stdout(output):
+                    status = run_cloud_school_meals.main(
+                        ["--mode", "retry", "--date", "2026-10-15", "--publish"]
+                    )
 
         self.assertEqual(status, 0)
         run.assert_not_called()
+        summary = output.getvalue()
+        self.assertIn("最終狀態：已完成", summary)
+        self.assertIn("發布狀態：本次無需發布", summary)
 
     def test_main_publishes_completed_schools_and_leaves_incomplete_for_retry(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -80,9 +87,11 @@ class RunCloudSchoolMealsTests(unittest.TestCase):
                 "_run",
                 side_effect=[2, 0, 0, 0, 0, 0, 0],
             ) as run:
-                status = run_cloud_school_meals.main(
-                    ["--mode", "main", "--date", "2026-10-15", "--publish"]
-                )
+                output = io.StringIO()
+                with redirect_stdout(output):
+                    status = run_cloud_school_meals.main(
+                        ["--mode", "main", "--date", "2026-10-15", "--publish"]
+                    )
 
         self.assertEqual(status, 2)
         publish = run.call_args_list[-1].args[0]
@@ -94,6 +103,26 @@ class RunCloudSchoolMealsTests(unittest.TestCase):
         self.assertEqual(selected, ["1000", "1001"])
         self.assertNotIn("1002", selected)
         self.assertNotIn("1003", selected)
+        summary = output.getvalue()
+        self.assertIn("午餐資料更新總結", summary)
+        self.assertIn("已發布 2 校", summary)
+        self.assertIn("下次待重試：2 校", summary)
+        self.assertIn("最終狀態：部分完成", summary)
+
+    def test_fetch_failure_still_ends_with_chinese_summary(self) -> None:
+        output = io.StringIO()
+        with patch.object(run_cloud_school_meals, "_run", return_value=1), redirect_stdout(
+            output
+        ):
+            status = run_cloud_school_meals.main(
+                ["--mode", "main", "--date", "2026-10-15", "--publish"]
+            )
+
+        self.assertEqual(status, 1)
+        summary = output.getvalue()
+        self.assertIn("午餐資料更新總結", summary)
+        self.assertIn("最終狀態：執行失敗", summary)
+        self.assertTrue(summary.rstrip().endswith("＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝"))
 
     def test_archives_each_fetch_report(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

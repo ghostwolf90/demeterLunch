@@ -109,7 +109,10 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('id="openDetail"', index_html)
         self.assertIn('id="mainDishButton"', index_html)
         self.assertIn('id="dishDetailDialog"', index_html)
-        self.assertIn("<title>好好吃飯</title>", index_html)
+        self.assertIn(
+            "<title>臺中國小營養午餐查詢、每日菜單與晚餐搭配｜好好吃飯</title>",
+            index_html,
+        )
         self.assertNotIn("document.title =", app_js)
         self.assertNotIn('id="recipeSourceDetails"', index_html)
 
