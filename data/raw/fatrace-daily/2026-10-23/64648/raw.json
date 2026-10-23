@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "新社區",
+    "level": "國小",
+    "name": "協成國小",
+    "fullName": "臺中市新社區協成國小",
+    "fatraceSchoolId": 64648
+  },
+  "mealDate": "2026-10-23",
+  "fetchedAt": "2026-10-23T10:29:28.836177+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=64648&period=2026-10-23",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 64648,
+        "SchoolName": "臺中市新社區協成國小",
+        "ConuntyId": 27,
+        "AreaId": 131485,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1440,
+          "KitchenName": "臺中市新社區協成國小",
+          "KitchenType": "006",
+          "Address": "臺中市新社區協成里興義街219號",
+          "Tel": "04-25813437",
+          "Fax": "04-25823466",
+          "Nutritionist": "張育菁",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "B064648",
+          "Email": "daffy218@gmail.com",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1440,
+              "KitchenName": "臺中市新社區協成國小",
+              "KitchenType": "006",
+              "Address": "臺中市新社區協成里興義街219號",
+              "Tel": "04-25813437",
+              "Fax": "04-25823466",
+              "Nutritionist": "張育菁",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "B064648",
+              "Email": "daffy218@gmail.com",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1792388874003237",
+                  "KitchenId": 1440,
+                  "KitchenName": "臺中市新社區協成國小",
+                  "SchoolId": 64648,
+                  "SchoolCode": "064648",
+                  "SchoolName": "臺中市新社區協成國小",
+                  "MenuDate": "2026/10/23",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-21T01:46:50.000Z",
+                  "TypeGrains": "6.83",
+                  "TypeOil": "0.12",
+                  "TypeVegetable": "1.81",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0.41",
+                  "TypeMeatBeans": "2.5",
+                  "Calorie": "745"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1792388874003237",
+                  "KitchenId": 1440,
+                  "KitchenName": "臺中市新社區協成國小",
+                  "SchoolId": 64648,
+                  "SchoolCode": "064648",
+                  "SchoolName": "臺中市新社區協成國小",
+                  "MenuDate": "2026/10/23",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-21T01:46:50.000Z",
+                  "TypeGrains": "6.83",
+                  "TypeOil": "0.12",
+                  "TypeVegetable": "1.81",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0.41",
+                  "TypeMeatBeans": "2.5",
+                  "Calorie": "745"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792547210029516",
+                      "BatchDataId": "1792388874003237",
+                      "DishName": "麥片飯",
+                      "DishType": "主食",
+                      "DishId": "46001",
+                      "UpdateDateTime": "2026-10-21T01:46:51.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 1440,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1440//1440_46001.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792547210029522",
+                      "BatchDataId": "1792388874003237",
+                      "DishName": "東坡豆腐",
+                      "DishType": "主菜",
+                      "DishId": "1541741388174334",
+                      "UpdateDateTime": "2026-10-21T01:46:51.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 1440,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1440//1440_1541741388174334."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792547210029520",
+                      "BatchDataId": "1792388874003237",
+                      "DishName": "紅蘿蔔炒蛋",
+                      "DishType": "副菜",
+                      "DishId": "45987",
+                      "UpdateDateTime": "2026-10-21T01:46:51.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 1440,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1440//1440_45987."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792547210029515",
+                      "BatchDataId": "1792388874003237",
+                      "DishName": "有機蔬菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1446001755214778",
+                      "UpdateDateTime": "2026-10-21T01:46:51.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 1440,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1440//1440_1446001755214778.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792547210029517",
+                      "BatchDataId": "1792388874003237",
+                      "DishName": "綠豆黃小米露",
+                      "DishType": "湯品",
+                      "DishId": "1578628577318466",
+                      "UpdateDateTime": "2026-10-21T01:46:51.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 1440,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1440//1440_1578628577318466.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792547210029521",
+                      "BatchDataId": "1792388874003237",
+                      "DishName": "海苔",
+                      "DishType": "附餐",
+                      "DishId": "1790135673006135",
+                      "UpdateDateTime": "2026-10-21T01:46:51.000Z",
+                      "DishOrder": 24,
+                      "KitchenId": 1440,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1440//1440_1790135673006135."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792547210029518",
+                      "BatchDataId": "1792388874003237",
+                      "DishName": "葡萄",
+                      "DishType": "附餐",
+                      "DishId": "54418",
+                      "UpdateDateTime": "2026-10-21T01:46:51.000Z",
+                      "DishOrder": 25,
+                      "KitchenId": 1440,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1440//1440_54418."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792547210029519",
+                      "BatchDataId": "1792388874003237",
+                      "DishName": "調味料",
+                      "DishId": "45991",
+                      "UpdateDateTime": "2026-10-21T01:46:51.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 1440,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

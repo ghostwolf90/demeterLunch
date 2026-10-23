@@ -50,11 +50,12 @@ export async function GET(request: Request) {
 
   try {
     const db = accountDatabase();
-    const accountPreferences = await db
+    const [accountPreferences, child] = await Promise.all([
+      db
       .prepare("SELECT default_school_id FROM parent_accounts WHERE auth_user_id = ? LIMIT 1")
       .bind(user.id)
-      .first<AccountPreferenceRow>();
-    const child = await db
+      .first<AccountPreferenceRow>(),
+      db
       .prepare(
         `SELECT id, nickname, grade_group, school_id, created_at, updated_at
          FROM child_profiles
@@ -63,7 +64,8 @@ export async function GET(request: Request) {
          LIMIT 1`,
       )
       .bind(user.id)
-      .first<ChildRow>();
+      .first<ChildRow>(),
+    ]);
     const [encounters, encounterCount] = child
       ? await Promise.all([
           db

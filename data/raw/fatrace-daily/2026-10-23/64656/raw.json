@@ -1,0 +1,430 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "清水區",
+    "level": "國小",
+    "name": "三田國小",
+    "fullName": "臺中市清水區三田國小",
+    "fatraceSchoolId": 64656
+  },
+  "mealDate": "2026-10-23",
+  "fetchedAt": "2026-10-23T10:47:45.451584+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=64656&period=2026-10-23",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 64656,
+        "SchoolName": "臺中市清水區三田國小",
+        "ConuntyId": 27,
+        "AreaId": 131493,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1401,
+          "KitchenName": "臺中市清水區清海國中",
+          "KitchenType": "007",
+          "Address": "臺中市清水區中央路51-60號",
+          "Tel": "04-2627-1902轉282",
+          "Fax": "04-2627-4329",
+          "Nutritionist": "陳竫萍",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "吃得營養才會頭好壯壯唷!",
+          "PicturePath": "-",
+          "CompanyId": "B064540",
+          "Email": "ht10819@chjh.tc.edu.tw",
+          "offering": []
+        },
+        {
+          "KitchenId": 2834,
+          "KitchenName": "臺中市清水區三田國小",
+          "KitchenType": "007",
+          "Address": "臺中市清水區三田路4號",
+          "Tel": "04-26262400",
+          "Fax": "04-26274633",
+          "Nutritionist": "陳玟馨",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "qualifier",
+          "Insurement": "insurement",
+          "PicturePath": "-",
+          "CompanyId": "B064656",
+          "Email": "s00012@stps.tc.edu.tw",
+          "offering": []
+        },
+        {
+          "KitchenId": 32148,
+          "KitchenName": "飪珍記食品股份有限公司(清海國中)",
+          "KitchenType": "005",
+          "Address": "臺中市太平區永平路2段476巷16號",
+          "Tel": "0910587307",
+          "Fax": "27070058",
+          "Nutritionist": "蔡岱均",
+          "Chef": "施含宜",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "29127077",
+          "Email": "dietitian20210709@gmail.com",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1401,
+              "KitchenName": "臺中市清水區清海國中",
+              "KitchenType": "007",
+              "Address": "臺中市清水區中央路51-60號",
+              "Tel": "04-2627-1902轉282",
+              "Fax": "04-2627-4329",
+              "Nutritionist": "陳竫萍",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "吃得營養才會頭好壯壯唷!",
+              "PicturePath": "-",
+              "CompanyId": "B064540",
+              "Email": "ht10819@chjh.tc.edu.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": []
+            },
+            "details": []
+          },
+          {
+            "kitchen": {
+              "KitchenId": 2834,
+              "KitchenName": "臺中市清水區三田國小",
+              "KitchenType": "007",
+              "Address": "臺中市清水區三田路4號",
+              "Tel": "04-26262400",
+              "Fax": "04-26274633",
+              "Nutritionist": "陳玟馨",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "qualifier",
+              "Insurement": "insurement",
+              "PicturePath": "-",
+              "CompanyId": "B064656",
+              "Email": "s00012@stps.tc.edu.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": []
+            },
+            "details": []
+          },
+          {
+            "kitchen": {
+              "KitchenId": 32148,
+              "KitchenName": "飪珍記食品股份有限公司(清海國中)",
+              "KitchenType": "005",
+              "Address": "臺中市太平區永平路2段476巷16號",
+              "Tel": "0910587307",
+              "Fax": "27070058",
+              "Nutritionist": "蔡岱均",
+              "Chef": "施含宜",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "29127077",
+              "Email": "dietitian20210709@gmail.com",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1792114556083079",
+                  "KitchenId": 32148,
+                  "KitchenName": "飪珍記食品股份有限公司(清海國中)",
+                  "SchoolId": 64656,
+                  "SchoolCode": "064656",
+                  "SchoolName": "臺中市清水區三田國小",
+                  "MenuDate": "2026/10/23",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-16T01:35:57.000Z",
+                  "TypeGrains": "0.05",
+                  "TypeOil": "0.01",
+                  "TypeVegetable": "2.75",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "3.94",
+                  "Calorie": "316"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1792114556083079",
+                  "KitchenId": 32148,
+                  "KitchenName": "飪珍記食品股份有限公司(清海國中)",
+                  "SchoolId": 64656,
+                  "SchoolCode": "064656",
+                  "SchoolName": "臺中市清水區三田國小",
+                  "MenuDate": "2026/10/23",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-16T01:35:57.000Z",
+                  "TypeGrains": "0.05",
+                  "TypeOil": "0.01",
+                  "TypeVegetable": "2.75",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "3.94",
+                  "Calorie": "316"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083081",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "白米飯",
+                      "DishType": "主食",
+                      "DishId": "14724489883262621",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 32148,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/32148//32148_14724489883262621."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083090",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "糖醋豆干",
+                      "DishType": "主菜",
+                      "DishId": "1792114556094248",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 32148,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/32148//32148_1792114556094248."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083084",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "糖醋豆干(素)",
+                      "DishType": "主菜",
+                      "DishId": "1792114556094249",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 13,
+                      "KitchenId": 32148,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/32148//32148_1792114556094249."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083085",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "芙蓉蛋",
+                      "DishType": "副菜",
+                      "DishId": "14724489882355581",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 32148,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/32148//32148_14724489882355581."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083086",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "芙蓉蛋(素)",
+                      "DishType": "副菜",
+                      "DishId": "1792114556094250",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 17,
+                      "KitchenId": 32148,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/32148//32148_1792114556094250."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083088",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "薑絲蚵白菜(素)",
+                      "DishType": "副菜",
+                      "DishId": "1662103057055952",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 18,
+                      "KitchenId": 32148,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/32148//32148_1662103057055952."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083089",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "滷冬瓜(素)",
+                      "DishType": "副菜",
+                      "DishId": "1653375841057112",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 19,
+                      "KitchenId": 32148,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/32148//32148_1653375841057112."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083087",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "絲瓜豆腐湯(素)",
+                      "DishType": "副菜",
+                      "DishId": "1630681205297178",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 20,
+                      "KitchenId": 32148,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/32148//32148_1630681205297178."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083080",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "蒜香蚵白菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1535621083273891",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 32148,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/32148//32148_1535621083273891."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083082",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "絲瓜豆腐湯",
+                      "DishType": "湯品",
+                      "DishId": "1630681205297179",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 32148,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/32148//32148_1630681205297179."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792114556083083",
+                      "BatchDataId": "1792114556083079",
+                      "DishName": "調味料",
+                      "DishId": "1535621083273901",
+                      "UpdateDateTime": "2026-10-16T01:35:57.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 32148,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

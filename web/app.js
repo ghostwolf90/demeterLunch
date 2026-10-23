@@ -100,7 +100,7 @@ const reactionLabels = {
 };
 
 const ids = [
-  "dashboard", "syncStatus", "syncStatusText", "todayLabel", "mealMoment", "heroDish", "introNote", "mainDish", "mealList",
+  "accountLoadingStatus", "dashboard", "syncStatus", "syncStatusText", "todayLabel", "mealMoment", "heroDish", "introNote", "mainDish", "mealList",
   "allergenRow", "calories", "calorieUnit", "nutritionBars", "nutritionSourceNote", "dinnerTitle", "dinnerPicks",
   "dinnerReason", "dinnerNotes", "disclaimer", "weekLabel", "weekDays",
   "previousWeek", "nextWeek", "averageCalories", "averageVegetables",
@@ -474,12 +474,15 @@ function renderAccount() {
   const authenticated = Boolean(account.authenticated);
   refs.accountButton.classList.toggle("is-authenticated", authenticated);
   refs.accountAvatar.textContent = authenticated ? (account.child?.nickname?.slice(0, 1) || "家") : "家";
-  refs.accountButton.disabled = !authenticated && !EMAIL_REGISTRATION_ENABLED;
+  refs.accountButton.disabled = account.loading || (!authenticated && !EMAIL_REGISTRATION_ENABLED);
+  refs.accountButton.setAttribute("aria-busy", String(account.loading));
+  refs.accountButton.title = account.loading ? "正在確認登入狀態" : authenticated ? "家庭帳號設定" : "登入或建立免費家庭帳號";
+  refs.accountLoadingStatus.hidden = !account.loading;
   refs.accountButton.setAttribute("aria-disabled", String(refs.accountButton.disabled));
-  refs.accountButtonText.textContent = authenticated
+  refs.accountButtonText.textContent = account.loading ? "正在確認登入…" : authenticated
     ? account.child ? `${account.child.nickname}的午餐紀錄` : "建立午餐紀錄"
     : EMAIL_REGISTRATION_ENABLED ? "登入／免費註冊" : "登入／免費註冊（準備中）";
-  refs.accountSignedOutView.hidden = authenticated;
+  refs.accountSignedOutView.hidden = account.loading || authenticated;
   refs.accountSignedInView.hidden = !authenticated;
   renderEmailAuthStep();
   if (authenticated) {
@@ -488,7 +491,7 @@ function renderAccount() {
       : `${account.user?.displayName || "家長"} · 免費會員`;
   }
 
-  refs.passportLocked.hidden = authenticated;
+  refs.passportLocked.hidden = account.loading || authenticated;
   refs.passportSetup.hidden = !authenticated || (Boolean(account.child) && !state.editingChild);
   refs.passportWorkspace.hidden = !authenticated || !account.child || state.editingChild;
   refs.schoolBrowserNote.hidden = true;
@@ -712,7 +715,7 @@ function renderAccountIntentNotice() {
 }
 
 function openAccountDialog(trigger) {
-  if (!state.account.authenticated && !EMAIL_REGISTRATION_ENABLED) return;
+  if (state.account.loading || (!state.account.authenticated && !EMAIL_REGISTRATION_ENABLED)) return;
   state.lastAccountTrigger = trigger || document.activeElement;
   renderAccountIntentNotice();
   openStagedDialog(
@@ -2666,6 +2669,7 @@ for (const link of document.querySelectorAll("a.today-link")) {
 setupMobileNavigation();
 
 async function initialize() {
+  renderAccount();
   refs.authBirthDate.max = adultBirthDateMaximum();
   const accountRequest = loadAccount();
   setDashboardStatus("loading", "正在讀取學校名冊…");

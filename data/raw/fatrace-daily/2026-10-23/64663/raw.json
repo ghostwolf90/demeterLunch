@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "梧棲區",
+    "level": "國小",
+    "name": "中正國小",
+    "fullName": "臺中市梧棲區中正國小",
+    "fatraceSchoolId": 64663
+  },
+  "mealDate": "2026-10-23",
+  "fetchedAt": "2026-10-23T10:45:03.257004+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=64663&period=2026-10-23",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 64663,
+        "SchoolName": "臺中市梧棲區中正國小",
+        "ConuntyId": 27,
+        "AreaId": 131492,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1406,
+          "KitchenName": "臺中市梧棲區中正國小",
+          "KitchenType": "006",
+          "Address": "臺中市梧棲區中央路2段15號",
+          "Tel": "04-26560844",
+          "Fax": "04-26577665",
+          "Nutritionist": "黃佳琳",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "0",
+          "PicturePath": "-",
+          "CompanyId": "B064663",
+          "Email": "t21356@st.tc.edu.tw",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1406,
+              "KitchenName": "臺中市梧棲區中正國小",
+              "KitchenType": "006",
+              "Address": "臺中市梧棲區中央路2段15號",
+              "Tel": "04-26560844",
+              "Fax": "04-26577665",
+              "Nutritionist": "黃佳琳",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "0",
+              "PicturePath": "-",
+              "CompanyId": "B064663",
+              "Email": "t21356@st.tc.edu.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1792370665082202",
+                  "KitchenId": 1406,
+                  "KitchenName": "臺中市梧棲區中正國小",
+                  "SchoolId": 64663,
+                  "SchoolCode": "064663",
+                  "SchoolName": "臺中市梧棲區中正國小",
+                  "MenuDate": "2026/10/23",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-19T00:44:57.000Z",
+                  "TypeGrains": "3.11",
+                  "TypeOil": "0.03",
+                  "TypeVegetable": "0.97",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2.12",
+                  "Calorie": "395"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1792370665082202",
+                  "KitchenId": 1406,
+                  "KitchenName": "臺中市梧棲區中正國小",
+                  "SchoolId": 64663,
+                  "SchoolCode": "064663",
+                  "SchoolName": "臺中市梧棲區中正國小",
+                  "MenuDate": "2026/10/23",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-19T00:44:57.000Z",
+                  "TypeGrains": "3.11",
+                  "TypeOil": "0.03",
+                  "TypeVegetable": "0.97",
+                  "TypeMilk": "0",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2.12",
+                  "Calorie": "395"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076334",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "燕麥飯",
+                      "DishType": "主食",
+                      "DishId": "45372",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_45372."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076346",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "韓式年糕油腐",
+                      "DishType": "主菜",
+                      "DishId": "1757056733036564",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1757056733036564."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076337",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "(素)韓式年糕油腐",
+                      "DishType": "主菜",
+                      "DishId": "1757056733036566",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 13,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1757056733036566."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076340",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "(素)花生豆干",
+                      "DishType": "主菜",
+                      "DishId": "1757056733036565",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 14,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1757056733036565."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076338",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "南瓜炒蛋",
+                      "DishType": "副菜",
+                      "DishId": "1443149033261355",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1443149033261355."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076339",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "(素)南瓜炒蛋",
+                      "DishType": "副菜",
+                      "DishId": "1744960488000015",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 17,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1744960488000015."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076344",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "花生豆干",
+                      "DishType": "副菜",
+                      "DishId": "1736134843035981",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 18,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1736134843035981."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076345",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "(素)和風炒手",
+                      "DishType": "副菜",
+                      "DishId": "1792370665082200",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 19,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1792370665082200."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076342",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "(素)鵝白菜",
+                      "DishType": "副菜",
+                      "DishId": "1792370665082201",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 20,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1792370665082201."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076343",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "(素)麵線糊",
+                      "DishType": "副菜",
+                      "DishId": "1742539920042522",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 21,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1742539920042522."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076333",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "鵝白菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1414988467276325",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1414988467276325."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076335",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "麵線糊",
+                      "DishType": "湯品",
+                      "DishId": "1414988467276258",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 1406,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/1406//1406_1414988467276258."
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792370696076336",
+                      "BatchDataId": "1792370665082202",
+                      "DishName": "調味料",
+                      "DishId": "77787",
+                      "UpdateDateTime": "2026-10-19T00:44:57.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 1406,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

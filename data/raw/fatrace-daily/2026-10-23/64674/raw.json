@@ -1,0 +1,316 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "大甲區",
+    "level": "國小",
+    "name": "東陽國小",
+    "fullName": "臺中市大甲區東陽國小",
+    "fatraceSchoolId": 64674
+  },
+  "mealDate": "2026-10-23",
+  "fetchedAt": "2026-10-23T10:52:30.525387+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=64674&period=2026-10-23",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 64674,
+        "SchoolName": "臺中市大甲區東陽國小",
+        "ConuntyId": 27,
+        "AreaId": 131494,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 1410,
+          "KitchenName": "臺中市大甲區東陽國小",
+          "KitchenType": "006",
+          "Address": "臺中市大甲區甲東路520號",
+          "Tel": "04-26876823",
+          "Fax": "04-26880926",
+          "Nutritionist": "梁玉鳳",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "B064674",
+          "Email": "san58101@gmail.com",
+          "offering": []
+        },
+        {
+          "KitchenId": 52273,
+          "KitchenName": "玉美生技股份有限公司(食材)",
+          "KitchenType": "005",
+          "Address": "臺中市烏日區南榮路53號",
+          "Tel": "04-26936161",
+          "Fax": "04-26935525",
+          "Nutritionist": "鄭嘉綺",
+          "Chef": "無",
+          "HACCP": "",
+          "Qualifier": "無",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "53872052",
+          "Email": "chiachi.zheng@yumeibt.com.tw",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 1410,
+              "KitchenName": "臺中市大甲區東陽國小",
+              "KitchenType": "006",
+              "Address": "臺中市大甲區甲東路520號",
+              "Tel": "04-26876823",
+              "Fax": "04-26880926",
+              "Nutritionist": "梁玉鳳",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "B064674",
+              "Email": "san58101@gmail.com",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": []
+            },
+            "details": []
+          },
+          {
+            "kitchen": {
+              "KitchenId": 52273,
+              "KitchenName": "玉美生技股份有限公司(食材)",
+              "KitchenType": "005",
+              "Address": "臺中市烏日區南榮路53號",
+              "Tel": "04-26936161",
+              "Fax": "04-26935525",
+              "Nutritionist": "鄭嘉綺",
+              "Chef": "無",
+              "HACCP": "",
+              "Qualifier": "無",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "53872052",
+              "Email": "chiachi.zheng@yumeibt.com.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1792114976088597",
+                  "KitchenId": 52273,
+                  "KitchenName": "玉美生技股份有限公司(食材)",
+                  "SchoolId": 64674,
+                  "SchoolCode": "064674",
+                  "SchoolName": "臺中市大甲區東陽國小",
+                  "MenuDate": "2026/10/23",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-16T01:56:38.000Z",
+                  "TypeGrains": "2.94",
+                  "TypeOil": "0",
+                  "TypeVegetable": "1.39",
+                  "TypeMilk": "0.47",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2.45",
+                  "Calorie": "454"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1792114976088597",
+                  "KitchenId": 52273,
+                  "KitchenName": "玉美生技股份有限公司(食材)",
+                  "SchoolId": 64674,
+                  "SchoolCode": "064674",
+                  "SchoolName": "臺中市大甲區東陽國小",
+                  "MenuDate": "2026/10/23",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-16T01:56:38.000Z",
+                  "TypeGrains": "2.94",
+                  "TypeOil": "0",
+                  "TypeVegetable": "1.39",
+                  "TypeMilk": "0.47",
+                  "TypeFruit": "0",
+                  "TypeMeatBeans": "2.45",
+                  "Calorie": "454"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792115798092491",
+                      "BatchDataId": "1792114976088597",
+                      "DishName": "燕麥飯",
+                      "DishType": "主食",
+                      "DishId": "1714733192011658",
+                      "UpdateDateTime": "2026-10-16T01:56:38.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 52273,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/52273//52273_1714733192011658.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792115798092496",
+                      "BatchDataId": "1792114976088597",
+                      "DishName": "蘑菇豆包",
+                      "DishType": "主菜",
+                      "DishId": "1714733192011659",
+                      "UpdateDateTime": "2026-10-16T01:56:38.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 52273,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/52273//52273_1714733192011659.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792115798092494",
+                      "BatchDataId": "1792114976088597",
+                      "DishName": "洋芋起司蛋",
+                      "DishType": "副菜",
+                      "DishId": "1768387997065705",
+                      "UpdateDateTime": "2026-10-16T01:56:38.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 52273,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/52273//52273_1768387997065705.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792115798092490",
+                      "BatchDataId": "1792114976088597",
+                      "DishName": "有機皺葉白菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1731048390031004",
+                      "UpdateDateTime": "2026-10-16T01:56:38.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 52273,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/52273//52273_1731048390031004.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792115798092492",
+                      "BatchDataId": "1792114976088597",
+                      "DishName": "清甜胡瓜湯",
+                      "DishType": "湯品",
+                      "DishId": "1729215244040486",
+                      "UpdateDateTime": "2026-10-16T01:56:38.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 52273,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/52273//52273_1729215244040486.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792115798092495",
+                      "BatchDataId": "1792114976088597",
+                      "DishName": "鮮奶",
+                      "DishType": "附餐",
+                      "DishId": "1714042435008331",
+                      "UpdateDateTime": "2026-10-16T01:56:38.000Z",
+                      "DishOrder": 24,
+                      "KitchenId": 52273,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/52273//52273_1714042435008331.jpg"
+                    },
+                    "ingredients": {
+                      "result": 1,
+                      "message": "Get Ingredient successful",
+                      "data": []
+                    }
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1792115798092493",
+                      "BatchDataId": "1792114976088597",
+                      "DishName": "調味料",
+                      "DishId": "1714042434008227",
+                      "UpdateDateTime": "2026-10-16T01:56:38.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 52273,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/52273//52273_1714042434008227.jpg"
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

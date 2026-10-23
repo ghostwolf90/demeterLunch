@@ -35,9 +35,9 @@
         <div class="sync-pill is-loading" id="syncStatus" role="status" aria-live="polite" aria-atomic="true">
           <span class="status-dot" aria-hidden="true"></span><span id="syncStatusText">正在讀取菜單…</span>
         </div>
-        <button class="account-button" id="accountButton" type="button" aria-haspopup="dialog" aria-disabled="false" title="登入或建立免費家庭帳號">
+        <button class="account-button" id="accountButton" type="button" aria-haspopup="dialog" aria-disabled="true" aria-busy="true" disabled title="正在確認登入狀態">
           <span class="account-avatar" id="accountAvatar" aria-hidden="true">家</span>
-          <span id="accountButtonText">登入／免費註冊</span>
+          <span id="accountButtonText">正在確認登入…</span>
         </button>
       </div>
     </header>
@@ -145,7 +145,8 @@
           <p class="section-lead">由家長在放學後，從孩子學校當天菜色記下實際提到或嘗到的食物；不要求吃光，也不把孩子貼上挑食標籤。家裡或其他場合也能另外記錄。</p>
         </div>
 
-        <article class="passport-locked card" id="passportLocked">
+        <p id="accountLoadingStatus" class="section-lead" role="status">正在確認登入狀態…</p>
+        <article class="passport-locked card" id="passportLocked" hidden>
           <div class="passport-lock-copy">
             <span class="lock-mark" aria-hidden="true">鎖</span>
             <p class="kicker">免費會員功能</p>
