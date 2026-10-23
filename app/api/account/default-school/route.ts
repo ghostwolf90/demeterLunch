@@ -19,7 +19,7 @@ export async function PUT(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return privateJson({ error: "資料格式不正確" }, { status: 400 });
+    return privateJson({ error: "請重新確認填寫內容。" }, { status: 400 });
   }
   const record = body && typeof body === "object" ? body as Record<string, unknown> : {};
   const schoolId = Number(record.schoolId);
@@ -35,7 +35,7 @@ export async function PUT(request: Request) {
     return privateJson({ ok: true, defaultSchoolId: schoolId });
   } catch (error) {
     console.error("Unable to save default school", error);
-    return privateJson({ error: "預設學校暫時無法儲存" }, { status: 503 });
+    return privateJson({ error: "目前無法儲存預設學校，請稍後再試。" }, { status: 503 });
   }
 }
 
@@ -52,6 +52,6 @@ export async function DELETE(request: Request) {
     return privateJson({ ok: true, defaultSchoolId: null });
   } catch (error) {
     console.error("Unable to clear default school", error);
-    return privateJson({ error: "預設學校暫時無法取消" }, { status: 503 });
+    return privateJson({ error: "目前無法取消預設學校，請稍後再試。" }, { status: 503 });
   }
 }

@@ -8,6 +8,7 @@ import sqlite3
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +19,69 @@ from src.dashboard import load_dashboard  # noqa: E402
 from src.menu_data import build_database  # noqa: E402
 from src.school_dashboard import load_school_meal_catalog  # noqa: E402
 from src.school_weekly_data import weekly_menu_image_paths  # noqa: E402
+
+
+DEFAULT_SCHOOL_ID = 193609
+
+
+def _sample_week_dates(days: list[dict], reference_date: str) -> list[str]:
+    weeks: dict[str, list[dict]] = {}
+    for day in days:
+        week_id = day.get("weekId")
+        meal_date = day.get("date")
+        if not week_id or not meal_date or not day.get("meal"):
+            continue
+        weeks.setdefault(str(week_id), []).append(day)
+
+    candidates = []
+    for week_id, week_days in weeks.items():
+        sorted_days = sorted(week_days, key=lambda item: item["date"])
+        candidates.append(
+            {
+                "weekId": week_id,
+                "days": sorted_days,
+                "endDate": sorted_days[-1]["date"],
+            }
+        )
+    candidates.sort(key=lambda item: item["endDate"], reverse=True)
+    eligible = [item for item in candidates if item["endDate"] <= reference_date]
+    pool = eligible or candidates
+    selected = next((item for item in pool if len(item["days"]) >= 5), None)
+    if selected is None and pool:
+        selected = max(pool, key=lambda item: (len(item["days"]), item["endDate"]))
+    return [day["date"] for day in selected["days"]] if selected else []
+
+
+def _sample_variant(variant: dict, sample_dates: list[str]) -> dict:
+    selected_dates = set(sample_dates)
+    days = [day for day in variant["days"] if day["date"] in selected_dates]
+    week_ids = {day["weekId"] for day in days}
+    return {
+        "days": days,
+        **{
+            key: {
+                day: value
+                for day, value in variant[key].items()
+                if day in selected_dates
+            }
+            for key in (
+                "nutritionAssessments",
+                "dinnerSuggestions",
+                "foodEducation",
+                "homeRecipes",
+                "traceability",
+            )
+        },
+        "insights": variant["insights"],
+        "archive": [
+            week for week in variant["archive"] if week.get("id") in week_ids
+        ],
+        "dateRange": {
+            "start": sample_dates[0],
+            "end": sample_dates[-1],
+        },
+        "totalDays": len(sample_dates),
+    }
 
 
 def _seo_school_manifest(schools: list[dict], records: dict[str, dict]) -> dict:
@@ -63,11 +127,19 @@ def build_static_site(
     latest = {meal_type: values[dates[-1]] for meal_type, values in dashboards.items()}
     official_school_meals = load_school_meal_catalog(database_path, parsed_root)
     generated_at = datetime.now(timezone.utc).isoformat()
+    public_official_school_meals = {
+        **official_school_meals,
+        "records": {
+            str(DEFAULT_SCHOOL_ID): official_school_meals.get("records", {}).get(
+                str(DEFAULT_SCHOOL_ID), {}
+            )
+        },
+    }
     payload = {
         "schemaVersion": 5,
         "generatedAt": generated_at,
         "nutritionStandard": latest["meat"]["nutritionStandard"],
-        "officialSchoolMeals": official_school_meals,
+        "officialSchoolMeals": public_official_school_meals,
         "variants": {
             meal_type: {
                 "days": [values[day]["selected"] for day in dates],
@@ -98,6 +170,54 @@ def build_static_site(
     data_output.mkdir(parents=True, exist_ok=True)
     (data_output / "site-data.json").write_text(
         json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    sample_dates = _sample_week_dates(
+        payload["variants"]["meat"]["days"],
+        datetime.now(ZoneInfo("Asia/Taipei")).date().isoformat(),
+    )
+    if not sample_dates:
+        raise ValueError("找不到可建立首頁功能範例的供餐週")
+    default_school = next(
+        (
+            school
+            for school in official_school_meals["schools"]
+            if int(school["fatraceSchoolId"]) == DEFAULT_SCHOOL_ID
+        ),
+        None,
+    )
+    if default_school is None:
+        raise ValueError("學校名冊缺少首頁功能範例學校")
+    default_records = official_school_meals.get("records", {}).get(
+        str(DEFAULT_SCHOOL_ID), {}
+    )
+    sample_payload = {
+        "schemaVersion": 1,
+        "generatedAt": generated_at,
+        "nutritionStandard": payload["nutritionStandard"],
+        "officialSchoolMeals": {
+            "schemaVersion": official_school_meals.get("schemaVersion", 1),
+            "defaultSchoolId": DEFAULT_SCHOOL_ID,
+            "schools": [default_school],
+            "records": {
+                str(DEFAULT_SCHOOL_ID): {
+                    day: default_records[day]
+                    for day in sample_dates
+                    if day in default_records
+                }
+            },
+            "dateRange": {
+                "start": sample_dates[0],
+                "end": sample_dates[-1],
+            },
+        },
+        "variants": {
+            meal_type: _sample_variant(variant, sample_dates)
+            for meal_type, variant in payload["variants"].items()
+        },
+    }
+    (data_output / "sample-data.json").write_text(
+        json.dumps(sample_payload, ensure_ascii=False, separators=(",", ":")),
         encoding="utf-8",
     )
     (data_output / "schools.json").write_text(

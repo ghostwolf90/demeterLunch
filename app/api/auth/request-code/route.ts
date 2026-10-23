@@ -26,28 +26,28 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return privateJson({ error: "資料格式不正確" }, { status: 400 });
+    return privateJson({ error: "請重新確認填寫內容。" }, { status: 400 });
   }
   const record = body && typeof body === "object" ? body as Record<string, unknown> : {};
   const email = normalizeEmail(record.email);
   if (!email) {
-    return privateJson({ error: "請輸入有效的 Email" }, { status: 400 });
+    return privateJson({ error: "請輸入有效的 Email。" }, { status: 400 });
   }
   if (!isAdultBirthDate(record.birthDate)) {
     return privateJson(
       {
-        error: "這項服務由成年家長或照顧者管理，請由成年家長協助註冊",
+        error: "這項服務由成年家長或照顧者管理，請由年滿 18 歲的家長或照顧者註冊。",
         code: "ADULT_REQUIRED",
       },
       { status: 403 },
     );
   }
   if (record.caregiverConfirmed !== true) {
-    return privateJson({ error: "請確認您是孩子的成年家長或照顧者" }, { status: 400 });
+    return privateJson({ error: "請勾選確認你是孩子的成年家長或照顧者。" }, { status: 400 });
   }
   if (!emailAuthReady(request)) {
     return privateJson(
-      { error: "Email 登入正在完成寄信設定，請稍後再試", code: "EMAIL_NOT_CONFIGURED" },
+      { error: "目前無法寄送驗證碼，請稍後再試。", code: "EMAIL_NOT_CONFIGURED" },
       { status: 503 },
     );
   }
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
   ]);
   if (Number(emailCount?.count || 0) >= 3 || Number(sourceCount?.count || 0) >= 12) {
     return privateJson(
-      { error: "驗證碼要求太頻繁，請稍後再試", code: "RATE_LIMITED" },
+      { error: "驗證碼寄送次數較多，請稍後再試。", code: "RATE_LIMITED" },
       { status: 429, headers: { "retry-after": "900" } },
     );
   }
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     await db.prepare("DELETE FROM email_auth_challenges WHERE id = ?").bind(challengeId).run();
     console.error("Unable to send family account verification code", error);
     return privateJson(
-      { error: "驗證信暫時無法寄出，請稍後再試", code: "EMAIL_DELIVERY_FAILED" },
+      { error: "目前無法寄送驗證碼，請稍後再試。", code: "EMAIL_DELIVERY_FAILED" },
       { status: 503 },
     );
   }

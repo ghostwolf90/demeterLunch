@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { allSchools, findSchool, publicSchoolDirectory } from "@/lib/schools";
+import { allSchools, findSchool } from "@/lib/schools";
 
 type RecordRow = {
   meal_date: string;
@@ -30,19 +30,10 @@ export async function GET(request: Request) {
   const school = findSchool(schoolId);
   if (!school) return Response.json({ error: "找不到指定學校" }, { status: 404 });
 
-  const publishedRecords = await loadPublishedRecords(request, schoolId);
-  let databaseRecords: Record<string, PublicMealRecord> = {};
-  if (env.DB) {
-    const query = await env.DB
-      .prepare(
-        "SELECT meal_date, record_json FROM official_meal_records WHERE school_id = ? ORDER BY meal_date",
-      )
-      .bind(schoolId)
-      .all<RecordRow>();
-    databaseRecords = Object.fromEntries(
-      query.results.map((row) => [row.meal_date, JSON.parse(row.record_json)]),
-    );
-  }
+  const [publishedRecords, databaseRecords] = await Promise.all([
+    loadPublishedRecords(request, schoolId),
+    loadDatabaseRecords(schoolId),
+  ]);
   // The deployed, reviewed snapshot is the publication baseline. Newer cloud
   // refreshes in D1 override the same school/date without hiding other dates.
   const records = { ...publishedRecords };
@@ -59,7 +50,6 @@ export async function GET(request: Request) {
   const sourceUrl =
     record?.source?.url ||
     `https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=${encodeURIComponent(schoolId)}&period=${encodeURIComponent(selectedDate)}`;
-  const directory = publicSchoolDirectory();
   const schoolWithRecords = {
     ...school,
     sourceUrl: "https://fatraceschool.k12ea.gov.tw/frontend/search.html",
@@ -73,7 +63,6 @@ export async function GET(request: Request) {
     {
       viewMode: "officialDaily",
       school: schoolWithRecords,
-      schoolDirectory: directory,
       requestedDate: selectedDate,
       selectedDate,
       record,
@@ -108,6 +97,19 @@ async function loadPublishedRecords(request: Request, schoolId: number) {
   } catch {
     return {};
   }
+}
+
+async function loadDatabaseRecords(schoolId: number): Promise<Record<string, PublicMealRecord>> {
+  if (!env.DB) return {};
+  const query = await env.DB
+    .prepare(
+      "SELECT meal_date, record_json FROM official_meal_records WHERE school_id = ? ORDER BY meal_date",
+    )
+    .bind(schoolId)
+    .all<RecordRow>();
+  return Object.fromEntries(
+    query.results.map((row) => [row.meal_date, JSON.parse(row.record_json)]),
+  );
 }
 
 function taipeiDate() {

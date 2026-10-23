@@ -112,6 +112,8 @@ class FatraceDailyClient:
     def __init__(self, http: HttpClient, *, include_ingredients: bool = True) -> None:
         self.http = http
         self.include_ingredients = include_ingredients
+        self._recording_probe = False
+        self._probe_cache: dict[str, dict[str, Any]] = {}
 
     def collect(
         self,
@@ -119,6 +121,7 @@ class FatraceDailyClient:
         meal_date: date,
         *,
         fetched_at: datetime | None = None,
+        fetch_details: bool = True,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         checked_at = (fetched_at or datetime.now(TAIPEI)).astimezone(TAIPEI)
         date_text = meal_date.isoformat()
@@ -194,37 +197,38 @@ class FatraceDailyClient:
                     if batch_id in seen_batch_ids:
                         continue
                     seen_batch_ids.add(batch_id)
-                    dish_response = self._get("/dish", {"BatchDataId": batch_id})
-                    dishes = _expect_list(dish_response["data"], "dish.data")
                     raw_dishes: list[dict[str, Any]] = []
                     normalized_dishes: list[dict[str, Any]] = []
-                    for dish in dishes:
-                        dish_obj = _expect_object(dish, "dish.data[]")
-                        dish_id = _dish_id(dish_obj)
-                        if str(dish_obj.get("DishName") or "").strip() == "調味料":
+                    if fetch_details:
+                        dish_response = self._get("/dish", {"BatchDataId": batch_id})
+                        dishes = _expect_list(dish_response["data"], "dish.data")
+                        for dish in dishes:
+                            dish_obj = _expect_object(dish, "dish.data[]")
+                            dish_id = _dish_id(dish_obj)
+                            if str(dish_obj.get("DishName") or "").strip() == "調味料":
+                                raw_dishes.append(
+                                    {"dish": dish_obj, "ingredients": None}
+                                )
+                                continue
+                            ingredient_response: dict[str, Any] | None = None
+                            ingredients: list[Any] = []
+                            if self.include_ingredients:
+                                ingredient_response = self._get(
+                                    "/ingredient",
+                                    {"BatchDataId": batch_id, "DishId": dish_id},
+                                )
+                                ingredients = _expect_list(
+                                    ingredient_response["data"], "ingredient.data"
+                                )
                             raw_dishes.append(
-                                {"dish": dish_obj, "ingredients": None}
+                                {
+                                    "dish": dish_obj,
+                                    "ingredients": ingredient_response,
+                                }
                             )
-                            continue
-                        ingredient_response: dict[str, Any] | None = None
-                        ingredients: list[Any] = []
-                        if self.include_ingredients:
-                            ingredient_response = self._get(
-                                "/ingredient",
-                                {"BatchDataId": batch_id, "DishId": dish_id},
+                            normalized_dishes.append(
+                                _normalize_dish(dish_obj, ingredients)
                             )
-                            ingredients = _expect_list(
-                                ingredient_response["data"], "ingredient.data"
-                            )
-                        raw_dishes.append(
-                            {
-                                "dish": dish_obj,
-                                "ingredients": ingredient_response,
-                            }
-                        )
-                        normalized_dishes.append(
-                            _normalize_dish(dish_obj, ingredients)
-                        )
                     raw_meals.append(
                         {
                             "meal": meal_obj,
@@ -305,12 +309,37 @@ class FatraceDailyClient:
         candidate["contentHash"] = candidate_fingerprint(candidate)
         return raw, candidate
 
+    def probe(
+        self,
+        school: School,
+        meal_date: date,
+        *,
+        fetched_at: datetime | None = None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Check meal availability without downloading dishes or ingredients."""
+        self._probe_cache.clear()
+        self._recording_probe = True
+        try:
+            return self.collect(
+                school,
+                meal_date,
+                fetched_at=fetched_at,
+                fetch_details=False,
+            )
+        except Exception:
+            self._probe_cache.clear()
+            raise
+        finally:
+            self._recording_probe = False
+
     def _get(
         self, path: str, params: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         url = f"{API_ROOT}{path}"
         if params:
             url = f"{url}?{urlencode(params)}"
+        if not self._recording_probe and url in self._probe_cache:
+            return self._probe_cache.pop(url)
         response = self.http.get(
             url,
             max_bytes=MAX_JSON_BYTES,
@@ -327,6 +356,8 @@ class FatraceDailyClient:
             raise FatraceDailyError(f"官方接口拒絕查詢 {path}：{message}")
         if "data" not in payload:
             raise FatraceDailyError(f"官方接口缺少 data：{path}")
+        if self._recording_probe:
+            self._probe_cache[url] = payload
         return payload
 
 

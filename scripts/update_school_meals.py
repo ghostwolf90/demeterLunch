@@ -37,11 +37,6 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="收集啟用名冊中的所有學校，不套用預設的西區篩選",
     )
-    scope.add_argument(
-        "--retry-failed",
-        action="store_true",
-        help="只補抓既有同日報告中的 failed 學校並保留完整批次",
-    )
     parser.add_argument(
         "--registry",
         type=Path,
@@ -57,6 +52,17 @@ def main(argv: list[str] | None = None) -> int:
         "--skip-ingredients",
         action="store_true",
         help="只收集菜色，不逐道查詢食材",
+    )
+    progress = parser.add_mutually_exclusive_group()
+    progress.add_argument(
+        "--resume",
+        action="store_true",
+        help="沿用同日進度，只抓尚未完成、未發布或先前失敗的學校",
+    )
+    progress.add_argument(
+        "--refresh-all",
+        action="store_true",
+        help="忽略同日既有進度，重新檢查範圍內全部學校",
     )
     parser.add_argument(
         "--verify-and-build",
@@ -79,10 +85,7 @@ def main(argv: list[str] | None = None) -> int:
         "--retries",
         str(args.retries),
     ]
-    if args.retry_failed:
-        print("收集範圍：既有報告中的 failed 學校", flush=True)
-        fetch.append("--retry-failed")
-    elif args.all_schools:
+    if args.all_schools:
         print("收集範圍：臺中市啟用名冊全部學校", flush=True)
     elif args.school:
         for school in args.school:
@@ -91,6 +94,10 @@ def main(argv: list[str] | None = None) -> int:
         fetch.extend(["--district", args.district])
     if args.skip_ingredients:
         fetch.append("--skip-ingredients")
+    if args.resume:
+        fetch.append("--resume")
+    if args.refresh_all:
+        fetch.append("--refresh-all")
     fetch_status = _run(fetch)
     if fetch_status != 0:
         return fetch_status

@@ -30,13 +30,13 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return privateJson({ error: "資料格式不正確" }, { status: 400 });
+    return privateJson({ error: "請重新確認填寫內容。" }, { status: 400 });
   }
   const record = body && typeof body === "object" ? body as Record<string, unknown> : {};
   const challengeId = typeof record.challengeId === "string" ? record.challengeId.trim() : "";
   const code = typeof record.code === "string" ? record.code.trim() : "";
   if (!/^[0-9a-f-]{30,50}$/i.test(challengeId) || !/^\d{6}$/.test(code)) {
-    return privateJson({ error: "請輸入六位數驗證碼" }, { status: 400 });
+    return privateJson({ error: "請輸入六位數驗證碼。" }, { status: 400 });
   }
 
   const db = accountDatabase();
@@ -49,13 +49,13 @@ export async function POST(request: Request) {
   const now = new Date().toISOString();
   if (!challenge || challenge.consumed_at || challenge.expires_at <= now) {
     return privateJson(
-      { error: "驗證碼已失效，請重新取得", code: "CODE_EXPIRED" },
+      { error: "驗證碼已過期，請重新取得。", code: "CODE_EXPIRED" },
       { status: 410 },
     );
   }
   if (challenge.attempts >= 5) {
     return privateJson(
-      { error: "驗證次數過多，請重新取得驗證碼", code: "CODE_LOCKED" },
+      { error: "驗證次數過多，請重新取得驗證碼。", code: "CODE_LOCKED" },
       { status: 429 },
     );
   }
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       "UPDATE email_auth_challenges SET attempts = attempts + 1 WHERE id = ? AND consumed_at IS NULL",
     ).bind(challenge.id).run();
     return privateJson(
-      { error: "驗證碼不正確，請再確認一次", code: "CODE_INVALID" },
+      { error: "驗證碼不正確，請再確認一次。", code: "CODE_INVALID" },
       { status: 400 },
     );
   }
@@ -79,13 +79,15 @@ export async function POST(request: Request) {
      LIMIT 1`,
   ).bind(challenge.email, challenge.email).first<AccountRow>();
   const authUserId = existing?.auth_user_id || await authUserIdForEmail(challenge.email);
+  const isNewAccount = !existing;
   const session = await createSession();
 
   await db.batch([
     db.prepare(
       `INSERT INTO parent_accounts
-         (auth_user_id, email, email_normalized, display_name, plan, adult_verified_at, caregiver_confirmed_at, created_at, updated_at)
-       VALUES (?, ?, ?, '家長', 'free', ?, ?, ?, ?)
+         (auth_user_id, email, email_normalized, display_name, plan, onboarding_status,
+          adult_verified_at, caregiver_confirmed_at, created_at, updated_at)
+       VALUES (?, ?, ?, '家長', 'free', ?, ?, ?, ?, ?)
        ON CONFLICT(auth_user_id) DO UPDATE SET
          email = excluded.email,
          email_normalized = excluded.email_normalized,
@@ -96,6 +98,7 @@ export async function POST(request: Request) {
       authUserId,
       challenge.email,
       challenge.email,
+      isNewAccount ? "pending" : "completed",
       challenge.eligibility_confirmed_at,
       challenge.eligibility_confirmed_at,
       now,
@@ -112,7 +115,7 @@ export async function POST(request: Request) {
   ]);
 
   return privateJson(
-    { ok: true },
+    { ok: true, isNewAccount },
     { headers: { "set-cookie": sessionCookie(request, session.token) } },
   );
 }

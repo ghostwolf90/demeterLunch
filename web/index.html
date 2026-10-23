@@ -1,40 +1,70 @@
 <!doctype html>
 <html lang="zh-Hant">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EDXYFV1B3L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-EDXYFV1B3L');
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="查詢臺中市國小已公布的每日營養午餐菜單與食材來源；少數具完整來源的學校另提供經校讀週菜單、營養資訊與晚餐搭配。" />
+    <meta name="description" content="好好吃飯提供臺中市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_TW" />
     <meta property="og:site_name" content="好好吃飯" />
-    <meta property="og:title" content="臺中國小營養午餐查詢、每日菜單與晚餐搭配｜好好吃飯" />
-    <meta property="og:description" content="查詢臺中市國小已公布的每日營養午餐菜單與食材來源；少數具完整來源的學校另提供經校讀週菜單、營養資訊與晚餐搭配。" />
+    <meta property="og:title" content="好好吃飯｜國小營養午餐查詢、每日菜單與晚餐搭配" />
+    <meta property="og:description" content="好好吃飯提供臺中市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
     <meta property="og:url" content="https://haohaofood.cc/" />
     <meta property="og:image" content="https://haohaofood.cc/og-image.png?v=20261020" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="好好吃飯品牌圖示與標語：讓關心孩子每一餐，變得簡單一點。" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="好好吃飯｜國小營養午餐查詢、每日菜單與晚餐搭配" />
+    <meta name="twitter:description" content="好好吃飯提供臺中市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
+    <meta name="twitter:image" content="https://haohaofood.cc/og-image.png?v=20261020" />
+    <meta name="twitter:image:alt" content="好好吃飯品牌圖示與標語：讓關心孩子每一餐，變得簡單一點。" />
     <meta name="theme-color" content="#f5f0e7" />
-    <title>臺中國小營養午餐查詢、每日菜單與晚餐搭配｜好好吃飯</title>
+    <title>好好吃飯｜國小營養午餐查詢、每日菜單與晚餐搭配</title>
     <link rel="canonical" href="https://haohaofood.cc/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "好好吃飯",
+        "alternateName": ["HaoHaoFood", "haohaofood.cc"],
+        "url": "https://haohaofood.cc/"
+      }
+    </script>
     <script>
       if (window.location.protocol === "file:") {
         window.location.replace("http://127.0.0.1:8000/");
       }
     </script>
-    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=20261020-dialog-close" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16 32x32 48x48" />
+    <link rel="icon" href="/favicon-32x32.png?v=20261020" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/icon-192x192.png?v=20261020" type="image/png" sizes="192x192" />
+    <link rel="icon" href="/favicon-16x16.png?v=20261020" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261020" sizes="180x180" />
+    <link rel="manifest" href="/site.webmanifest?v=20261022-child-meals" />
+    <link rel="stylesheet" href="./passport-memory.css?v=20261023-single-memory-list" />
+    <link rel="stylesheet" href="./styles.css?v=20261022-encounter-collapse-20261021-recipe-search" />
   </head>
   <body>
     <header class="topbar">
       <a class="brand today-link" href="#today" aria-label="回到今日菜單">
-        <span class="brand-mark" aria-hidden="true">好</span>
-        <span><strong>好好吃飯</strong><small id="brandSchoolLabel">臺中市國小午餐助手</small></span>
+        <img class="brand-mark" src="/icon-192x192.png?v=20261020" alt="" aria-hidden="true" width="43" height="43" />
+        <span><strong>好好吃飯</strong><small id="brandSchoolLabel">孩子的每一餐</small></span>
       </a>
       <nav aria-label="主要導覽">
-        <a class="today-link" href="#today">今日</a><a href="#week">本週</a><a href="#traceability">溯源</a><a href="#passport">午餐紀錄</a><a href="#standard">基準</a><a href="#insights">趨勢</a><a href="/schools">學校目錄</a><a href="./news.html">午餐觀察</a>
+        <a class="today-link" href="#today">今日菜單</a><a href="#week">本週菜單</a><a href="#traceability">食材來源</a><a href="#passport">飲食紀錄</a><a href="#standard">營養基準</a><a href="#insights">供應趨勢</a><a href="./news.html">午餐消息</a><a href="/support">支援中心</a>
       </nav>
       <div class="topbar-actions">
-        <div class="sync-pill is-loading" id="syncStatus" role="status" aria-live="polite" aria-atomic="true">
-          <span class="status-dot" aria-hidden="true"></span><span id="syncStatusText">正在讀取菜單…</span>
-        </div>
         <button class="account-button" id="accountButton" type="button" aria-haspopup="dialog" aria-disabled="true" aria-busy="true" disabled title="正在確認登入狀態">
           <span class="account-avatar" id="accountAvatar" aria-hidden="true">家</span>
           <span id="accountButtonText">正在確認登入…</span>
@@ -45,7 +75,7 @@
     <main id="dashboard" aria-busy="true">
       <section class="intro" id="today">
         <div class="intro-copy">
-          <p class="eyebrow">TODAY'S SCHOOL LUNCH</p>
+          <h1 class="eyebrow intro-service-heading">國小營養午餐查詢</h1>
           <div class="school-picker">
             <div class="school-field">
               <label for="districtSelect">行政區</label>
@@ -67,8 +97,8 @@
             <button id="mealTypeVegetarian" type="button" aria-pressed="false">素食</button>
           </div>
           <p class="today-label" id="todayLabel">—</p>
-          <h1><span id="mealMoment">今天中午，</span><br /><em id="heroDish">吃得好嗎？</em></h1>
-          <p class="intro-note" id="introNote">把學校菜單整理成真正看得懂、用得上的每日資訊。</p>
+          <p class="intro-display"><span id="mealMoment">孩子今天</span><br /><em id="heroDish">中午吃什麼？</em></p>
+          <p class="intro-note" id="introNote">先找孩子的學校，看看午餐菜單、營養資訊、食材來源與過敏原注意事項，也替晚餐找點想法。公開查詢免費，資料依各校公布內容提供。</p>
         </div>
         <div class="doodle" aria-hidden="true">
           <span class="doodle-sun">☀</span><span class="doodle-bowl">🥣</span>
@@ -79,7 +109,7 @@
       <section class="sample-mode-banner" id="sampleModeBanner" aria-labelledby="sampleModeTitle" hidden>
         <div>
           <span class="sample-mode-label">功能範例</span>
-          <p><strong id="sampleModeTitle">還沒選學校，也能先把午餐助手看完整。</strong><span id="sampleModeDate">以下使用已校讀菜單示範，不代表今日或任何未選學校的實際供餐。</span></p>
+          <p><strong id="sampleModeTitle">還沒選學校，也能先看看網站內容。</strong><span id="sampleModeDate">以下使用已校讀菜單示範，不代表今日或任何未選學校的實際供餐。</span></p>
         </div>
         <button id="sampleSelectSchool" type="button">選擇我的學校</button>
       </section>
@@ -95,7 +125,7 @@
 
       <section class="today-grid" id="todayGrid">
         <article class="menu-board card" id="menuBoard">
-          <div class="card-heading"><div><p class="kicker" id="menuKicker">SELECTED PLATE</p><h2 id="menuHeading">午餐內容</h2></div><span class="review-badge" id="reviewBadge">✓ 已校讀</span></div>
+          <div class="card-heading"><div><p class="kicker" id="menuKicker">選擇的午餐</p><h2 id="menuHeading">午餐內容</h2></div><span class="review-badge" id="reviewBadge">✓ 已校讀</span></div>
           <button class="main-dish" id="mainDishButton" type="button"><span>這餐主角</span><strong id="mainDish">—</strong></button>
           <p class="dish-count" id="dishCount">—</p>
           <div class="meal-list" id="mealList"></div>
@@ -110,13 +140,14 @@
         </article>
 
         <article class="nutrition-card card" id="nutritionCard">
-          <div class="card-heading"><div><p class="kicker">NUTRITION SNAPSHOT</p><h2>營養快照</h2></div><div class="calorie-orb"><strong id="calories">—</strong><span id="calorieUnit">kcal</span></div></div>
+          <div class="card-heading"><div><p class="kicker">這餐的營養</p><h2>這餐的營養資訊</h2></div><div class="calorie-orb"><strong id="calories">—</strong><span id="calorieUnit">kcal</span></div></div>
           <div class="nutrition-bars" id="nutritionBars"></div>
           <p class="source-note" id="nutritionSourceNote">份數與熱量照學校公布的營養分析登錄。</p>
         </article>
 
         <article class="dinner-card card" id="dinnerCard">
-          <div class="card-heading"><div><p class="kicker">DINNER IDEA</p><h2 id="dinnerTitle">這天晚餐，換個主角</h2></div></div>
+          <div class="card-heading"><div><p class="kicker">晚餐搭配</p><h2 id="dinnerTitle">今晚吃什麼？從孩子的午餐找靈感</h2></div></div>
+          <p class="dinner-search-hint">點選餐點，另開新分頁搜尋做法</p>
           <div class="dinner-picks" id="dinnerPicks"></div>
           <p class="dinner-reason" id="dinnerReason"></p><ul id="dinnerNotes"></ul>
           <p class="disclaimer" id="disclaimer"></p>
@@ -127,7 +158,7 @@
       <section class="traceability-section section" id="traceability">
         <article class="traceability-card card">
           <div class="card-heading">
-            <div><p class="kicker" id="traceabilityKicker">SOURCE TO PLATE</p><h2 id="traceabilityHeading">今日供餐食材追溯</h2></div>
+            <div><p class="kicker" id="traceabilityKicker">食材來源</p><h2 id="traceabilityHeading">今日供餐食材來源</h2></div>
             <span class="traceability-status" id="traceabilityStatus">讀取中</span>
           </div>
           <div class="traceability-intro">
@@ -141,8 +172,8 @@
 
       <section class="passport-section section" id="passport" aria-labelledby="passportTitle">
         <div class="section-title passport-title">
-          <div><p class="kicker">ONE-BITE PASSPORT</p><h2 id="passportTitle">一口護照，<br />孩子的營養午餐紀錄</h2></div>
-          <p class="section-lead">由家長在放學後，從孩子學校當天菜色記下實際提到或嘗到的食物；不要求吃光，也不把孩子貼上挑食標籤。家裡或其他場合也能另外記錄。</p>
+          <div><p class="kicker">一口護照</p><h2 id="passportTitle">記錄孩子與食物的<br />每一次相遇</h2></div>
+          <p class="section-lead">孩子提到哪一道菜、說了什麼，都可以記在這裡，之後再一起回頭看。</p>
         </div>
 
         <p id="accountLoadingStatus" class="section-lead" role="status">正在確認登入狀態…</p>
@@ -150,10 +181,10 @@
           <div class="passport-lock-copy">
             <span class="lock-mark" aria-hidden="true">鎖</span>
             <p class="kicker">免費會員功能</p>
-            <h3>登入後，替孩子保存每天的營養午餐紀錄</h3>
-            <p>公開午餐資訊不需要登入；只有孩子暱稱與私人午餐紀錄會放進家長帳號。</p>
+            <h3>登入後，留下孩子的飲食紀錄</h3>
+            <p>公開午餐資訊不需要登入；只有家庭成員設定與私人飲食紀錄會放進家長帳號。</p>
             <button class="passport-unlock" id="passportUnlock" type="button" aria-disabled="false">免費登入後開啟</button>
-            <small>免費註冊 · 不需密碼、不綁信用卡</small>
+            <small>免費建立 1 位孩子的飲食紀錄 · 不需設定密碼</small>
           </div>
           <div class="passport-preview" aria-label="登入後可記錄的午餐食物經驗">
             <span>沒有吃</span><span>嚐了一口</span><span>吃了一些</span>
@@ -161,22 +192,21 @@
           </div>
         </article>
 
+        <div class="passport-child-toolbar card" id="passportChildToolbar" hidden>
+          <div>
+            <div class="child-switcher" id="childSwitcher" role="group" aria-label="孩子設定捷徑"></div>
+            <button class="child-plan-summary" id="childPlanSummary" type="button" aria-haspopup="dialog">免費方案 · 0/1 位孩子</button>
+          </div>
+          <button id="addChildButton" type="button">＋ 新增孩子</button>
+        </div>
+
         <article class="passport-setup card" id="passportSetup" hidden>
           <div class="passport-setup-copy">
-            <p class="kicker" id="childSetupKicker">先認識孩子</p>
-            <h3 id="childSetupTitle">午餐紀錄中要怎麼稱呼孩子？</h3>
-            <p id="childSetupDescription">只需要暱稱、年級與就讀國小，不填生日或真實姓名；資料由登入的家長帳號保存。</p>
+            <p class="kicker">先新增孩子資料</p>
+            <h3>新增孩子的資料後，就可以開始記錄飲食</h3>
+            <p>請先在家庭設定中填寫孩子的姓名、就讀學校與需要留意的食物；暱稱與大頭貼可稍後再補。</p>
           </div>
-          <form class="child-form" id="childForm">
-            <label>孩子暱稱<input id="childNickname" name="nickname" maxlength="20" autocomplete="off" required placeholder="例如：小禾" /></label>
-            <label>年級<select id="childGradeGroup" name="gradeGroup"><option value="not_set">暫不設定</option><option value="elementary_lower">國小 1–3 年級</option><option value="elementary_upper">國小 4–6 年級</option></select></label>
-            <label class="child-school-field">孩子就讀國小<select id="childSchool" name="schoolId" required><option value="">正在讀取學校名冊…</option></select><small>這是孩子午餐紀錄所屬學校；上方切換學校只會查看公開午餐，不會改掉這裡。</small></label>
-            <div class="child-form-actions">
-              <button id="childFormSubmit" type="submit">建立免費午餐紀錄</button>
-              <button class="secondary" id="cancelChildEdit" type="button" hidden>取消</button>
-            </div>
-            <p class="form-status" id="childFormStatus" role="status" aria-live="polite"></p>
-          </form>
+          <button class="passport-settings-button" id="openChildSettings" type="button">開啟孩子設定</button>
         </article>
 
         <div class="passport-workspace" id="passportWorkspace" hidden>
@@ -189,21 +219,28 @@
               <p id="passportSchoolNoticeText"></p>
               <button id="returnChildSchool" type="button">回到孩子的學校</button>
             </div>
-            <form id="encounterForm">
+            <details class="passport-entry-details" id="encounterEntry">
+              <summary id="encounterEntryToggle"><span class="passport-entry-invitation">今天，孩子提到了哪一道菜？<small>聊到午餐時，有什麼想記住的，就留一筆。</small></span><span class="passport-entry-action"><span class="entry-open-label">記一筆午餐經驗 ＋</span><span class="entry-close-label">收起 −</span></span></summary>
+              <form id="encounterForm">
+              <p class="passport-entry-intro">選一道菜，留一句原話、一點觀察或這次的感受，就能完成記錄。</p>
               <fieldset class="passport-fieldset">
-                <legend>1. 今天午餐從哪一道菜開始記？</legend>
-                <p class="passport-field-hint">先選來源菜色，之後回看才知道「扣肉」原本藏在哪一道菜裡；再次按已選菜色可以取消。</p>
+                <legend>1. 今天午餐從哪一道菜開始記？ <span class="field-required">必填</span></legend>
+                <p class="passport-field-hint">先選孩子提到的那道菜。再點一次可以取消。</p>
                 <div class="food-choice-list" id="passportFoodChoices"></div>
               </fieldset>
-              <fieldset class="passport-fieldset">
-                <legend>2. 想記整道菜，還是其中一種食物？</legend>
-                <label class="custom-food">食物名稱（可不填）<input id="customFoodName" maxlength="80" autocomplete="off" placeholder="例如：扣肉、紅蘿蔔絲" /><small>不填會記下整道菜；填寫時仍會保留上一步選的來源菜色。</small></label>
-              </fieldset>
-              <fieldset class="passport-fieldset">
-                <legend>3. 這次午餐，孩子有吃這個食物嗎？</legend>
-                <p class="passport-field-hint">選最接近今天情況的一項就好；沒有好壞，也不代表孩子喜不喜歡。再次按已選項目可以取消。</p>
+              <p class="passport-field-hint">選一種開始，也可以切換補充；已填內容會一起保存。</p>
+              <div class="memory-entry-modes" role="group" aria-label="想留下什麼">
+                <button type="button" data-memory-mode="quote" aria-pressed="true" aria-controls="memoryQuoteField">孩子說了一句話</button>
+                <button type="button" data-memory-mode="experience" aria-pressed="false" aria-controls="memoryExperienceField">記下這次嘗試</button>
+                <button type="button" data-memory-mode="note" aria-pressed="false" aria-controls="memoryNoteField">家長想記住</button>
+              </div>
+              <label class="memory-quick-field" id="memoryQuoteField">孩子原話<textarea id="encounterChildQuote" maxlength="160" rows="2" placeholder="例如：菇菇像雨傘"></textarea><small>保留孩子說的話，不用整理成完整句子。</small></label>
+              <label class="memory-quick-field" id="memoryNoteField" hidden>家長筆記<textarea id="encounterNote" maxlength="240" rows="2" placeholder="記下當時的情況"></textarea><small>家長的觀察會與孩子原話分開呈現。</small></label>
+              <fieldset class="passport-fieldset" id="memoryExperienceField" hidden>
+                <legend>這次，孩子怎麼接觸這個食物？（可不填）</legend>
+                <p class="passport-field-hint">選最接近當時情況的一項；不確定也可以略過。再點一次可以取消。</p>
                 <div class="experience-list" id="experienceChoices">
-                  <label><input type="radio" name="experience" value="not_eaten" required /><span>沒有吃</span></label>
+                  <label><input type="radio" name="experience" value="not_eaten" /><span>沒有吃</span></label>
                   <label><input type="radio" name="experience" value="tasted" /><span>嚐了一口</span></label>
                   <label><input type="radio" name="experience" value="ate_some" /><span>吃了一些</span></label>
                   <label><input type="radio" name="experience" value="ate_most" /><span>吃了大部分</span></label>
@@ -221,50 +258,61 @@
                     <label><input type="radio" name="noEatContact" value="unknown" /><span>不確定</span></label>
                   </div>
                 </div>
-                <div class="familiarity-question">
-                  <p id="familiarityLabel">孩子以前吃過這個食物嗎？（可不填，再按一次可取消）</p>
-                  <div class="familiarity-list" role="radiogroup" aria-labelledby="familiarityLabel">
-                    <label><input type="radio" name="familiarity" value="first" /><span>第一次吃</span></label>
-                    <label><input type="radio" name="familiarity" value="previous" /><span>以前吃過</span></label>
-                    <label><input type="radio" name="familiarity" value="unknown" /><span>不確定</span></label>
+              </fieldset>
+              <details class="passport-optional-details" id="passportOptionalDetails">
+                <summary><span>補充更多細節</span><small id="passportOptionalBadge">選填</small></summary>
+                <div class="passport-optional-content">
+                  <fieldset class="passport-fieldset">
+                    <legend>想記整道菜，還是其中一種食物？</legend>
+                    <label class="custom-food"><span id="customFoodRequirement">食物名稱（可不填）</span><input id="customFoodName" maxlength="80" autocomplete="off" placeholder="例如：扣肉、紅蘿蔔絲" /><small id="customFoodHint">不填會記下整道菜；填寫時仍會保留上一步選的來源菜色。</small></label>
+                  </fieldset>
+                  <fieldset class="passport-fieldset familiarity-question">
+                    <legend id="familiarityLabel">孩子以前吃過這個食物嗎？（可不填，再按一次可取消）</legend>
+                    <div class="familiarity-list" role="radiogroup" aria-labelledby="familiarityLabel">
+                      <label><input type="radio" name="familiarity" value="first" /><span>第一次吃</span></label>
+                      <label><input type="radio" name="familiarity" value="previous" /><span>以前吃過</span></label>
+                      <label><input type="radio" name="familiarity" value="unknown" /><span>不確定</span></label>
+                    </div>
+                  </fieldset>
+                  <fieldset class="passport-fieldset">
+                    <legend>孩子對這個食物的感覺如何？（可不填，再按一次可取消）</legend>
+                    <p class="passport-field-hint">和吃了多少分開記；孩子沒有提到，也可以略過。</p>
+                    <div class="reaction-list" id="reactionChoices">
+                      <label><input type="radio" name="reaction" value="loved" /><span>很喜歡</span></label>
+                      <label><input type="radio" name="reaction" value="liked" /><span>喜歡</span></label>
+                      <label><input type="radio" name="reaction" value="okay" /><span>還好</span></label>
+                      <label><input type="radio" name="reaction" value="less_liked" /><span>不太喜歡</span></label>
+                      <label><input type="radio" name="reaction" value="disliked" /><span>不喜歡</span></label>
+                      <label><input type="radio" name="reaction" value="no_comment" /><span>不確定／孩子沒提到</span></label>
+                    </div>
+                  </fieldset>
+                  <div class="passport-note-grid">
+                    <label>喜歡／不喜歡哪種做法？<input id="encounterPreparation" maxlength="80" autocomplete="off" placeholder="例如：可以接受切絲炒蛋" /></label>
                   </div>
                 </div>
-              </fieldset>
-              <fieldset class="passport-fieldset">
-                <legend>4. 孩子對這個食物的感覺如何？（可不填，再按一次可取消）</legend>
-                <p class="passport-field-hint">和吃了多少分開記；孩子沒有提到，也可以略過。</p>
-                <div class="reaction-list" id="reactionChoices">
-                  <label><input type="radio" name="reaction" value="loved" /><span>很喜歡</span></label>
-                  <label><input type="radio" name="reaction" value="liked" /><span>喜歡</span></label>
-                  <label><input type="radio" name="reaction" value="okay" /><span>還好</span></label>
-                  <label><input type="radio" name="reaction" value="less_liked" /><span>不太喜歡</span></label>
-                  <label><input type="radio" name="reaction" value="disliked" /><span>不喜歡</span></label>
-                  <label><input type="radio" name="reaction" value="no_comment" /><span>不確定／孩子沒提到</span></label>
-                </div>
-              </fieldset>
-              <div class="passport-note-grid">
-                <label class="child-quote-field">孩子的原話（可不填）<textarea id="encounterChildQuote" maxlength="160" rows="2" placeholder="例如：軟軟的，我不喜歡"></textarea></label>
-                <label>喜歡／不喜歡哪種做法？<input id="encounterPreparation" maxlength="80" autocomplete="off" placeholder="例如：可以接受切絲炒蛋" /></label>
-                <label>家長的小筆記<textarea id="encounterNote" maxlength="240" rows="3" placeholder="補充當時的情況，不評論吃多少"></textarea></label>
-              </div>
+              </details>
               <div class="passport-submit-row">
-                <button type="submit">儲存午餐紀錄</button>
-                <p class="form-status" id="encounterFormStatus" role="status" aria-live="polite"></p>
+                <button type="submit">儲存飲食紀錄</button>
               </div>
-            </form>
+              </form>
+            </details>
+            <p class="form-status" id="encounterFormStatus" role="status" aria-live="polite"></p>
+          <section id="passportSavedMemory" class="memory-saved" tabindex="-1" aria-label="剛留下的記憶" hidden></section>
+
           </article>
 
           <aside class="passport-history card">
-            <div><p class="kicker">最近的午餐紀錄</p><h3>不是分數，是經驗</h3></div>
+            <div><p class="kicker">孩子與食物的相遇</p><h3 id="passportHistoryTitle" tabindex="-1">最近留下的片刻</h3></div>
             <div class="encounter-list" id="encounterList"></div>
-            <a class="all-encounters-link" id="allEncounterRecords" href="./records.html" hidden>查看全部午餐紀錄</a>
+            <a class="all-encounters-link" id="allEncounterRecords" href="./records.html" hidden>查看全部飲食紀錄</a>
           </aside>
         </div>
       </section>
 
+
       <section class="standard-section section" id="standard" aria-labelledby="standardTitle">
         <div class="section-title standard-title">
-          <div><p class="kicker">WEEKLY NUTRITION STANDARD</p><h2 id="standardTitle">本週供應，<br />和官方基準一起看</h2></div>
+          <div><p class="kicker">本週午餐營養</p><h2 id="standardTitle">本週供應，<br />和官方基準一起看</h2></div>
           <div class="standard-controls" aria-label="選擇營養基準">
             <div class="standard-control">
               <span>年級</span>
@@ -294,13 +342,13 @@
           <div class="standard-metrics" id="standardMetrics"></div>
           <div class="standard-detail-grid">
             <div class="standard-guidance">
-              <p class="kicker">FAMILY NOTE</p>
-              <h3>其他餐次怎麼接</h3>
+              <p class="kicker">家庭餐食參考</p>
+              <h3>其他餐次搭配參考</h3>
               <ul id="standardGuidance"></ul>
             </div>
             <div class="standard-observation-panel">
-              <p class="kicker">SUPPLY OBSERVATION</p>
-              <h3>只觀察，不硬判定</h3>
+              <p class="kicker">學校供應情況</p>
+              <h3>一起了解這週的營養供應</h3>
               <div class="standard-observations" id="standardObservations"></div>
             </div>
           </div>
@@ -314,8 +362,8 @@
 
       <section class="family-section section" id="learn">
         <div class="section-title family-title">
-          <div><p class="kicker">LEARN FROM LUNCH</p><h2>從這份午餐，<br />多認識一點</h2></div>
-          <p class="section-lead">把一道菜變成一個親子話題，也把熟悉的校園味道帶回家。</p>
+          <div><p class="kicker">親子食育</p><h2>從午餐認識食物</h2></div>
+          <p class="section-lead">從一道菜認識食材、口感與料理方式，放學後也多一個輕鬆的親子話題。</p>
         </div>
         <div class="family-grid">
           <article class="food-card card">
@@ -346,8 +394,8 @@
 
       <section class="insights-section section" id="insights">
         <div class="section-title">
-          <div><p class="kicker" id="insightsKicker">近期飲食節奏</p><h2>不是只看一張圖，<br />而是看見飲食節奏</h2></div>
-          <p class="section-lead">以目前收錄的供餐日計算；資料增加時，這些數字會自動更新。</p>
+          <div><p class="kicker" id="insightsKicker">午餐供應趨勢</p><h2>一段時間的<br />午餐供應變化</h2></div>
+          <p class="section-lead">根據目前收錄的供餐日統計；數字代表學校供應，不等於孩子實際攝取。</p>
         </div>
         <div class="stat-grid">
           <article><span>平均熱量</span><strong id="averageCalories">—</strong><small>kcal / 餐</small></article>
@@ -356,15 +404,15 @@
           <article><span>含酥炸料理</span><strong id="friedDays">—</strong><small id="friedDaysContext">共 — 個供餐日</small></article>
         </div>
         <div class="insight-grid">
-          <article class="chart-card card"><div class="card-heading"><div><p class="kicker">PROTEIN MIX</p><h3>蛋白質出現天數</h3></div></div><div class="protein-bars" id="proteinBars"></div></article>
-          <article class="chart-card card"><div class="card-heading"><div><p class="kicker">ENERGY TREND</p><h3>每日熱量趨勢</h3></div><span id="trendRange"></span></div><div class="calorie-chart" id="calorieChart"></div></article>
+          <article class="chart-card card"><div class="card-heading"><div><p class="kicker">蛋白質供應</p><h3>蛋白質食物出現天數</h3></div></div><div class="protein-bars" id="proteinBars"></div></article>
+          <article class="chart-card card"><div class="card-heading"><div><p class="kicker">熱量變化</p><h3>每日供應熱量</h3></div><span id="trendRange"></span></div><div class="calorie-chart" id="calorieChart"></div></article>
         </div>
       </section>
 
       <section class="news-preview-section section" id="news">
         <div class="section-title">
-          <div><p class="kicker">LUNCH WATCH</p><h2>最近，校園午餐<br />還發生了什麼？</h2></div>
-          <div class="news-preview-intro"><p class="section-lead">整理近期政策、食安與食育消息，只留下和家庭真正相關的線索。</p><a class="text-action" href="./news.html">查看午餐觀察</a></div>
+          <div><p class="kicker">午餐消息</p><h2>近期校園午餐消息</h2></div>
+          <div class="news-preview-intro"><p class="section-lead">整理近期政策、食安與食育消息，保留和家庭生活相關的重點與原文連結。</p><a class="text-action" href="./news.html">查看午餐消息</a></div>
         </div>
         <div class="news-preview-grid" id="latestNews" aria-live="polite" aria-busy="true">
           <div class="loading-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><span>正在整理近期午餐消息…</span></div>
@@ -374,18 +422,21 @@
 
       <section class="source-section section" id="source">
         <div class="source-copy">
-          <p class="kicker">TRACEABLE DATA</p><h2>分析有依據，<br />原圖也沒有消失。</h2>
-          <p>每筆菜單都保留原始圖片；有校方文章時也保留連結。若分類或菜名有疑問，可以直接回到來源資料核對。</p>
+          <p class="kicker">資料來源</p><h2>菜單資料從哪裡來？</h2>
+          <p>每筆菜單都保留原始圖片與校方文章連結。若分類或菜名有疑問，可以直接回到來源資料核對。</p>
           <div class="monitor-note"><span aria-hidden="true"></span><div><strong>定期檢查菜單來源</strong><small>發現新文章或原圖更新時，先保存與校讀，再加入公開統計。</small></div></div>
           <div class="source-actions"><a class="primary-action" id="sourceArticle" target="_blank" rel="noreferrer">查看來源文章 ↗</a><button class="secondary-action" id="openSource" type="button">檢視本週菜單</button></div>
         </div>
         <div class="archive-list" id="archiveList"></div>
       </section>
 
-      <section class="empty-state card" id="errorState" hidden><h2>暫時讀不到菜單</h2><p id="errorMessage"></p></section>
+      <section class="empty-state card" id="errorState" hidden><h2>目前還無法顯示這份菜單</h2><p id="errorMessage">請稍後再試。</p></section>
     </main>
 
-    <footer><strong>好好吃飯</strong><span id="footerSource">資料來源：忠信國小午餐網 · 僅供家庭餐食規劃參考</span></footer>
+    <footer>
+      <div class="footer-brand"><strong>好好吃飯</strong><span id="footerSource">資料來源：忠信國小午餐網 · 僅供家庭餐食規劃參考</span></div>
+      <nav class="footer-links" aria-label="服務資訊"><a href="/about">品牌故事</a><a href="/schools">學校目錄</a><a href="/privacy">隱私權政策</a><a href="/terms">服務條款</a><a href="/support">支援中心</a></nav>
+    </footer>
 
     <nav class="mobile-nav" aria-label="手機版主要導覽">
       <a class="today-link active" href="#today" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 14 0H5Zm7-7v3M4 8h16" /></svg><span>今日</span></a>
@@ -397,16 +448,16 @@
     <dialog class="account-dialog" id="accountDialog" aria-label="家庭帳號">
       <div class="account-dialog-shell">
         <button class="account-dialog-close modal-close-button" id="closeAccountDialog" type="button" aria-label="關閉登入視窗"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
-        <div id="accountSignedOutView">
+        <div class="account-signed-out-view" id="accountSignedOutView">
           <span class="account-dialog-mark" aria-hidden="true">家</span>
-          <p class="kicker">免費家庭帳號</p>
-          <h2 id="accountDialogTitle">替孩子留下<br />沒有壓力的營養午餐紀錄</h2>
+          <p class="kicker">免費建立家庭帳號</p>
+          <h2 id="accountDialogTitle">替孩子留一份飲食紀錄</h2>
           <p class="account-intent-notice" id="accountIntentNotice" role="status" hidden></p>
-          <p>使用家長 Email 收取六位數驗證碼，不需要 ChatGPT，也不需要設定密碼。今天吃什麼、營養與食材資訊一直都能免費查看。</p>
-          <ul><li>免費版可建立 1 位孩子</li><li>記下午餐菜色與孩子實際提到的食物</li><li>家裡或其他場合的食物也能另外記錄</li><li>不綁信用卡，不以吃光作為獎勵</li></ul>
+          <p class="account-value-copy">登入後，可以保存孩子提過的食物、說過的話，還有你想記住的事。</p>
+          <ul><li>免費建立 1 位孩子的飲食紀錄</li><li>記錄學校午餐與日常飲食</li><li>留下孩子對不同食物的感受與嘗試</li></ul>
           <form class="account-auth-form" id="emailAuthForm">
             <label>家長 Email
-              <input id="authEmail" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" required placeholder="parent@example.com" />
+              <input id="authEmail" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" required placeholder="請輸入電子郵件" />
             </label>
             <label>家長／成年照顧者出生日期
               <input id="authBirthDate" name="birthDate" type="date" autocomplete="bday" required />
@@ -416,12 +467,14 @@
               <input id="authCaregiverConfirmed" name="caregiverConfirmed" type="checkbox" required />
               <span>我確認我是年滿 18 歲的家長、法定監護人或獲家長授權的成年照顧者，此帳號不由孩子自行使用。</span>
             </label>
-            <button class="account-sign-in" id="requestAuthCode" type="submit" aria-disabled="false">寄送驗證碼</button>
-            <p class="account-registration-notice" id="authRegistrationNotice">驗證碼會寄到你的信箱，10 分鐘內有效；完整生日不會保存。</p>
+            <button class="account-sign-in" id="requestAuthCode" type="submit" aria-disabled="false">寄送登入驗證碼</button>
+            <p class="account-login-note">不需要設定密碼，透過 Email 驗證即可登入。</p>
+            <p class="account-legal-note">繼續使用即表示你同意<a href="/terms">服務條款</a>，並已閱讀<a href="/privacy">隱私權政策</a>；公開午餐查詢不需要註冊。</p>
+            <p class="account-registration-notice" id="authRegistrationNotice">驗證碼 10 分鐘內有效；完整生日不會保存。</p>
             <p class="form-status" id="authRequestStatus" role="status" aria-live="polite"></p>
           </form>
           <div class="account-code-step" id="emailCodeStep" hidden>
-            <p>驗證碼已寄到 <strong id="authMaskedEmail">—</strong>，請在 10 分鐘內輸入。</p>
+            <p>已寄出驗證碼，請查看 <strong id="authMaskedEmail">—</strong> 的信箱，並在 10 分鐘內輸入。</p>
             <form class="account-auth-form" id="emailCodeForm">
               <label>六位數驗證碼
                 <input id="authCode" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="000000" />
@@ -429,23 +482,195 @@
               <button class="account-sign-in" id="verifyAuthCode" type="submit">驗證並登入</button>
               <p class="form-status" id="authVerifyStatus" role="status" aria-live="polite"></p>
             </form>
-            <button class="account-text-button" id="changeAuthEmail" type="button">更換 Email 或重新取得驗證碼</button>
+            <button class="account-text-button" id="changeAuthEmail" type="button">返回並重新寄送驗證碼</button>
           </div>
-          <details class="account-privacy"><summary>資料使用說明</summary><p>我們只保存已驗證的家長 Email、成年確認結果、孩子暱稱與營養午餐紀錄。完整生日不會寫入資料庫，也不要求孩子提供 Email、真實姓名或生日。</p></details>
+          <details class="account-privacy"><summary>資料使用說明</summary><p>我們保存已驗證的家長 Email、成年確認結果，以及家長自行填寫的家庭成員姓名、暱稱、大頭貼與飲食紀錄。完整生日不會寫入資料庫，也不要求孩子提供 Email 或生日；大頭貼只供登入後的家庭帳號讀取。<a href="/privacy">查看完整隱私權政策</a></p></details>
+          <p class="account-public-menu-note">只想查看學校午餐嗎？不需要註冊，也能免費使用。</p>
         </div>
         <div id="accountSignedInView" hidden>
-          <span class="account-dialog-mark" aria-hidden="true">好</span>
-          <p class="kicker">家庭帳號</p>
-          <h2>已登入</h2>
-          <p id="accountIdentity">—</p>
+          <div class="account-profile-hero">
+            <div class="profile-avatar-preview is-parent" id="parentAvatarPreview" aria-hidden="true">家</div>
+            <div><p class="kicker">家庭帳號</p><h2>個人設定</h2><p id="accountIdentity">—</p></div>
+          </div>
+          <form class="profile-settings-form" id="parentProfileForm">
+            <div class="profile-photo-actions account-photo-actions">
+              <label for="parentAvatarInput">更換大頭貼</label>
+              <input id="parentAvatarInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden />
+              <button class="profile-photo-remove" id="removeParentAvatar" type="button" hidden>移除照片</button>
+            </div>
+            <div class="profile-settings-grid">
+              <label><span class="field-heading">家長姓名</span><input id="parentName" name="name" maxlength="40" autocomplete="name" required /></label>
+              <label><span class="field-heading">暱稱 <span class="field-optional">選填</span></span><input id="parentNickname" name="nickname" maxlength="20" autocomplete="nickname" /><small>有暱稱顯示暱稱，沒有則顯示姓名。</small></label>
+            </div>
+            <button class="profile-save-button" id="saveParentProfile" type="submit">儲存個人設定</button>
+            <p class="form-status" id="parentProfileStatus" role="status" aria-live="polite"></p>
+          </form>
+          <section class="account-family-panel" aria-labelledby="accountFamilyTitle">
+            <div class="account-section-heading">
+              <div><p class="kicker">家庭成員</p><h3 id="accountFamilyTitle">孩子設定</h3></div>
+              <button id="accountAddChild" type="button">新增孩子</button>
+            </div>
+            <div class="account-child-list" id="accountChildList"></div>
+            <p class="form-status account-family-status" id="accountFamilyStatus" role="status" aria-live="polite"></p>
+            <div class="account-child-editor" id="accountChildEditor" hidden>
+              <button class="account-child-back" id="accountChildBack" type="button" hidden>← 返回家庭設定</button>
+              <div class="account-child-editor-heading">
+                <p class="kicker" id="childSetupKicker">孩子資料</p>
+                <h4 id="childSetupTitle">編輯孩子設定</h4>
+                <p id="childSetupDescription">姓名只用在家庭帳號內；可另外設定暱稱，畫面會優先顯示暱稱。</p>
+              </div>
+              <form class="child-form" id="childForm">
+                <div class="profile-photo-field child-photo-field">
+                  <div class="profile-avatar-preview" id="childAvatarPreview" aria-hidden="true">孩</div>
+                  <div>
+                    <strong>孩子大頭貼</strong>
+                    <p>選填，照片只會顯示在登入後的家庭帳號。</p>
+                    <div class="profile-photo-actions">
+                      <label for="childAvatarInput">選擇照片</label>
+                      <input id="childAvatarInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden />
+                      <button class="profile-photo-remove" id="removeChildAvatar" type="button" hidden>移除照片</button>
+                    </div>
+                  </div>
+                </div>
+                <label><span class="field-heading">孩子本名</span><input id="childName" name="name" maxlength="40" autocomplete="off" required placeholder="例如：林小禾" /></label>
+                <label><span class="field-heading">孩子暱稱 <span class="field-optional">選填</span></span><input id="childNickname" name="nickname" maxlength="20" autocomplete="off" placeholder="例如：小禾" /><small>有填暱稱時，網站會優先顯示暱稱。</small></label>
+                <label><span class="field-heading">年級</span><select id="childGradeGroup" name="gradeGroup"><option value="not_set">暫不設定</option><option value="elementary_lower">國小 1–3 年級</option><option value="elementary_upper">國小 4–6 年級</option></select></label>
+                <label class="child-school-field"><span class="field-heading">孩子就讀國小</span><select id="childSchool" name="schoolId" required><option value="">正在讀取學校名冊…</option></select><small>這是孩子午餐紀錄所屬學校；上方切換學校只會查看公開午餐，不會改掉這裡。</small></label>
+                <fieldset class="child-allergen-fieldset">
+                  <legend>需要留意的食物 <span>選填，可隨時修改</span></legend>
+                  <p>選擇後，只要孩子學校的當日資料中有可辨識項目，午餐頁就會顯示個人提醒。</p>
+                  <div class="allergen-choice-list">
+                    <label><input type="checkbox" name="childAllergen" value="egg" /><span>蛋</span></label>
+                    <label><input type="checkbox" name="childAllergen" value="milk" /><span>奶類</span></label>
+                    <label><input type="checkbox" name="childAllergen" value="peanut" /><span>花生</span></label>
+                    <label><input type="checkbox" name="childAllergen" value="tree_nuts" /><span>堅果類</span></label>
+                    <label><input type="checkbox" name="childAllergen" value="sesame" /><span>芝麻</span></label>
+                    <label><input type="checkbox" name="childAllergen" value="gluten" /><span>麩質穀物</span></label>
+                    <label><input type="checkbox" name="childAllergen" value="soy" /><span>大豆</span></label>
+                    <label><input type="checkbox" name="childAllergen" value="fish" /><span>魚類</span></label>
+                    <label><input type="checkbox" name="childAllergen" value="crustaceans" /><span>甲殼類</span></label>
+                    <label><input type="checkbox" name="childAllergen" value="mango" /><span>芒果</span></label>
+                    <label><input type="checkbox" name="childAllergen" value="sulfites" /><span>亞硫酸鹽</span></label>
+                  </div>
+                  <small>各校多在當日 08:00–18:00 陸續公布；本站只在取得當日資料後顯示提醒，不會前一晚預測。未顯示提醒不代表餐點不含該食物，嚴重過敏仍請直接向校方確認。</small>
+                </fieldset>
+                <div class="child-form-actions">
+                  <button id="childFormSubmit" type="submit">儲存孩子資料</button>
+                  <button class="secondary" id="cancelChildEdit" type="button">取消</button>
+                </div>
+                <p class="form-status" id="childFormStatus" role="status" aria-live="polite"></p>
+              </form>
+            </div>
+          </section>
+          <section class="account-plan-panel" id="accountPlanPanel" aria-labelledby="accountPlanName">
+            <div class="account-plan-heading">
+              <strong id="accountPlanName">免費方案</strong>
+              <span id="accountSubscriptionState">免費使用中</span>
+            </div>
+            <p id="accountPlanDescription">免費家庭帳號目前可建立 1 位孩子，並使用現階段開放的家庭飲食紀錄功能。</p>
+            <dl class="account-subscription-details">
+              <div><dt>訂閱狀態</dt><dd id="accountSubscriptionDetail">目前使用免費方案。</dd></div>
+              <div><dt>孩子名額</dt><dd id="accountChildUsage">0 / 1 位孩子</dd></div>
+            </dl>
+            <div class="account-plan-options" id="accountPlanOptions" hidden></div>
+            <p class="account-plan-status" id="accountPlanStatus">目前開放免費體驗；其他家庭功能若有調整，將另行公告。</p>
+          </section>
+          <div class="account-support" id="accountSupport" hidden>
+            <strong>需要協助嗎？</strong>
+            <p>有使用上的問題，歡迎寫信給好好吃飯客服。</p>
+            <a class="account-support-email" id="accountSupportEmail"></a>
+            <div class="account-support-links"><a href="/support">前往支援中心</a><a href="/privacy">隱私權政策</a><a href="/terms">服務條款</a></div>
+          </div>
           <button class="account-sign-in secondary" id="accountSignOut" type="button">登出</button>
         </div>
       </div>
     </dialog>
 
+    <dialog class="account-dialog family-plan-dialog" id="familyPlanDialog" aria-labelledby="familyPlanTitle">
+      <div class="account-dialog-shell family-plan-shell">
+        <button class="account-dialog-close modal-close-button" id="closeFamilyPlanDialog" type="button" aria-label="關閉家庭方案"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+        <header class="family-plan-hero">
+          <span class="account-dialog-mark" aria-hidden="true">家</span>
+          <div>
+            <p class="kicker">免費體驗</p>
+            <h2 id="familyPlanTitle">確認目前開放的家庭功能</h2>
+            <p>你可以在這裡確認目前的使用狀態、孩子名額與可用功能。</p>
+          </div>
+        </header>
+
+        <section class="family-plan-current" aria-labelledby="familyPlanCurrentName">
+          <div class="family-plan-current-heading">
+            <div>
+              <span>目前方案</span>
+              <strong id="familyPlanCurrentName">免費方案</strong>
+            </div>
+            <span class="family-plan-current-badge" id="familyPlanCurrentBadge">免費使用中</span>
+          </div>
+          <p id="familyPlanCurrentDescription">免費方案可建立 1 位孩子，保存午餐紀錄、孩子原話與家長筆記。</p>
+          <dl class="family-plan-current-details">
+            <div><dt>訂閱狀態</dt><dd id="familyPlanSubscriptionDetail">目前使用免費方案。</dd></div>
+            <div><dt>孩子名額</dt><dd id="familyPlanChildUsage">0 / 1 位孩子</dd></div>
+          </dl>
+        </section>
+
+        <section class="family-plan-feature-panel" aria-labelledby="familyPlanFeatureTitle">
+          <div>
+            <p class="kicker">目前可用功能</p>
+            <h3 id="familyPlanFeatureTitle">你目前可以使用</h3>
+          </div>
+          <ul class="family-plan-feature-list" id="familyPlanFeatureList"></ul>
+        </section>
+
+        <section class="family-plan-comparison" id="familyPlanComparison" aria-labelledby="familyPlanComparisonTitle" hidden></section>
+
+        <p class="family-plan-availability" id="familyPlanAvailability">好好吃飯目前開放免費體驗；免費家庭帳號目前可建立 1 位孩子。</p>
+        <button class="family-plan-return" id="closeFamilyPlanAction" type="button">回到一口護照</button>
+      </div>
+    </dialog>
+
+    <template id="accountPlanOptionsTemplate">
+      <article>
+        <span>家庭月繳</span>
+        <strong>每月 NT$49</strong>
+        <small>最多 3 位孩子</small>
+      </article>
+      <article>
+        <span>家庭年繳</span>
+        <strong>每年 NT$490</strong>
+        <small>最多 3 位孩子</small>
+      </article>
+    </template>
+
+    <template id="familyPlanComparisonTemplate">
+      <div class="family-plan-section-heading">
+        <div><p class="kicker">方案一覽</p><h3 id="familyPlanComparisonTitle">選擇適合家裡的方式</h3></div>
+        <span>價格皆為新台幣</span>
+      </div>
+      <div class="family-plan-grid">
+        <article class="family-plan-card" data-plan-id="free">
+          <div class="family-plan-card-heading"><span>免費方案</span><span class="family-plan-card-state">方案選項</span></div>
+          <strong>NT$0</strong>
+          <small>1 位孩子</small>
+          <p>一口護照、孩子學校設定、需留意食物與飲食紀錄。</p>
+        </article>
+        <article class="family-plan-card" data-plan-id="family_monthly">
+          <div class="family-plan-card-heading"><span>家庭月繳</span><span class="family-plan-card-state">方案選項</span></div>
+          <strong>每月 NT$49</strong>
+          <small>最多 3 位孩子</small>
+          <p>每位孩子都有分開的學校、需留意食物與一口護照紀錄。</p>
+        </article>
+        <article class="family-plan-card" data-plan-id="family_yearly">
+          <div class="family-plan-card-heading"><span>家庭年繳</span><span class="family-plan-card-state">方案選項</span></div>
+          <strong>每年 NT$490</strong>
+          <small>最多 3 位孩子</small>
+          <p>與月繳相同的家庭功能，改以年繳方式使用。</p>
+        </article>
+      </div>
+    </template>
+
     <dialog class="source-dialog" id="sourceDialog" aria-labelledby="dialogTitle">
       <button class="dialog-close modal-close-button" id="closeSource" type="button" aria-label="關閉"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
-      <div><p class="kicker">ORIGINAL MENU</p><h2 id="dialogTitle">本週原始菜單</h2></div>
+      <div><p class="kicker">原始菜單</p><h2 id="dialogTitle">本週原始菜單</h2></div>
       <div class="source-image-stage" id="sourceImageStage" data-state="idle">
         <div class="source-image-status loading-state" id="sourceImageStatus" role="status" aria-live="polite" aria-atomic="true">
           <span class="loading-spinner" aria-hidden="true"></span><span id="sourceImageStatusText">準備載入原圖…</span>
@@ -459,7 +684,7 @@
       <div class="dish-detail-shell">
         <header class="dish-detail-header">
           <button class="dish-detail-close modal-close-button" id="closeDishDetail" type="button" aria-label="關閉菜色明細"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
-          <p class="kicker">DISH DETAILS</p>
+          <p class="kicker">菜色明細</p>
           <p class="dish-detail-role" id="dishDetailRole">菜色明細</p>
           <h2 id="dishDetailTitle">—</h2>
           <p class="dish-detail-count" id="dishDetailCount">—</p>
@@ -476,6 +701,7 @@
     <script src="./number-format.js" defer></script>
     <script src="./official-diet.js" defer></script>
     <script src="./sample-dashboard.js" defer></script>
-    <script src="./app.js?v=20261017-sample-preview" defer></script>
+    <script src="./passport-memory.js?v=20261023-single-memory-list" defer></script>
+    <script src="./app.js?v=20261023-family-copy" defer></script>
   </body>
 </html>

@@ -1,22 +1,14 @@
 const state = { items: [], category: "全部" };
 
 const refs = {
-  newsSync: document.getElementById("newsSync"),
-  newsSyncText: document.getElementById("newsSyncText"),
   newsRange: document.getElementById("newsRange"),
   newsFilters: document.getElementById("newsFilters"),
   newsList: document.getElementById("newsList"),
   newsEmpty: document.getElementById("newsEmpty"),
   sourcePolicy: document.getElementById("sourcePolicy"),
-  accountButton: document.getElementById("newsAccountButton"),
-  accountAvatar: document.getElementById("newsAccountAvatar"),
-  accountButtonText: document.getElementById("newsAccountButtonText"),
 };
 
-function setNewsStatus(status, message) {
-  refs.newsSync.classList.remove("ready", "is-loading", "is-error");
-  refs.newsSync.classList.add(status === "ready" ? "ready" : `is-${status}`);
-  refs.newsSyncText.textContent = message;
+function setNewsStatus(status) {
   refs.newsList.setAttribute("aria-busy", String(status === "loading"));
   for (const button of refs.newsFilters.querySelectorAll("button")) {
     button.disabled = status === "loading";
@@ -88,7 +80,7 @@ refs.newsFilters.addEventListener("click", (event) => {
 });
 
 async function loadNews() {
-  setNewsStatus("loading", "正在讀取消息…");
+  setNewsStatus("loading", "正在讀取午餐消息…");
   try {
     const response = await fetch(endpoint(), { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -99,29 +91,11 @@ async function loadNews() {
     setNewsStatus("ready", `更新於 ${formatDate(payload.generatedAt)}`);
     render();
   } catch (error) {
-    setNewsStatus("error", "消息讀取失敗");
+    setNewsStatus("error", "午餐消息暫時無法顯示");
     refs.newsList.replaceChildren();
     refs.newsEmpty.hidden = false;
-    refs.newsEmpty.textContent = "近期消息暫時讀取不到，請稍後再試。";
-  }
-}
-
-async function loadAccountSummary() {
-  try {
-    const response = await fetch("/api/account", { cache: "no-store", credentials: "same-origin" });
-    if (!response.ok) return;
-    const account = await response.json();
-    if (!account.authenticated) return;
-
-    const label = account.child ? `${account.child.nickname}的午餐紀錄` : "建立午餐紀錄";
-    refs.accountButton.classList.add("is-authenticated");
-    refs.accountAvatar.textContent = account.child?.nickname?.slice(0, 1) || "家";
-    refs.accountButtonText.textContent = label;
-    refs.accountButton.title = label;
-  } catch {
-    // The static preview has no account API; keep the signed-out link usable.
+    refs.newsEmpty.textContent = "目前還無法顯示近期消息，請稍後再試。";
   }
 }
 
 loadNews();
-loadAccountSummary();

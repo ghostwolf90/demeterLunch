@@ -148,33 +148,6 @@ class PublishSchoolMealsTests(unittest.TestCase):
             with self.assertRaisesRegex(ManualPublishError, "仍有抓取失敗"):
                 build_publish_bundle(root, date(2026, 10, 13))
 
-    def test_can_publish_a_successful_subset_from_report_with_failures(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            self._fixture(root, failed=1)
-
-            bundle = build_publish_bundle(
-                root,
-                date(2026, 10, 13),
-                school_ids={193609},
-            )
-
-        self.assertEqual(bundle["reportSummary"]["schools"], 1)
-        self.assertEqual(bundle["reportSummary"]["failed"], 0)
-        self.assertEqual(len(bundle["records"]), 1)
-
-    def test_rejects_missing_subset_school(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            self._fixture(root)
-
-            with self.assertRaisesRegex(ManualPublishError, "找不到學校代碼"):
-                build_publish_bundle(
-                    root,
-                    date(2026, 10, 13),
-                    school_ids={999999},
-                )
-
     def test_https_context_keeps_certificate_verification_enabled(self) -> None:
         context = _verified_ssl_context()
 

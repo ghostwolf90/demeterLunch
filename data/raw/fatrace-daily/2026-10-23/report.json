@@ -1,1719 +1,3609 @@
 {
-  "schemaVersion": 1,
-  "checkedAt": "2026-10-23T09:50:19.472945+08:00",
-  "completedAt": "2026-10-23T10:55:34.964285+08:00",
-  "durationSeconds": 3915.489,
-  "averageSecondsPerSchool": 16.113,
+  "schemaVersion": 2,
+  "checkedAt": "2026-10-23T14:14:31+08:00",
+  "updatedAt": "2026-10-23T14:22:25+08:00",
+  "completedAt": "2026-10-23T14:22:25+08:00",
+  "durationSeconds": 474.369,
+  "averageSecondsPerSchool": 4.697,
   "mealDate": "2026-10-23",
   "registry": "data/reference/taichung-active-elementary-schools.json",
   "includeIngredients": true,
+  "runMode": "resume",
   "summary": {
     "schools": 243,
     "available": 142,
     "noMeal": 0,
     "notPublished": 101,
-    "failed": 0
+    "failed": 0,
+    "notChecked": 0,
+    "completed": 142,
+    "pending": 101,
+    "checkedThisRun": 101,
+    "reusedCompleted": 142
   },
+  "notPublishedSchools": [
+    {
+      "school": "忠信國小",
+      "district": "西區",
+      "fatraceSchoolId": 193609,
+      "checkedAt": "2026-10-23T14:14:31.207010+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "大勇國小",
+      "district": "西區",
+      "fatraceSchoolId": 193644,
+      "checkedAt": "2026-10-23T14:14:34.474606+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "中正國小",
+      "district": "西區",
+      "fatraceSchoolId": 193612,
+      "checkedAt": "2026-10-23T14:14:39.230402+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "大同國小",
+      "district": "西區",
+      "fatraceSchoolId": 193610,
+      "checkedAt": "2026-10-23T14:14:46.500676+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "上石國小",
+      "district": "西屯區",
+      "fatraceSchoolId": 193651,
+      "checkedAt": "2026-10-23T14:14:51.147535+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "何厝國小",
+      "district": "西屯區",
+      "fatraceSchoolId": 193649,
+      "checkedAt": "2026-10-23T14:14:55.847313+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "國安國小",
+      "district": "西屯區",
+      "fatraceSchoolId": 193650,
+      "checkedAt": "2026-10-23T14:15:00.367455+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "永安國小",
+      "district": "西屯區",
+      "fatraceSchoolId": 193624,
+      "checkedAt": "2026-10-23T14:15:04.843975+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "重慶國小",
+      "district": "西屯區",
+      "fatraceSchoolId": 193645,
+      "checkedAt": "2026-10-23T14:15:09.442460+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "長安國小",
+      "district": "西屯區",
+      "fatraceSchoolId": 193661,
+      "checkedAt": "2026-10-23T14:15:14.010782+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "力行國小",
+      "district": "東區",
+      "fatraceSchoolId": 193606,
+      "checkedAt": "2026-10-23T14:15:18.730730+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "大智國小",
+      "district": "東區",
+      "fatraceSchoolId": 193603,
+      "checkedAt": "2026-10-23T14:15:23.196797+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "樂業國小",
+      "district": "東區",
+      "fatraceSchoolId": 193607,
+      "checkedAt": "2026-10-23T14:15:27.914763+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "信義國小",
+      "district": "南區",
+      "fatraceSchoolId": 193615,
+      "checkedAt": "2026-10-23T14:15:32.639517+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "樹德國小",
+      "district": "南區",
+      "fatraceSchoolId": 64744649,
+      "checkedAt": "2026-10-23T14:15:37.980475+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "樹義國小",
+      "district": "南區",
+      "fatraceSchoolId": 193657,
+      "checkedAt": "2026-10-23T14:15:42.523349+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "私立明德高中附設國小",
+      "district": "南區",
+      "fatraceSchoolId": 64743078,
+      "checkedAt": "2026-10-23T14:15:47.247794+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "中華國小",
+      "district": "北區",
+      "fatraceSchoolId": 193617,
+      "checkedAt": "2026-10-23T14:15:51.934229+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "國立臺中教育大學附設實驗國小",
+      "district": "北區",
+      "fatraceSchoolId": 190601,
+      "checkedAt": "2026-10-23T14:15:56.470372+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "私立育仁國小",
+      "district": "北區",
+      "fatraceSchoolId": 64742521,
+      "checkedAt": "2026-10-23T14:16:01.218682+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "賴厝國小",
+      "district": "北區",
+      "fatraceSchoolId": 193654,
+      "checkedAt": "2026-10-23T14:16:05.686147+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "仁愛國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193641,
+      "checkedAt": "2026-10-23T14:16:10.234338+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "仁美國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193660,
+      "checkedAt": "2026-10-23T14:16:14.826067+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "僑孝國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193633,
+      "checkedAt": "2026-10-23T14:16:19.282760+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "北屯國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193632,
+      "checkedAt": "2026-10-23T14:16:23.919330+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "四張犁國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193634,
+      "checkedAt": "2026-10-23T14:16:28.461416+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "大坑國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193637,
+      "checkedAt": "2026-10-23T14:16:32.908795+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "建功國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193639,
+      "checkedAt": "2026-10-23T14:16:37.612447+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "東光國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193658,
+      "checkedAt": "2026-10-23T14:16:42.210200+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "松竹國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193635,
+      "checkedAt": "2026-10-23T14:16:46.679972+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "私立明道普霖斯頓國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 64742545,
+      "checkedAt": "2026-10-23T14:16:51.364747+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "軍功國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193636,
+      "checkedAt": "2026-10-23T14:16:55.950277+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "逢甲國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193638,
+      "checkedAt": "2026-10-23T14:17:00.712050+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "陳平國小",
+      "district": "北屯區",
+      "fatraceSchoolId": 193653,
+      "checkedAt": "2026-10-23T14:17:05.577650+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "大墩國小",
+      "district": "南屯區",
+      "fatraceSchoolId": 193663,
+      "checkedAt": "2026-10-23T14:17:10.408212+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "大新國小",
+      "district": "南屯區",
+      "fatraceSchoolId": 193652,
+      "checkedAt": "2026-10-23T14:17:14.918238+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "春安國小",
+      "district": "南屯區",
+      "fatraceSchoolId": 193630,
+      "checkedAt": "2026-10-23T14:17:19.608719+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "鎮平國小",
+      "district": "南屯區",
+      "fatraceSchoolId": 193628,
+      "checkedAt": "2026-10-23T14:17:24.270392+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "坪林國小",
+      "district": "太平區",
+      "fatraceSchoolId": 64737633,
+      "checkedAt": "2026-10-23T14:17:29.091115+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "坪林國小坪廍分校",
+      "district": "太平區",
+      "fatraceSchoolId": 64724001,
+      "checkedAt": "2026-10-23T14:17:33.675513+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "建平國小",
+      "district": "太平區",
+      "fatraceSchoolId": 64740,
+      "checkedAt": "2026-10-23T14:17:38.349115+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "新高國小",
+      "district": "太平區",
+      "fatraceSchoolId": 64743046,
+      "checkedAt": "2026-10-23T14:17:42.867088+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "東平國小",
+      "district": "太平區",
+      "fatraceSchoolId": 64745,
+      "checkedAt": "2026-10-23T14:17:47.827417+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "長億國小",
+      "district": "太平區",
+      "fatraceSchoolId": 64764,
+      "checkedAt": "2026-10-23T14:17:52.601554+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "內新國小",
+      "district": "大里區",
+      "fatraceSchoolId": 64706,
+      "checkedAt": "2026-10-23T14:17:57.276221+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "大里國小",
+      "district": "大里區",
+      "fatraceSchoolId": 64705,
+      "checkedAt": "2026-10-23T14:18:01.925497+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "永隆國小",
+      "district": "大里區",
+      "fatraceSchoolId": 64752,
+      "checkedAt": "2026-10-23T14:18:06.748820+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "瑞城國小",
+      "district": "大里區",
+      "fatraceSchoolId": 64709,
+      "checkedAt": "2026-10-23T14:18:12.035852+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "竹仔坑國小",
+      "district": "大里區",
+      "fatraceSchoolId": 64710,
+      "checkedAt": "2026-10-23T14:18:17.088017+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "美群國小",
+      "district": "大里區",
+      "fatraceSchoolId": 64753,
+      "checkedAt": "2026-10-23T14:18:22.186156+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "草湖國小",
+      "district": "大里區",
+      "fatraceSchoolId": 64711,
+      "checkedAt": "2026-10-23T14:18:26.905059+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "五福國小",
+      "district": "霧峰區",
+      "fatraceSchoolId": 64715,
+      "checkedAt": "2026-10-23T14:18:31.414496+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "僑榮國小",
+      "district": "霧峰區",
+      "fatraceSchoolId": 64713,
+      "checkedAt": "2026-10-23T14:18:36.090315+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "光正國小",
+      "district": "霧峰區",
+      "fatraceSchoolId": 64720,
+      "checkedAt": "2026-10-23T14:18:40.811599+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "吉峰國小",
+      "district": "霧峰區",
+      "fatraceSchoolId": 64749,
+      "checkedAt": "2026-10-23T14:18:45.413971+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "四德國小",
+      "district": "霧峰區",
+      "fatraceSchoolId": 64714,
+      "checkedAt": "2026-10-23T14:18:49.968268+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "復興國小",
+      "district": "霧峰區",
+      "fatraceSchoolId": 64719,
+      "checkedAt": "2026-10-23T14:18:54.709494+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "萬豐國小",
+      "district": "霧峰區",
+      "fatraceSchoolId": 64716,
+      "checkedAt": "2026-10-23T14:18:59.316629+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "霧峰國小",
+      "district": "霧峰區",
+      "fatraceSchoolId": 64712,
+      "checkedAt": "2026-10-23T14:19:03.892989+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "僑仁國小",
+      "district": "烏日區",
+      "fatraceSchoolId": 64694,
+      "checkedAt": "2026-10-23T14:19:08.847290+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "喀哩國小",
+      "district": "烏日區",
+      "fatraceSchoolId": 64695,
+      "checkedAt": "2026-10-23T14:19:13.326028+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "旭光國小",
+      "district": "烏日區",
+      "fatraceSchoolId": 64698,
+      "checkedAt": "2026-10-23T14:19:18.003496+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "東園國小",
+      "district": "烏日區",
+      "fatraceSchoolId": 64696,
+      "checkedAt": "2026-10-23T14:19:23.013744+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "合作國小",
+      "district": "豐原區",
+      "fatraceSchoolId": 64608,
+      "checkedAt": "2026-10-23T14:19:27.579611+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "福陽國小",
+      "district": "豐原區",
+      "fatraceSchoolId": 64759,
+      "checkedAt": "2026-10-23T14:19:32.079007+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "翁子國小",
+      "district": "豐原區",
+      "fatraceSchoolId": 64606,
+      "checkedAt": "2026-10-23T14:19:36.634998+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "豐原國小",
+      "district": "豐原區",
+      "fatraceSchoolId": 64601,
+      "checkedAt": "2026-10-23T14:19:41.353185+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "豐村國小",
+      "district": "豐原區",
+      "fatraceSchoolId": 64605,
+      "checkedAt": "2026-10-23T14:19:45.833034+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "七星國小",
+      "district": "后里區",
+      "fatraceSchoolId": 64612,
+      "checkedAt": "2026-10-23T14:19:50.635925+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "后里國小",
+      "district": "后里區",
+      "fatraceSchoolId": 64610,
+      "checkedAt": "2026-10-23T14:19:55.266001+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "月眉國小",
+      "district": "后里區",
+      "fatraceSchoolId": 64611,
+      "checkedAt": "2026-10-23T14:19:59.879569+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "泰安國小",
+      "district": "后里區",
+      "fatraceSchoolId": 64614,
+      "checkedAt": "2026-10-23T14:20:04.574215+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "育英國小",
+      "district": "后里區",
+      "fatraceSchoolId": 64613,
+      "checkedAt": "2026-10-23T14:20:09.140215+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "土牛國小",
+      "district": "石岡區",
+      "fatraceSchoolId": 64644,
+      "checkedAt": "2026-10-23T14:20:13.747055+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "石岡國小",
+      "district": "石岡區",
+      "fatraceSchoolId": 64643,
+      "checkedAt": "2026-10-23T14:20:18.334867+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "平等國小",
+      "district": "和平區",
+      "fatraceSchoolId": 64734,
+      "checkedAt": "2026-10-23T14:20:23.026084+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "中和國小",
+      "district": "新社區",
+      "fatraceSchoolId": 64651,
+      "checkedAt": "2026-10-23T14:20:27.763559+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "大林國小",
+      "district": "新社區",
+      "fatraceSchoolId": 64649,
+      "checkedAt": "2026-10-23T14:20:32.423707+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "崑山國小",
+      "district": "新社區",
+      "fatraceSchoolId": 64650,
+      "checkedAt": "2026-10-23T14:20:37.066346+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "福民國小",
+      "district": "新社區",
+      "fatraceSchoolId": 64730,
+      "checkedAt": "2026-10-23T14:20:41.423302+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "新興國小",
+      "district": "潭子區",
+      "fatraceSchoolId": 64629,
+      "checkedAt": "2026-10-23T14:20:46.015452+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "潭陽國小",
+      "district": "潭子區",
+      "fatraceSchoolId": 64741,
+      "checkedAt": "2026-10-23T14:20:50.754462+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "三和國小",
+      "district": "大雅區",
+      "fatraceSchoolId": 64621,
+      "checkedAt": "2026-10-23T14:20:55.662799+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "上楓國小",
+      "district": "大雅區",
+      "fatraceSchoolId": 64623,
+      "checkedAt": "2026-10-23T14:21:00.306478+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "文雅國小",
+      "district": "大雅區",
+      "fatraceSchoolId": 64746,
+      "checkedAt": "2026-10-23T14:21:04.973849+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "大忠國小",
+      "district": "大肚區",
+      "fatraceSchoolId": 64704,
+      "checkedAt": "2026-10-23T14:21:10.511066+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "瑞峰國小",
+      "district": "大肚區",
+      "fatraceSchoolId": 64701,
+      "checkedAt": "2026-10-23T14:21:15.197443+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "鹿陽國小",
+      "district": "沙鹿區",
+      "fatraceSchoolId": 64754296,
+      "checkedAt": "2026-10-23T14:21:19.805577+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "龍峰國小",
+      "district": "龍井區",
+      "fatraceSchoolId": 64692,
+      "checkedAt": "2026-10-23T14:21:24.418713+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "東山國小",
+      "district": "清水區",
+      "fatraceSchoolId": 64660,
+      "checkedAt": "2026-10-23T14:21:29.077049+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "甲南國小",
+      "district": "清水區",
+      "fatraceSchoolId": 64657,
+      "checkedAt": "2026-10-23T14:21:33.700504+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "西寧國小",
+      "district": "清水區",
+      "fatraceSchoolId": 64653,
+      "checkedAt": "2026-10-23T14:21:38.274370+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "高美國小",
+      "district": "清水區",
+      "fatraceSchoolId": 64658,
+      "checkedAt": "2026-10-23T14:21:42.690992+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "大甲國小",
+      "district": "大甲區",
+      "fatraceSchoolId": 64665,
+      "checkedAt": "2026-10-23T14:21:47.268349+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "文昌國小",
+      "district": "大甲區",
+      "fatraceSchoolId": 64667,
+      "checkedAt": "2026-10-23T14:21:52.013459+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "日南國小",
+      "district": "大甲區",
+      "fatraceSchoolId": 64670,
+      "checkedAt": "2026-10-23T14:21:56.620159+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "順天國小",
+      "district": "大甲區",
+      "fatraceSchoolId": 64668,
+      "checkedAt": "2026-10-23T14:22:01.249482+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "外埔國小",
+      "district": "外埔區",
+      "fatraceSchoolId": 64630,
+      "checkedAt": "2026-10-23T14:22:05.920486+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "安定國小",
+      "district": "外埔區",
+      "fatraceSchoolId": 64631,
+      "checkedAt": "2026-10-23T14:22:10.512523+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "鐵山國小",
+      "district": "外埔區",
+      "fatraceSchoolId": 64632,
+      "checkedAt": "2026-10-23T14:22:15.119424+08:00",
+      "attempts": 1
+    },
+    {
+      "school": "三光國小",
+      "district": "大安區",
+      "fatraceSchoolId": 64683,
+      "checkedAt": "2026-10-23T14:22:19.683961+08:00",
+      "attempts": 1
+    }
+  ],
   "results": [
     {
       "school": "忠信國小",
+      "fullName": "臺中市西區忠信國小",
+      "district": "西區",
       "fatraceSchoolId": 193609,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193609"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:14:31.207010+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193609",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "忠孝國小",
+      "fullName": "臺中市西區忠孝國小",
+      "district": "西區",
       "fatraceSchoolId": 193608,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193608"
     },
     {
       "school": "大勇國小",
+      "fullName": "臺中市西區大勇國小",
+      "district": "西區",
       "fatraceSchoolId": 193644,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193644"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:14:34.474606+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193644",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "中正國小",
+      "fullName": "臺中市西區中正國小",
+      "district": "西區",
       "fatraceSchoolId": 193612,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193612"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:14:39.230402+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193612",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "大同國小",
+      "fullName": "臺中市西區大同國小",
+      "district": "西區",
       "fatraceSchoolId": 193610,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193610"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:14:46.500676+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193610",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "忠明國小",
+      "fullName": "臺中市西區忠明國小",
+      "district": "西區",
       "fatraceSchoolId": 193611,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193611"
     },
     {
       "school": "上安國小",
+      "fullName": "臺中市西屯區上安國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193659,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193659"
     },
     {
       "school": "上石國小",
+      "fullName": "臺中市西屯區上石國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193651,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193651"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:14:51.147535+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193651",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "何厝國小",
+      "fullName": "臺中市西屯區何厝國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193649,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193649"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:14:55.847313+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193649",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "協和國小",
+      "fullName": "臺中市西屯區協和國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193625,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193625"
     },
     {
       "school": "國安國小",
+      "fullName": "臺中市西屯區國安國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193650,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193650"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:00.367455+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193650",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "大仁國小",
+      "fullName": "臺中市西屯區大仁國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193626,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193626"
     },
     {
       "school": "大鵬國小",
+      "fullName": "臺中市西屯區大鵬國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193623,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193623"
     },
     {
       "school": "惠來國小",
+      "fullName": "臺中市西屯區惠來國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193662,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193662"
     },
     {
       "school": "東海國小",
+      "fullName": "臺中市西屯區東海國小",
+      "district": "西屯區",
       "fatraceSchoolId": 64740659,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64740659"
     },
     {
       "school": "永安國小",
+      "fullName": "臺中市西屯區永安國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193624,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193624"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:04.843975+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193624",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "泰安國小",
+      "fullName": "臺中市西屯區泰安國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193622,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193622"
     },
     {
       "school": "私立麗喆國(中)小",
+      "fullName": "臺中市西屯區私立麗喆國(中)小",
+      "district": "西屯區",
       "fatraceSchoolId": 64742519,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64742519"
     },
     {
       "school": "西屯國小",
+      "fullName": "臺中市西屯區西屯國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193621,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193621"
     },
     {
       "school": "重慶國小",
+      "fullName": "臺中市西屯區重慶國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193645,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193645"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:09.442460+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193645",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "長安國小",
+      "fullName": "臺中市西屯區長安國小",
+      "district": "西屯區",
       "fatraceSchoolId": 193661,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193661"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:14.010782+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193661",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "力行國小",
+      "fullName": "臺中市東區力行國小",
+      "district": "東區",
       "fatraceSchoolId": 193606,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193606"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:18.730730+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193606",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "大智國小",
+      "fullName": "臺中市東區大智國小",
+      "district": "東區",
       "fatraceSchoolId": 193603,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193603"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:23.196797+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193603",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "成功國小",
+      "fullName": "臺中市東區成功國小",
+      "district": "東區",
       "fatraceSchoolId": 193604,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193604"
     },
     {
       "school": "樂業國小",
+      "fullName": "臺中市東區樂業國小",
+      "district": "東區",
       "fatraceSchoolId": 193607,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193607"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:27.914763+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193607",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "臺中國小",
+      "fullName": "臺中市東區臺中國小",
+      "district": "東區",
       "fatraceSchoolId": 193602,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193602"
     },
     {
       "school": "進德國小",
+      "fullName": "臺中市東區進德國小",
+      "district": "東區",
       "fatraceSchoolId": 193605,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193605"
     },
     {
       "school": "信義國小",
+      "fullName": "臺中市南區信義國小",
+      "district": "南區",
       "fatraceSchoolId": 193615,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193615"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:32.639517+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193615",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "和平國小",
+      "fullName": "臺中市南區和平國小",
+      "district": "南區",
       "fatraceSchoolId": 193613,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193613"
     },
     {
       "school": "國光國小",
+      "fullName": "臺中市南區國光國小",
+      "district": "南區",
       "fatraceSchoolId": 193614,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193614"
     },
     {
       "school": "樹德國小",
+      "fullName": "臺中市南區樹德國小",
+      "district": "南區",
       "fatraceSchoolId": 64744649,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64744649"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:37.980475+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64744649",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "樹義國小",
+      "fullName": "臺中市南區樹義國小",
+      "district": "南區",
       "fatraceSchoolId": 193657,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193657"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:42.523349+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193657",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "私立明德高中附設國小",
+      "fullName": "臺中市南區私立明德高中附設國小",
+      "district": "南區",
       "fatraceSchoolId": 64743078,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64743078"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:47.247794+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64743078",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "光復國小",
+      "fullName": "臺中市中區光復國小",
+      "district": "中區",
       "fatraceSchoolId": 193601,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193601"
     },
     {
       "school": "中華國小",
+      "fullName": "臺中市北區中華國小",
+      "district": "北區",
       "fatraceSchoolId": 193617,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193617"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:51.934229+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193617",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "健行國小",
+      "fullName": "臺中市北區健行國小",
+      "district": "北區",
       "fatraceSchoolId": 193619,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193619"
     },
     {
       "school": "國立臺中教育大學附設實驗國小",
+      "fullName": "臺中市北區國立臺中教育大學附設實驗國小",
+      "district": "北區",
       "fatraceSchoolId": 190601,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/190601"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:15:56.470372+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/190601",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "太平國小",
+      "fullName": "臺中市北區太平國小",
+      "district": "北區",
       "fatraceSchoolId": 193616,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193616"
     },
     {
       "school": "省三國小",
+      "fullName": "臺中市北區省三國小",
+      "district": "北區",
       "fatraceSchoolId": 193620,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193620"
     },
     {
       "school": "私立育仁國小",
+      "fullName": "臺中市北區私立育仁國小",
+      "district": "北區",
       "fatraceSchoolId": 64742521,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64742521"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:01.218682+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64742521",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "立人國小",
+      "fullName": "臺中市北區立人國小",
+      "district": "北區",
       "fatraceSchoolId": 193642,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193642"
     },
     {
       "school": "篤行國小",
+      "fullName": "臺中市北區篤行國小",
+      "district": "北區",
       "fatraceSchoolId": 193618,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193618"
     },
     {
       "school": "賴厝國小",
+      "fullName": "臺中市北區賴厝國小",
+      "district": "北區",
       "fatraceSchoolId": 193654,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193654"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:05.686147+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193654",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "仁愛國小",
+      "fullName": "臺中市北屯區仁愛國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193641,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193641"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:10.234338+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193641",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "仁美國小",
+      "fullName": "臺中市北屯區仁美國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193660,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193660"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:14.826067+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193660",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "僑孝國小",
+      "fullName": "臺中市北屯區僑孝國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193633,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193633"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:19.282760+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193633",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "北屯國小",
+      "fullName": "臺中市北屯區北屯國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193632,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193632"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:23.919330+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193632",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "南興國小",
+      "fullName": "臺中市北屯區南興國小",
+      "district": "北屯區",
       "fatraceSchoolId": 64754668,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64754668"
     },
     {
       "school": "四張犁國小",
+      "fullName": "臺中市北屯區四張犁國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193634,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193634"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:28.461416+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193634",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "四維國小",
+      "fullName": "臺中市北屯區四維國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193648,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193648"
     },
     {
       "school": "大坑國小",
+      "fullName": "臺中市北屯區大坑國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193637,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193637"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:32.908795+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193637",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "廍子國小",
+      "fullName": "臺中市北屯區廍子國小",
+      "district": "北屯區",
       "fatraceSchoolId": 64743017,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64743017"
     },
     {
       "school": "建功國小",
+      "fullName": "臺中市北屯區建功國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193639,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193639"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:37.612447+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193639",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "文心國小",
+      "fullName": "臺中市北屯區文心國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193647,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193647"
     },
     {
       "school": "文昌國小",
+      "fullName": "臺中市北屯區文昌國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193643,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193643"
     },
     {
       "school": "新興國小",
+      "fullName": "臺中市北屯區新興國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193640,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193640"
     },
     {
       "school": "東光國小",
+      "fullName": "臺中市北屯區東光國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193658,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193658"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:42.210200+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193658",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "松強國小",
+      "fullName": "臺中市北屯區松強國小",
+      "district": "北屯區",
       "fatraceSchoolId": 64754264,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64754264"
     },
     {
       "school": "松竹國小",
+      "fullName": "臺中市北屯區松竹國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193635,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193635"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:46.679972+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193635",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "私立慎齋國小",
+      "fullName": "臺中市北屯區私立慎齋國小",
+      "district": "北屯區",
       "fatraceSchoolId": 64742523,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64742523"
     },
     {
       "school": "私立明道普霖斯頓國小",
+      "fullName": "臺中市北屯區私立明道普霖斯頓國小",
+      "district": "北屯區",
       "fatraceSchoolId": 64742545,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64742545"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:51.364747+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64742545",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "軍功國小",
+      "fullName": "臺中市北屯區軍功國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193636,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193636"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:16:55.950277+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193636",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "逢甲國小",
+      "fullName": "臺中市北屯區逢甲國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193638,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193638"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:00.712050+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193638",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "陳平國小",
+      "fullName": "臺中市北屯區陳平國小",
+      "district": "北屯區",
       "fatraceSchoolId": 193653,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193653"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:05.577650+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193653",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "南屯國小",
+      "fullName": "臺中市南屯區南屯國小",
+      "district": "南屯區",
       "fatraceSchoolId": 193627,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193627"
     },
     {
       "school": "大墩國小",
+      "fullName": "臺中市南屯區大墩國小",
+      "district": "南屯區",
       "fatraceSchoolId": 193663,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193663"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:10.408212+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193663",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "大新國小",
+      "fullName": "臺中市南屯區大新國小",
+      "district": "南屯區",
       "fatraceSchoolId": 193652,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193652"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:14.918238+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193652",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "惠文國小",
+      "fullName": "臺中市南屯區惠文國小",
+      "district": "南屯區",
       "fatraceSchoolId": 193656,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193656"
     },
     {
       "school": "文山國小",
+      "fullName": "臺中市南屯區文山國小",
+      "district": "南屯區",
       "fatraceSchoolId": 193629,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193629"
     },
     {
       "school": "春安國小",
+      "fullName": "臺中市南屯區春安國小",
+      "district": "南屯區",
       "fatraceSchoolId": 193630,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193630"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:19.608719+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193630",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "東興國小",
+      "fullName": "臺中市南屯區東興國小",
+      "district": "南屯區",
       "fatraceSchoolId": 193646,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193646"
     },
     {
       "school": "永春國小",
+      "fullName": "臺中市南屯區永春國小",
+      "district": "南屯區",
       "fatraceSchoolId": 193655,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193655"
     },
     {
       "school": "鎮平國小",
+      "fullName": "臺中市南屯區鎮平國小",
+      "district": "南屯區",
       "fatraceSchoolId": 193628,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/193628"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:24.270392+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/193628",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "黎明國小",
+      "fullName": "臺中市南屯區黎明國小",
+      "district": "南屯區",
       "fatraceSchoolId": 193631,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/193631"
     },
     {
       "school": "中華國小",
+      "fullName": "臺中市太平區中華國小",
+      "district": "太平區",
       "fatraceSchoolId": 64742,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64742"
     },
     {
       "school": "光隆國小",
+      "fullName": "臺中市太平區光隆國小",
+      "district": "太平區",
       "fatraceSchoolId": 64725,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64725"
     },
     {
       "school": "坪林國小",
+      "fullName": "臺中市太平區坪林國小",
+      "district": "太平區",
       "fatraceSchoolId": 64737633,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64737633"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:29.091115+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64737633",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "坪林國小坪廍分校",
+      "fullName": "臺中市太平區坪林國小坪廍分校",
+      "district": "太平區",
       "fatraceSchoolId": 64724001,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64724001"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:33.675513+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64724001",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "太平國小",
+      "fullName": "臺中市太平區太平國小",
+      "district": "太平區",
       "fatraceSchoolId": 64721,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64721"
     },
     {
       "school": "宜欣國小",
+      "fullName": "臺中市太平區宜欣國小",
+      "district": "太平區",
       "fatraceSchoolId": 64722,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64722"
     },
     {
       "school": "建平國小",
+      "fullName": "臺中市太平區建平國小",
+      "district": "太平區",
       "fatraceSchoolId": 64740,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64740"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:38.349115+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64740",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "新光國小",
+      "fullName": "臺中市太平區新光國小",
+      "district": "太平區",
       "fatraceSchoolId": 64723,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64723"
     },
     {
       "school": "新平國小",
+      "fullName": "臺中市太平區新平國小",
+      "district": "太平區",
       "fatraceSchoolId": 64750,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64750"
     },
     {
       "school": "新高國小",
+      "fullName": "臺中市太平區新高國小",
+      "district": "太平區",
       "fatraceSchoolId": 64743046,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64743046"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:42.867088+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64743046",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "東平國小",
+      "fullName": "臺中市太平區東平國小",
+      "district": "太平區",
       "fatraceSchoolId": 64745,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64745"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:47.827417+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64745",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "東汴國小",
+      "fullName": "臺中市太平區東汴國小",
+      "district": "太平區",
       "fatraceSchoolId": 64728,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64728"
     },
     {
       "school": "車籠埔國小",
+      "fullName": "臺中市太平區車籠埔國小",
+      "district": "太平區",
       "fatraceSchoolId": 64758,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64758"
     },
     {
       "school": "長億國小",
+      "fullName": "臺中市太平區長億國小",
+      "district": "太平區",
       "fatraceSchoolId": 64764,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64764"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:52.601554+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64764",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "頭汴國小",
+      "fullName": "臺中市太平區頭汴國小",
+      "district": "太平區",
       "fatraceSchoolId": 64727,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64727"
     },
     {
       "school": "黃竹國小",
+      "fullName": "臺中市太平區黃竹國小",
+      "district": "太平區",
       "fatraceSchoolId": 64726,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64726"
     },
     {
       "school": "內新國小",
+      "fullName": "臺中市大里區內新國小",
+      "district": "大里區",
       "fatraceSchoolId": 64706,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64706"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:17:57.276221+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64706",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "塗城國小",
+      "fullName": "臺中市大里區塗城國小",
+      "district": "大里區",
       "fatraceSchoolId": 64708,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64708"
     },
     {
       "school": "大元國小",
+      "fullName": "臺中市大里區大元國小",
+      "district": "大里區",
       "fatraceSchoolId": 64748,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64748"
     },
     {
       "school": "大里國小",
+      "fullName": "臺中市大里區大里國小",
+      "district": "大里區",
       "fatraceSchoolId": 64705,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64705"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:01.925497+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64705",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "崇光國小",
+      "fullName": "臺中市大里區崇光國小",
+      "district": "大里區",
       "fatraceSchoolId": 64707,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64707"
     },
     {
       "school": "永隆國小",
+      "fullName": "臺中市大里區永隆國小",
+      "district": "大里區",
       "fatraceSchoolId": 64752,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64752"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:06.748820+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64752",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "瑞城國小",
+      "fullName": "臺中市大里區瑞城國小",
+      "district": "大里區",
       "fatraceSchoolId": 64709,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64709"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:12.035852+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64709",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "益民國小",
+      "fullName": "臺中市大里區益民國小",
+      "district": "大里區",
       "fatraceSchoolId": 64738,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64738"
     },
     {
       "school": "立新國小",
+      "fullName": "臺中市大里區立新國小",
+      "district": "大里區",
       "fatraceSchoolId": 64756,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64756"
     },
     {
       "school": "竹仔坑國小",
+      "fullName": "臺中市大里區竹仔坑國小",
+      "district": "大里區",
       "fatraceSchoolId": 64710,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64710"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:17.088017+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64710",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "美群國小",
+      "fullName": "臺中市大里區美群國小",
+      "district": "大里區",
       "fatraceSchoolId": 64753,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64753"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:22.186156+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64753",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "草湖國小",
+      "fullName": "臺中市大里區草湖國小",
+      "district": "大里區",
       "fatraceSchoolId": 64711,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64711"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:26.905059+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64711",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "五福國小",
+      "fullName": "臺中市霧峰區五福國小",
+      "district": "霧峰區",
       "fatraceSchoolId": 64715,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64715"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:31.414496+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64715",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "僑榮國小",
+      "fullName": "臺中市霧峰區僑榮國小",
+      "district": "霧峰區",
       "fatraceSchoolId": 64713,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64713"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:36.090315+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64713",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "光正國小",
+      "fullName": "臺中市霧峰區光正國小",
+      "district": "霧峰區",
       "fatraceSchoolId": 64720,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64720"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:40.811599+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64720",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "吉峰國小",
+      "fullName": "臺中市霧峰區吉峰國小",
+      "district": "霧峰區",
       "fatraceSchoolId": 64749,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64749"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:45.413971+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64749",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "四德國小",
+      "fullName": "臺中市霧峰區四德國小",
+      "district": "霧峰區",
       "fatraceSchoolId": 64714,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64714"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:49.968268+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64714",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "峰谷國小",
+      "fullName": "臺中市霧峰區峰谷國小",
+      "district": "霧峰區",
       "fatraceSchoolId": 64717,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64717"
     },
     {
       "school": "復興國小",
+      "fullName": "臺中市霧峰區復興國小",
+      "district": "霧峰區",
       "fatraceSchoolId": 64719,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64719"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:54.709494+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64719",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "桐林國小",
+      "fullName": "臺中市霧峰區桐林國小",
+      "district": "霧峰區",
       "fatraceSchoolId": 64718,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64718"
     },
     {
       "school": "萬豐國小",
+      "fullName": "臺中市霧峰區萬豐國小",
+      "district": "霧峰區",
       "fatraceSchoolId": 64716,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64716"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:18:59.316629+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64716",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "霧峰國小",
+      "fullName": "臺中市霧峰區霧峰國小",
+      "district": "霧峰區",
       "fatraceSchoolId": 64712,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64712"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:03.892989+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64712",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "九德國小",
+      "fullName": "臺中市烏日區九德國小",
+      "district": "烏日區",
       "fatraceSchoolId": 64743,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64743"
     },
     {
       "school": "五光國小",
+      "fullName": "臺中市烏日區五光國小",
+      "district": "烏日區",
       "fatraceSchoolId": 64699,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64699"
     },
     {
       "school": "僑仁國小",
+      "fullName": "臺中市烏日區僑仁國小",
+      "district": "烏日區",
       "fatraceSchoolId": 64694,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64694"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:08.847290+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64694",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "喀哩國小",
+      "fullName": "臺中市烏日區喀哩國小",
+      "district": "烏日區",
       "fatraceSchoolId": 64695,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64695"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:13.326028+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64695",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "旭光國小",
+      "fullName": "臺中市烏日區旭光國小",
+      "district": "烏日區",
       "fatraceSchoolId": 64698,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64698"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:18.003496+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64698",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "東園國小",
+      "fullName": "臺中市烏日區東園國小",
+      "district": "烏日區",
       "fatraceSchoolId": 64696,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64696"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:23.013744+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64696",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "溪尾國小",
+      "fullName": "臺中市烏日區溪尾國小",
+      "district": "烏日區",
       "fatraceSchoolId": 64697,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64697"
     },
     {
       "school": "烏日國小",
+      "fullName": "臺中市烏日區烏日國小",
+      "district": "烏日區",
       "fatraceSchoolId": 64693,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64693"
     },
     {
       "school": "南陽國小",
+      "fullName": "臺中市豐原區南陽國小",
+      "district": "豐原區",
       "fatraceSchoolId": 64603,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64603"
     },
     {
       "school": "合作國小",
+      "fullName": "臺中市豐原區合作國小",
+      "district": "豐原區",
       "fatraceSchoolId": 64608,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64608"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:27.579611+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64608",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "富春國小",
+      "fullName": "臺中市豐原區富春國小",
+      "district": "豐原區",
       "fatraceSchoolId": 64604,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64604"
     },
     {
       "school": "瑞穗國小",
+      "fullName": "臺中市豐原區瑞穗國小",
+      "district": "豐原區",
       "fatraceSchoolId": 64602,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64602"
     },
     {
       "school": "福陽國小",
+      "fullName": "臺中市豐原區福陽國小",
+      "district": "豐原區",
       "fatraceSchoolId": 64759,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64759"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:32.079007+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64759",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "翁子國小",
+      "fullName": "臺中市豐原區翁子國小",
+      "district": "豐原區",
       "fatraceSchoolId": 64606,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64606"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:36.634998+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64606",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "葫蘆墩國小",
+      "fullName": "臺中市豐原區葫蘆墩國小",
+      "district": "豐原區",
       "fatraceSchoolId": 64751,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64751"
     },
     {
       "school": "豐原國小",
+      "fullName": "臺中市豐原區豐原國小",
+      "district": "豐原區",
       "fatraceSchoolId": 64601,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64601"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:41.353185+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64601",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "豐村國小",
+      "fullName": "臺中市豐原區豐村國小",
+      "district": "豐原區",
       "fatraceSchoolId": 64605,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64605"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:45.833034+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64605",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "豐田國小",
+      "fullName": "臺中市豐原區豐田國小",
+      "district": "豐原區",
       "fatraceSchoolId": 64607,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64607"
     },
     {
       "school": "七星國小",
+      "fullName": "臺中市后里區七星國小",
+      "district": "后里區",
       "fatraceSchoolId": 64612,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64612"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:50.635925+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64612",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "內埔國小",
+      "fullName": "臺中市后里區內埔國小",
+      "district": "后里區",
       "fatraceSchoolId": 64609,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64609"
     },
     {
       "school": "后里國小",
+      "fullName": "臺中市后里區后里國小",
+      "district": "后里區",
       "fatraceSchoolId": 64610,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64610"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:55.266001+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64610",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "月眉國小",
+      "fullName": "臺中市后里區月眉國小",
+      "district": "后里區",
       "fatraceSchoolId": 64611,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64611"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:19:59.879569+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64611",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "泰安國小",
+      "fullName": "臺中市后里區泰安國小",
+      "district": "后里區",
       "fatraceSchoolId": 64614,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64614"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:04.574215+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64614",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "育英國小",
+      "fullName": "臺中市后里區育英國小",
+      "district": "后里區",
       "fatraceSchoolId": 64613,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64613"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:09.140215+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64613",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "土牛國小",
+      "fullName": "臺中市石岡區土牛國小",
+      "district": "石岡區",
       "fatraceSchoolId": 64644,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64644"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:13.747055+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64644",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "石岡國小",
+      "fullName": "臺中市石岡區石岡國小",
+      "district": "石岡區",
       "fatraceSchoolId": 64643,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64643"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:18.334867+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64643",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "中山國小",
+      "fullName": "臺中市東勢區中山國小",
+      "district": "東勢區",
       "fatraceSchoolId": 64636,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64636"
     },
     {
       "school": "中科國小",
+      "fullName": "臺中市東勢區中科國小",
+      "district": "東勢區",
       "fatraceSchoolId": 64640,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64640"
     },
     {
       "school": "成功國小",
+      "fullName": "臺中市東勢區成功國小",
+      "district": "東勢區",
       "fatraceSchoolId": 64638,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64638"
     },
     {
       "school": "新成國小",
+      "fullName": "臺中市東勢區新成國小",
+      "district": "東勢區",
       "fatraceSchoolId": 64641,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64641"
     },
     {
       "school": "新盛國小",
+      "fullName": "臺中市東勢區新盛國小",
+      "district": "東勢區",
       "fatraceSchoolId": 64747,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64747"
     },
     {
       "school": "明正國小",
+      "fullName": "臺中市東勢區明正國小",
+      "district": "東勢區",
       "fatraceSchoolId": 64642,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64642"
     },
     {
       "school": "東勢國小",
+      "fullName": "臺中市東勢區東勢國小",
+      "district": "東勢區",
       "fatraceSchoolId": 64635,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64635"
     },
     {
       "school": "東新國小",
+      "fullName": "臺中市東勢區東新國小",
+      "district": "東勢區",
       "fatraceSchoolId": 64762,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64762"
     },
     {
       "school": "石城國小",
+      "fullName": "臺中市東勢區石城國小",
+      "district": "東勢區",
       "fatraceSchoolId": 64637,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64637"
     },
     {
       "school": "石角國小",
+      "fullName": "臺中市東勢區石角國小",
+      "district": "東勢區",
       "fatraceSchoolId": 64639,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64639"
     },
     {
       "school": "中坑國小",
+      "fullName": "臺中市和平區中坑國小",
+      "district": "和平區",
       "fatraceSchoolId": 64733,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64733"
     },
     {
       "school": "博屋瑪國小",
+      "fullName": "臺中市和平區博屋瑪國小",
+      "district": "和平區",
       "fatraceSchoolId": 64732,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64732"
     },
     {
       "school": "和平國小",
+      "fullName": "臺中市和平區和平國小",
+      "district": "和平區",
       "fatraceSchoolId": 64729,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64729"
     },
     {
       "school": "平等國小",
+      "fullName": "臺中市和平區平等國小",
+      "district": "和平區",
       "fatraceSchoolId": 64734,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64734"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:23.026084+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64734",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "德芙蘭國小",
+      "fullName": "臺中市和平區德芙蘭國小",
+      "district": "和平區",
       "fatraceSchoolId": 64735,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64735"
     },
     {
       "school": "德芙蘭國小谷關分校",
+      "fullName": "臺中市和平區德芙蘭國小谷關分校",
+      "district": "和平區",
       "fatraceSchoolId": 64735001,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64735001"
     },
     {
       "school": "白冷國小",
+      "fullName": "臺中市和平區白冷國小",
+      "district": "和平區",
       "fatraceSchoolId": 64731,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64731"
     },
     {
       "school": "自由國小",
+      "fullName": "臺中市和平區自由國小",
+      "district": "和平區",
       "fatraceSchoolId": 64736,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64736"
     },
     {
       "school": "自由國小烏石分校",
+      "fullName": "臺中市和平區自由國小烏石分校",
+      "district": "和平區",
       "fatraceSchoolId": 64736001,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64736001"
     },
     {
       "school": "中和國小",
+      "fullName": "臺中市新社區中和國小",
+      "district": "新社區",
       "fatraceSchoolId": 64651,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64651"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:27.763559+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64651",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "協成國小",
+      "fullName": "臺中市新社區協成國小",
+      "district": "新社區",
       "fatraceSchoolId": 64648,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64648"
     },
     {
       "school": "大南國小",
+      "fullName": "臺中市新社區大南國小",
+      "district": "新社區",
       "fatraceSchoolId": 64647,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64647"
     },
     {
       "school": "大林國小",
+      "fullName": "臺中市新社區大林國小",
+      "district": "新社區",
       "fatraceSchoolId": 64649,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64649"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:32.423707+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64649",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "崑山國小",
+      "fullName": "臺中市新社區崑山國小",
+      "district": "新社區",
       "fatraceSchoolId": 64650,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64650"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:37.066346+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64650",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "新社國小",
+      "fullName": "臺中市新社區新社國小",
+      "district": "新社區",
       "fatraceSchoolId": 64645,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64645"
     },
     {
       "school": "東興國小",
+      "fullName": "臺中市新社區東興國小",
+      "district": "新社區",
       "fatraceSchoolId": 64646,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64646"
     },
     {
       "school": "福民國小",
+      "fullName": "臺中市新社區福民國小",
+      "district": "新社區",
       "fatraceSchoolId": 64730,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64730"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:41.423302+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64730",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "僑忠國小",
+      "fullName": "臺中市潭子區僑忠國小",
+      "district": "潭子區",
       "fatraceSchoolId": 64627,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64627"
     },
     {
       "school": "新興國小",
+      "fullName": "臺中市潭子區新興國小",
+      "district": "潭子區",
       "fatraceSchoolId": 64629,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64629"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:46.015452+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64629",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "東寶國小",
+      "fullName": "臺中市潭子區東寶國小",
+      "district": "潭子區",
       "fatraceSchoolId": 64628,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64628"
     },
     {
       "school": "潭子國小",
+      "fullName": "臺中市潭子區潭子國小",
+      "district": "潭子區",
       "fatraceSchoolId": 64626,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64626"
     },
     {
       "school": "潭陽國小",
+      "fullName": "臺中市潭子區潭陽國小",
+      "district": "潭子區",
       "fatraceSchoolId": 64741,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64741"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:50.754462+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64741",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "私立華盛頓國小",
+      "fullName": "臺中市潭子區私立華盛頓國小",
+      "district": "潭子區",
       "fatraceSchoolId": 64742535,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64742535"
     },
     {
       "school": "頭家國小",
+      "fullName": "臺中市潭子區頭家國小",
+      "district": "潭子區",
       "fatraceSchoolId": 64760,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64760"
     },
     {
       "school": "三和國小",
+      "fullName": "臺中市大雅區三和國小",
+      "district": "大雅區",
       "fatraceSchoolId": 64621,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64621"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:20:55.662799+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64621",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "上楓國小",
+      "fullName": "臺中市大雅區上楓國小",
+      "district": "大雅區",
       "fatraceSchoolId": 64623,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64623"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:00.306478+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64623",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "六寶國小",
+      "fullName": "臺中市大雅區六寶國小",
+      "district": "大雅區",
       "fatraceSchoolId": 64765,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64765"
     },
     {
       "school": "大明國小",
+      "fullName": "臺中市大雅區大明國小",
+      "district": "大雅區",
       "fatraceSchoolId": 64622,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64622"
     },
     {
       "school": "大雅國小",
+      "fullName": "臺中市大雅區大雅國小",
+      "district": "大雅區",
       "fatraceSchoolId": 64620,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64620"
     },
     {
       "school": "文雅國小",
+      "fullName": "臺中市大雅區文雅國小",
+      "district": "大雅區",
       "fatraceSchoolId": 64746,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64746"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:04.973849+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64746",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "汝鎏國小",
+      "fullName": "臺中市大雅區汝鎏國小",
+      "district": "大雅區",
       "fatraceSchoolId": 64624,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64624"
     },
     {
       "school": "陽明國小",
+      "fullName": "臺中市大雅區陽明國小",
+      "district": "大雅區",
       "fatraceSchoolId": 64625,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64625"
     },
     {
       "school": "圳堵國小",
+      "fullName": "臺中市神岡區圳堵國小",
+      "district": "神岡區",
       "fatraceSchoolId": 64618,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64618"
     },
     {
       "school": "岸裡國小",
+      "fullName": "臺中市神岡區岸裡國小",
+      "district": "神岡區",
       "fatraceSchoolId": 64619,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64619"
     },
     {
       "school": "社口國小",
+      "fullName": "臺中市神岡區社口國小",
+      "district": "神岡區",
       "fatraceSchoolId": 64617,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64617"
     },
     {
       "school": "神岡國小",
+      "fullName": "臺中市神岡區神岡國小",
+      "district": "神岡區",
       "fatraceSchoolId": 64615,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64615"
     },
     {
       "school": "豐洲國小",
+      "fullName": "臺中市神岡區豐洲國小",
+      "district": "神岡區",
       "fatraceSchoolId": 64616,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64616"
     },
     {
       "school": "大忠國小",
+      "fullName": "臺中市大肚區大忠國小",
+      "district": "大肚區",
       "fatraceSchoolId": 64704,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64704"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:10.511066+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64704",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "大肚國小",
+      "fullName": "臺中市大肚區大肚國小",
+      "district": "大肚區",
       "fatraceSchoolId": 64700,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64700"
     },
     {
       "school": "山陽國小",
+      "fullName": "臺中市大肚區山陽國小",
+      "district": "大肚區",
       "fatraceSchoolId": 64755,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64755"
     },
     {
       "school": "永順國小",
+      "fullName": "臺中市大肚區永順國小",
+      "district": "大肚區",
       "fatraceSchoolId": 64702,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64702"
     },
     {
       "school": "瑞井國小",
+      "fullName": "臺中市大肚區瑞井國小",
+      "district": "大肚區",
       "fatraceSchoolId": 64761,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64761"
     },
     {
       "school": "瑞峰國小",
+      "fullName": "臺中市大肚區瑞峰國小",
+      "district": "大肚區",
       "fatraceSchoolId": 64701,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64701"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:15.197443+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64701",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "追分國小",
+      "fullName": "臺中市大肚區追分國小",
+      "district": "大肚區",
       "fatraceSchoolId": 64703,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64703"
     },
     {
       "school": "公明國小",
+      "fullName": "臺中市沙鹿區公明國小",
+      "district": "沙鹿區",
       "fatraceSchoolId": 64679,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64679"
     },
     {
       "school": "公舘國小",
+      "fullName": "臺中市沙鹿區公舘國小",
+      "district": "沙鹿區",
       "fatraceSchoolId": 64680,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64680"
     },
     {
       "school": "北勢國小",
+      "fullName": "臺中市沙鹿區北勢國小",
+      "district": "沙鹿區",
       "fatraceSchoolId": 64678,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64678"
     },
     {
       "school": "文光國小",
+      "fullName": "臺中市沙鹿區文光國小",
+      "district": "沙鹿區",
       "fatraceSchoolId": 64676,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64676"
     },
     {
       "school": "沙鹿國小",
+      "fullName": "臺中市沙鹿區沙鹿國小",
+      "district": "沙鹿區",
       "fatraceSchoolId": 64675,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64675"
     },
     {
       "school": "竹林國小",
+      "fullName": "臺中市沙鹿區竹林國小",
+      "district": "沙鹿區",
       "fatraceSchoolId": 64677,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64677"
     },
     {
       "school": "鹿峰國小",
+      "fullName": "臺中市沙鹿區鹿峰國小",
+      "district": "沙鹿區",
       "fatraceSchoolId": 64681,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64681"
     },
     {
       "school": "鹿陽國小",
+      "fullName": "臺中市沙鹿區鹿陽國小",
+      "district": "沙鹿區",
       "fatraceSchoolId": 64754296,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64754296"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:19.805577+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64754296",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "龍井國小",
+      "fullName": "臺中市龍井區龍井國小",
+      "district": "龍井區",
       "fatraceSchoolId": 64687,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64687"
     },
     {
       "school": "龍山國小",
+      "fullName": "臺中市龍井區龍山國小",
+      "district": "龍井區",
       "fatraceSchoolId": 64686,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64686"
     },
     {
       "school": "龍峰國小",
+      "fullName": "臺中市龍井區龍峰國小",
+      "district": "龍井區",
       "fatraceSchoolId": 64692,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64692"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:24.418713+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64692",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "龍泉國小",
+      "fullName": "臺中市龍井區龍泉國小",
+      "district": "龍井區",
       "fatraceSchoolId": 64691,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64691"
     },
     {
       "school": "龍津國小",
+      "fullName": "臺中市龍井區龍津國小",
+      "district": "龍井區",
       "fatraceSchoolId": 64688,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64688"
     },
     {
       "school": "龍海國小",
+      "fullName": "臺中市龍井區龍海國小",
+      "district": "龍井區",
       "fatraceSchoolId": 64689,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64689"
     },
     {
       "school": "龍港國小",
+      "fullName": "臺中市龍井區龍港國小",
+      "district": "龍井區",
       "fatraceSchoolId": 64690,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64690"
     },
     {
       "school": "中正國小",
+      "fullName": "臺中市梧棲區中正國小",
+      "district": "梧棲區",
       "fatraceSchoolId": 64663,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64663"
     },
     {
       "school": "中港國小",
+      "fullName": "臺中市梧棲區中港國小",
+      "district": "梧棲區",
       "fatraceSchoolId": 64744,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64744"
     },
     {
       "school": "大德國小",
+      "fullName": "臺中市梧棲區大德國小",
+      "district": "梧棲區",
       "fatraceSchoolId": 64757,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64757"
     },
     {
       "school": "梧南國小",
+      "fullName": "臺中市梧棲區梧南國小",
+      "district": "梧棲區",
       "fatraceSchoolId": 64662,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64662"
     },
     {
       "school": "梧棲國小",
+      "fullName": "臺中市梧棲區梧棲國小",
+      "district": "梧棲區",
       "fatraceSchoolId": 64661,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64661"
     },
     {
       "school": "永寧國小",
+      "fullName": "臺中市梧棲區永寧國小",
+      "district": "梧棲區",
       "fatraceSchoolId": 64664,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64664"
     },
     {
       "school": "三田國小",
+      "fullName": "臺中市清水區三田國小",
+      "district": "清水區",
       "fatraceSchoolId": 64656,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64656"
     },
     {
       "school": "吳厝國小",
+      "fullName": "臺中市清水區吳厝國小",
+      "district": "清水區",
       "fatraceSchoolId": 64754,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64754"
     },
     {
       "school": "大楊國小",
+      "fullName": "臺中市清水區大楊國小",
+      "district": "清水區",
       "fatraceSchoolId": 64659,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64659"
     },
     {
       "school": "大秀國小",
+      "fullName": "臺中市清水區大秀國小",
+      "district": "清水區",
       "fatraceSchoolId": 64655,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64655"
     },
     {
       "school": "建國國小",
+      "fullName": "臺中市清水區建國國小",
+      "district": "清水區",
       "fatraceSchoolId": 64654,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64654"
     },
     {
       "school": "東山國小",
+      "fullName": "臺中市清水區東山國小",
+      "district": "清水區",
       "fatraceSchoolId": 64660,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64660"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:29.077049+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64660",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "槺榔國小",
+      "fullName": "臺中市清水區槺榔國小",
+      "district": "清水區",
       "fatraceSchoolId": 64739,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64739"
     },
     {
       "school": "清水國小",
+      "fullName": "臺中市清水區清水國小",
+      "district": "清水區",
       "fatraceSchoolId": 64652,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64652"
     },
     {
       "school": "甲南國小",
+      "fullName": "臺中市清水區甲南國小",
+      "district": "清水區",
       "fatraceSchoolId": 64657,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64657"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:33.700504+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64657",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "西寧國小",
+      "fullName": "臺中市清水區西寧國小",
+      "district": "清水區",
       "fatraceSchoolId": 64653,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64653"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:38.274370+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64653",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "高美國小",
+      "fullName": "臺中市清水區高美國小",
+      "district": "清水區",
       "fatraceSchoolId": 64658,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64658"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:42.690992+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64658",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "大甲國小",
+      "fullName": "臺中市大甲區大甲國小",
+      "district": "大甲區",
       "fatraceSchoolId": 64665,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64665"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:47.268349+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64665",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "德化國小",
+      "fullName": "臺中市大甲區德化國小",
+      "district": "大甲區",
       "fatraceSchoolId": 64666,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64666"
     },
     {
       "school": "文昌國小",
+      "fullName": "臺中市大甲區文昌國小",
+      "district": "大甲區",
       "fatraceSchoolId": 64667,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64667"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:52.013459+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64667",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "文武國小",
+      "fullName": "臺中市大甲區文武國小",
+      "district": "大甲區",
       "fatraceSchoolId": 64669,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64669"
     },
     {
       "school": "日南國小",
+      "fullName": "臺中市大甲區日南國小",
+      "district": "大甲區",
       "fatraceSchoolId": 64670,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64670"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:21:56.620159+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64670",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "東明國小",
+      "fullName": "臺中市大甲區東明國小",
+      "district": "大甲區",
       "fatraceSchoolId": 64671,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64671"
     },
     {
       "school": "東陽國小",
+      "fullName": "臺中市大甲區東陽國小",
+      "district": "大甲區",
       "fatraceSchoolId": 64674,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64674"
     },
     {
       "school": "華龍國小",
+      "fullName": "臺中市大甲區華龍國小",
+      "district": "大甲區",
       "fatraceSchoolId": 64672,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64672"
     },
     {
       "school": "西岐國小",
+      "fullName": "臺中市大甲區西岐國小",
+      "district": "大甲區",
       "fatraceSchoolId": 64673,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64673"
     },
     {
       "school": "順天國小",
+      "fullName": "臺中市大甲區順天國小",
+      "district": "大甲區",
       "fatraceSchoolId": 64668,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64668"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:22:01.249482+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64668",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "外埔國小",
+      "fullName": "臺中市外埔區外埔國小",
+      "district": "外埔區",
       "fatraceSchoolId": 64630,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64630"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:22:05.920486+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64630",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "安定國小",
+      "fullName": "臺中市外埔區安定國小",
+      "district": "外埔區",
       "fatraceSchoolId": 64631,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64631"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:22:10.512523+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64631",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "水美國小",
+      "fullName": "臺中市外埔區水美國小",
+      "district": "外埔區",
       "fatraceSchoolId": 64634,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64634"
     },
     {
       "school": "鐵山國小",
+      "fullName": "臺中市外埔區鐵山國小",
+      "district": "外埔區",
       "fatraceSchoolId": 64632,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64632"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:22:15.119424+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64632",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "馬鳴國小",
+      "fullName": "臺中市外埔區馬鳴國小",
+      "district": "外埔區",
       "fatraceSchoolId": 64633,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64633"
     },
     {
       "school": "三光國小",
+      "fullName": "臺中市大安區三光國小",
+      "district": "大安區",
       "fatraceSchoolId": 64683,
       "recordStatus": "not_published",
-      "saveStatus": "created",
-      "path": "data/raw/fatrace-daily/2026-10-23/64683"
+      "availabilityStatus": "not_published",
+      "saveStatus": "unchanged",
+      "checkedAt": "2026-10-23T14:22:19.683961+08:00",
+      "attempts": 1,
+      "path": "data/raw/fatrace-daily/2026-10-23/64683",
+      "note": "指定日期尚未查到校方上傳的公開午餐資料；下次續跑會優先重試。"
     },
     {
       "school": "大安國小",
+      "fullName": "臺中市大安區大安國小",
+      "district": "大安區",
       "fatraceSchoolId": 64682,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64682"
     },
     {
       "school": "永安國小",
+      "fullName": "臺中市大安區永安國小",
+      "district": "大安區",
       "fatraceSchoolId": 64685,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64685"
     },
     {
       "school": "海墘國小",
+      "fullName": "臺中市大安區海墘國小",
+      "district": "大安區",
       "fatraceSchoolId": 64684,
       "recordStatus": "available",
       "saveStatus": "created",
+      "checkedAt": null,
+      "attempts": 0,
       "path": "data/raw/fatrace-daily/2026-10-23/64684"
     }
   ]

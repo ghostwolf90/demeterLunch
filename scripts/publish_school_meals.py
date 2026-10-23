@@ -46,12 +46,7 @@ def _read_json(path: Path) -> Any:
         raise ManualPublishError(f"無法讀取有效 JSON：{path}") from exc
 
 
-def build_publish_bundle(
-    project_root: Path,
-    meal_date: date,
-    *,
-    school_ids: set[int] | None = None,
-) -> dict[str, Any]:
+def build_publish_bundle(project_root: Path, meal_date: date) -> dict[str, Any]:
     project_root = project_root.resolve()
     date_text = meal_date.isoformat()
     report_path = project_root / "data/raw/fatrace-daily" / date_text / "report.json"
@@ -63,18 +58,19 @@ def build_publish_bundle(
     results = report.get("results")
     if not isinstance(summary, dict) or not isinstance(results, list):
         raise ManualPublishError(f"抓取報告缺少 summary 或 results：{report_path}")
-    available = int(summary.get("available", 0))
-    no_meal = int(summary.get("noMeal", 0))
-    expected = available + no_meal
+    if int(summary.get("failed", 0)):
+        raise ManualPublishError("當日仍有抓取失敗的學校，拒絕發佈")
+
+    expected = int(summary.get("available", 0)) + int(summary.get("noMeal", 0))
     school_count = int(summary.get("schools", 0))
     not_published = int(summary.get("notPublished", 0))
-    failed = int(summary.get("failed", 0))
     if school_count < 1 or school_count != len(results):
         raise ManualPublishError("抓取報告的學校總數與 results 不一致")
-    if expected + not_published + failed != school_count:
+    if expected + not_published != school_count:
         raise ManualPublishError("抓取報告的狀態統計與學校總數不一致")
 
-    normalized_results: list[dict[str, Any]] = []
+    report_results: list[dict[str, Any]] = []
+    reviewed_records: list[dict[str, Any]] = []
     seen_school_ids: set[int] = set()
     for result in results:
         if not isinstance(result, dict):
@@ -83,57 +79,9 @@ def build_publish_bundle(
         status = str(result.get("recordStatus") or "")
         if school_id <= 0 or school_id in seen_school_ids:
             raise ManualPublishError(f"抓取報告包含無效或重複學校代碼：{school_id}")
-        if status not in {"available", "no_meal", "not_published", "failed"}:
+        if status not in {"available", "no_meal", "not_published"}:
             raise ManualPublishError(f"學校 {school_id} 的狀態不可發佈：{status or '空白'}")
         seen_school_ids.add(school_id)
-        normalized_results.append(result)
-
-    actual_counts = {
-        status: sum(
-            result.get("recordStatus") == status for result in normalized_results
-        )
-        for status in ("available", "no_meal", "not_published", "failed")
-    }
-    if actual_counts != {
-        "available": available,
-        "no_meal": no_meal,
-        "not_published": not_published,
-        "failed": failed,
-    }:
-        raise ManualPublishError("抓取報告的狀態統計與 results 不一致")
-
-    if school_ids is not None:
-        if not school_ids:
-            raise ManualPublishError("指定的發佈學校不得為空")
-        missing = school_ids - seen_school_ids
-        if missing:
-            raise ManualPublishError(
-                f"抓取報告找不到學校代碼：{', '.join(map(str, sorted(missing)))}"
-            )
-        selected_results = [
-            result
-            for result in normalized_results
-            if int(result.get("fatraceSchoolId", 0)) in school_ids
-        ]
-    else:
-        if failed:
-            raise ManualPublishError("當日仍有抓取失敗的學校，拒絕發佈")
-        selected_results = normalized_results
-
-    selected_failed = [
-        result for result in selected_results if result.get("recordStatus") == "failed"
-    ]
-    if selected_failed:
-        raise ManualPublishError("發佈批次不得包含抓取失敗的學校")
-
-    report_results: list[dict[str, Any]] = []
-    reviewed_records: list[dict[str, Any]] = []
-    selected_available = 0
-    selected_no_meal = 0
-    selected_not_published = 0
-    for result in selected_results:
-        school_id = int(result.get("fatraceSchoolId", 0))
-        status = str(result.get("recordStatus") or "")
         report_results.append(
             {
                 "schoolId": school_id,
@@ -142,12 +90,7 @@ def build_publish_bundle(
             }
         )
         if status == "not_published":
-            selected_not_published += 1
             continue
-        if status == "available":
-            selected_available += 1
-        elif status == "no_meal":
-            selected_no_meal += 1
 
         record_path = (
             project_root
@@ -204,11 +147,9 @@ def build_publish_bundle(
             }
         )
 
-    selected_expected = selected_available + selected_no_meal
-    if len(reviewed_records) != selected_expected:
+    if len(reviewed_records) != expected:
         raise ManualPublishError(
-            f"reviewed 紀錄數不符：應有 {selected_expected}，"
-            f"實際 {len(reviewed_records)}"
+            f"reviewed 紀錄數不符：應有 {expected}，實際 {len(reviewed_records)}"
         )
 
     return {
@@ -218,10 +159,10 @@ def build_publish_bundle(
         "mealDate": date_text,
         "createdAt": datetime.now(TAIPEI).isoformat(),
         "reportSummary": {
-            "schools": len(selected_results),
-            "available": selected_available,
-            "noMeal": selected_no_meal,
-            "notPublished": selected_not_published,
+            "schools": int(summary.get("schools", 0)),
+            "available": int(summary.get("available", 0)),
+            "noMeal": int(summary.get("noMeal", 0)),
+            "notPublished": int(summary.get("notPublished", 0)),
             "failed": 0,
         },
         "results": report_results,
@@ -345,23 +286,12 @@ def main(argv: list[str] | None = None) -> int:
         "--token-file", type=Path, default=DEFAULT_TOKEN_FILE, help=argparse.SUPPRESS
     )
     parser.add_argument(
-        "--school-id",
-        action="append",
-        type=int,
-        default=[],
-        help=argparse.SUPPRESS,
-    )
-    parser.add_argument(
         "--dry-run", action="store_true", help="只驗證本機發佈包，不送到 Site"
     )
     args = parser.parse_args(argv)
 
     try:
-        bundle = build_publish_bundle(
-            PROJECT_ROOT,
-            args.date,
-            school_ids=set(args.school_id) if args.school_id else None,
-        )
+        bundle = build_publish_bundle(PROJECT_ROOT, args.date)
         if args.dry_run:
             result = {
                 "status": "ready",

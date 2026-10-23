@@ -10,7 +10,7 @@ export const DEFAULT_SENTRY_DSN =
 export const SENTRY_TRACES_SAMPLE_RATE = 0.1;
 
 const FILTERED = "[Filtered]";
-const SENSITIVE_KEY = /(?:^|_)(?:authorization|cookie|email|birth(?:day|date)?|password|secret|session|token|otp|verification_code|child(?:_name)?|display_name|food_name|dish_name|meal_context|school)(?:$|_)/i;
+const SENSITIVE_KEY = /(?:^|_)(?:authorization|cookie|email|birth(?:day|date)?|password|secret|session|token|otp|verification_code|child(?:_name)?|display_name|nickname|avatar(?:_key)?|food_name|dish_name|meal_context|school)(?:$|_)/i;
 const EMAIL = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
 const BEARER_TOKEN = /\bBearer\s+[^\s,;]+/gi;
 const VERIFICATION_CODE = /((?:驗證碼|verification\s*code|one[- ]time\s*(?:password|code)|otp)[^\d]{0,20})\d{6}\b/gi;

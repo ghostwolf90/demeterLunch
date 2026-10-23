@@ -4,11 +4,6 @@
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 }(typeof globalThis !== "undefined" ? globalThis : this, function createDateContext() {
   const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-  const englishMonths = [
-    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
-    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER",
-  ];
-
   function parseIsoDate(value) {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
     if (!match) throw new TypeError(`Invalid ISO date: ${value}`);
@@ -47,6 +42,19 @@
     return closest;
   }
 
+  function latestMealDate(availableDates, targetDate) {
+    if (!Array.isArray(availableDates) || !availableDates.length) return null;
+    const dates = [...new Set(availableDates)].filter((date) => {
+      try {
+        parseIsoDate(date);
+        return true;
+      } catch {
+        return false;
+      }
+    }).sort();
+    return dates.filter((date) => date <= targetDate).at(-1) || dates[0] || null;
+  }
+
   function mealMoment(selectedDate, todayDate) {
     const offset = relativeDayOffset(selectedDate, todayDate);
     if (offset === 0) return "今天中午，";
@@ -59,16 +67,14 @@
   function insightsPeriodLabel(startDate, endDate) {
     const [startYear, startMonth] = parseIsoDate(startDate);
     const [endYear, endMonth] = parseIsoDate(endDate);
-    const startLabel = englishMonths[startMonth - 1];
-    const endLabel = englishMonths[endMonth - 1];
     if (startYear === endYear && startMonth === endMonth) {
-      return `${startLabel} AT A GLANCE`;
+      return `${startYear} 年 ${startMonth} 月午餐趨勢`;
     }
     if (startYear === endYear) {
-      return `${startLabel}–${endLabel} AT A GLANCE`;
+      return `${startYear} 年 ${startMonth}–${endMonth} 月午餐趨勢`;
     }
-    return `${startLabel} ${startYear}–${endLabel} ${endYear} AT A GLANCE`;
+    return `${startYear} 年 ${startMonth} 月–${endYear} 年 ${endMonth} 月午餐趨勢`;
   }
 
-  return { closestMealDate, insightsPeriodLabel, mealMoment, relativeDayOffset };
+  return { closestMealDate, latestMealDate, insightsPeriodLabel, mealMoment, relativeDayOffset };
 }));

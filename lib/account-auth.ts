@@ -1,8 +1,4 @@
 import { env } from "cloudflare:workers";
-import {
-  sendMaacGoVerificationEmail,
-  verificationEmailContent,
-} from "@/lib/email-delivery";
 
 export type AccountUser = {
   id: string;
@@ -57,8 +53,6 @@ export function emailAuthReady(request: Request) {
     env.EMAIL_AUTH_SECRET?.trim()
       && (
         localAuthCode(request)
-          || env.MAACGO_AUTH?.trim()
-          || env.MAACGO_API_KEY?.trim()
           || (env.RESEND_API_KEY?.trim() && env.AUTH_EMAIL_FROM?.trim())
       ),
   );
@@ -173,21 +167,9 @@ export function clearSessionCookie(request: Request) {
 
 export async function sendVerificationEmail(email: string, code: string, challengeId: string, request: Request) {
   if (localAuthCode(request)) return;
-  const maacGoAuth = env.MAACGO_AUTH?.trim() || env.MAACGO_API_KEY?.trim();
-  if (maacGoAuth) {
-    await sendMaacGoVerificationEmail({
-      authorization: maacGoAuth,
-      email,
-      code,
-      ttlMinutes: AUTH_CODE_TTL_MINUTES,
-    });
-    return;
-  }
   const apiKey = env.RESEND_API_KEY?.trim();
   const from = env.AUTH_EMAIL_FROM?.trim();
   if (!apiKey || !from) throw new Error("Email delivery is not configured");
-
-  const content = verificationEmailContent(code, AUTH_CODE_TTL_MINUTES);
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -199,9 +181,9 @@ export async function sendVerificationEmail(email: string, code: string, challen
     body: JSON.stringify({
       from,
       to: [email],
-      subject: content.subject,
-      text: content.text,
-      html: content.html,
+      subject: "好好吃飯登入驗證碼",
+      text: `您的好好吃飯登入驗證碼是 ${code}。驗證碼將在 ${AUTH_CODE_TTL_MINUTES} 分鐘後失效。若不是您本人操作，請忽略這封信。`,
+      html: `<div style="font-family:system-ui,sans-serif;color:#153447;line-height:1.7"><h1 style="font-size:22px">好好吃飯</h1><p>您的登入驗證碼是：</p><p style="font-size:32px;font-weight:800;letter-spacing:.18em">${code}</p><p>驗證碼將在 ${AUTH_CODE_TTL_MINUTES} 分鐘後失效。若不是您本人操作，請忽略這封信。</p></div>`,
     }),
   });
   if (!response.ok) {

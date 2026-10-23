@@ -1,0 +1,1 @@
+ALTER TABLE `child_profiles` ADD `allergen_codes` text DEFAULT '[]' NOT NULL;

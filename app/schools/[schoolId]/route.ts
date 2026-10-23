@@ -28,10 +28,10 @@ export async function GET(request: Request, context: RouteContext) {
 function renderSchoolPage(data: PublicSchoolPageData) {
   const { school, today, todayRecord, displayRecord, dates, hasWeeklyMenu } = data;
   const canonical = `${SITE_ORIGIN}/schools/${school.fatraceSchoolId}`;
-  const title = `${school.name}營養午餐｜每日菜單與營養資訊｜好好吃飯`;
+  const title = `${school.name}營養午餐｜每日菜單與食材資訊｜好好吃飯`;
   const description = hasWeeklyMenu
-    ? `查詢${school.city}${school.name}已公布的營養午餐菜單，了解餐點、營養資訊與食材來源，並參考家庭晚餐搭配建議。`
-    : `查詢${school.city}${school.name}已公布的每日營養午餐菜單、菜單日期與官方食材來源。`;
+    ? `查詢${school.fullName}已公布的每日營養午餐與經校讀週菜單，了解菜色、營養資訊與食材來源，並參考家庭晚餐搭配建議。`
+    : `查詢${school.fullName}已公布的每日營養午餐菜單、供餐日期與官方食材來源；如今日尚未公布，頁面會清楚標示。`;
   const todayAvailable = todayRecord?.status === "available";
   const todayNoMeal = todayRecord?.status === "no_meal";
   const displayDate = displayRecord?.mealDate || findRecordDate(data, displayRecord);
@@ -52,7 +52,7 @@ function renderSchoolPage(data: PublicSchoolPageData) {
     <meta property="og:description" content="${escapeHtml(description)}" />
     <meta property="og:url" content="${escapeHtml(canonical)}" />
     <meta property="og:image" content="${SITE_ORIGIN}/og-image.png?v=20261020" />
-    <meta property="og:image:alt" content="好好吃飯｜臺中市國小營養午餐查詢" />
+    <meta property="og:image:alt" content="好好吃飯｜國小營養午餐查詢" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(title)}" />
     <meta name="twitter:description" content="${escapeHtml(description)}" />
@@ -60,8 +60,9 @@ function renderSchoolPage(data: PublicSchoolPageData) {
     <meta name="theme-color" content="#f5f0e7" />
     <title>${escapeHtml(title)}</title>
     <link rel="canonical" href="${escapeHtml(canonical)}" />
-    <link rel="icon" href="/favicon.ico?v=20261020" sizes="any" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16 32x32 48x48" />
     <link rel="icon" href="/favicon-32x32.png?v=20261020" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/icon-192x192.png?v=20261020" type="image/png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261020" sizes="180x180" />
     <link rel="stylesheet" href="/styles.css?v=20261020-school-seo" />
     <link rel="stylesheet" href="/schools.css?v=20261020-school-seo" />
@@ -185,7 +186,7 @@ function analyticsHead() {
 }
 
 function siteHeader() {
-  return `<header class="topbar school-public-topbar"><a class="brand" href="/" aria-label="好好吃飯首頁"><img class="brand-mark" src="/icon-192x192.png?v=20261020" alt="" aria-hidden="true" width="43" height="43" /><span><strong>好好吃飯</strong><small>臺中市國小午餐助手</small></span></a><nav aria-label="主要導覽"><a href="/">午餐查詢</a><a href="/schools" aria-current="page">學校目錄</a><a href="/news.html">午餐消息</a><a href="/support">支援中心</a></nav></header>`;
+  return `<header class="topbar school-public-topbar"><a class="brand" href="/" aria-label="好好吃飯首頁"><img class="brand-mark" src="/icon-192x192.png?v=20261020" alt="" aria-hidden="true" width="43" height="43" /><span><strong>好好吃飯</strong><small>國小午餐助手</small></span></a><nav aria-label="主要導覽"><a href="/">午餐查詢</a><a href="/schools" aria-current="page">學校目錄</a><a href="/news.html">午餐消息</a><a href="/support">支援中心</a></nav></header>`;
 }
 
 function siteFooter() {

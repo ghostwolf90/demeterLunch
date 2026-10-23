@@ -62,22 +62,39 @@ class UpdateSchoolMealsTests(unittest.TestCase):
         self.assertEqual(fetch[fetch.index("--school") + 1], "信義國小")
         self.assertNotIn("--district", fetch)
 
-    def test_citywide_wrapper_defaults_to_auto_retry_workflow(self) -> None:
+    def test_refresh_all_is_forwarded_to_the_collector(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._write_report(root, "2026-10-12")
+            with patch.object(update_school_meals, "PROJECT_ROOT", root), patch.object(
+                update_school_meals, "_run", return_value=0
+            ) as run:
+                status = update_school_meals.main(
+                    ["--date", "2026-10-12", "--all-schools", "--refresh-all"]
+                )
+
+        self.assertEqual(status, 0)
+        fetch = run.call_args_list[0].args[0]
+        self.assertIn("--refresh-all", fetch)
+        self.assertNotIn("--resume", fetch)
+
+    def test_citywide_wrapper_enables_full_build_by_default(self) -> None:
         with patch.object(
             update_all_taichung_schools,
-            "run_cloud_school_meals",
+            "update_school_meals",
             return_value=0,
-        ) as run_cloud:
+        ) as update:
             status = update_all_taichung_schools.main(
                 ["--date", "2026-10-12", "--skip-ingredients"]
             )
 
         self.assertEqual(status, 0)
         self.assertEqual(
-            run_cloud.call_args.args[0],
+            update.call_args.args[0],
             [
-                "--mode",
-                "retry",
+                "--all-schools",
+                "--verify-and-build",
+                "--resume",
                 "--date",
                 "2026-10-12",
                 "--skip-ingredients",
@@ -87,58 +104,34 @@ class UpdateSchoolMealsTests(unittest.TestCase):
     def test_citywide_wrapper_can_publish_after_success(self) -> None:
         with patch.object(
             update_all_taichung_schools,
-            "run_cloud_school_meals",
+            "update_school_meals",
             return_value=0,
-        ) as run_cloud:
+        ), patch.object(
+            update_all_taichung_schools,
+            "publish_school_meals",
+            return_value=0,
+        ) as publish:
             status = update_all_taichung_schools.main(
                 ["--date", "2026-10-13", "--publish"]
             )
 
         self.assertEqual(status, 0)
-        self.assertEqual(
-            run_cloud.call_args.args[0],
-            [
-                "--mode",
-                "retry",
-                "--date",
-                "2026-10-13",
-                "--publish",
-            ],
-        )
+        publish.assert_called_once_with(["--date", "2026-10-13"])
 
-    def test_refresh_all_forces_a_new_citywide_main_batch(self) -> None:
+    def test_citywide_wrapper_can_ignore_progress_and_refresh_every_school(self) -> None:
         with patch.object(
             update_all_taichung_schools,
-            "run_cloud_school_meals",
+            "update_school_meals",
             return_value=0,
-        ) as run_cloud:
+        ) as update:
             status = update_all_taichung_schools.main(
-                ["--date", "2026-10-15", "--refresh-all", "--publish"]
+                ["--date", "2026-10-13", "--refresh-all"]
             )
 
         self.assertEqual(status, 0)
-        self.assertEqual(
-            run_cloud.call_args.args[0],
-            [
-                "--mode",
-                "main",
-                "--date",
-                "2026-10-15",
-                "--publish",
-            ],
-        )
-
-    def test_retry_failed_reaches_fetcher_without_district_filter(self) -> None:
-        with patch.object(update_school_meals, "_run", return_value=2) as run:
-            status = update_school_meals.main(
-                ["--date", "2026-10-15", "--retry-failed"]
-            )
-
-        self.assertEqual(status, 2)
-        fetch = run.call_args.args[0]
-        self.assertIn("--retry-failed", fetch)
-        self.assertNotIn("--district", fetch)
-        self.assertNotIn("--all-schools", fetch)
+        forwarded = update.call_args.args[0]
+        self.assertIn("--refresh-all", forwarded)
+        self.assertNotIn("--resume", forwarded)
 
 
 if __name__ == "__main__":

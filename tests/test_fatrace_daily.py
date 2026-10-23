@@ -216,6 +216,77 @@ class FatraceDailyTests(unittest.TestCase):
         )
         self.assertEqual(candidate["status"], "not_published")
 
+    def test_probe_detects_available_meal_without_fetching_details(self) -> None:
+        def responder(url: str):
+            path = urlsplit(url).path
+            if path == "/school/193609":
+                return _ok(
+                    {"SchoolId": 193609, "SchoolName": "臺中市西區忠信國小"}
+                )
+            if path == "/offering/service":
+                return _ok([{"label": "午餐", "ServiceId": 1}])
+            if path == "/offered/kitchen":
+                return _ok([{"KitchenId": 99, "KitchenName": "測試廚房"}])
+            if path == "/nomenudatelist":
+                return _ok([])
+            if path == "/offered/meal":
+                return _ok(
+                    [
+                        {
+                            "BatchDataId": 88,
+                            "MenuDate": "2026/10/08",
+                            "MenuType": "1",
+                            "MenuTypeName": "午餐",
+                            "KitchenId": 99,
+                            "KitchenName": "測試廚房",
+                        }
+                    ]
+                )
+            if path == "/dish":
+                return _ok(
+                    [
+                        {
+                            "DishId": 123,
+                            "BatchDataId": 88,
+                            "DishName": "小米飯",
+                            "DishType": "主食",
+                        }
+                    ]
+                )
+            if path == "/ingredient":
+                return _ok([{"IngredientName": "白米"}])
+            self.fail(f"probe should not fetch details: {url}")
+
+        fake = _FakeHttpClient(responder)
+        client = FatraceDailyClient(fake)
+        raw, candidate = client.probe(
+            self.school, self.meal_date, fetched_at=self.fetched_at
+        )
+
+        self.assertEqual(candidate["status"], "available")
+        self.assertFalse(any("/dish?" in url for url in fake.urls))
+        self.assertFalse(any("/ingredient?" in url for url in fake.urls))
+        details = raw["responses"]["lunchServices"][0]["mealQueries"][0]["details"]
+        self.assertEqual(details[0]["dishes"], [])
+        _, collected = client.collect(
+            self.school, self.meal_date, fetched_at=self.fetched_at
+        )
+        self.assertEqual(
+            collected["services"][0]["meals"][0]["dishes"][0]["name"],
+            "小米飯",
+        )
+        paths = [urlsplit(url).path for url in fake.urls]
+        for base_path in (
+            "/school/193609",
+            "/offering/service",
+            "/offered/kitchen",
+            "/nomenudatelist",
+            "/offered/meal",
+        ):
+            self.assertEqual(paths.count(base_path), 1)
+        self.assertEqual(paths.count("/dish"), 1)
+        self.assertEqual(paths.count("/ingredient"), 1)
+
     def test_rejects_school_id_name_mismatch(self) -> None:
         fake = _FakeHttpClient(
             lambda _url: _ok(

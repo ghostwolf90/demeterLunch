@@ -94,8 +94,17 @@ export const parentAccounts = sqliteTable("parent_accounts", {
   email: text("email"),
   emailNormalized: text("email_normalized"),
   displayName: text("display_name"),
+  nickname: text("nickname"),
+  avatarKey: text("avatar_key"),
   defaultSchoolId: integer("default_school_id"),
   plan: text("plan").notNull().default("free"),
+  subscriptionStatus: text("subscription_status").notNull().default("active"),
+  subscriptionPeriodEnd: text("subscription_period_end"),
+  subscriptionCancelAtPeriodEnd: integer("subscription_cancel_at_period_end", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  onboardingStatus: text("onboarding_status").notNull().default("completed"),
+  onboardingStartedAt: text("onboarding_started_at"),
   adultVerifiedAt: text("adult_verified_at"),
   caregiverConfirmedAt: text("caregiver_confirmed_at"),
   createdAt: text("created_at").notNull(),
@@ -146,13 +155,16 @@ export const childProfiles = sqliteTable(
     authUserId: text("auth_user_id")
       .notNull()
       .references(() => parentAccounts.authUserId, { onDelete: "cascade" }),
+    name: text("name"),
     nickname: text("nickname").notNull(),
+    avatarKey: text("avatar_key"),
     gradeGroup: text("grade_group").notNull(),
     schoolId: integer("school_id"),
+    allergenCodes: text("allergen_codes").notNull().default("[]"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
-  (table) => [uniqueIndex("child_profiles_owner_idx").on(table.authUserId)],
+  (table) => [index("child_profiles_owner_idx").on(table.authUserId, table.id)],
 );
 
 export const foodEncounters = sqliteTable(

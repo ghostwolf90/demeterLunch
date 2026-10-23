@@ -17,8 +17,6 @@ const localAuthVars = Object.fromEntries(
   [
     "EMAIL_AUTH_SECRET",
     "EMAIL_AUTH_DEV_CODE",
-    "MAACGO_AUTH",
-    "MAACGO_API_KEY",
     "RESEND_API_KEY",
     "AUTH_EMAIL_FROM",
     "SENTRY_DSN",

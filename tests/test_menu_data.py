@@ -53,17 +53,17 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertEqual(card["category"], "吃得更懂")
         self.assertTrue(card["source"]["url"].endswith("newsId=6200"))
 
-    def test_reviewed_data_covers_seven_weeks_and_both_meal_types(self) -> None:
+    def test_reviewed_data_covers_nine_weeks_and_both_meal_types(self) -> None:
         weeks = load_reviewed_weeks(PARSED_ROOT)
-        self.assertEqual(len(weeks), 7)
-        self.assertEqual(sum(len(week["days"]) for week in weeks), 32)
+        self.assertEqual(len(weeks), 9)
+        self.assertEqual(sum(len(week["days"]) for week in weeks), 41)
         self.assertEqual(
             sum(
                 len(day["variants"])
                 for week in weeks
                 for day in week["days"]
             ),
-            64,
+            82,
         )
 
     def test_fruit_is_served_once_on_tuesday_and_thursday(self) -> None:
@@ -77,6 +77,10 @@ class ReviewedMenuTests(unittest.TestCase):
                         "2026-10-06": "芭樂",
                         "2026-10-13": "藍莓",
                         "2026-10-15": "香蕉",
+                        "2026-10-20": "蘋果",
+                        "2026-10-22": "香蕉",
+                        "2026-10-27": "橘子",
+                        "2026-10-29": "香蕉",
                     }
                     expected_fruit = named_fruit.get(
                         day["date"],
@@ -95,9 +99,9 @@ class ReviewedMenuTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "lunch.db"
             stats = build_database(PARSED_ROOT, database)
-            self.assertEqual(stats["days"], 32)
-            self.assertEqual(stats["variants"], 64)
-            self.assertEqual(stats["recipeIngredients"], 1047)
+            self.assertEqual(stats["days"], 41)
+            self.assertEqual(stats["variants"], 82)
+            self.assertEqual(stats["recipeIngredients"], 1323)
             with sqlite3.connect(database) as connection:
                 row = connection.execute(
                     """
@@ -138,8 +142,8 @@ class ReviewedMenuTests(unittest.TestCase):
                 stats["traceableIngredients"], expected_traceability_count
             )
             self.assertEqual(traceability_count, expected_traceability_count)
-            self.assertEqual(recipe_dish_count, 367)
-            self.assertEqual(recipe_ingredient_count, 1047)
+            self.assertEqual(recipe_dish_count, 466)
+            self.assertEqual(recipe_ingredient_count, 1323)
 
     def test_reviewed_traceability_links_dishes_suppliers_and_certifications(self) -> None:
         weeks = load_reviewed_weeks(PARSED_ROOT)
@@ -302,7 +306,7 @@ class ReviewedMenuTests(unittest.TestCase):
         self.assertIsNone(dashboard["traceability"]["dataDate"])
         self.assertGreater(len(dashboard["traceability"]["dishes"]), 0)
         self.assertIn("僅供來源參考", dashboard["traceability"]["notice"])
-        self.assertEqual(dashboard["totalDays"], 32)
+        self.assertEqual(dashboard["totalDays"], 41)
 
     def test_dashboard_switches_to_vegetarian_menu_and_detail_image(self) -> None:
         dashboard = load_dashboard(
@@ -487,7 +491,7 @@ class ReviewedMenuTests(unittest.TestCase):
         ]
         counts = Counter(first_choices)
         self.assertGreaterEqual(len(counts), 12)
-        self.assertLessEqual(max(counts.values()), 4)
+        self.assertLessEqual(max(counts.values()), (len(first_choices) + 7) // 8)
         self.assertNotIn("清蒸魚", counts)
 
     def test_dashboard_falls_back_to_nearest_previous_school_day(self) -> None:
