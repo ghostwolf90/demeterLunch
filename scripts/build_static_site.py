@@ -15,6 +15,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from scripts.prepare_release import load_release_metadata, public_release, render_release_html
+
 from src.dashboard import load_dashboard  # noqa: E402
 from src.menu_data import build_database  # noqa: E402
 from src.school_dashboard import load_school_meal_catalog  # noqa: E402
@@ -107,6 +109,11 @@ def build_static_site(
     if output_root.exists():
         shutil.rmtree(output_root)
     shutil.copytree(web_root, output_root)
+    release = load_release_metadata()
+    index_path = output_root / "index.html"
+    if index_path.is_file():
+        index_path.write_text(render_release_html(index_path.read_text(encoding="utf-8"), release), encoding="utf-8")
+    (output_root / "version.json").write_text(json.dumps(public_release(release), ensure_ascii=False), encoding="utf-8")
 
     with sqlite3.connect(database_path) as connection:
         dates = [

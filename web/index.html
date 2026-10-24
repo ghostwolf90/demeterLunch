@@ -53,7 +53,8 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261020" sizes="180x180" />
     <link rel="manifest" href="/site.webmanifest?v=20261022-child-meals" />
     <link rel="stylesheet" href="./passport-memory.css?v=20261023-single-memory-list" />
-    <link rel="stylesheet" href="./styles.css?v=20261022-encounter-collapse-20261021-recipe-search" />
+    <link rel="stylesheet" href="./legal.css?v=20261020-brand-story" />
+    <link rel="stylesheet" href="./styles.css?v=20261023-settings-version" />
   </head>
   <body>
     <header class="topbar">
@@ -65,7 +66,7 @@
         <a class="today-link" href="#today">今日菜單</a><a href="#week">本週菜單</a><a href="#traceability">食材來源</a><a href="#passport">飲食紀錄</a><a href="#standard">營養基準</a><a href="#insights">供應趨勢</a><a href="./news.html">午餐消息</a><a href="/support">支援中心</a>
       </nav>
       <div class="topbar-actions">
-        <button class="account-button" id="accountButton" type="button" aria-haspopup="dialog" aria-disabled="true" aria-busy="true" disabled title="正在確認登入狀態">
+        <button class="account-button" id="accountButton" type="button" aria-haspopup="dialog" aria-controls="settingsDialog" aria-disabled="true" aria-busy="true" disabled title="正在確認登入狀態">
           <span class="account-avatar" id="accountAvatar" aria-hidden="true">家</span>
           <span id="accountButtonText">正在確認登入…</span>
         </button>
@@ -228,7 +229,7 @@
                 <p class="passport-field-hint">先選孩子提到的那道菜。再點一次可以取消。</p>
                 <div class="food-choice-list" id="passportFoodChoices"></div>
               </fieldset>
-              <p class="passport-field-hint">選一種開始，也可以切換補充；已填內容會一起保存。</p>
+              <p class="passport-field-hint passport-mode-hint">選一種開始，也可以切換補充；已填內容會一起保存。</p>
               <div class="memory-entry-modes" role="group" aria-label="想留下什麼">
                 <button type="button" data-memory-mode="quote" aria-pressed="true" aria-controls="memoryQuoteField">孩子說了一句話</button>
                 <button type="button" data-memory-mode="experience" aria-pressed="false" aria-controls="memoryExperienceField">記下這次嘗試</button>
@@ -443,10 +444,81 @@
       <a href="#week"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5h14v14H5zM8 3v4m8-4v4M5 9h14" /></svg><span>本週</span></a>
       <a href="#traceability"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 18V9m7 9V5m7 13v-6M3 20h18" /></svg><span>分析</span></a>
       <a href="#passport"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Zm3 16a3 3 0 0 1 0-6h11" /></svg><span>紀錄</span></a>
+      <button id="mobileSettingsButton" type="button" aria-controls="settingsDialog"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg><span>設定</span></button>
     </nav>
+
+    <dialog class="account-dialog settings-dialog" id="settingsDialog" aria-labelledby="settingsTitle">
+      <div class="account-dialog-shell">
+        <button class="account-dialog-close modal-close-button" id="closeSettingsDialog" type="button" aria-label="關閉設定"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+        <header class="settings-heading"><p class="kicker">好好吃飯</p><h2 id="settingsTitle">設定</h2><p>讓每一次查看，都更順手。</p></header>
+        <section class="settings-section" aria-labelledby="settingsFamilyTitle">
+          <h3 id="settingsFamilyTitle">家庭帳號</h3>
+          <button class="settings-row settings-family-link" id="settingsFamilyAccount" type="button" aria-haspopup="dialog"><span><strong id="settingsAccountLabel">登入／免費註冊</strong><small id="settingsAccountDescription">管理家長與孩子資料</small></span><span aria-hidden="true">›</span></button>
+          <p class="settings-note">孩子的學校、需留意食物與飲食紀錄，會隨家庭帳號保存。</p>
+        </section>
+        <section class="settings-section" aria-labelledby="settingsDisplayTitle">
+          <h3 id="settingsDisplayTitle">顯示偏好</h3>
+          <div class="settings-group">
+            <button class="settings-row settings-mobile-preference" id="settingsGradeGroup" type="button" data-settings-page="grade" aria-haspopup="dialog"><span>營養比較年級</span><span class="settings-row-value"><span id="settingsGradeValue">國小 1–3 年級</span><span aria-hidden="true">›</span></span></button>
+            <button class="settings-row settings-mobile-preference" id="settingsStandardMode" type="button" data-settings-page="standard" aria-haspopup="dialog"><span>營養比較方式</span><span class="settings-row-value"><span id="settingsStandardValue">目標值</span><span aria-hidden="true">›</span></span></button>
+            <label class="settings-row settings-desktop-preference" for="settingsDesktopGrade"><span>營養比較年級</span><select id="settingsDesktopGrade"><option value="elementary_lower">國小 1–3 年級</option><option value="elementary_upper">國小 4–6 年級</option></select></label>
+            <label class="settings-row settings-desktop-preference" for="settingsDesktopStandard"><span>營養比較方式</span><select id="settingsDesktopStandard"><option value="target">目標值</option><option value="transitional">階段值</option></select></label>
+          </div>
+          <p class="settings-note"><span class="settings-mobile-note">選擇後按「完成」套用，只記在這台裝置，不會修改孩子資料。</span><span class="settings-desktop-note">選擇後立即套用，只記在這台裝置，不會修改孩子資料。</span></p>
+          <p class="form-status" id="settingsStatus" role="status" aria-live="polite"></p>
+        </section>
+        <section class="settings-section" aria-labelledby="settingsAboutTitle">
+          <h3 id="settingsAboutTitle">支援與關於</h3>
+          <div class="settings-group">
+            <a class="settings-row settings-web-link" href="/support"><span>支援中心</span><span aria-hidden="true">›</span></a>
+            <button class="settings-row settings-mobile-link" type="button" data-settings-page="support" aria-haspopup="dialog"><span>支援中心</span><span aria-hidden="true">›</span></button>
+            <a class="settings-row settings-web-link" href="/about"><span>關於好好吃飯</span><span aria-hidden="true">›</span></a>
+            <button class="settings-row settings-mobile-link" type="button" data-settings-page="about" aria-haspopup="dialog"><span>關於好好吃飯</span><span aria-hidden="true">›</span></button>
+            <a class="settings-row settings-web-link" href="/privacy"><span>隱私權政策</span><span aria-hidden="true">›</span></a>
+            <button class="settings-row settings-mobile-link" type="button" data-settings-page="privacy" aria-haspopup="dialog"><span>隱私權政策</span><span aria-hidden="true">›</span></button>
+            <a class="settings-row settings-web-link" href="/terms"><span>服務條款</span><span aria-hidden="true">›</span></a>
+            <button class="settings-row settings-mobile-link" type="button" data-settings-page="terms" aria-haspopup="dialog"><span>服務條款</span><span aria-hidden="true">›</span></button>
+          </div>
+        </section>
+        <section class="settings-section" aria-labelledby="settingsVersionTitle">
+          <h3 id="settingsVersionTitle">版本資訊</h3>
+          <div class="settings-group">
+            <div class="settings-row settings-version-row"><span>版本</span><span class="settings-row-value" id="settingsAppVersion">本機預覽</span></div>
+            <div class="settings-row settings-version-row"><span>建置版本</span><span class="settings-row-value" id="settingsBuildNumber">—</span></div>
+          </div>
+          <p class="settings-note" id="settingsVersionStatus" role="status" aria-live="polite"></p>
+          <button class="settings-retry-button" id="refreshSiteVersion" type="button" hidden>重新載入最新版</button>
+        </section>
+      </div>
+    </dialog>
+
+    <script type="application/json" id="siteReleaseMetadata">{"version":"本機預覽","buildNumber":0,"releaseId":null,"builtAt":null}</script>
+    <dialog class="account-dialog settings-child-sheet" id="settingsPageDialog" aria-labelledby="settingsPageTitle">
+      <div class="account-dialog-shell settings-page-shell">
+        <header class="settings-sheet-toolbar">
+          <button class="settings-sheet-close modal-close-button" id="closeSettingsPage" type="button" aria-label="關閉子頁，返回設定"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+          <h2 id="settingsPageTitle">設定</h2>
+        </header>
+        <div class="settings-page-body">
+          <form id="settingsPreferenceForm" hidden>
+            <fieldset class="settings-preference-options" id="settingsPreferenceChoices"><legend id="settingsPreferenceLegend">選擇顯示偏好</legend></fieldset>
+            <p class="settings-note">只更改這台裝置的營養比較，不會修改孩子資料。</p>
+            <button class="settings-done-button" type="submit">完成</button>
+          </form>
+          <div class="settings-document" id="settingsDocument" hidden></div>
+          <p class="form-status" id="settingsPageStatus" role="status" aria-live="polite"></p>
+          <button class="settings-retry-button" id="settingsPageRetry" type="button" hidden>重新載入</button>
+          <button class="settings-done-button" id="settingsPageDone" type="button" hidden>完成</button>
+        </div>
+      </div>
+    </dialog>
 
     <dialog class="account-dialog" id="accountDialog" aria-label="家庭帳號">
       <div class="account-dialog-shell">
+        <header class="settings-sheet-toolbar" id="settingsAccountToolbar" hidden>
+          <button class="settings-sheet-close modal-close-button" id="closeSettingsAccountSheet" type="button" aria-label="關閉家庭帳號，返回設定"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+          <h2>家庭帳號</h2>
+        </header>
         <button class="account-dialog-close modal-close-button" id="closeAccountDialog" type="button" aria-label="關閉登入視窗"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
         <div class="account-signed-out-view" id="accountSignedOutView">
           <span class="account-dialog-mark" aria-hidden="true">家</span>
@@ -702,6 +774,6 @@
     <script src="./official-diet.js" defer></script>
     <script src="./sample-dashboard.js" defer></script>
     <script src="./passport-memory.js?v=20261023-single-memory-list" defer></script>
-    <script src="./app.js?v=20261023-family-copy" defer></script>
+    <script src="./app.js?v=20261023-settings-version" defer></script>
   </body>
 </html>

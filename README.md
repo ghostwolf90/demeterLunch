@@ -448,3 +448,9 @@ python3 scripts/build_static_site.py
 - Blogger 或 Google 可能限流；遇到 429 或 5xx 時只會做有限次重試，不會繞過網站限制。
 - Blogger 偶爾會讓 `s0` 仍只回傳較小版本；下載器會重試並在 metadata 的 `matchesDeclaredDimensions` 標示是否符合文章宣告尺寸。
 - 不使用 GitHub Actions；公開網站的來源偵測由連結到 Site 的排程負責。
+
+## 自動發布版本
+
+正式建置請使用 `npm run build`，會先自動執行 `npm run release:prepare`。發布版本記錄於 `.openai/release.json`：來源內容改變時遞增修訂版本與建置序號，同一來源的重試沿用原版本。一般測試與靜態快照重建不遞增；產生的資料庫與建置輸出不列入來源指紋。
+
+首頁與靜態輸出會嵌入相同版本資料，核心 CSS／JavaScript 的快取識別也會同步更新。設定最底部保留目前頁面的版本，並透過不快取的 `/api/version` 檢查線上版本；出現更新時由使用者選擇重新載入，檢查失敗時不宣稱已是最新版。單純重新部署相同建置仍是同一版本，回復舊建置則顯示該建置的真實版本。

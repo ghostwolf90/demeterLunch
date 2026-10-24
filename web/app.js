@@ -26,6 +26,8 @@ const state = {
   lastSourceTrigger: null,
   accountRequestId: 0,
   dialogMotion: {
+    settingsPage: { openFrame: 0, closeTimer: 0, closePromise: null },
+    settings: { openFrame: 0, closeTimer: 0, closePromise: null },
     account: { openFrame: 0, closeTimer: 0, closePromise: null },
     familyPlan: { openFrame: 0, closeTimer: 0, closePromise: null },
     source: { openFrame: 0, closeTimer: 0, closePromise: null },
@@ -55,6 +57,20 @@ const state = {
   childAvatarFile: null,
   parentAvatarPreviewUrl: null,
   childAvatarPreviewUrl: null,
+  releaseCheckRequestId: 0,
+  releaseCheckAbort: null,
+  settingsTabActive: false,
+  settingsTabScrollTop: 0,
+  settingsPreviousTab: "today",
+  settingsBackground: [],
+  settingsIgnoredCloseEvents: 0,
+  skipSettingsFocusRestore: false,
+  settingsPageKind: null,
+  settingsPageTrigger: null,
+  settingsPageRequestId: 0,
+  settingsPageAbort: null,
+  settingsAccountSession: 0,
+  lastSettingsTrigger: null,
   lastAccountTrigger: null,
   accountDialogView: "family",
   onboardingActive: false,
@@ -136,6 +152,13 @@ const allergenOptions = [
 ];
 
 const ids = [
+  "settingsVersionStatus", "refreshSiteVersion", "settingsDesktopGrade", "settingsDesktopStandard",
+  "mobileSettingsButton", "settingsDialog", "closeSettingsDialog", "settingsTitle",
+  "settingsFamilyAccount", "settingsAccountLabel", "settingsAccountDescription",
+  "settingsGradeGroup", "settingsStandardMode", "settingsStatus", "settingsGradeValue", "settingsStandardValue",
+  "settingsPageDialog", "settingsPageTitle", "closeSettingsPage", "settingsPreferenceForm", "settingsPreferenceChoices",
+  "settingsPreferenceLegend", "settingsDocument", "settingsPageStatus", "settingsPageRetry", "settingsPageDone",
+  "settingsAccountToolbar", "closeSettingsAccountSheet",
   "encounterEntry", "encounterEntryToggle",
   "accountLoadingStatus",
   "dashboard", "todayLabel", "mealMoment", "heroDish", "introNote", "mainDish", "mealList",
@@ -234,6 +257,7 @@ async function markOnboardingStarted() {
 }
 
 async function skipOnboarding() {
+  const settingsSession = state.settingsAccountSession;
   refs.cancelChildEdit.disabled = true;
   setFormStatus(refs.childFormStatus, "正在保留稍後設定…", "loading");
   try {
@@ -252,6 +276,7 @@ async function skipOnboarding() {
     resetAvatarSelection("child");
     await loadAccount({ childId: null });
     setFormStatus(refs.accountFamilyStatus, "已保留稍後設定；需要時可從孩子設定新增資料。", "success");
+    await completeSettingsAccountTask("已保留稍後設定。", settingsSession);
   } catch (error) {
     setFormStatus(
       refs.childFormStatus,
@@ -967,6 +992,246 @@ function renderFamilyPlan() {
   });
 }
 
+function renderSettings() {
+  refs.settingsDesktopGrade.value = state.gradeGroup;
+  refs.settingsDesktopStandard.value = state.standardMode;
+  refs.settingsGradeValue.textContent = state.gradeGroup === "elementary_upper" ? "國小 4–6 年級" : "國小 1–3 年級";
+  refs.settingsStandardValue.textContent = state.standardMode === "transitional" ? "階段值" : "目標值";
+  refs.settingsFamilyAccount.disabled = state.account.loading;
+  refs.settingsAccountLabel.textContent = state.account.loading
+    ? "正在確認登入狀態…"
+    : state.account.authenticated ? "家庭帳號設定" : "登入／免費註冊";
+  refs.settingsAccountDescription.textContent = state.account.authenticated
+    ? `${profileDisplayName(state.account.user, "家長")} · 家長資料、孩子設定與目前方案`
+    : "免費建立 1 位孩子的飲食紀錄";
+}
+
+const SETTINGS_DOCUMENT_PAGES = {
+  support: { title: "支援中心", path: "/support" },
+  about: { title: "關於好好吃飯", path: "/about" },
+  privacy: { title: "隱私權政策", path: "/privacy" },
+  terms: { title: "服務條款", path: "/terms" },
+};
+const SETTINGS_PREFERENCE_PAGES = {
+  grade: { title: "營養比較年級", stateKey: "gradeGroup", options: [["elementary_lower", "國小 1–3 年級"], ["elementary_upper", "國小 4–6 年級"]] },
+  standard: { title: "營養比較方式", stateKey: "standardMode", options: [["target", "目標值"], ["transitional", "階段值"]] },
+};
+
+function refreshSettingsDepth() {
+  refs.settingsDialog.classList.toggle("has-settings-child", refs.settingsPageDialog.open || refs.accountDialog.open);
+  syncSettingsPresentation();
+}
+
+function viewedSiteRelease() {
+  try {
+    return JSON.parse(document.getElementById("siteReleaseMetadata")?.textContent || "null");
+  } catch {
+    return null;
+  }
+}
+
+async function checkSiteVersion() {
+  const viewed = viewedSiteRelease();
+  refs.refreshSiteVersion.hidden = true;
+  if (!viewed?.releaseId) {
+    refs.settingsVersionStatus.textContent = "本機預覽，尚未產生正式建置版本。";
+    return;
+  }
+  const ticket = ++state.releaseCheckRequestId;
+  state.releaseCheckAbort?.abort();
+  const controller = new AbortController();
+  state.releaseCheckAbort = controller;
+  const timeout = window.setTimeout(() => controller.abort(), 8000);
+  const isCurrent = () => ticket === state.releaseCheckRequestId && refs.settingsDialog.open;
+  refs.settingsVersionStatus.textContent = "正在確認是否為最新版…";
+  try {
+    let response = await fetch("/api/version", { cache: "no-store", signal: controller.signal });
+    if (response.status === 404) response = await fetch("/version.json", { cache: "no-store", signal: controller.signal });
+    if (!response.ok) throw new Error("Unable to check release");
+    const latest = await response.json();
+    if (typeof latest.releaseId !== "string" || !/^[0-9a-f]{64}$/.test(latest.releaseId) || typeof latest.version !== "string" || !/^[0-9]+\.[0-9]+\.[0-9]+$/.test(latest.version) || !Number.isInteger(latest.buildNumber)) throw new Error("Invalid release metadata");
+    if (!isCurrent()) return;
+    const current = latest.releaseId === viewed.releaseId && latest.version === viewed.version && latest.buildNumber === viewed.buildNumber;
+    refs.settingsVersionStatus.textContent = current ? "已是最新版。" : `網站已更新至 ${latest.version}，重新載入即可使用。`;
+    refs.refreshSiteVersion.hidden = current;
+  } catch {
+    if (isCurrent()) refs.settingsVersionStatus.textContent = "目前無法確認更新；上方仍顯示這個頁面的實際版本。";
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function setMobileNavigationTarget(target) {
+  const items = document.querySelectorAll('.mobile-nav a[href^="#"], #mobileSettingsButton');
+  for (const item of items) {
+    const active = item === refs.mobileSettingsButton ? target === "settings" : item.hash === `#${target}`;
+    item.classList.toggle("active", active);
+    if (active) item.setAttribute("aria-current", "page");
+    else item.removeAttribute("aria-current");
+  }
+}
+
+function resetSettingsTabPresentation() {
+  if (!state.settingsTabActive) return;
+  state.settingsTabScrollTop = refs.settingsDialog.querySelector(".account-dialog-shell").scrollTop;
+  state.settingsTabActive = false;
+  for (const [element, wasInert] of state.settingsBackground) element.inert = wasInert;
+  state.settingsBackground = [];
+  document.body.classList.remove("settings-tab-active");
+  refs.settingsDialog.classList.remove("settings-tab-page", "is-visible", "is-closing");
+  refs.settingsDialog.removeAttribute("role");
+  refs.settingsDialog.removeAttribute("aria-modal");
+  setMobileNavigationTarget(state.settingsPreviousTab);
+}
+
+function openSettingsDialog(trigger) {
+  if (refs.settingsDialog.open) return;
+  state.lastSettingsTrigger = trigger;
+  renderSettings();
+  setFormStatus(refs.settingsStatus);
+  const shell = refs.settingsDialog.querySelector(".account-dialog-shell");
+  if (window.matchMedia("(max-width: 1050px)").matches) {
+    state.settingsPreviousTab = document.querySelector('.mobile-nav a.active')?.hash.slice(1) || "today";
+    state.settingsTabActive = true;
+    state.settingsBackground = [...document.querySelectorAll("body > .topbar, body > main, body > footer")]
+      .map((element) => [element, element.inert]);
+    for (const [element] of state.settingsBackground) element.inert = true;
+    refs.settingsDialog.classList.add("settings-tab-page");
+    refs.settingsDialog.setAttribute("role", "region");
+    refs.settingsDialog.setAttribute("aria-modal", "false");
+    document.body.classList.add("settings-tab-active");
+    // Nonmodal presentation keeps the real tab bar interactive and outside the page.
+    refs.settingsDialog.show();
+    setMobileNavigationTarget("settings");
+    shell.scrollTo({ top: state.settingsTabScrollTop });
+    refs.settingsTitle.tabIndex = -1;
+    refs.settingsTitle.focus({ preventScroll: true });
+    void checkSiteVersion();
+    return;
+  }
+  openStagedDialog(refs.settingsDialog, state.dialogMotion.settings, refs.closeSettingsDialog);
+  shell.scrollTo({ top: 0 });
+  void checkSiteVersion();
+}
+
+function syncSettingsPresentation() {
+  const mobile = window.matchMedia("(max-width: 1050px)").matches;
+  if (mobile) refs.accountButton.removeAttribute("aria-haspopup");
+  else refs.accountButton.setAttribute("aria-haspopup", "dialog");
+  if (!refs.settingsDialog.open || mobile === state.settingsTabActive
+      || refs.accountDialog.open || refs.settingsPageDialog.open || refs.familyPlanDialog.open
+      || refs.settingsDialog.classList.contains("is-closing")) return;
+  const trigger = state.lastSettingsTrigger;
+  const shell = refs.settingsDialog.querySelector(".account-dialog-shell");
+  const scrollTop = shell.scrollTop;
+  state.settingsIgnoredCloseEvents += 1;
+  window.cancelAnimationFrame(state.dialogMotion.settings.openFrame);
+  resetSettingsTabPresentation();
+  refs.settingsDialog.close();
+  openSettingsDialog(trigger);
+  shell.scrollTo({ top: scrollTop });
+}
+
+function closeSettingsPage() {
+  state.settingsPageRequestId += 1;
+  state.settingsPageAbort?.abort();
+  return closeStagedDialog(refs.settingsPageDialog, state.dialogMotion.settingsPage);
+}
+
+async function loadSettingsDocument(kind) {
+  const page = SETTINGS_DOCUMENT_PAGES[kind];
+  if (!page) return;
+  const ticket = ++state.settingsPageRequestId;
+  state.settingsPageAbort?.abort();
+  const controller = new AbortController();
+  state.settingsPageAbort = controller;
+  refs.settingsDocument.replaceChildren();
+  refs.settingsDocument.setAttribute("aria-busy", "true");
+  refs.settingsPageRetry.hidden = true;
+  setFormStatus(refs.settingsPageStatus, "正在載入內容…", "loading");
+  const isCurrent = () => ticket === state.settingsPageRequestId && refs.settingsPageDialog.open;
+  try {
+    const response = await fetch(page.path, { signal: controller.signal, credentials: "same-origin" });
+    if (!response.ok) throw new Error("目前無法載入內容，請稍後再試。");
+    const parsed = new DOMParser().parseFromString(await response.text(), "text/html");
+    const main = parsed.querySelector("main.legal-main");
+    if (!main) throw new Error("目前無法顯示內容，請重新載入。");
+    if (!isCurrent()) return;
+    // Only reuse the public document body; never mount its scripts, account UI or navigation.
+    main.querySelectorAll("script, style, iframe, object, embed, form").forEach((element) => element.remove());
+    for (const element of [main, ...main.querySelectorAll("*")]) {
+      for (const attribute of [...element.attributes]) {
+        if (/^on/i.test(attribute.name)) element.removeAttribute(attribute.name);
+      }
+      if (element.id) element.id = `settings-document-${element.id}`;
+      for (const attribute of ["aria-labelledby", "aria-describedby"]) {
+        if (element.hasAttribute(attribute)) element.setAttribute(attribute, element.getAttribute(attribute).split(/\s+/).map((id) => `settings-document-${id}`).join(" "));
+      }
+    }
+    main.querySelectorAll("a[href]").forEach((link) => {
+      const href = link.getAttribute("href");
+      if (href.startsWith("#")) link.setAttribute("href", `#settings-document-${href.slice(1)}`);
+      else if (!/^(https?:|mailto:|\/)/i.test(href)) link.removeAttribute("href");
+    });
+    refs.settingsDocument.replaceChildren(document.importNode(main, true));
+    setFormStatus(refs.settingsPageStatus);
+  } catch (error) {
+    if (!isCurrent() || error.name === "AbortError") return;
+    setFormStatus(refs.settingsPageStatus, error.message || "目前無法載入內容，請稍後再試。", "error");
+    refs.settingsPageRetry.hidden = false;
+  } finally {
+    if (isCurrent()) refs.settingsDocument.setAttribute("aria-busy", "false");
+  }
+}
+
+function openSettingsPage(kind, trigger) {
+  const preference = SETTINGS_PREFERENCE_PAGES[kind];
+  const page = preference || SETTINGS_DOCUMENT_PAGES[kind];
+  if (!page) return;
+  if (!refs.settingsPageDialog.open) state.settingsPageTrigger = trigger;
+  state.settingsPageKind = kind;
+  refs.settingsPageTitle.textContent = page.title;
+  refs.settingsPreferenceForm.hidden = !preference;
+  refs.settingsDocument.hidden = Boolean(preference);
+  refs.settingsPageDone.hidden = Boolean(preference);
+  refs.settingsPageRetry.hidden = true;
+  setFormStatus(refs.settingsPageStatus);
+  if (preference) {
+    refs.settingsPreferenceChoices.querySelectorAll("label").forEach((label) => label.remove());
+    refs.settingsPreferenceLegend.textContent = page.title;
+    for (const [value, label] of preference.options) {
+      const row = node("label", "settings-preference-choice");
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "settingsChoice";
+      radio.value = value;
+      radio.checked = state[preference.stateKey] === value;
+      row.append(radio, node("span", "", label));
+      refs.settingsPreferenceChoices.append(row);
+    }
+  }
+  openStagedDialog(refs.settingsPageDialog, state.dialogMotion.settingsPage, refs.closeSettingsPage);
+  refs.settingsPageDialog.querySelector(".account-dialog-shell").scrollTo({ top: 0 });
+  refreshSettingsDepth();
+  if (!preference) void loadSettingsDocument(kind);
+}
+
+async function completeSettingsAccountTask(message, session) {
+  if (session !== state.settingsAccountSession || !refs.settingsDialog.open || !refs.accountDialog.open || !refs.accountDialog.classList.contains("settings-child-sheet")) return;
+  renderSettings();
+  setFormStatus(refs.settingsStatus, message, "success");
+  if (window.matchMedia("(max-width: 1050px)").matches) await closeAccountDialog();
+}
+
+function closeSettingsDialog() {
+  if (state.settingsTabActive) {
+    resetSettingsTabPresentation();
+    refs.settingsDialog.close();
+    return Promise.resolve();
+  }
+  return closeStagedDialog(refs.settingsDialog, state.dialogMotion.settings);
+}
+
 function renderAccount() {
   const account = state.account;
   const authenticated = Boolean(account.authenticated);
@@ -975,7 +1240,7 @@ function renderAccount() {
   renderProfileAvatar(refs.accountAvatar, authenticated ? account.user : null);
   refs.accountButton.disabled = account.loading || (!authenticated && !EMAIL_REGISTRATION_ENABLED);
   refs.accountButton.setAttribute("aria-busy", String(account.loading));
-  refs.accountButton.title = account.loading ? "正在確認登入狀態" : authenticated ? "家庭帳號設定" : "登入或建立免費家庭帳號";
+  refs.accountButton.title = account.loading ? "正在確認登入狀態" : authenticated ? "設定與家庭帳號" : "設定與登入";
   refs.accountLoadingStatus.hidden = !account.loading;
   refs.accountButton.setAttribute("aria-disabled", String(refs.accountButton.disabled));
   refs.accountButtonText.textContent = account.loading ? "正在確認登入…" : authenticated
@@ -986,6 +1251,7 @@ function renderAccount() {
   const childSettingsView = authenticated && !onboardingActive && state.accountDialogView === "child";
   refs.accountSignedInView.classList.toggle("is-child-settings-view", childSettingsView);
   refs.accountSignedInView.classList.toggle("is-onboarding", onboardingActive);
+  renderSettings();
   refs.accountChildBack.hidden = !childSettingsView;
   renderChildNavigation();
   renderAccountChildren();
@@ -1206,7 +1472,7 @@ async function verifyEmailAuthCode() {
       focusAccountChildEditor(refs.childName);
     } else {
       await closeAccountDialog();
-      if (state.account.child) {
+      if (state.account.child && !refs.settingsDialog.open) {
         refs.passport.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }
@@ -1307,14 +1573,19 @@ function renderAccountIntentNotice() {
 function openAccountDialog(trigger, { view = "family" } = {}) {
   if (state.account.loading || (!state.account.authenticated && !EMAIL_REGISTRATION_ENABLED)) return;
   state.lastAccountTrigger = trigger || document.activeElement;
+  state.settingsAccountSession += 1;
+  const fromSettings = refs.settingsDialog.open;
+  refs.accountDialog.classList.toggle("settings-child-sheet", fromSettings);
+  refs.settingsAccountToolbar.hidden = !fromSettings;
   state.accountDialogView = view;
   renderAccount();
   renderAccountIntentNotice();
   openStagedDialog(
     refs.accountDialog,
     state.dialogMotion.account,
-    refs.closeAccountDialog,
+    fromSettings ? refs.closeSettingsAccountSheet : refs.closeAccountDialog,
   );
+  refreshSettingsDepth();
   refs.accountDialog.querySelector(".account-dialog-shell")?.scrollTo({ top: 0 });
   if (state.onboardingActive) void markOnboardingStarted();
 }
@@ -1328,7 +1599,8 @@ function openRequestedAccountDialog() {
   if (url.searchParams.get("account") !== "1") return;
   url.searchParams.delete("account");
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-  openAccountDialog(refs.accountButton);
+  openSettingsDialog(refs.accountButton);
+  openAccountDialog(refs.settingsFamilyAccount);
 }
 
 function openFamilyPlanDialog(trigger) {
@@ -1338,6 +1610,7 @@ function openFamilyPlanDialog(trigger) {
   }
   state.lastFamilyPlanTrigger = trigger || document.activeElement;
   renderFamilyPlan();
+  refs.familyPlanDialog.classList.toggle("settings-child-sheet", refs.settingsDialog.open);
   openStagedDialog(
     refs.familyPlanDialog,
     state.dialogMotion.familyPlan,
@@ -3039,7 +3312,95 @@ refs.gradeUpper.addEventListener("click", () => selectGradeGroup("elementary_upp
 refs.standardTarget.addEventListener("click", () => selectStandardMode("target"));
 refs.standardTransitional.addEventListener("click", () => selectStandardMode("transitional"));
 
-refs.accountButton.addEventListener("click", () => openAccountDialog(refs.accountButton));
+for (const trigger of [refs.accountButton, refs.mobileSettingsButton]) {
+  trigger.addEventListener("click", () => openSettingsDialog(trigger));
+}
+refs.closeSettingsDialog.addEventListener("click", () => closeSettingsDialog());
+refs.settingsDialog.addEventListener("click", (event) => {
+  if (event.target === refs.settingsDialog) void closeSettingsDialog();
+});
+refs.settingsDialog.addEventListener("cancel", (event) => {
+  if (event.target !== refs.settingsDialog) return;
+  event.preventDefault();
+  void closeSettingsDialog();
+});
+refs.settingsDialog.addEventListener("close", () => {
+  if (state.settingsIgnoredCloseEvents > 0) {
+    state.settingsIgnoredCloseEvents -= 1;
+    return;
+  }
+  state.releaseCheckRequestId += 1;
+  state.releaseCheckAbort?.abort();
+  resetSettingsTabPresentation();
+  const trigger = state.lastSettingsTrigger;
+  state.lastSettingsTrigger = null;
+  if (!state.skipSettingsFocusRestore && trigger?.isConnected) trigger.focus({ preventScroll: true });
+  state.skipSettingsFocusRestore = false;
+});
+refs.refreshSiteVersion.addEventListener("click", () => window.location.reload());
+refs.settingsDesktopGrade.addEventListener("change", () => {
+  selectGradeGroup(refs.settingsDesktopGrade.value);
+  renderSettings();
+  setFormStatus(refs.settingsStatus, "顯示偏好已儲存在這台裝置。", "success");
+});
+refs.settingsDesktopStandard.addEventListener("change", () => {
+  selectStandardMode(refs.settingsDesktopStandard.value);
+  renderSettings();
+  setFormStatus(refs.settingsStatus, "顯示偏好已儲存在這台裝置。", "success");
+});
+refs.settingsFamilyAccount.addEventListener("click", () => openAccountDialog(refs.settingsFamilyAccount));
+refs.settingsDialog.querySelectorAll("[data-settings-page]").forEach((trigger) => {
+  trigger.addEventListener("click", () => openSettingsPage(trigger.dataset.settingsPage, trigger));
+});
+refs.closeSettingsPage.addEventListener("click", () => closeSettingsPage());
+refs.settingsPageDone.addEventListener("click", () => closeSettingsPage());
+refs.settingsPageDialog.addEventListener("click", (event) => {
+  if (event.target === refs.settingsPageDialog) void closeSettingsPage();
+});
+refs.settingsPageDialog.addEventListener("cancel", (event) => {
+  if (event.target !== refs.settingsPageDialog) return;
+  event.preventDefault();
+  void closeSettingsPage();
+});
+refs.settingsPageDialog.addEventListener("close", () => {
+  state.settingsPageRequestId += 1;
+  state.settingsPageAbort?.abort();
+  state.settingsPageKind = null;
+  refreshSettingsDepth();
+  const trigger = state.settingsPageTrigger;
+  state.settingsPageTrigger = null;
+  if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+});
+refs.settingsPreferenceForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const kind = state.settingsPageKind;
+  const preference = SETTINGS_PREFERENCE_PAGES[kind];
+  const value = new FormData(refs.settingsPreferenceForm).get("settingsChoice");
+  if (!preference?.options.some(([option]) => option === value)) return;
+  if (kind === "grade") selectGradeGroup(value);
+  else selectStandardMode(value);
+  renderSettings();
+  setFormStatus(refs.settingsStatus, "顯示偏好已儲存在這台裝置。", "success");
+  await closeSettingsPage();
+});
+refs.settingsPageRetry.addEventListener("click", () => loadSettingsDocument(state.settingsPageKind));
+refs.settingsDocument.addEventListener("click", (event) => {
+  const link = event.target.closest("a[href]");
+  if (!link) return;
+  const url = new URL(link.getAttribute("href"), window.location.origin);
+  if (url.origin !== window.location.origin) return;
+  if (url.hash.startsWith("#settings-document-")) {
+    event.preventDefault();
+    document.getElementById(url.hash.slice(1))?.scrollIntoView({ block: "start" });
+    return;
+  }
+  const kind = Object.keys(SETTINGS_DOCUMENT_PAGES).find((key) => SETTINGS_DOCUMENT_PAGES[key].path === url.pathname);
+  if (kind) {
+    event.preventDefault();
+    openSettingsPage(kind, state.settingsPageTrigger);
+  }
+});
+refs.closeSettingsAccountSheet.addEventListener("click", () => closeAccountDialog());
 refs.passportUnlock.addEventListener("click", () => openAccountDialog(refs.passportUnlock));
 refs.closeAccountDialog.addEventListener("click", () => closeAccountDialog());
 refs.accountDialog.addEventListener("click", (event) => {
@@ -3051,6 +3412,10 @@ refs.accountDialog.addEventListener("cancel", (event) => {
   closeAccountDialog();
 });
 refs.accountDialog.addEventListener("close", () => {
+  state.settingsAccountSession += 1;
+  refs.accountDialog.classList.remove("settings-child-sheet");
+  refs.settingsAccountToolbar.hidden = true;
+  refreshSettingsDepth();
   state.pendingDefaultSchoolId = null;
   renderAccountIntentNotice();
   const trigger = state.lastAccountTrigger;
@@ -3068,6 +3433,8 @@ refs.familyPlanDialog.addEventListener("cancel", (event) => {
   closeFamilyPlanDialog();
 });
 refs.familyPlanDialog.addEventListener("close", () => {
+  refs.familyPlanDialog.classList.remove("settings-child-sheet");
+  syncSettingsPresentation();
   const trigger = state.lastFamilyPlanTrigger;
   state.lastFamilyPlanTrigger = null;
   if (trigger?.isConnected) trigger.focus();
@@ -3099,6 +3466,7 @@ refs.childAvatarInput.addEventListener("change", () => {
 });
 refs.parentProfileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const settingsSession = state.settingsAccountSession;
   refs.saveParentProfile.disabled = true;
   setFormStatus(refs.parentProfileStatus, "正在儲存個人設定…", "loading");
   try {
@@ -3119,6 +3487,7 @@ refs.parentProfileForm.addEventListener("submit", async (event) => {
     resetAvatarSelection("parent");
     await loadAccount({ childId: state.activeChildId });
     setFormStatus(refs.parentProfileStatus, "個人設定已更新。", "success");
+    await completeSettingsAccountTask("個人設定已更新。", settingsSession);
   } catch (error) {
     setFormStatus(refs.parentProfileStatus, error instanceof Error ? error.message : "目前無法儲存家長資料，請稍後再試。", "error");
   } finally {
@@ -3140,6 +3509,7 @@ refs.removeParentAvatar.addEventListener("click", async () => {
   }
 });
 refs.accountSignOut.addEventListener("click", async () => {
+  const settingsSession = state.settingsAccountSession;
   refs.accountSignOut.disabled = true;
   try {
     const response = await fetch("/api/auth/sign-out", {
@@ -3150,7 +3520,8 @@ refs.accountSignOut.addEventListener("click", async () => {
     if (!response.ok) throw new Error(payload.error || "暫時無法登出");
     resetEmailAuthForm();
     await loadAccount();
-    refs.authEmail.focus();
+    if (refs.settingsDialog.open) await completeSettingsAccountTask("已登出家庭帳號。", settingsSession);
+    if (refs.accountDialog.open && !state.account.authenticated) refs.authEmail.focus();
   } catch (error) {
     refs.accountIdentity.textContent = error instanceof Error ? error.message : "暫時無法登出";
   } finally {
@@ -3305,6 +3676,7 @@ refs.returnChildSchool.addEventListener("click", async () => {
 
 refs.childForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const settingsSession = state.settingsAccountSession;
   const submit = refs.childForm.querySelector('button[type="submit"]');
   submit.disabled = true;
   setFormStatus(refs.childFormStatus, "正在儲存孩子資料…");
@@ -3355,6 +3727,7 @@ refs.childForm.addEventListener("submit", async (event) => {
       setFormStatus(refs.accountFamilyStatus, successMessage, "success");
     }
     setFormStatus(refs.encounterFormStatus, successMessage, "success");
+    await completeSettingsAccountTask(successMessage, settingsSession);
   } catch (error) {
     setFormStatus(refs.childFormStatus, error instanceof Error ? error.message : "目前無法儲存孩子資料，請稍後再試。", "error");
   } finally {
@@ -3541,16 +3914,13 @@ function setupMobileNavigation() {
     .filter(Boolean);
   let updateFrame = 0;
 
-  const setActive = (target) => {
-    for (const link of links) {
-      const isActive = link.hash === `#${target}`;
-      link.classList.toggle("active", isActive);
-      if (isActive) link.setAttribute("aria-current", "page");
-      else link.removeAttribute("aria-current");
-    }
-  };
+  const setActive = setMobileNavigationTarget;
   const update = () => {
     updateFrame = 0;
+    if (state.settingsTabActive) {
+      setActive("settings");
+      return;
+    }
     const marker = Math.min(window.innerHeight * .34, 250);
     let target = "today";
     for (const section of sections) {
@@ -3566,7 +3936,14 @@ function setupMobileNavigation() {
   };
 
   for (const link of links) {
-    link.addEventListener("click", () => setActive(link.hash.slice(1)));
+    link.addEventListener("click", () => {
+      if (state.settingsTabActive) {
+        state.skipSettingsFocusRestore = true;
+        void closeSettingsDialog();
+        link.focus({ preventScroll: true });
+      }
+      setActive(link.hash.slice(1));
+    });
   }
   window.addEventListener("scroll", queueUpdate, { passive: true });
   window.addEventListener("resize", queueUpdate);
@@ -3587,6 +3964,11 @@ for (const link of document.querySelectorAll("a.today-link")) {
 }
 
 setupMobileNavigation();
+window.matchMedia("(max-width: 1050px)").addEventListener("change", syncSettingsPresentation);
+syncSettingsPresentation();
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && refs.settingsDialog.open) void checkSiteVersion();
+});
 
 function sectionIdFromHash(hash) {
   try {

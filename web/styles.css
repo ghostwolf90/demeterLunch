@@ -65,7 +65,7 @@ a { color: inherit; text-decoration: none; }
 .topbar nav { min-width: 0; display: flex; gap: 7px; padding: 5px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.45); }
 .topbar nav a { flex: 0 0 auto; padding: 8px 15px; border-radius: 999px; font-size: 13px; font-weight: 650; white-space: nowrap; }
 .topbar nav a:hover, .topbar nav a.active { background: var(--white); }
-.topbar-actions { justify-self: end; display: flex; align-items: center; }
+.topbar-actions { justify-self: end; display: flex; align-items: center; gap: 8px; }
 .account-button { min-height: 42px; padding: 5px 12px 5px 6px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); background: var(--white); cursor: pointer; white-space: nowrap; font-size: var(--text-xs); font-weight: 800; box-shadow: 0 7px 20px rgba(21,52,71,.08); }
 .account-button:hover { border-color: rgba(170,71,41,.45); }
 .account-button:disabled { cursor: not-allowed; opacity: .58; box-shadow: none; }
@@ -437,6 +437,7 @@ body[data-view-mode="official"] .official-menu-board .main-dish span { margin: 0
 .passport-fieldset legend { margin-bottom: 12px; padding: 0; font-size: 12px; font-weight: 850; }
 .field-required { margin-left: 5px; color: var(--orange-dark); font-size: var(--text-xs); }
 .passport-field-hint { margin: -5px 0 13px; color: var(--ink-soft); font-size: var(--text-xs); line-height: 1.6; }
+.passport-field-hint.passport-mode-hint { margin: 24px 0 13px; }
 .food-choice-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .food-choice-list label, .experience-list label, .reaction-list label, .contact-list label, .familiarity-list label { cursor: pointer; }
 .food-choice-list input, .experience-list input, .reaction-list input, .contact-list input, .familiarity-list input { position: absolute; opacity: 0; pointer-events: none; }
@@ -944,8 +945,8 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
     box-shadow: 0 15px 44px rgba(21,52,71,.22);
     backdrop-filter: blur(18px);
   }
-  .mobile-nav a { min-height: 46px; display: grid; place-items: center; align-content: center; gap: 2px; border-radius: 14px; color: var(--ink-soft); font-size: var(--text-xs); font-weight: 700; }
-  .mobile-nav a:active { color: var(--ink); background: var(--paper-deep); }
+  .mobile-nav a, .mobile-nav button { min-height: 46px; display: grid; place-items: center; align-content: center; gap: 2px; border-radius: 14px; color: var(--ink-soft); font-size: var(--text-xs); font-weight: 700; }
+  .mobile-nav a:active, .mobile-nav button:active { color: var(--ink); background: var(--paper-deep); }
   .mobile-nav a.active { color: var(--ink); background: var(--paper-deep); }
   .mobile-nav svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .mobile-nav span { font-size: inherit; line-height: 1.15; }
@@ -1224,4 +1225,129 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
 .passport-entry-details[open] .entry-close-label { display: inline; }
 @media (max-width: 600px) {
   .passport-entry-details > summary { align-items: flex-start; flex-direction: column; gap: 12px; padding: 16px; }
+}
+
+/* Settings share the existing dialog motion and reduced-motion treatment. */
+.settings-row:focus-visible, .mobile-nav button:focus-visible { outline: 3px solid rgba(238,117,78,.32); outline-offset: 2px; }
+.settings-heading { padding-right: 44px; }
+.settings-heading h2 { font-size: 34px; }
+.settings-heading > p:last-child { margin: 8px 0 0; color: var(--ink-soft); font-size: 13px; }
+.settings-section { margin-top: 26px; }
+.settings-section h3 { margin: 0 0 10px; font-size: 13px; }
+.settings-group, .settings-family-link { overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: var(--white); }
+.settings-row { width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; color: var(--ink); text-align: left; text-decoration: none; font: inherit; font-size: 14px; }
+.settings-group .settings-row + .settings-row { border-top: 1px solid var(--line); }
+.settings-family-link { cursor: pointer; }
+.settings-family-link:disabled { opacity: .6; cursor: wait; }
+.settings-family-link strong, .settings-family-link small { display: block; }
+.settings-family-link small { margin-top: 5px; color: var(--ink-soft); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.settings-row > span:last-child[aria-hidden] { color: var(--ink-soft); font-size: 23px; }
+.settings-dialog .settings-note { margin: 9px 4px 0; color: var(--ink-soft); font-size: 12px; line-height: 1.7; }
+.settings-dialog .form-status { margin: 8px 4px 0; font-size: 12px; }
+.mobile-nav button { border: 0; background: transparent; cursor: pointer; font-family: inherit; }
+@media (max-width: 1050px) {
+  .settings-dialog .account-dialog-shell { padding-bottom: calc(26px + env(safe-area-inset-bottom)); }
+}
+
+/* Keep Settings underneath task sheets so dismissing a task restores its context. */
+.settings-row { cursor: pointer; }
+button.settings-row { border: 0; background: transparent; }
+button.settings-family-link { border: 1px solid var(--line); background: var(--white); }
+.settings-row-value { display: inline-flex; align-items: center; gap: 10px; color: var(--ink-soft); font-size: 12px; }
+.settings-row-value > span[aria-hidden] { font-size: 23px; }
+.settings-dialog { inset: auto 0 0; width: min(640px, 100%); max-height: 92dvh; margin: 0 auto; border-radius: 26px 26px 0 0; transform: translateY(calc(100% + 24px)); transform-origin: center top; transition: opacity 320ms cubic-bezier(.32,.72,0,1), transform 320ms cubic-bezier(.32,.72,0,1); }
+.settings-dialog.is-visible { transform: translateY(0); }
+.settings-dialog .account-dialog-shell { min-height: 92dvh; max-height: 92dvh; overscroll-behavior: contain; }
+.settings-dialog.is-visible.has-settings-child { transform: translateY(-10px) scale(.97); }
+.settings-dialog > .account-dialog-shell > .account-dialog-close { left: 20px; right: auto; }
+.settings-dialog .settings-heading { min-height: 55px; padding: 0 0 0 48px; }
+.settings-child-sheet { inset: auto 0 0; width: min(640px, 100%); max-width: none; height: 85dvh; max-height: 85dvh; margin: 0 auto; border-radius: 26px 26px 0 0; transform: translateY(calc(100% + 24px)); transition: opacity 320ms cubic-bezier(.32,.72,0,1), transform 320ms cubic-bezier(.32,.72,0,1); }
+.settings-child-sheet.is-visible { transform: translateY(0); }
+.settings-child-sheet::backdrop { backdrop-filter: none; transition: background-color 320ms cubic-bezier(.32,.72,0,1); }
+.settings-child-sheet.is-visible::backdrop { background: rgba(16,34,45,.22); backdrop-filter: none; }
+.settings-child-sheet .account-dialog-shell { height: 100%; max-height: 100%; padding: 0 24px calc(24px + env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+.settings-child-sheet > .account-dialog-shell > .account-dialog-close { display: none; }
+.settings-sheet-toolbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 14px; min-height: 76px; margin: 0 -24px 22px; padding: 14px 24px; border-bottom: 1px solid var(--line); background: var(--paper); }
+.settings-sheet-toolbar[hidden] { display: none; }
+.settings-sheet-toolbar h2 { margin: 0; color: var(--ink); font-family: inherit; font-size: 17px; font-weight: 800; letter-spacing: -.02em; }
+.settings-sheet-close { width: 44px; height: 44px; }
+.settings-sheet-close:focus-visible, .settings-done-button:focus-visible, .settings-retry-button:focus-visible { outline: 3px solid rgba(238,117,78,.32); outline-offset: 2px; }
+.settings-preference-options { display: grid; gap: 0; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--white); }
+.settings-preference-options legend { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.settings-preference-choice { display: flex; align-items: center; gap: 13px; min-height: 62px; padding: 16px; cursor: pointer; font-size: 16px; }
+.settings-preference-choice + .settings-preference-choice { border-top: 1px solid var(--line); }
+.settings-preference-choice input { width: 22px; height: 22px; margin: 0; accent-color: var(--green); }
+.settings-child-sheet .settings-note { margin: 14px 3px; color: var(--ink-soft); font-size: 12px; line-height: 1.7; }
+.settings-done-button { width: 100%; min-height: 48px; margin-top: 20px; padding: 12px 18px; border: 0; border-radius: 15px; color: var(--white); background: var(--ink); cursor: pointer; font: inherit; font-size: 15px; font-weight: 800; }
+.settings-retry-button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: var(--white); cursor: pointer; font: inherit; }
+.settings-done-button[hidden], .settings-retry-button[hidden] { display: none; }
+.settings-row:active, .settings-preference-choice:active { background: var(--paper-deep); }
+.settings-document .legal-main { width: 100%; margin: 0; padding: 0; }
+.settings-document .legal-hero, .settings-document .legal-layout, .settings-document .legal-summary, .settings-document .support-grid, .settings-document .brand-story-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.settings-document .legal-hero { padding: 0 0 24px; }
+.settings-document .legal-hero h1 { margin-bottom: 14px; font-size: 36px; }
+.settings-document .legal-lead { font-size: 14px; line-height: 1.8; }
+.settings-document .legal-summary, .settings-document .brand-story-grid { margin-bottom: 24px; }
+.settings-document .legal-toc { position: static; }
+.settings-document .legal-toc ol { grid-template-columns: 1fr; }
+.settings-document .legal-section, .settings-document .brand-story-letter, .settings-document .support-card { padding: 22px 18px; }
+.settings-document .legal-section h2, .settings-document .brand-story-letter h2 { font-size: 26px; }
+.settings-document [id] { scroll-margin-top: 95px; }
+.settings-document p, .settings-document a { overflow-wrap: anywhere; }
+.family-plan-dialog.settings-child-sheet > .account-dialog-shell > .account-dialog-close { display: grid; left: 20px; right: auto; top: 18px; }
+.family-plan-dialog.settings-child-sheet .family-plan-hero { padding-left: 52px; padding-right: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .settings-dialog, .settings-child-sheet { transform: none; transition: opacity 160ms ease-out; }
+  .settings-dialog.is-visible, .settings-dialog.is-visible.has-settings-child, .settings-child-sheet.is-visible { transform: none; }
+  .settings-dialog::backdrop, .settings-child-sheet::backdrop { transition: background-color 160ms ease-out; backdrop-filter: none; }
+}
+
+/* Mobile Settings is a full page; every task uses the same near-full-height sheet. */
+@media (max-width: 1050px) {
+  .settings-dialog { inset: 0; width: 100%; max-width: none; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; }
+  .settings-dialog .account-dialog-shell { height: 100%; min-height: 0; max-height: 100%; padding-top: calc(29px + env(safe-area-inset-top)); padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+  .settings-dialog > .account-dialog-shell > .account-dialog-close { top: calc(15px + env(safe-area-inset-top)); }
+  .settings-dialog.is-visible.has-settings-child { transform: none; }
+  .settings-child-sheet { --settings-task-height: calc(100dvh - max(7dvh, env(safe-area-inset-top))); width: 100%; height: var(--settings-task-height); max-height: var(--settings-task-height); }
+}
+
+/* Settings is a mobile tab page; only its tasks enter the modal top layer. */
+body.settings-tab-active { overflow: hidden; }
+.settings-dialog.settings-tab-page { position: fixed; z-index: 25; opacity: 1; transform: none; transition: none; box-shadow: none; }
+.settings-dialog.settings-tab-page > .account-dialog-shell > .account-dialog-close { display: none; }
+.settings-dialog.settings-tab-page .account-dialog-shell { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
+.settings-dialog.settings-tab-page .settings-heading { min-height: 0; padding: 0; }
+.settings-dialog.settings-tab-page .settings-heading > .kicker,
+.settings-dialog.settings-tab-page .settings-heading > p:last-child { display: none; }
+.mobile-nav button.active { color: var(--orange); background: var(--paper-deep); }
+.settings-dialog.settings-tab-page #settingsTitle:focus { outline: none; }
+
+.settings-version-row { cursor: default; }
+.settings-version-row .settings-row-value { font-variant-numeric: tabular-nums; }
+
+.settings-desktop-preference, .settings-web-link, .settings-desktop-note { display: none; }
+@media (min-width: 1051px) {
+  .settings-mobile-preference, .settings-mobile-link, .settings-mobile-note { display: none; }
+  .settings-desktop-preference, .settings-web-link { display: flex; }
+  .settings-desktop-note { display: inline; }
+  .settings-dialog { inset: 0; width: min(760px, calc(100vw - 64px)); height: auto; max-height: calc(100dvh - 64px); margin: auto; border-radius: 24px; transform: translateY(12px) scale(.985); transform-origin: center; transition: opacity 180ms ease-out, transform 220ms ease-out; }
+  .settings-dialog.is-visible, .settings-dialog.is-visible.has-settings-child { transform: none; }
+  .settings-dialog .account-dialog-shell { height: auto; min-height: 0; max-height: calc(100dvh - 64px); padding: 32px; }
+  .settings-dialog > .account-dialog-shell > .account-dialog-close { left: auto; right: 22px; top: 22px; }
+  .settings-dialog .settings-heading { padding: 0 56px 0 0; }
+  .settings-child-sheet { inset: 0; width: min(720px, calc(100vw - 96px)); height: auto; max-height: calc(100dvh - 96px); margin: auto; border-radius: 24px; transform: translateY(12px) scale(.985); transition: opacity 180ms ease-out, transform 220ms ease-out; }
+  .settings-child-sheet.is-visible { transform: none; }
+  .settings-child-sheet .account-dialog-shell { height: auto; max-height: calc(100dvh - 96px); }
+  .settings-child-sheet .settings-sheet-toolbar { justify-content: space-between; }
+  .settings-child-sheet .settings-sheet-toolbar .settings-sheet-close { order: 2; }
+  .settings-child-sheet .settings-sheet-toolbar h2 { font-size: 20px; }
+  .settings-group .settings-desktop-preference:first-of-type { border-top: 0; }
+  .settings-desktop-preference select { min-height: 40px; width: 190px; max-width: 55%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); color: var(--ink); font: inherit; }
+  .settings-desktop-preference select:focus-visible { outline: 3px solid rgba(238,117,78,.32); outline-offset: 2px; }
+  .settings-dialog .settings-done-button, .settings-child-sheet .settings-done-button { width: auto; min-width: 110px; }
+  .family-plan-dialog.settings-child-sheet > .account-dialog-shell > .account-dialog-close { left: auto; right: 20px; }
+  .family-plan-dialog.settings-child-sheet .family-plan-hero { padding-left: 0; padding-right: 52px; }
+}
+@media (min-width: 1051px) and (prefers-reduced-motion: reduce) {
+  .settings-dialog, .settings-child-sheet { transform: none; transition: opacity 160ms ease-out; }
 }

@@ -37,3 +37,11 @@
 - Prefer curl, HTTP requests, static analysis, and automated tests.
 - Browser-dependent checks must be reported for manual verification.
 - Never override these restrictions without explicit user approval.
+
+## 發布版本規則
+
+- 每次有程式或公開來源變更的正式發布，都必須使用 `npm run build`；其 `prebuild` 會自動執行 `npm run release:prepare`，由 `scripts/prepare_release.py` 遞增版本號與建置序號。不得只重建靜態檔就發布程式更新。
+- `.openai/release.json` 是發布版本的唯一來源，不得手填設定頁版本、手動改寫建置序號，或用瀏覽器儲存空間產生版本。設定頁、靜態輸出與 `/api/version` 必須使用同一份建置資料。
+- 一般測試與 `build_static_site.py` 不遞增版本。同一份來源的建置／發布重試必須沿用原版本；只有來源異動的新建置才遞增，並保留前版資訊。不要為了遞增版本改動無關來源。
+- 設定頁顯示的是該頁載入時的實際版本，不能把版本檢查端點回傳的最新版直接覆寫成本頁版本。發現不同版本時提供重新載入按鈕；離線或檢查失敗不得宣稱已是最新版。
+- 發布前確認 HTML、核心 CSS／JavaScript 的版本識別一致；發布成功後以 HTTP 驗證首頁內嵌版本與 `/api/version` 的 `version`、`buildNumber`、`releaseId` 完全一致。首頁與版本端點不得使用長效快取。
