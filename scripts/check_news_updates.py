@@ -38,6 +38,11 @@ def main() -> int:
         type=Path,
         default=PROJECT_ROOT / "data" / "news" / "state.json",
     )
+    parser.add_argument(
+        "--reviewed-file", type=Path,
+        default=PROJECT_ROOT / "data" / "news" / "reviewed.json",
+        help="Manually verified public announcements supplementing the RSS feeds.",
+    )
     parser.add_argument("--days", type=int, default=30)
     parser.add_argument("--max-items", type=int, default=20)
     parser.add_argument("--timeout", type=float, default=20.0)
@@ -61,19 +66,25 @@ def main() -> int:
             lookback_days=args.days,
             max_items=args.max_items,
         )
+        previous_payload = load_json(args.news_file)
+        reviewed = load_json(args.reviewed_file)
+        if args.reviewed_file.exists() and (
+            reviewed is None or not isinstance(reviewed.get("items"), list)
+        ):
+            raise ValueError("Reviewed news must contain an items array")
         payload = build_news_payload(
-            items,
+            [*(reviewed.get("items", []) if reviewed else []), *items],
             statuses,
             lookback_days=args.days,
+            previous_items=previous_payload.get("items", []) if previous_payload else [],
         )
         fingerprint = payload_fingerprint(payload)
-        previous_payload = load_json(args.news_file)
         previous_fingerprint = (
             payload_fingerprint(previous_payload) if previous_payload else None
         )
         changed = previous_fingerprint != fingerprint
-        if changed:
-            write_json_atomic(args.news_file, payload)
+        # A successful check refreshes its timestamp, while entries are merged atomically.
+        write_json_atomic(args.news_file, payload)
 
         failed_sources = [
             source["id"] for source in statuses if source.get("status") == "failed"
@@ -85,7 +96,8 @@ def main() -> int:
             "status": "updated" if changed else "unchanged",
             "changed": changed,
             "fingerprint": fingerprint,
-            "itemCount": len(items),
+            "itemCount": len(payload["items"]),
+            "fetchedItemCount": len(items),
             "failedSources": failed_sources,
             "importantItems": [
                 {"title": item["title"], "url": item["url"]} for item in important

@@ -270,6 +270,7 @@ if (accountPanelTriggers.length) {
       container.append(image);
     } else {
       container.textContent = displayName.slice(0, 1) || "家";
+      if (displayName) LunchI18n.keep(container);
     }
   }
 
@@ -283,6 +284,7 @@ if (accountPanelTriggers.length) {
       const avatar = trigger.querySelector("[data-account-avatar]");
       if (authenticated) {
         if (label) label.textContent = displayName;
+        if (label) LunchI18n.keep(label);
         if (status) {
           status.textContent = "";
           status.hidden = true;
@@ -333,7 +335,7 @@ if (accountPanelTriggers.length) {
       const group = document.createElement("optgroup");
       group.label = label;
       for (const school of schools) {
-        const option = node("option", "", school.name);
+        const option = LunchI18n.keep(node("option", "", school.name));
         option.value = String(school.fatraceSchoolId);
         group.append(option);
       }
@@ -371,7 +373,7 @@ if (accountPanelTriggers.length) {
       const copy = node("div", "account-child-copy");
       const school = schoolById(child.schoolId);
       copy.append(
-        node("strong", "", profileDisplayName(child, "孩子")),
+        LunchI18n.keep(node("strong", "", profileDisplayName(child, "孩子"))),
         node("span", "", `${school?.name || "尚未設定學校"}${child.nickname ? ` · 姓名 ${child.name}` : ""}`),
       );
       const edit = node("button", "", "修改");

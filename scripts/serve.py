@@ -203,7 +203,7 @@ def make_handler(
                 )
                 return
 
-            relative = "index.html" if path in {"", "/"} else path.lstrip("/")
+            relative = "news.html" if path in {"/news", "/news/"} else "index.html" if path in {"", "/"} else path.lstrip("/")
             self._serve_file(web_root, relative, cache_images=False)
 
         def do_POST(self) -> None:  # noqa: N802

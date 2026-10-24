@@ -389,17 +389,62 @@ def build_news_payload(
     *,
     now: datetime | None = None,
     lookback_days: int = 30,
+    previous_items: Iterable[dict[str, Any]] = (),
 ) -> dict[str, Any]:
     current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    retained = merge_news_items(previous_items, items)
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "generatedAt": current.isoformat().replace("+00:00", "Z"),
         "lookbackDays": lookback_days,
-        "itemCount": len(items),
-        "items": items,
+        "itemCount": len(retained),
+        "recentItemCount": sum(
+            parse_datetime(item["publishedAt"]) >= current - timedelta(days=lookback_days)
+            for item in retained
+        ),
+        "archiveStart": retained[-1]["publishedAt"] if retained else None,
+        "items": retained,
         "sources": statuses,
         "sourcePolicy": "僅顯示標題、日期、來源、本站整理的關聯說明與原文連結。",
     }
+
+
+def merge_news_items(
+    previous: Iterable[dict[str, Any]], incoming: Iterable[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Retain published entries even when they leave a feed or its date window."""
+    retained: list[dict[str, Any]] = []
+    urls: dict[str, int] = {}
+    titles: dict[str, int] = {}
+    for item in (*previous, *incoming):
+        if not isinstance(item, dict) or not all(
+            isinstance(item.get(key), str) and item[key].strip()
+            for key in ("title", "url", "publishedAt", "source")
+        ) or parse_datetime(item.get("publishedAt")) is None:
+            continue
+        url = canonicalize_url(item["url"])
+        if url in BLOCKED_URLS or urlsplit(url).scheme not in {"http", "https"}:
+            continue
+        title = normalize_title(item["title"])
+        index = urls.get(url, titles.get(title))
+        entry = dict(item)
+        entry.pop("summary", None)
+        entry.pop("score", None)
+        entry.pop("sourcePriority", None)
+        if index is None:
+            index = len(retained)
+            entry.setdefault("id", hashlib.sha256(url.encode()).hexdigest()[:16])
+            retained.append(entry)
+        else:
+            entry = {**retained[index], **entry, "id": retained[index]["id"]}
+            retained[index] = entry
+        urls[url] = index
+        titles[title] = index
+    return sorted(
+        retained,
+        key=lambda item: (parse_datetime(item["publishedAt"]), item["url"]),
+        reverse=True,
+    )
 
 
 def payload_fingerprint(payload: dict[str, Any]) -> str:

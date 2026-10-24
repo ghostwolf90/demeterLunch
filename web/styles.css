@@ -1351,3 +1351,40 @@ body.settings-tab-active { overflow: hidden; }
 @media (min-width: 1051px) and (prefers-reduced-motion: reduce) {
   .settings-dialog, .settings-child-sheet { transform: none; transition: opacity 160ms ease-out; }
 }
+
+/* Language names stay readable on both the settings sheet and desktop panel. */
+.settings-language-row select { min-height: 44px; width: 210px; max-width: 68%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); color: var(--ink); font: inherit; }
+.settings-language-row select:focus-visible { outline: 3px solid rgba(238,117,78,.32); outline-offset: 2px; }
+html[lang="en"] .brand { flex-shrink: 0; white-space: nowrap; }
+html[lang="en"] .brand strong { letter-spacing: .02em; }
+html[lang="en"] .topbar nav { flex-wrap: nowrap; }
+@media (min-width: 1051px) {
+  /* Reserve brand/account space; only the middle navigation track may shrink. */
+  html[lang="en"] .topbar:not(.records-topbar) { grid-template-columns: auto minmax(0, 1fr) auto; }
+  html[lang="en"] .topbar nav { width: max-content; max-width: 100%; justify-self: center; overflow-x: auto; overscroll-behavior-inline: contain; scroll-padding-inline: 5px; scrollbar-width: thin; }
+  html[lang="en"] .topbar-actions { min-width: 0; max-width: min(22vw, 240px); }
+  html[lang="en"] .topbar-actions .account-button { min-width: 0; max-width: 100%; }
+  html[lang="en"] .account-avatar { flex-shrink: 0; }
+  html[lang="en"] .account-button > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (min-width: 1051px) and (max-width: 1440px) {
+  html[lang="en"] .topbar:not(.records-topbar) { padding-inline: 24px; gap: 16px; }
+  html[lang="en"] .topbar nav { gap: 2px; }
+  html[lang="en"] .topbar nav a { padding-inline: 9px; font-size: 12px; }
+}
+html[lang="en"] .settings-row { overflow-wrap: anywhere; }
+html[lang="en"] .mobile-nav button span { font-size: 10px; }
+
+/* The news archive combines month and category filters without hiding older entries. */
+.news-filter-controls { min-width: 0; display: grid; justify-items: end; gap: 12px; }
+.news-month-filter { display: flex; align-items: center; gap: 10px; color: var(--ink-soft); font-size: 13px; }
+.news-month-filter select { max-width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: var(--white); font: inherit; }
+.news-month-filter select:focus-visible { outline: 3px solid rgba(238,117,78,.3); outline-offset: 2px; }
+.news-filter-summary { color: var(--ink-soft); font-size: 13px; }
+.news-month-title { margin: 28px 0 0; padding-bottom: 14px; color: var(--orange); font-size: 19px; border-bottom: 1px solid var(--line); }
+.news-item-content h4 { margin: 0 0 10px; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(20px, 2.1vw, 28px); line-height: 1.35; }
+.news-item-content h4 a:hover { color: var(--orange); }
+@media (max-width: 720px) {
+  .news-filter-controls { width: 100%; justify-items: start; }
+  .news-item-content h4 { font-size: 23px; }
+}

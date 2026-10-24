@@ -300,6 +300,7 @@ function renderProfileAvatar(container, profile, previewUrl = null) {
     container.append(image);
   } else {
     container.textContent = displayName.slice(0, 1) || "家";
+    if (displayName) LunchI18n.keep(container);
   }
 }
 
@@ -504,7 +505,7 @@ function populateChildSchoolSelect(preferredSchoolId) {
     const group = document.createElement("optgroup");
     group.label = label;
     for (const school of schools) {
-      const option = node("option", "", school.name);
+      const option = LunchI18n.keep(node("option", "", school.name));
       option.value = String(school.fatraceSchoolId);
       group.append(option);
     }
@@ -559,6 +560,7 @@ function renderPassportSchoolContext() {
   const childSchool = schoolById(child.schoolId);
   const viewingSchool = selectedSchool();
   refs.passportChildSchool.textContent = childSchool?.name || "尚未設定";
+  if (childSchool) LunchI18n.keep(refs.passportChildSchool);
   const mismatch = Boolean(childSchool && !isViewingChildSchool());
   const missing = !childSchool;
   refs.schoolBrowserNote.hidden = !mismatch;
@@ -609,7 +611,7 @@ function renderPassportFoodChoices() {
     input.name = "dishSource";
     input.value = value;
     input.checked = value === previous;
-    label.append(input, node("span", "", text));
+    label.append(input, LunchI18n.keep(node("span", "", text)));
     refs.passportFoodChoices.append(label);
   });
   syncPassportOptionalDetails();
@@ -656,7 +658,7 @@ function renderEncounterHistory() {
     const time = document.createElement("time");
     time.dateTime = encounter.mealDate;
     time.textContent = formatDate(encounter.mealDate);
-    heading.append(node("strong", "", encounter.foodName), time);
+    heading.append(LunchI18n.keep(node("strong", "", encounter.foodName)), time);
     summaryBody.append(
       heading,
       node("p", "encounter-stage", experienceLabels[encounter.experience] || "未記錄接觸方式"),
@@ -821,7 +823,7 @@ function renderEncounterMealPreview(container, snapshot, encounter) {
       row.classList.add("is-recorded");
       linkedDishFound = true;
     }
-    row.append(node("span", "", mealItem.role), node("strong", "", mealItem.name));
+    row.append(node("span", "", mealItem.role), LunchI18n.keep(node("strong", "", mealItem.name)));
     list.append(row);
   }
   container.append(
@@ -857,7 +859,7 @@ function renderChildNavigation() {
     const avatar = node("span", "child-switcher-avatar");
     renderProfileAvatar(avatar, child);
     const displayName = profileDisplayName(child, "孩子");
-    button.append(avatar, document.createTextNode(displayName));
+    button.append(avatar, LunchI18n.keep(document.createTextNode(displayName)));
     const active = Number(child.id) === Number(account.child?.id);
     if (active) button.classList.add("is-active");
     button.setAttribute(
@@ -896,7 +898,7 @@ function renderAccountChildren() {
     const copy = node("div", "account-child-copy");
     const school = schoolById(child.schoolId);
     copy.append(
-      node("strong", "", profileDisplayName(child, "孩子")),
+      LunchI18n.keep(node("strong", "", profileDisplayName(child, "孩子"))),
       node("span", "", `${school?.name || "尚未設定學校"}${child.nickname ? ` · 姓名 ${child.name}` : ""}`),
     );
     const edit = node("button", "", "修改");
@@ -1246,6 +1248,7 @@ function renderAccount() {
   refs.accountButtonText.textContent = account.loading ? "正在確認登入…" : authenticated
     ? profileDisplayName(account.user, "家庭帳號")
     : EMAIL_REGISTRATION_ENABLED ? "登入／免費註冊" : "登入／免費註冊（準備中）";
+  if (authenticated && !account.loading) LunchI18n.keep(refs.accountButtonText);
   refs.accountSignedOutView.hidden = account.loading || authenticated;
   refs.accountSignedInView.hidden = !authenticated;
   const childSettingsView = authenticated && !onboardingActive && state.accountDialogView === "child";
@@ -1312,7 +1315,7 @@ function renderAccount() {
     populateChildSchoolSelect(state.schoolId);
   } else if (authenticated && account.child) {
     const childDisplayName = profileDisplayName(account.child, "孩子");
-    refs.passportChildName.textContent = childDisplayName;
+    refs.passportChildName.textContent = childDisplayName; LunchI18n.keep(refs.passportChildName);
     refs.childName.value = account.child.name || childDisplayName;
     refs.childNickname.value = account.child.nickname || "";
     renderProfileAvatar(refs.childAvatarPreview, account.child, state.childAvatarPreviewUrl);
@@ -1835,7 +1838,7 @@ function newsCard(item) {
     node("time", "", formatNewsDate(item.publishedAt)),
   );
   const title = node("h3");
-  const link = node("a", "", item.title);
+  const link = LunchI18n.keep(node("a", "", item.title));
   link.href = item.url;
   link.target = "_blank";
   link.rel = "noreferrer";
@@ -1843,8 +1846,8 @@ function newsCard(item) {
   article.append(
     meta,
     title,
-    node("p", "news-why", item.whyItMatters),
-    node("span", "news-source", `${item.sourceType} · ${item.source}`),
+    LunchI18n.keep(node("p", "news-why", item.whyItMatters)),
+    LunchI18n.keep(node("span", "news-source", `${item.sourceType} · ${item.source}`)),
   );
   return article;
 }
@@ -1855,12 +1858,14 @@ async function loadNewsPreview() {
   refs.newsUpdated.textContent = "正在讀取近期消息…";
   try {
     const payload = await fetchNews();
-    const items = Array.isArray(payload.items) ? payload.items.slice(0, 2) : [];
+    const items = Array.isArray(payload.items)
+      ? [...payload.items].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 2)
+      : [];
     refs.latestNews.replaceChildren(...items.map(newsCard));
     if (!items.length) {
-      refs.latestNews.append(node("p", "news-empty", "近 30 天暫時沒有符合條件的消息。"));
+      refs.latestNews.append(node("p", "news-empty", "目前尚無已刊登的午餐消息。"));
     }
-    refs.newsUpdated.textContent = `最近更新：${formatNewsDate(payload.generatedAt)} · 僅整理近 ${payload.lookbackDays || 30} 天`;
+    refs.newsUpdated.textContent = `最近查核：${formatNewsDate(payload.generatedAt)} · 歷史消息保留於完整列表`;
   } catch (error) {
     refs.latestNews.replaceChildren(node("p", "news-empty", "近期消息暫時讀取不到，午餐菜單仍可正常使用。"));
     refs.newsUpdated.textContent = "新聞資料暫時無法更新";
@@ -1875,8 +1880,8 @@ function renderMeal(day, { personalizeAllergens = true } = {}) {
     state.lastDishTrigger = null;
     closeDishDetail({ immediate: true });
   }
-  refs.mainDish.textContent = day.meal.mainDish;
-  refs.heroDish.textContent = day.meal.mainDish;
+  refs.mainDish.textContent = day.meal.mainDish; LunchI18n.keep(refs.mainDish);
+  refs.heroDish.textContent = day.meal.mainDish; LunchI18n.keep(refs.heroDish);
   refs.mealList.replaceChildren();
   const sourceDishes = Array.isArray(day.recipeDetails) ? day.recipeDetails : [];
   const detailedRoles = new Set(sourceDishes.map((dish) => dish.role));
@@ -1927,7 +1932,7 @@ function renderMeal(day, { personalizeAllergens = true } = {}) {
       item.setAttribute("aria-label", `查看${label}「${value}」的食材與設計用量`);
       item.addEventListener("click", () => openDishDetail(dishIndex, item));
     }
-    item.append(node("span", "", label), node("strong", "", value));
+    item.append(node("span", "", label), LunchI18n.keep(node("strong", "", value)));
     refs.mealList.append(item);
   }
   renderAllergenNotice(
@@ -1952,7 +1957,7 @@ function renderDishDetail() {
   if (!dish) return;
   const ingredients = Array.isArray(dish.ingredients) ? dish.ingredients : [];
   refs.dishDetailRole.textContent = dish.category || roleLabels[dish.role] || "菜色";
-  refs.dishDetailTitle.textContent = dish.name;
+  refs.dishDetailTitle.textContent = dish.name; LunchI18n.keep(refs.dishDetailTitle);
   refs.dishDetailCount.textContent = dish.schoolMenu?.servingText
     ? `校方設計每份 ${dish.schoolMenu.servingText} · 官方食材 ${ingredients.length} 項`
     : `食譜明細共 ${ingredients.length} 項`;
@@ -1965,7 +1970,7 @@ function renderDishDetail() {
     const row = node("article", "dish-detail-ingredient");
     const heading = node("div", "dish-detail-ingredient-heading");
     heading.append(
-      node("strong", "", ingredient.name),
+      LunchI18n.keep(node("strong", "", ingredient.name)),
       node("span", "", ingredientQuantity(ingredient)),
     );
     const badges = node("div", "ingredient-source-badges");
@@ -2218,7 +2223,7 @@ function traceabilityDetail(label, value, url = null) {
 function renderIngredient(ingredient) {
   const card = node("article", "ingredient-card");
   const heading = node("div", "ingredient-heading");
-  heading.append(node("strong", "", ingredient.name));
+  heading.append(LunchI18n.keep(node("strong", "", ingredient.name)));
   const certification = ingredient.certification;
   const certificationLabel = certification?.label.includes("CAS")
     ? "CAS"
@@ -2324,7 +2329,7 @@ function renderTraceability(traceability) {
     const details = node("details", "traceability-dish");
     const summary = node("summary");
     const title = node("span", "traceability-dish-title");
-    title.append(node("small", "", dish.category || "菜色"), node("strong", "", dish.name));
+    title.append(node("small", "", dish.category || "菜色"), LunchI18n.keep(node("strong", "", dish.name)));
     if (dish.officialName && dish.officialName !== dish.name) {
       title.append(node("em", "", `平臺名稱：${dish.officialName}`));
     }
@@ -2421,9 +2426,9 @@ function renderWeek(dashboard) {
       : hasHistoricalMatch ? "reference" : "pending";
     button.append(
       dateLine,
-      node("h3", "", day.meal.mainDish),
+      LunchI18n.keep(node("h3", "", day.meal.mainDish)),
       node("span", `day-traceability ${traceabilityClass}`, traceabilityLabel),
-      node("p", "", sides),
+      LunchI18n.keep(node("p", "", sides)),
     );
     const selectDate = dashboard.isSample ? loadSampleDashboard : loadDashboard;
     button.addEventListener("click", () => selectDate(day.date, {
@@ -2632,7 +2637,7 @@ function populateSchoolSelectors() {
   placeholder.value = "";
   refs.schoolSelect.append(placeholder);
   for (const school of state.schoolDirectory.filter((item) => districtKey(item) === state.district)) {
-    const option = node("option", "", school.name);
+    const option = LunchI18n.keep(node("option", "", school.name));
     option.value = String(school.fatraceSchoolId);
     refs.schoolSelect.append(option);
   }
@@ -2648,7 +2653,7 @@ function renderSchoolContext(dashboard) {
     state.schoolId = Number(dashboard.school.fatraceSchoolId);
     state.district = districtKey(dashboard.school);
     populateSchoolSelectors();
-    refs.brandSchoolLabel.textContent = "孩子的每一餐";
+    refs.brandSchoolLabel.textContent = "孩子午餐，晚餐靈感";
     const schoolMenu = dashboard.record?.schoolMenu;
     const complete = dashboard.viewMode === "detailed" || Boolean(schoolMenu);
     setSchoolDataScope(schoolDataScopeText(dashboard));
@@ -2723,7 +2728,7 @@ async function renderNoSchoolSelected() {
   refs.mealMoment.textContent = "今天想看，";
   refs.heroDish.textContent = "哪一間國小？";
   refs.introNote.textContent = "先找孩子的學校，看看午餐菜單、營養資訊、食材來源與過敏原注意事項，也替晚餐找點想法。公開查詢免費，資料依各校公布內容提供。";
-  refs.brandSchoolLabel.textContent = "孩子的每一餐";
+  refs.brandSchoolLabel.textContent = "孩子午餐，晚餐靈感";
   setSchoolDataScope("尚未選擇學校");
   refs.footerSource.textContent = "選擇學校後，才會讀取對應的公開午餐資料。";
   refs.errorState.hidden = true;
@@ -2780,6 +2785,7 @@ function renderOfficialMeal(dashboard) {
 
   refs.heroDish.textContent = `${summary.dishCount} 道公開菜色`;
   refs.mainDish.textContent = heroDish?.name || "本日無菜色";
+  if (heroDish) LunchI18n.keep(refs.mainDish);
   refs.mainDishButton.disabled = !heroDish;
   refs.mainDishButton.setAttribute(
     "aria-label",
@@ -2800,7 +2806,7 @@ function renderOfficialMeal(dashboard) {
     item.setAttribute("aria-label", `查看${dish.category}「${dish.name}」的官方食材紀錄`);
     item.append(
       node("span", "", dish.schoolMenu?.category || dish.category),
-      node("strong", "", dish.name),
+      LunchI18n.keep(node("strong", "", dish.name)),
     );
     if (dish.schoolMenu?.servingText) item.append(node("em", "", `校方每份 ${dish.schoolMenu.servingText}`));
     item.addEventListener("click", () => openDishDetail(index, item));
@@ -2833,7 +2839,7 @@ function renderOfficialIngredient(ingredient) {
   const heading = node("div", "ingredient-heading");
   const certification = ingredient.certifications?.[0];
   heading.append(
-    node("strong", "", ingredient.name),
+    LunchI18n.keep(node("strong", "", ingredient.name)),
     node(
       "span",
       `certification-badge${certification ? "" : " empty"}`,
@@ -2898,7 +2904,7 @@ function renderOfficialTraceability(dashboard) {
     const details = node("details", "traceability-dish");
     const summary = node("summary");
     const title = node("span", "traceability-dish-title");
-    title.append(node("small", "", dish.category), node("strong", "", dish.name));
+    title.append(node("small", "", dish.category), LunchI18n.keep(node("strong", "", dish.name)));
     summary.append(title, node("span", "traceability-count", `${dish.ingredients.length} 項食材`));
     const ingredients = node("div", "ingredient-grid");
     if (dish.ingredients.length) {
@@ -2938,9 +2944,9 @@ function renderOfficialWeek(dashboard) {
     button.append(
       dateLine,
       node("span", "day-dish-role", mainDish ? "主菜" : "供餐紀錄"),
-      node("h3", "", mainDish?.name || "無供餐紀錄"),
+      mainDish ? LunchI18n.keep(node("h3", "", mainDish.name)) : node("h3", "", "無供餐紀錄"),
       node("span", "day-traceability verified", `${dishes.length} 道官方菜色`),
-      node("p", "", supportingDishes.slice(0, 3).map((dish) => dish.name).join(" · ") || "—"),
+      LunchI18n.keep(node("p", "", supportingDishes.slice(0, 3).map((dish) => dish.name).join(" · ") || "—")),
     );
     button.addEventListener("click", () => loadDashboard(date, { announce: true, focusWeekDay: true }));
     refs.weekDays.append(button);
@@ -3014,7 +3020,7 @@ function render(dashboard) {
   }
   if (dashboard.isSample) {
     populateSchoolSelectors();
-    refs.brandSchoolLabel.textContent = "孩子的每一餐";
+    refs.brandSchoolLabel.textContent = "孩子午餐，晚餐靈感";
     setSchoolDataScope("功能範例 · 尚未選校");
     refs.footerSource.textContent = "功能範例使用已校讀公開菜單；實際日期照頁面顯示，不代表今日或任何未選學校的供餐。";
   } else {
@@ -3986,6 +3992,7 @@ const homepageSectionIds = new Set([
   "passport",
   "standard",
   "insights",
+  "news",
 ]);
 
 async function restoreInitialSectionPosition() {

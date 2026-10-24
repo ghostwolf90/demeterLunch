@@ -29,9 +29,9 @@
   }
   function memoryCard(item) {
     const card = el("article", undefined, "memory-card");
-    card.append(el("h4", item.foodName), el("p", `${item.mealDate} · ${origin(item)}`, "memory-context"));
-    if (item.childQuote) card.append(el("p", "孩子原話", "memory-label"), el("blockquote", item.childQuote));
-    if (item.note) card.append(el("p", "家長筆記", "memory-label"), el("p", item.note));
+    card.append(LunchI18n.keep(el("h4", item.foodName)), el("p", `${item.mealDate} · ${origin(item)}`, "memory-context"));
+    if (item.childQuote) card.append(el("p", "孩子原話", "memory-label"), LunchI18n.keep(el("blockquote", item.childQuote)));
+    if (item.note) card.append(el("p", "家長筆記", "memory-label"), LunchI18n.keep(el("p", item.note)));
     if (item.experience && item.experience !== "unrecorded") card.append(el("p", experiences[item.experience] || "未記錄接觸方式"));
     const feelings = (item.reactions || []).map(value => reactions[value]).filter(Boolean);
     if (feelings.length) card.append(el("p", `當時記下的感受：${feelings.join("、")}`));

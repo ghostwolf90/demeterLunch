@@ -119,7 +119,7 @@ function encounterCard(encounter) {
   const card = node("article", "records-entry");
   const heading = document.createElement("header");
   heading.append(
-    node("h3", "", encounter.foodName),
+    LunchI18n.keep(node("h3", "", encounter.foodName)),
     node("span", "records-stage", experienceLabels[encounter.experience] || "食物經驗"),
   );
   card.append(heading, node("p", "records-origin", encounterOriginText(encounter)));
@@ -134,7 +134,7 @@ function encounterCard(encounter) {
     card.append(tags);
   }
   if (encounter.childQuote) {
-    card.append(node("blockquote", "records-quote", `「${encounter.childQuote}」`));
+    card.append(LunchI18n.keep(node("blockquote", "records-quote", `「${encounter.childQuote}」`)));
   }
   if (encounter.preparation) {
     card.append(recordDetail("喜歡／不喜歡的做法", encounter.preparation));
@@ -146,7 +146,7 @@ function encounterCard(encounter) {
 
 function recordDetail(label, value) {
   const row = node("p", "records-note");
-  row.append(node("strong", "", label), document.createTextNode(value));
+  row.append(node("strong", "", label), LunchI18n.keep(document.createTextNode(value)));
   return row;
 }
 
@@ -215,7 +215,7 @@ function renderChildSelect() {
   const children = Array.isArray(state.account?.children) ? state.account.children : [];
   refs.childSelect.replaceChildren();
   children.forEach((child) => {
-    const option = node("option", "", childDisplayName(child));
+    const option = LunchI18n.keep(node("option", "", childDisplayName(child)));
     option.value = String(child.id);
     option.selected = Number(child.id) === Number(state.account.child?.id);
     refs.childSelect.append(option);
@@ -375,7 +375,7 @@ function renderMealSnapshot(container, snapshot, encounters) {
     if (linkedDishes.some((dishName) => sameFood(mealItem.name, dishName))) {
       row.classList.add("is-recorded");
     }
-    row.append(node("span", "", mealItem.role), node("strong", "", mealItem.name));
+    row.append(node("span", "", mealItem.role), LunchI18n.keep(node("strong", "", mealItem.name)));
     list.append(row);
   });
   container.append(

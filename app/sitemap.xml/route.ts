@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     `${SITE_ORIGIN}/`,
     `${SITE_ORIGIN}/about`,
     `${SITE_ORIGIN}/schools`,
-    `${SITE_ORIGIN}/news.html`,
+    `${SITE_ORIGIN}/news`,
     `${SITE_ORIGIN}/support`,
     ...schools.map((school) => `${SITE_ORIGIN}/schools/${school.fatraceSchoolId}`),
   ];

@@ -105,7 +105,7 @@ class SiteLayoutTests(unittest.TestCase):
         ).group(1))
         self.assertIn('href="/schools">學校目錄</a>', index_html)
         self.assertIn('href="/schools">學校目錄</a>', news_html)
-        self.assertIn('href="./news.html" aria-current="page">午餐消息</a>', news_html)
+        self.assertIn('href="/#news">午餐消息</a>', news_html)
         self.assertIn('id="newsAccountButton" data-account-panel-trigger type="button"', news_html)
         self.assertIn('<strong data-account-label>帳號</strong><small data-account-status>未登入</small>', news_html)
         self.assertIn('/account-panel.js?v=20261023-family-copy', news_html)
@@ -248,7 +248,7 @@ class SiteLayoutTests(unittest.TestCase):
             '<h1 class="eyebrow intro-service-heading">國小營養午餐查詢</h1>',
             index_html,
         )
-        self.assertIn('<small id="brandSchoolLabel">孩子的每一餐</small>', index_html)
+        self.assertIn('<small id="brandSchoolLabel">孩子午餐，晚餐靈感</small>', index_html)
         self.assertNotIn("臺中市國小午餐助手", index_html)
         self.assertNotIn("document.title =", app_js)
         self.assertNotIn('id="recipeSourceDetails"', index_html)

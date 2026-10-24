@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     <link rel="stylesheet" href="/schools.css?v=20261020-school-seo" />
   </head>
   <body class="school-public-page">
-    <header class="topbar school-public-topbar"><a class="brand" href="/" aria-label="好好吃飯首頁"><img class="brand-mark" src="/icon-192x192.png?v=20261020" alt="" aria-hidden="true" width="43" height="43" /><span><strong>好好吃飯</strong><small>國小午餐助手</small></span></a><nav aria-label="主要導覽"><a href="/">午餐查詢</a><a href="/schools" aria-current="page">學校目錄</a><a href="/news.html">午餐消息</a><a href="/support">支援中心</a></nav></header>
+    <header class="topbar school-public-topbar"><a class="brand" href="/" aria-label="好好吃飯首頁"><img class="brand-mark" src="/icon-192x192.png?v=20261020" alt="" aria-hidden="true" width="43" height="43" /><span><strong>好好吃飯</strong><small>國小午餐助手</small></span></a><nav aria-label="主要導覽"><a href="/">午餐查詢</a><a href="/schools" aria-current="page">學校目錄</a><a href="/#news">午餐消息</a><a href="/support">支援中心</a></nav></header>
     <main class="school-public-main school-directory-main">
       <nav class="school-breadcrumbs" aria-label="麵包屑"><a href="/">首頁</a><span aria-hidden="true">/</span><span aria-current="page">學校目錄</span></nav>
       <section class="school-directory-hero"><p class="kicker">臺中市國小營養午餐</p><h1>找到孩子的學校，<br /><em>直接看已公布菜單</em></h1><p>目前收錄 ${schools.length} 所臺中市國小。每個連結都是可直接開啟的公開學校頁面；若今天尚未公布，頁面會清楚標示，不會用其他日期代替。</p></section>

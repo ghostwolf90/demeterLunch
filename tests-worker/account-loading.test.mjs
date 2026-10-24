@@ -12,7 +12,7 @@ function renderHeader(account) {
     classList: { toggle() {} },
     setAttribute(name, value) { this[name] = value; },
   }]));
-  vm.runInNewContext(headerRender + '\nrenderAccount();', { state: { account }, refs, EMAIL_REGISTRATION_ENABLED: true, renderProfileAvatar() {}, profileDisplayName(profile, fallback) { return profile?.nickname || profile?.name || fallback; } });
+  vm.runInNewContext(headerRender + '\nrenderAccount();', { state: { account }, refs, LunchI18n: { keep(node) { return node; } }, EMAIL_REGISTRATION_ENABLED: true, renderProfileAvatar() {}, profileDisplayName(profile, fallback) { return profile?.nickname || profile?.name || fallback; } });
   return refs;
 }
 
