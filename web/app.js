@@ -176,9 +176,9 @@ const ids = [
   "latestNews", "newsUpdated", "traceabilityStatus", "traceabilityNotice",
   "traceabilitySummary", "traceabilityDishes", "traceabilitySource",
   "mealTypeMeat", "mealTypeVegetarian", "mealTypeNote", "openDetail",
-  "dishCount", "mainDishButton", "dishDetailDialog", "closeDishDetail",
+  "dishCount", "dishPhotoDateButton", "mainDishButton", "dishDetailDialog", "closeDishDetail",
   "dishDetailRole", "dishDetailTitle", "dishDetailCount", "dishDetailIngredients",
-  "dishDetailNote", "previousDish", "nextDish",
+  "dishDetailNote", "dishDetailPhoto", "previousDish", "nextDish",
   "gradeLower", "gradeUpper", "standardTarget", "standardTransitional",
   "standardPeriod", "standardBasis", "standardDescription", "standardSummary",
   "standardMetrics", "standardGuidance", "standardObservations", "standardMethod",
@@ -859,7 +859,7 @@ function renderChildNavigation() {
     const avatar = node("span", "child-switcher-avatar");
     renderProfileAvatar(avatar, child);
     const displayName = profileDisplayName(child, "孩子");
-    button.append(avatar, LunchI18n.keep(document.createTextNode(displayName)));
+    button.append(avatar, LunchI18n.keep(node("span", "child-switcher-name", displayName)));
     const active = Number(child.id) === Number(account.child?.id);
     if (active) button.classList.add("is-active");
     button.setAttribute(
@@ -1875,7 +1875,7 @@ async function loadNewsPreview() {
   }
 }
 
-function renderMeal(day, { personalizeAllergens = true } = {}) {
+function renderMeal(day, { personalizeAllergens = true, photoRecord = null } = {}) {
   if (refs.dishDetailDialog.open) {
     state.lastDishTrigger = null;
     closeDishDetail({ immediate: true });
@@ -1883,14 +1883,34 @@ function renderMeal(day, { personalizeAllergens = true } = {}) {
   refs.mainDish.textContent = day.meal.mainDish; LunchI18n.keep(refs.mainDish);
   refs.heroDish.textContent = day.meal.mainDish; LunchI18n.keep(refs.heroDish);
   refs.mealList.replaceChildren();
-  const sourceDishes = Array.isArray(day.recipeDetails) ? day.recipeDetails : [];
+  const photoDishes = photoRecord?.mealDate === day.date
+    ? (photoRecord.meals || []).flatMap((meal) => meal.dishes || [])
+    : [];
+  const sourceDishes = (Array.isArray(day.recipeDetails) ? day.recipeDetails : []).map((dish) => {
+    const match = matchSameDayPhoto(dish, photoDishes, state.mealType);
+    const role = day.meal.drink === dish.name ? "soup"
+      : day.meal.fruit === dish.name ? "fruit" : dish.role;
+    return { ...dish, role, officialPhotoUrl: match?.imageUrl || null };
+  });
+  // Fruit and drinks may exist only in the weekly overview, outside the recipes.
+  // Attach their own same-day official record instead of creating a text-only duplicate.
+  for (const role of ["fruit", "drink"]) {
+    const name = day.meal[role];
+    if (!name || sourceDishes.some((dish) => dish.role === role || dish.name === name)) continue;
+    const match = matchSameDayPhoto({ name, role }, photoDishes, state.mealType);
+    if (!match) continue;
+    sourceDishes.push({
+      ...match, role: role === "drink" ? "soup" : role, officialRecord: true,
+      ingredients: (match.ingredients || []).map((ingredient) => ({ ...ingredient, officialRecord: true })),
+    });
+  }
   const detailedRoles = new Set(sourceDishes.map((dish) => dish.role));
   const supplementalItems = [
     !detailedRoles.has("fruit") && day.meal.fruit
       ? { label: "水果", value: day.meal.fruit }
       : null,
-    !detailedRoles.has("drink") && day.meal.drink
-      ? { label: "飲品", value: day.meal.drink }
+    day.meal.drink && !sourceDishes.some((dish) => dish.name === day.meal.drink)
+      ? { label: "湯品", value: day.meal.drink }
       : null,
   ].filter(Boolean);
   state.dishDetails = sourceDishes;
@@ -1900,8 +1920,12 @@ function renderMeal(day, { personalizeAllergens = true } = {}) {
       ? `菜單共 ${sourceDishes.length + supplementalItems.length} 道 · 其中 ${sourceDishes.length} 道可查看食材與設計用量`
       : `本餐共 ${sourceDishes.length} 道 · 點選菜色查看食材與設計用量`
     : "菜色依午餐總表校讀";
+  if (sourceDishes.some((dish) => dish.officialRecord)) {
+    refs.dishCount.textContent = `本餐共 ${sourceDishes.length + supplementalItems.length} 道 · 點選菜色查看食材明細`;
+  }
 
   const mainDishIndex = sourceDishes.findIndex((dish) => dish.role === "main");
+  renderMenuPhoto(refs.mainDishButton, sourceDishes[mainDishIndex], { eager: true });
   refs.mainDishButton.disabled = mainDishIndex < 0;
   refs.mainDishButton.setAttribute(
     "aria-label",
@@ -1922,7 +1946,7 @@ function renderMeal(day, { personalizeAllergens = true } = {}) {
       { label: "主食", value: day.meal.staple },
       ...day.meal.sideDishes.map((dish, index) => ({ label: `配菜 ${index + 1}`, value: dish })),
       { label: "湯品", value: day.meal.soup },
-      { label: day.meal.drink ? "飲品" : "水果", value: day.meal.drink || day.meal.fruit },
+      { label: day.meal.drink ? "湯品" : "水果", value: day.meal.drink || day.meal.fruit },
     ].filter(({ value }) => value);
   for (const { label, value, dish } of items) {
     const item = node(dish ? "button" : "div", "meal-item");
@@ -1932,7 +1956,9 @@ function renderMeal(day, { personalizeAllergens = true } = {}) {
       item.setAttribute("aria-label", `查看${label}「${value}」的食材與設計用量`);
       item.addEventListener("click", () => openDishDetail(dishIndex, item));
     }
+    if (dish?.officialRecord) item.setAttribute("aria-label", `查看${label}「${value}」的官方食材紀錄`);
     item.append(node("span", "", label), LunchI18n.keep(node("strong", "", value)));
+    renderMenuPhoto(item, dish);
     refs.mealList.append(item);
   }
   renderAllergenNotice(
@@ -1952,12 +1978,134 @@ function ingredientQuantity(ingredient) {
   ].filter((value) => value !== null && value !== undefined).join(" ") || "未標示";
 }
 
+function matchSameDayPhoto(dish, photoDishes, mealType) {
+  const clean = (value) => String(value || "").trim().replace(/\s+/g, "");
+  const menuName = clean(dish.name);
+  const exact = photoDishes.filter((item) => clean(item.name) === menuName
+    || (mealType === "vegetarian" && clean(item.name) === `素${menuName}`));
+  if (exact.length) return exact.length === 1 ? exact[0] : null;
+
+  // Weekly menus append serving sizes or preparation notes that the official name omits.
+  const unannotated = menuName.replace(/[（(][^）)]*[）)]/g, "");
+  if (unannotated && unannotated !== menuName) {
+    const matches = photoDishes.filter((item) => clean(item.name) === unannotated
+      || (mealType === "vegetarian" && clean(item.name) === `素${unannotated}`));
+    if (matches.length) return matches.length === 1 ? matches[0] : null;
+  }
+  // These spelling differences were checked against same-day official records.
+  const aliases = {
+    "南蠻雞": "日式南蠻雞", "蛋酥高麗": "蛋酥高麗菜",
+    "三杯菇菇油豆腐": "三杯菇菇油腐", "蜜燒黑干": "蜜汁黑干",
+    "炸醬麵": "炸醬麵的麵", "客家湯麵": "客家湯麵的麵",
+    "阿婆豆腐": "麻婆豆腐", "大阪燒高麗": "大阪燒高麗菜",
+  };
+  const alias = aliases[menuName];
+  if (alias) {
+    const matches = photoDishes.filter((item) => clean(item.name) === alias);
+    if (matches.length) return matches.length === 1 ? matches[0] : null;
+  }
+  // A generic vegetable label is resolved using its explicitly reviewed ingredient,
+  // never just the category, a similar dish name, or another day's photograph.
+  if (dish.role !== "vegetable" || /[＋+、]/.test(menuName)) return null;
+  const ingredientName = clean(dish.ingredients?.[0]?.name);
+  if (!ingredientName) return null;
+  const vegetableMatches = photoDishes.filter((item) => item.category === "蔬菜"
+    && clean(item.name).replace(/^炒/, "") === ingredientName);
+  return vegetableMatches.length === 1 ? vegetableMatches[0] : null;
+}
+
+function menuPhotoUrl(dish) {
+  const value = dish?.officialRecord ? dish.imageUrl : dish?.officialPhotoUrl;
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.origin === "https://fatraceschool.k12ea.gov.tw"
+      && /^\/dish\/pic\/[1-9]\d{0,19}$/.test(url.pathname) ? url : null;
+  } catch { return null; }
+}
+
+function renderMenuPhoto(container, dish, { eager = false } = {}) {
+  container.querySelector(".meal-photo")?.remove();
+  container.classList.remove("has-photo");
+  container.menuPhotoRequest = null;
+  const url = menuPhotoUrl(dish);
+  if (!url) return;
+  const image = node("img", "meal-photo");
+  image.alt = "";
+  image.width = eager ? 88 : 64;
+  image.height = image.width;
+  image.loading = eager ? "eager" : "lazy";
+  image.decoding = "async";
+  image.referrerPolicy = "no-referrer";
+  container.menuPhotoRequest = image;
+  container.classList.add("has-photo");
+  image.onload = () => {
+    if (container.menuPhotoRequest === image) image.classList.add("is-loaded");
+  };
+  image.onerror = () => {
+    if (container.menuPhotoRequest !== image) return;
+    image.remove();
+    container.classList.remove("has-photo");
+  };
+  container.append(image);
+  image.src = `/api/dish-photo?dishId=${encodeURIComponent(url.pathname.split("/").pop())}`;
+}
+
+function renderDishPhoto(dish) {
+  const figure = refs.dishDetailPhoto;
+  figure.hidden = true;
+  figure.replaceChildren();
+  const imageUrl = dish.officialRecord ? dish.imageUrl : dish.officialPhotoUrl;
+  if (!imageUrl) {
+    figure.append(node("p", "dish-photo-status", "尚無這道菜的同日官方照片。"));
+    figure.hidden = false;
+    return;
+  }
+  let url;
+  try {
+    url = new URL(imageUrl);
+  } catch { return; }
+  if (url.origin !== "https://fatraceschool.k12ea.gov.tw"
+      || !/^\/dish\/pic\/\d+$/.test(url.pathname)) return;
+  const image = document.createElement("img");
+  image.alt = dish.name;
+  LunchI18n.keep(image);
+  image.decoding = "async";
+  image.referrerPolicy = "no-referrer";
+  const caption = node("figcaption", "", "照片來源：校園食材平台。照片供辨識菜色參考，實際供餐以校方為準。");
+  const status = node("p", "dish-photo-status", "正在載入菜色照片…");
+  status.setAttribute("role", "status");
+  image.hidden = true;
+  figure.append(image, status, caption);
+  figure.hidden = false;
+  // Each selection owns its image, so a late response cannot reveal an old dish.
+  image.onload = () => {
+    if (figure.firstElementChild === image && image.naturalWidth > 0) {
+      image.hidden = false;
+      status.hidden = true;
+    }
+  };
+  image.onerror = () => {
+    if (figure.firstElementChild === image) {
+      image.hidden = true;
+      status.textContent = "照片暫時無法載入，可至官方圖片查看。";
+      const link = node("a", "dish-photo-source-link", "查看官方圖片");
+      link.href = url.href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      status.append(link);
+    }
+  };
+  image.src = `/api/dish-photo?dishId=${encodeURIComponent(url.pathname.split("/").pop())}`;
+}
+
 function renderDishDetail() {
   const dish = state.dishDetails[state.activeDishIndex];
   if (!dish) return;
   const ingredients = Array.isArray(dish.ingredients) ? dish.ingredients : [];
   refs.dishDetailRole.textContent = dish.category || roleLabels[dish.role] || "菜色";
   refs.dishDetailTitle.textContent = dish.name; LunchI18n.keep(refs.dishDetailTitle);
+  renderDishPhoto(dish);
   refs.dishDetailCount.textContent = dish.schoolMenu?.servingText
     ? `校方設計每份 ${dish.schoolMenu.servingText} · 官方食材 ${ingredients.length} 項`
     : `食譜明細共 ${ingredients.length} 項`;
@@ -2761,6 +2909,7 @@ function officialMainDish(dishes, record = null) {
 }
 
 function renderOfficialMeal(dashboard) {
+  renderMenuPhoto(refs.mainDishButton, null);
   const record = dashboard.record;
   const profile = OfficialDiet.profile(record);
   const dishes = officialDishes(record, profile.hasVariants ? state.mealType : null);
@@ -2785,6 +2934,7 @@ function renderOfficialMeal(dashboard) {
 
   refs.heroDish.textContent = `${summary.dishCount} 道公開菜色`;
   refs.mainDish.textContent = heroDish?.name || "本日無菜色";
+  renderMenuPhoto(refs.mainDishButton, heroDish, { eager: true });
   if (heroDish) LunchI18n.keep(refs.mainDish);
   refs.mainDishButton.disabled = !heroDish;
   refs.mainDishButton.setAttribute(
@@ -2809,6 +2959,7 @@ function renderOfficialMeal(dashboard) {
       LunchI18n.keep(node("strong", "", dish.name)),
     );
     if (dish.schoolMenu?.servingText) item.append(node("em", "", `校方每份 ${dish.schoolMenu.servingText}`));
+    renderMenuPhoto(item, dish);
     item.addEventListener("click", () => openDishDetail(index, item));
     refs.mealList.append(item);
   });
@@ -3014,6 +3165,8 @@ function renderOfficial(dashboard) {
 }
 
 function render(dashboard) {
+  refs.dishPhotoDateButton.hidden = true;
+  refs.dishPhotoDateButton.onclick = null;
   if (dashboard.viewMode === "officialDaily") {
     renderOfficial(dashboard);
     return;
@@ -3042,7 +3195,21 @@ function render(dashboard) {
     : dashboard.isFallback
     ? `指定日期沒有供餐資料，先顯示最近的 ${formatDate(day.date)}。`
     : `${dashboard.mealTypeLabel}：${day.meal.staple}、${day.meal.mainDish}；${day.meal.fruit ? `附餐 ${day.meal.fruit}；` : ""}食譜明細共 ${day.recipeDetails?.length || day.meal.sideDishes.length + 2} 道。`;
-  renderMeal(day, { personalizeAllergens: !dashboard.isFallback && !dashboard.isSample });
+  renderMeal(day, {
+    personalizeAllergens: !dashboard.isFallback && !dashboard.isSample,
+    photoRecord: !dashboard.isSample && Number(dashboard.school?.fatraceSchoolId) === DEFAULT_SCHOOL_ID
+      ? dashboard.officialRecord : null,
+  });
+  if (!dashboard.isSample && !dashboard.officialRecord) {
+    const records = state.staticData?.officialSchoolMeals?.records?.[String(DEFAULT_SCHOOL_ID)] || {};
+    const photoDate = Object.keys(records).filter((date) => date < day.date
+      && (records[date].meals || []).some((meal) => (meal.dishes || []).some((dish) => dish.imageUrl))).sort().at(-1);
+    if (photoDate) {
+      refs.dishPhotoDateButton.textContent = `這天尚無官方照片 · 查看 ${compactDate(photoDate)} 的菜色`;
+      refs.dishPhotoDateButton.hidden = false;
+      refs.dishPhotoDateButton.onclick = () => loadDashboard(photoDate, { announce: true });
+    }
+  }
   renderPassportFoodChoices();
   renderNutrition(day.nutrition);
   if (dashboard.isSample) {
@@ -3454,7 +3621,7 @@ refs.emailCodeForm.addEventListener("submit", async (event) => {
   await verifyEmailAuthCode();
 });
 refs.authCode.addEventListener("input", () => {
-  refs.authCode.value = refs.authCode.value.replace(/\D/g, "").slice(0, 6);
+  refs.authCode.value = refs.authCode.value.normalize("NFKC").replace(/\D/g, "").slice(0, 6);
 });
 refs.changeAuthEmail.addEventListener("click", () => {
   state.authChallengeId = null;

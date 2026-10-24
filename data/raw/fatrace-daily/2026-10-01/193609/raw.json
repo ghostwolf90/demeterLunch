@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "recordType": "official-daily-meal-raw",
+  "school": {
+    "city": "臺中市",
+    "district": "西區",
+    "level": "國小",
+    "name": "忠信國小",
+    "fullName": "臺中市西區忠信國小",
+    "fatraceSchoolId": 193609
+  },
+  "mealDate": "2026-10-01",
+  "fetchedAt": "2026-10-25T00:43:28.863450+08:00",
+  "source": {
+    "name": "教育部校園食材登錄平臺公開查詢頁",
+    "url": "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=193609&period=2026-10-01",
+    "apiRoot": "https://fatraceschool.k12ea.gov.tw"
+  },
+  "responses": {
+    "school": {
+      "result": 1,
+      "message": "Get School successful",
+      "data": {
+        "SchoolId": 193609,
+        "SchoolName": "臺中市西區忠信國小",
+        "ConuntyId": 27,
+        "AreaId": 131471,
+        "SchoolType": 2
+      }
+    },
+    "services": {
+      "result": 1,
+      "message": "Get Offering Service successful",
+      "data": [
+        {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        {
+          "label": "午餐菜單設計人員",
+          "ServiceId": 7
+        }
+      ]
+    },
+    "kitchens": {
+      "result": 1,
+      "message": "Get Offering School successful",
+      "data": [
+        {
+          "KitchenId": 2392,
+          "KitchenName": "臺中市西區忠信國小",
+          "KitchenType": "006",
+          "Address": "臺中市西區",
+          "Tel": "23722866",
+          "Fax": "23720152",
+          "Nutritionist": "莊巧筠",
+          "Chef": "",
+          "HACCP": "",
+          "Qualifier": "",
+          "Insurement": "",
+          "PicturePath": "-",
+          "CompanyId": "B193609",
+          "Email": "yun@ms2.zxes.tc.edu.tw",
+          "offering": []
+        }
+      ]
+    },
+    "lunchServices": [
+      {
+        "service": {
+          "label": "午餐",
+          "ServiceId": 1
+        },
+        "noMenuDates": {
+          "result": 1,
+          "message": "Search noMenuDate List Successful",
+          "data": []
+        },
+        "mealQueries": [
+          {
+            "kitchen": {
+              "KitchenId": 2392,
+              "KitchenName": "臺中市西區忠信國小",
+              "KitchenType": "006",
+              "Address": "臺中市西區",
+              "Tel": "23722866",
+              "Fax": "23720152",
+              "Nutritionist": "莊巧筠",
+              "Chef": "",
+              "HACCP": "",
+              "Qualifier": "",
+              "Insurement": "",
+              "PicturePath": "-",
+              "CompanyId": "B193609",
+              "Email": "yun@ms2.zxes.tc.edu.tw",
+              "offering": []
+            },
+            "meals": {
+              "result": 1,
+              "message": "Get Offering Meal successful",
+              "data": [
+                {
+                  "BatchDataId": "1790817502053354",
+                  "KitchenId": 2392,
+                  "KitchenName": "臺中市西區忠信國小",
+                  "SchoolId": 193609,
+                  "SchoolCode": "193609",
+                  "SchoolName": "臺中市西區忠信國小",
+                  "MenuDate": "2026/10/01",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-01T01:18:22.000Z",
+                  "TypeGrains": "7.14",
+                  "TypeOil": "0.29",
+                  "TypeVegetable": "4.82",
+                  "TypeMilk": "0",
+                  "TypeFruit": "3.37",
+                  "TypeMeatBeans": "7.53",
+                  "Calorie": "1312"
+                }
+              ]
+            },
+            "details": [
+              {
+                "meal": {
+                  "BatchDataId": "1790817502053354",
+                  "KitchenId": 2392,
+                  "KitchenName": "臺中市西區忠信國小",
+                  "SchoolId": 193609,
+                  "SchoolCode": "193609",
+                  "SchoolName": "臺中市西區忠信國小",
+                  "MenuDate": "2026/10/01",
+                  "MenuType": 1,
+                  "MenuTypeName": "午餐",
+                  "UploadDateTime": "2026-10-01T01:18:22.000Z",
+                  "TypeGrains": "7.14",
+                  "TypeOil": "0.29",
+                  "TypeVegetable": "4.82",
+                  "TypeMilk": "0",
+                  "TypeFruit": "3.37",
+                  "TypeMeatBeans": "7.53",
+                  "Calorie": "1312"
+                },
+                "dishes": [
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1790817502053356",
+                      "BatchDataId": "1790817502053354",
+                      "DishName": "五穀飯",
+                      "DishType": "主食",
+                      "DishId": "1441326116108383",
+                      "UpdateDateTime": "2026-10-01T01:18:22.000Z",
+                      "DishOrder": 10,
+                      "KitchenId": 2392,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2392//2392_1441326116108383."
+                    },
+                    "ingredients": null
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1790817502053363",
+                      "BatchDataId": "1790817502053354",
+                      "DishName": "可樂豬腳",
+                      "DishType": "主菜",
+                      "DishId": "72226",
+                      "UpdateDateTime": "2026-10-01T01:18:22.000Z",
+                      "DishOrder": 12,
+                      "KitchenId": 2392,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1790817502053359",
+                      "BatchDataId": "1790817502053354",
+                      "DishName": "素可樂滷豆輪",
+                      "DishType": "主菜",
+                      "DishId": "1790817501038682",
+                      "UpdateDateTime": "2026-10-01T01:18:22.000Z",
+                      "DishOrder": 13,
+                      "KitchenId": 2392,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2392//2392_1790817501038682."
+                    },
+                    "ingredients": null
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1790817502053360",
+                      "BatchDataId": "1790817502053354",
+                      "DishName": "開陽蒲瓜",
+                      "DishType": "副菜",
+                      "DishId": "1465184530112652",
+                      "UpdateDateTime": "2026-10-01T01:18:22.000Z",
+                      "DishOrder": 16,
+                      "KitchenId": 2392,
+                      "PicturePath": ""
+                    },
+                    "ingredients": null
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1790817502053361",
+                      "BatchDataId": "1790817502053354",
+                      "DishName": "素莧菜炒腐竹",
+                      "DishType": "副菜",
+                      "DishId": "1790817501038683",
+                      "UpdateDateTime": "2026-10-01T01:18:22.000Z",
+                      "DishOrder": 17,
+                      "KitchenId": 2392,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2392//2392_1790817501038683."
+                    },
+                    "ingredients": null
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1790817502053355",
+                      "BatchDataId": "1790817502053354",
+                      "DishName": "炒青江菜",
+                      "DishType": "蔬菜",
+                      "DishId": "1443168512114047",
+                      "UpdateDateTime": "2026-10-01T01:18:22.000Z",
+                      "DishOrder": 22,
+                      "KitchenId": 2392,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2392//2392_1443168512114047."
+                    },
+                    "ingredients": null
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1790817502053357",
+                      "BatchDataId": "1790817502053354",
+                      "DishName": "紫菜蛋花湯",
+                      "DishType": "湯品",
+                      "DishId": "1409301673100470",
+                      "UpdateDateTime": "2026-10-01T01:18:22.000Z",
+                      "DishOrder": 23,
+                      "KitchenId": 2392,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2392//2392_1409301673100470."
+                    },
+                    "ingredients": null
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1790817502053362",
+                      "BatchDataId": "1790817502053354",
+                      "DishName": "香蕉",
+                      "DishType": "附餐",
+                      "DishId": "1441067953110029",
+                      "UpdateDateTime": "2026-10-01T01:18:22.000Z",
+                      "DishOrder": 24,
+                      "KitchenId": 2392,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2392//2392_1441067953110029."
+                    },
+                    "ingredients": null
+                  },
+                  {
+                    "dish": {
+                      "DishBatchDataId": "1790817502053358",
+                      "BatchDataId": "1790817502053354",
+                      "DishName": "調味料",
+                      "DishId": "38705",
+                      "UpdateDateTime": "2026-10-01T01:18:22.000Z",
+                      "DishOrder": 26,
+                      "KitchenId": 2392,
+                      "PicturePath": "/mnt/hdb/cateringservice/dish/2392//2392_38705.jpg"
+                    },
+                    "ingredients": null
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

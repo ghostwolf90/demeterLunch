@@ -131,6 +131,7 @@
           <div class="card-heading"><div><p class="kicker" id="menuKicker">選擇的午餐</p><h2 id="menuHeading">午餐內容</h2></div><span class="review-badge" id="reviewBadge">✓ 已校讀</span></div>
           <button class="main-dish" id="mainDishButton" type="button"><span>這餐主角</span><strong id="mainDish">—</strong></button>
           <p class="dish-count" id="dishCount">—</p>
+          <button class="dish-photo-date-button" id="dishPhotoDateButton" type="button" hidden></button>
           <div class="meal-list" id="mealList"></div>
           <div class="allergen-row" id="allergenRow"></div>
           <button class="detail-menu-action" id="openDetail" type="button">查看供餐廠商食譜原表</button>
@@ -444,7 +445,7 @@
     <nav class="mobile-nav" aria-label="手機版主要導覽">
       <a class="today-link active" href="#today" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 14 0H5Zm7-7v3M4 8h16" /></svg><span>今日</span></a>
       <a href="#week"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5h14v14H5zM8 3v4m8-4v4M5 9h14" /></svg><span>本週</span></a>
-      <a href="#traceability"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 18V9m7 9V5m7 13v-6M3 20h18" /></svg><span>分析</span></a>
+      <a href="#traceability"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 18V9m7 9V5m7 13v-6M3 20h18" /></svg><span>溯源</span></a>
       <a href="#passport"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Zm3 16a3 3 0 0 1 0-6h11" /></svg><span>紀錄</span></a>
       <button id="mobileSettingsButton" type="button" aria-controls="settingsDialog"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg><span>設定</span></button>
     </nav>
@@ -482,6 +483,24 @@
             <a class="settings-row settings-web-link" href="/terms"><span>服務條款</span><span aria-hidden="true">›</span></a>
             <button class="settings-row settings-mobile-link" type="button" data-settings-page="terms" aria-haspopup="dialog"><span>服務條款</span><span aria-hidden="true">›</span></button>
           </div>
+        </section>
+        <section class="settings-section developer-support" aria-labelledby="developerSupportTitle">
+          <details>
+            <summary class="settings-row"><span id="developerSupportTitle">支持開發者</span><span aria-hidden="true">＋</span></summary>
+            <div class="developer-support-body">
+              <p>如果好好吃飯讓你每天少一點煩惱，歡迎請開發者吃點東西，支持持續維護與改進。</p>
+              <p id="developerSupportNotice" class="settings-note">付款尚未開放，目前無法扣款。以下為預定的單次支持金額。</p>
+              <ul class="developer-support-amounts" aria-describedby="developerSupportNotice">
+                <li><span aria-hidden="true">🧋</span><span>一杯珍奶</span><strong>NT$30</strong></li>
+                <li><span aria-hidden="true">🧋</span><span>兩杯珍奶</span><strong>NT$60</strong></li>
+                <li><span aria-hidden="true">🍱</span><span>一份便當</span><strong>NT$90</strong></li>
+                <li><span aria-hidden="true">☕</span><span>咖啡＋點心</span><strong>NT$150</strong></li>
+                <li><span aria-hidden="true">🍜</span><span>一碗拉麵</span><strong>NT$290</strong></li>
+                <li><span aria-hidden="true">🍣</span><span>迴轉壽司</span><strong>NT$490</strong></li>
+              </ul>
+              <p class="settings-note">每次支持皆為單次付款，不會自動續扣，也不會解鎖功能或變更家庭方案。正式開放後將於 haohaofood.cc 付款。</p>
+            </div>
+          </details>
         </section>
         <section class="settings-section" aria-labelledby="settingsVersionTitle">
           <h3 id="settingsVersionTitle">版本資訊</h3>
@@ -532,7 +551,7 @@
           <ul><li>免費建立 1 位孩子的飲食紀錄</li><li>記錄學校午餐與日常飲食</li><li>留下孩子對不同食物的感受與嘗試</li></ul>
           <form class="account-auth-form" id="emailAuthForm">
             <label>家長 Email
-              <input id="authEmail" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" required placeholder="請輸入電子郵件" />
+              <input id="authEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" maxlength="254" required placeholder="請輸入電子郵件" />
             </label>
             <label>家長／成年照顧者出生日期
               <input id="authBirthDate" name="birthDate" type="date" autocomplete="bday" required />
@@ -552,7 +571,7 @@
             <p>已寄出驗證碼，請查看 <strong id="authMaskedEmail">—</strong> 的信箱，並在 10 分鐘內輸入。</p>
             <form class="account-auth-form" id="emailCodeForm">
               <label>六位數驗證碼
-                <input id="authCode" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="000000" />
+                <input id="authCode" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" autocapitalize="none" spellcheck="false" enterkeyhint="done" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="000000" />
               </label>
               <button class="account-sign-in" id="verifyAuthCode" type="submit">驗證並登入</button>
               <p class="form-status" id="authVerifyStatus" role="status" aria-live="polite"></p>
@@ -764,6 +783,7 @@
           <h2 id="dishDetailTitle">—</h2>
           <p class="dish-detail-count" id="dishDetailCount">—</p>
         </header>
+        <figure class="dish-detail-photo" id="dishDetailPhoto" hidden></figure>
         <div class="dish-detail-ingredients" id="dishDetailIngredients"></div>
         <p class="dish-detail-note" id="dishDetailNote">用量為供餐廠商的食譜設計值，不代表實際攝取量。</p>
         <div class="dish-detail-nav" aria-label="切換菜色">

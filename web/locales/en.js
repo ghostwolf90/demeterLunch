@@ -1,5 +1,20 @@
 /* English interface copy. Chinese source copy is intentionally unchanged. */
 window.LunchEnglish = {
+  "尚無這道菜的同日官方照片。": "No official photo is available for this dish on this date.",
+  "正在載入菜色照片…": "Loading dish photo…",
+  "照片暫時無法載入，可至官方圖片查看。": "The photo could not be loaded. You can view the official image.",
+  "查看官方圖片": "View official image",
+  "照片來源：校園食材平台。照片供辨識菜色參考，實際供餐以校方為準。": "Photo source: School Food Ingredients Platform. Photos help identify dishes; confirm the actual meal with the school.",
+  "支持開發者": "Support the developer",
+  "如果好好吃飯讓你每天少一點煩惱，歡迎請開發者吃點東西，支持持續維護與改進。": "If HaoHaoFood makes your day a little easier, treat the developer to a bite and help keep it running and improving.",
+  "付款尚未開放，目前無法扣款。以下為預定的單次支持金額。": "Payments are not available yet. No charges can be made. These are the planned one-time contribution amounts.",
+  "一杯珍奶": "One bubble tea",
+  "兩杯珍奶": "Two bubble teas",
+  "一份便當": "A lunch box",
+  "咖啡＋點心": "Coffee and a snack",
+  "一碗拉麵": "A bowl of ramen",
+  "迴轉壽司": "Conveyor belt sushi",
+  "每次支持皆為單次付款，不會自動續扣，也不會解鎖功能或變更家庭方案。正式開放後將於 haohaofood.cc 付款。": "Each contribution is a one-time payment, with no automatic renewal, feature unlocks, or changes to your family plan. Payments will take place at haohaofood.cc once available.",
   "好好吃飯": "HaoHaoFood",
   "孩子午餐，晚餐靈感": "School lunch, dinner inspiration",
   "今日菜單": "Today's menu",
@@ -200,7 +215,7 @@ window.LunchEnglish = {
   "今日": "Today",
   "紀錄": "Journal",
   "趨勢": "Trends",
-  "分析": "Insights",
+  "溯源": "Sources",
   "消息": "News",
   "支援": "Help",
   "品牌故事": "Our story",
@@ -1598,6 +1613,8 @@ window.LunchEnglish = {
   "主辦單位公告": "Organizer announcement"
 };
 window.LunchEnglishTemplates = [
+  ["本餐共 {0} 道 · 點選菜色查看食材明細", "{0} dishes in this meal · Select a dish to view ingredient details"],
+  ["這天尚無官方照片 · 查看 {0} 的菜色", "No official photos for this date · View dishes for {0}"],
   [
     "⚠ {0}需留意：{1}。這天已取得的菜單或食材資料中有相符項目；請再向校方確認實際食材與製程。",
     "⚠ Foods to watch for — {0}: {1}. A match was found in the available menu or ingredient data for this date. Confirm actual ingredients and preparation with the school."

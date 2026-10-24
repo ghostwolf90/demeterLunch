@@ -27,6 +27,8 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.admin_actions import AdminActionRunner  # noqa: E402
 from src.admin_status import load_admin_status  # noqa: E402
 from src.dashboard import load_site_dashboard  # noqa: E402
+from src.dish_photo import load_dish_photo  # noqa: E402
+from src.http_client import RequestError  # noqa: E402
 from src.school_dashboard import (  # noqa: E402
     DEFAULT_SCHOOL_ID,
     load_school_meal_catalog,
@@ -111,6 +113,18 @@ def make_handler(
         def do_GET(self) -> None:  # noqa: N802
             request = urlsplit(self.path)
             path = unquote(request.path)
+            if path == "/api/dish-photo":
+                dish_id = parse_qs(request.query).get("dishId", [""])[0]
+                try:
+                    data, content_type = load_dish_photo(dish_id)
+                except ValueError:
+                    self.send_error(400, "Invalid photo request")
+                    return
+                except (RequestError, OSError):
+                    self.send_error(502, "Photo unavailable")
+                    return
+                self._send_bytes(data, content_type, cache_control="public, max-age=3600")
+                return
             if path == "/api/schools":
                 try:
                     catalog = load_school_meal_catalog(database_path)
