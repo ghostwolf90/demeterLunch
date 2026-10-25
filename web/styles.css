@@ -759,14 +759,17 @@ body[data-view-mode="official"] .official-menu-board .main-dish span { margin: 0
 
 .section { padding: 105px 0 20px; scroll-margin-top: 80px; }
 .week-section { padding: 58px 0 42px; }
-.week-toolbar { margin-bottom: 18px; display: flex; justify-content: flex-end; }
+.week-toolbar { margin-bottom: 18px; display: flex; justify-content: center; }
 .section-title { margin-bottom: 31px; display: flex; justify-content: space-between; align-items: flex-end; gap: 28px; }
 .section-title h2 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(35px, 4.1vw, 58px); line-height: 1.02; letter-spacing: -.045em; }
 .section-lead { max-width: 400px; margin: 0 0 4px; color: var(--ink-soft); line-height: 1.75; font-size: 14px; }
-.week-nav { display: flex; align-items: center; gap: 12px; }
-.week-nav button { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 50%; background: var(--white); cursor: pointer; }
+.week-nav { display: grid; grid-template-columns: 44px minmax(160px, auto) 44px; align-items: center; gap: 18px; }
+.week-nav button { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%; background: var(--white); cursor: pointer; }
 .week-nav button:disabled { opacity: .3; cursor: default; }
-.week-nav span { min-width: 125px; text-align: center; font-size: 13px; font-weight: 700; }
+.week-nav > span { min-width: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 8px; text-align: center; }
+.week-month { font-size: 18px; font-weight: 800; line-height: 1.4; }
+.week-number { color: var(--ink-soft); font-size: 13px; font-weight: 650; white-space: nowrap; }
+.week-sample { color: var(--ink-soft); font-size: 11px; }
 .week-days { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .day-card { position: relative; min-height: 168px; padding: 17px; text-align: left; border: 1px solid var(--line); border-radius: 19px; color: var(--ink); background: rgba(255,253,248,.72); cursor: pointer; transition: transform .18s ease, background .18s ease, box-shadow .18s ease; }
 .day-card[aria-current="true"] { color: var(--white); border-color: var(--orange); background: var(--orange); box-shadow: 8px 9px 0 rgba(238,117,78,.18); }
@@ -909,6 +912,13 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
 .dish-detail-photo[hidden] { display: none; }
 .dish-detail-photo img { display: block; width: auto; max-width: 100%; height: auto; max-height: 220px; object-fit: contain; border-radius: 16px; background: rgba(255,253,248,.74); }
 .dish-detail-photo figcaption { margin-top: 9px; color: var(--ink-soft); font-size: var(--text-xs); line-height: 1.65; }
+.dish-photo-link { display: block; width: fit-content; max-width: 100%; border-radius: 16px; color: var(--ink); text-decoration: none; cursor: zoom-in; }
+.dish-photo-link[hidden] { display: none; }
+.dish-photo-link:focus-visible { outline: 3px solid var(--orange); outline-offset: 5px; }
+.dish-photo-hint { display: flex; align-items: center; min-height: 44px; font-size: var(--text-xs); color: var(--orange); text-decoration: underline; text-underline-offset: 3px; }
+@media (hover: hover) {
+  .dish-photo-link:hover .dish-photo-hint { color: var(--ink); }
+}
 .dish-photo-status { margin: 0; padding: 12px 0; color: var(--ink-soft); font-size: var(--text-xs); line-height: 1.65; }
 .dish-photo-source-link { display: block; margin-top: 6px; color: var(--orange); text-decoration: underline; }
 .dish-photo-date-button { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); font: inherit; font-size: var(--text-xs); cursor: pointer; }
@@ -979,7 +989,7 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   .topbar-actions { gap: 6px; }
   .account-button { min-height: 40px; padding-right: 10px; }
   .account-button > span:last-child { max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
-  .intro, body[data-view-mode] .intro { min-height: auto; padding: 25px 3px 21px; grid-template-columns: 1fr; }
+  .intro, body[data-view-mode] .intro { min-height: auto; padding: 25px 3px 8px; grid-template-columns: 1fr; }
   .eyebrow { margin-bottom: 8px; font-size: var(--text-xs); }
   .meal-type-switch { margin-bottom: 14px; }
   .meal-type-switch button { min-width: 70px; padding: 8px 14px; }
@@ -1095,14 +1105,15 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   .profile-avatar-preview.is-parent { width: 62px; height: 62px; }
   .profile-photo-field { align-items: flex-start; }
   .section { padding-top: 68px; scroll-margin-top: 62px; }
-  .week-section { padding: 38px 0 30px; }
+  .week-section { padding: 8px 0 16px; }
   .sample-mode-banner { padding: 16px; align-items: flex-start; flex-direction: column; gap: 14px; }
   .sample-mode-banner > div { align-items: flex-start; }
   .sample-mode-banner button { width: 100%; }
   .section-title { align-items: flex-start; flex-direction: column; }
   .section-title { margin-bottom: 22px; gap: 17px; }
   .section-title h2 { font-size: 37px; }
-  .week-nav { width: 100%; justify-content: space-between; }
+  .week-nav { width: 100%; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 8px; }
+  .week-month { font-size: 16px; }
   .week-toolbar { margin-bottom: 14px; }
   .week-nav button { width: 44px; height: 44px; }
   .week-days { display: flex; overflow-x: auto; padding-bottom: 13px; scroll-snap-type: x mandatory; }
@@ -1481,3 +1492,16 @@ html[lang="en"] .mobile-nav button span { font-size: 10px; }
   .main-dish.has-photo, body[data-view-mode="official"] .official-menu-board .main-dish.has-photo { grid-template-columns: 68px minmax(0, 1fr); column-gap: 14px; }
   .main-dish.has-photo > .meal-photo { width: 68px; height: 68px; border-radius: 12px; }
 }
+
+/* Compact mobile date navigation keeps the full week visible. */
+@media (max-width: 720px) {
+  .week-toolbar { margin-bottom: 8px; }
+  .week-days { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-right: 0; padding: 0; overflow: visible; scroll-snap-type: none; }
+  .day-card { min-width: 0; min-height: 72px; padding: 10px 3px; border-radius: 14px; }
+  .day-date { flex-direction: column; gap: 8px; margin: 0; font-size: 11px; letter-spacing: 0; }
+  .day-date strong { font-size: 24px; }
+  .day-card h3, .day-card > p, .day-card .day-traceability, .day-card .day-dish-role { display: none; }
+  .day-card[aria-current="true"] { box-shadow: none; }
+  .day-card:active { transform: scale(.97); }
+}
+.day-card.is-pending { outline: 2px solid var(--orange); outline-offset: 2px; }

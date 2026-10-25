@@ -11,6 +11,8 @@ class Element {
   classList = { add: value => this.classes.add(value), remove: value => this.classes.delete(value) };
   append(...children) { children.forEach(child => { child.parentElement = this; }); this.children.push(...children); }
   querySelector(selector) { return this.children.find(child => child.className === selector.slice(1)); }
+  querySelectorAll(selector) { return this.children.flatMap(child => [ ...(child.className === selector.slice(1) ? [child] : []), ...child.querySelectorAll(selector)]); }
+  removeAttribute(name) { delete this.attributes[name]; if (name === "src") this.src = ""; }
   remove() { if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(child => child !== this); }
   replaceChildren(...children) { this.children = children; }
   get firstElementChild() { return this.children[0]; }
@@ -23,6 +25,7 @@ function ui() {
   const context = vm.createContext({ refs, state, URL, encodeURIComponent,
     document: { createElement: () => new Element() },
     LunchI18n: { keep: x => x }, roleLabels: {},
+    MealPhotos: { attach(image, id) { image.src = `/api/dish-photo?dishId=${id}`; return () => {}; } },
     renderAllergenNotice() {},
     node(tag, className, text) { const element = new Element(); element.className = className; element.textContent = text; return element; },
   });
@@ -39,12 +42,18 @@ test("weekly menu passes the exact same-day dish photo through to a same-origin 
   assert.equal(state.dishDetails[0].officialPhotoUrl, photo);
   assert.equal(refs.mainDishButton.querySelector(".meal-photo").src, "/api/dish-photo?dishId=1792636821055976");
   context.renderDishPhoto(state.dishDetails[0]);
-  const image = refs.dishDetailPhoto.firstElementChild;
+  const link = refs.dishDetailPhoto.firstElementChild;
+  assert.equal(link.href, "/api/dish-photo?dishId=1792636821055976");
+  assert.equal(link.target, "_blank");
+  assert.equal(link.rel, "noopener noreferrer");
+  assert.equal(link.hidden, true);
+  const image = link.firstElementChild;
   assert.equal(image.src, "/api/dish-photo?dishId=1792636821055976");
   assert.equal(refs.dishDetailPhoto.hidden, false);
   assert.equal(image.hidden, true);
   image.naturalWidth = 1280; image.onload();
   assert.equal(image.hidden, false);
+  assert.equal(link.hidden, false);
   assert.equal(refs.dishDetailPhoto.children[1].hidden, true);
 });
 test("menu thumbnails fail gracefully and stale callbacks cannot change a new selection", () => {
@@ -55,9 +64,10 @@ test("menu thumbnails fail gracefully and stale callbacks cannot change a new se
   const first = container.querySelector(".meal-photo");
   assert.equal(first.alt, "");
   assert.equal(first.loading, "eager");
+  const staleError = first.onerror;
   context.renderMenuPhoto(container, dish);
   const second = container.querySelector(".meal-photo");
-  first.onerror();
+  staleError();
   assert.ok(container.classes.has("has-photo"));
   second.onload();
   assert.ok(second.classes.has("is-loaded"));
@@ -79,9 +89,9 @@ test("different dates, different dish names and ambiguous matches never supply a
 test("official daily photos, failures, missing URLs and stale callbacks are handled", () => {
   const { refs, context } = ui();
   context.renderDishPhoto({ officialRecord: true, imageUrl: photo, name: "主菜" });
-  const first = refs.dishDetailPhoto.firstElementChild;
+  const first = refs.dishDetailPhoto.firstElementChild.firstElementChild;
   context.renderDishPhoto({ officialRecord: true, imageUrl: photo + "1", name: "配菜" });
-  const second = refs.dishDetailPhoto.firstElementChild;
+  const second = refs.dishDetailPhoto.firstElementChild.firstElementChild;
   first.naturalWidth = 640; first.onload(); first.onerror();
   assert.equal(second.hidden, true);
   second.onerror();
@@ -125,7 +135,7 @@ test("photo delivery restricts IDs, validates image bytes and does not forward u
     const fallback = await dishPhoto(new Request("https://example.com/api/dish-photo?dishId=123"));
     assert.equal(fallback.status, 302);
     assert.equal(fallback.headers.get("location"), "https://fatraceschool.k12ea.gov.tw/dish/pic/123");
-    assert.equal(fallback.headers.get("cache-control"), "no-store");
+    assert.equal(fallback.headers.get("cache-control"), "public, max-age=300");
     globalThis.fetch = async () => { throw new Error("timeout"); };
     assert.equal((await dishPhoto(new Request("https://example.com/api/dish-photo?dishId=123"))).status, 302);
   } finally { globalThis.fetch = original; }
@@ -213,4 +223,52 @@ test("supplemental fruit never borrows another date's photograph", () => {
   });
   assert.equal(state.dishDetails.some(dish => dish.name === "香蕉"), false);
   assert.equal(refs.mealList.children.at(-1).querySelector(".meal-photo"), undefined);
+});
+
+test('photo proxy deduplicates requests, caches valid images, and never queues another photo', async () => {
+  const { dishPhoto: fresh } = await import('../lib/dish-photo.ts?cache-and-queue');
+  const oldFetch = globalThis.fetch, oldCaches = globalThis.caches;
+  let calls = 0, finish;
+  const saved = new Map();
+  globalThis.caches = { default: {
+    async match(key) { return saved.get(key.url)?.clone(); },
+    async put(key, response) { saved.set(key.url, response); },
+  } };
+  globalThis.fetch = async () => { calls++; return new Promise(resolve => { finish = resolve; }); };
+  try {
+    const request = new Request('https://example.com/api/dish-photo?dishId=123');
+    const first = fresh(request); const duplicate = fresh(request);
+    await new Promise(resolve => setImmediate(resolve));
+    const other = await fresh(new Request('https://example.com/api/dish-photo?dishId=124'));
+    assert.equal(other.status, 302); assert.equal(calls, 1);
+    finish(new Response(new Uint8Array([255,216,255,217]), { headers: { 'content-type': 'image/jpeg' } }));
+    assert.equal((await first).status, 200); assert.equal((await duplicate).status, 200);
+    assert.equal((await fresh(request)).status, 200); assert.equal(calls, 1);
+  } finally { globalThis.fetch = oldFetch; if (oldCaches === undefined) delete globalThis.caches; else globalThis.caches = oldCaches; }
+});
+test('changing dates releases fetch subscriptions even before an image has a src', () => {
+  const { refs, context } = ui(); let released = 0;
+  const image = new Element(); image.className = 'meal-photo'; image.complete = true;
+  image.photoRelease = () => { released++; };
+  refs.mealList.append(image); context.cancelMenuPhotos(); assert.equal(released, 1);
+});
+
+test('October 19 bun and water spinach are separate dishes with their own ingredients and photos', () => {
+  const menu = JSON.parse(readFileSync(new URL('../data/parsed/2026/semester-1/week-08/menu.json', import.meta.url))).days.find(day => day.date === '2026-10-19');
+  const recipe = JSON.parse(readFileSync(new URL('../data/parsed/2026/semester-1/week-08/recipe-details.json', import.meta.url))).days.find(day => day.date === menu.date);
+  const record = JSON.parse(readFileSync(new URL('../data/parsed/schools/fatrace/193609/2026-10-19.json', import.meta.url)));
+  const photoRecord = { mealDate: record.mealDate, meals: record.services.flatMap(service => service.meals) };
+  for (const variant of ['meat', 'vegetarian']) {
+    const { state, context } = ui(); state.mealType = variant;
+    context.renderMeal({ date: menu.date, ...menu.variants[variant], recipeDetails: recipe.variants[variant] }, { photoRecord });
+    const bun = state.dishDetails.find(dish => dish.name === '豆沙包');
+    const vegetable = state.dishDetails.find(dish => dish.name === '空心菜');
+    assert.equal(state.dishDetails.length, 6);
+    assert.equal(bun.role, 'side_2'); assert.equal(vegetable.role, 'vegetable');
+    assert.equal(bun.ingredients.length, 1); assert.equal(bun.ingredients[0].name, '豆沙包'); assert.equal(bun.ingredients[0].quantityValue, 30);
+    assert.equal(vegetable.ingredients.length, 1); assert.equal(vegetable.ingredients[0].name, '空心菜'); assert.equal(vegetable.ingredients[0].quantityValue, 80);
+    assert.ok(bun.officialPhotoUrl); assert.ok(vegetable.officialPhotoUrl);
+    assert.notEqual(bun.officialPhotoUrl, vegetable.officialPhotoUrl);
+    assert.equal(state.dishDetails.some(dish => dish.name.includes('＋')), false);
+  }
 });

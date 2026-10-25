@@ -76,5 +76,13 @@
     return `${startYear} 年 ${startMonth} 月–${endYear} 年 ${endMonth} 月午餐趨勢`;
   }
 
-  return { closestMealDate, latestMealDate, insightsPeriodLabel, mealMoment, relativeDayOffset };
+  function weekMonthLabel(startDate, endDate) {
+    const [startYear, startMonth] = parseIsoDate(startDate);
+    const [endYear, endMonth] = parseIsoDate(endDate);
+    if (startYear !== endYear) return `${startYear}年${startMonth}月–${endYear}年${endMonth}月`;
+    if (startMonth !== endMonth) return `${startMonth}–${endMonth}月`;
+    return `${startMonth}月`;
+  }
+
+  return { closestMealDate, latestMealDate, insightsPeriodLabel, mealMoment, relativeDayOffset, weekMonthLabel };
 }));

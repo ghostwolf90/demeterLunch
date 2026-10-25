@@ -231,12 +231,12 @@ python3 scripts/fetch_school_meals.py --date 2026-10-08 --school 忠信國小
 每校資料以完整目錄原子替換，保存於：
 
 ```text
-data/raw/fatrace-daily/YYYY-MM-DD/<fatraceSchoolId>/raw.json
+data/raw/fatrace-daily/YYYY-MM-DD/<fatraceSchoolId>/raw.json.gz
 data/raw/fatrace-daily/YYYY-MM-DD/<fatraceSchoolId>/candidate.json
 data/raw/fatrace-daily/YYYY-MM-DD/report.json
 ```
 
-`raw.json` 保存官方接口的完整回應；`candidate.json` 是統一格式的待校讀候選資料。候選資料固定標示 `review.status: pending`，不會自動進入 reviewed `data/parsed/`、SQLite 或公開網站。若官方明確回傳不供餐設定，狀態為 `no_meal`；空菜單且沒有官方原因則標示 `not_published`，不可解讀為今日沒有供餐。既有 `available` 或 `no_meal` 紀錄不會被後續空回應覆蓋。
+`raw.json.gz` 無損壓縮保存官方接口的完整回應（舊的 `raw.json` 仍可讀取）；`candidate.json` 是統一格式的待校讀候選資料。候選資料固定標示 `review.status: pending`，不會自動進入 reviewed `data/parsed/`、SQLite 或公開網站。若官方明確回傳不供餐設定，狀態為 `no_meal`；空菜單且沒有官方原因則標示 `not_published`，不可解讀為今日沒有供餐。既有 `available` 或 `no_meal` 紀錄不會被後續空回應覆蓋。
 
 ### 每日操作流程
 
@@ -454,3 +454,9 @@ python3 scripts/build_static_site.py
 正式建置請使用 `npm run build`，會先自動執行 `npm run release:prepare`。發布版本記錄於 `.openai/release.json`：來源內容改變時遞增修訂版本與建置序號，同一來源的重試沿用原版本。一般測試與靜態快照重建不遞增；產生的資料庫與建置輸出不列入來源指紋。
 
 首頁與靜態輸出會嵌入相同版本資料，核心 CSS／JavaScript 的快取識別也會同步更新。設定最底部保留目前頁面的版本，並透過不快取的 `/api/version` 檢查線上版本；出現更新時由使用者選擇重新載入，檢查失敗時不宣稱已是最新版。單純重新部署相同建置仍是同一版本，回復舊建置則顯示該建置的真實版本。
+
+## 本機午餐資料容量整理
+
+`python3 scripts/compact_lunch_data.py` 預設僅盤點；加上 `--apply` 才執行。每日原始回應與月度 OpenAPI CSV 以 gzip 無損封存，每份檔案在刪除未壓縮版前都以解壓後 SHA-256 完整驗證。`candidate.json` 僅移除排版空白、保留所有欄位、值與修改時間；校讀流程維持原路徑。
+
+經審核的 `data/parsed/` JSON、SQLite、網站公開資料與照片機制不變，網站查詢不需解壓原始封存。後續每日抓取會直接保存壓縮回應及精簡候選 JSON；月度更新直接封存 CSV，雜湊比對仍使用原始未壓縮內容。舊 CSV 邏輯路徑會透過 `src.archive_storage.open_archive` 自動尋找 `.gz`；也可傳入 `.csv.gz`。`manifest.json` 的原始檔名、位元組數、SHA-256 均保持原始來源定義。手動檢查封存可使用 `gzip -dc <檔案.gz>`，不需先解壓整份資料。

@@ -27,7 +27,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.admin_actions import AdminActionRunner  # noqa: E402
 from src.admin_status import load_admin_status  # noqa: E402
 from src.dashboard import load_site_dashboard  # noqa: E402
-from src.dish_photo import load_dish_photo  # noqa: E402
+from src.dish_photo import PhotoSourceBusy, load_dish_photo  # noqa: E402
 from src.http_client import RequestError  # noqa: E402
 from src.school_dashboard import (  # noqa: E402
     DEFAULT_SCHOOL_ID,
@@ -120,8 +120,11 @@ def make_handler(
                 except ValueError:
                     self.send_error(400, "Invalid photo request")
                     return
-                except (RequestError, OSError):
-                    self.send_error(502, "Photo unavailable")
+                except (PhotoSourceBusy, RequestError, OSError):
+                    self.send_response(302)
+                    self.send_header("Location", f"https://fatraceschool.k12ea.gov.tw/dish/pic/{dish_id}")
+                    self.send_header("Cache-Control", "public, max-age=300")
+                    self.end_headers()
                     return
                 self._send_bytes(data, content_type, cache_control="public, max-age=3600")
                 return

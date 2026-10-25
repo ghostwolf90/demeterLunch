@@ -10,6 +10,7 @@ const state = {
   staticData: null,
   sampleData: null,
   schoolMealData: {},
+  schoolDashboardCache: new Map(),
   schoolId: null,
   schoolDirectory: [],
   district: null,
@@ -1774,6 +1775,51 @@ function isAbortError(error) {
   return error?.name === "AbortError";
 }
 
+// Weekly plans remain the navigation baseline; only exact-date official evidence replaces them.
+function prioritizeDailyDashboard(weekly, daily) {
+  const date = weekly.selected.date;
+  const records = daily?.records || {};
+  const record = records[date] || (daily?.selectedDate === date ? daily.record : null);
+  const valid = Number(daily?.school?.fatraceSchoolId) === DEFAULT_SCHOOL_ID
+    && record?.mealDate === date && ["available", "no_meal"].includes(record.status);
+  const plan = { ...weekly, dataPriority: "weekly_planned", dailyRecords: records };
+  if (!valid) return plan;
+  return { ...daily, requestedDate: weekly.requestedDate, selectedDate: date,
+    record, records, isMissing: false, isFallback: weekly.isFallback,
+    mealType: weekly.mealType, mealTypeLabel: weekly.mealTypeLabel,
+    weeklyDashboard: plan, dataPriority: "official_daily",
+    sourceUrl: record.source?.url || daily.sourceUrl };
+}
+
+async function fetchWeeklyDashboard(date, { mealType, preferLatest, signal }) {
+  const data = await publicSiteData(signal);
+  const weekly = dashboardFromStatic(data, date, mealType, preferLatest);
+  const selectedDate = weekly.selected.date;
+  const snapshot = officialDashboardFromStatic(data, selectedDate, DEFAULT_SCHOOL_ID, mealType);
+  const cached = state.schoolDashboardCache.get(String(DEFAULT_SCHOOL_ID));
+  if (cached && Date.now() - cached.fetchedAt < 60000) {
+    return prioritizeDailyDashboard(weekly, cached.dashboard);
+  }
+  try {
+    const response = await fetch(`/api/dashboard?date=${encodeURIComponent(selectedDate)}&mealType=${encodeURIComponent(mealType)}&schoolId=${DEFAULT_SCHOOL_ID}`, { signal });
+    if (response.ok && response.headers.get("content-type")?.includes("application/json")) {
+      let daily = await response.json();
+      // The local Python server returns the same-day record beside its weekly dashboard.
+      if (daily.viewMode === "detailed") daily = { ...snapshot,
+        records: { ...snapshot.records, ...(daily.officialRecord ? { [selectedDate]: daily.officialRecord } : {}) } };
+      if (Number(daily.school?.fatraceSchoolId) === DEFAULT_SCHOOL_ID && daily.records) {
+        daily = { ...daily, records: { ...snapshot.records, ...daily.records } };
+        state.schoolDashboardCache.set(String(DEFAULT_SCHOOL_ID), { dashboard: daily, fetchedAt: Date.now() });
+        return prioritizeDailyDashboard(weekly, daily);
+      }
+    }
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+    console.info("Daily records unavailable; keeping the reviewed weekly plan.", error);
+  }
+  return prioritizeDailyDashboard(weekly, snapshot);
+}
+
 async function fetchDashboard(date, {
   preferLatest = false,
   schoolId = state.schoolId,
@@ -1781,12 +1827,26 @@ async function fetchDashboard(date, {
   signal,
 } = {}) {
   if (!schoolId) throw new Error("請先選擇學校");
+  if (Number(schoolId) === DEFAULT_SCHOOL_ID) {
+    return fetchWeeklyDashboard(date, { mealType, preferLatest, signal });
+  }
+  const cached = state.schoolDashboardCache.get(String(schoolId));
+  const cachedRecord = cached?.dashboard.records?.[date];
+  if (cachedRecord && Date.now() - cached.fetchedAt < 60000) {
+    return { ...cached.dashboard, requestedDate: date, selectedDate: date,
+      record: cachedRecord, isMissing: false, mealType,
+      mealTypeLabel: mealType === "vegetarian" ? "素食" : "葷食",
+      sourceUrl: cachedRecord.source?.url || cached.dashboard.sourceUrl };
+  }
   if (schoolId !== DEFAULT_SCHOOL_ID || isLocalApiAvailable()) {
     try {
       const response = await fetch(`/api/dashboard?date=${encodeURIComponent(date)}&mealType=${encodeURIComponent(mealType)}&schoolId=${encodeURIComponent(schoolId)}`, { signal });
       const isJson = response.headers.get("content-type")?.includes("application/json");
       if (response.ok && isJson) {
         const dashboard = await response.json();
+        if (dashboard.viewMode === "officialDaily" && dashboard.records) {
+          state.schoolDashboardCache.set(String(schoolId), { dashboard, fetchedAt: Date.now() });
+        }
         if (dashboard.record) return dashboard;
         if (preferLatest) {
           const latest = latestOfficialDashboard(dashboard, date);
@@ -1882,6 +1942,7 @@ function renderMeal(day, { personalizeAllergens = true, photoRecord = null } = {
   }
   refs.mainDish.textContent = day.meal.mainDish; LunchI18n.keep(refs.mainDish);
   refs.heroDish.textContent = day.meal.mainDish; LunchI18n.keep(refs.heroDish);
+  cancelMenuPhotos();
   refs.mealList.replaceChildren();
   const photoDishes = photoRecord?.mealDate === day.date
     ? (photoRecord.meals || []).flatMap((meal) => meal.dishes || [])
@@ -2024,8 +2085,25 @@ function menuPhotoUrl(dish) {
   } catch { return null; }
 }
 
+function cancelMenuPhotos() {
+  for (const image of refs.mealList.querySelectorAll(".meal-photo")) {
+    image.photoRelease?.();
+    if (image.complete) continue;
+    image.onload = null;
+    image.onerror = null;
+    image.removeAttribute("src");
+  }
+}
+
 function renderMenuPhoto(container, dish, { eager = false } = {}) {
-  container.querySelector(".meal-photo")?.remove();
+  const previous = container.querySelector(".meal-photo");
+  previous?.photoRelease?.();
+  if (previous && !previous.complete) {
+    previous.onload = null;
+    previous.onerror = null;
+    previous.removeAttribute("src");
+  }
+  previous?.remove();
   container.classList.remove("has-photo");
   container.menuPhotoRequest = null;
   const url = menuPhotoUrl(dish);
@@ -2048,11 +2126,12 @@ function renderMenuPhoto(container, dish, { eager = false } = {}) {
     container.classList.remove("has-photo");
   };
   container.append(image);
-  image.src = `/api/dish-photo?dishId=${encodeURIComponent(url.pathname.split("/").pop())}`;
+  image.photoRelease = MealPhotos.attach(image, url.pathname.split("/").pop());
 }
 
 function renderDishPhoto(dish) {
   const figure = refs.dishDetailPhoto;
+  figure.firstElementChild?.photoRelease?.();
   figure.hidden = true;
   figure.replaceChildren();
   const imageUrl = dish.officialRecord ? dish.imageUrl : dish.officialPhotoUrl;
@@ -2076,17 +2155,25 @@ function renderDishPhoto(dish) {
   const status = node("p", "dish-photo-status", "正在載入菜色照片…");
   status.setAttribute("role", "status");
   image.hidden = true;
-  figure.append(image, status, caption);
+  const photoLink = node("a", "dish-photo-link");
+  photoLink.href = `/api/dish-photo?dishId=${encodeURIComponent(url.pathname.split("/").pop())}`;
+  photoLink.target = "_blank";
+  photoLink.rel = "noopener noreferrer";
+  photoLink.hidden = true;
+  const hint = node("span", "dish-photo-hint", "查看原圖 ↗（另開分頁）");
+  photoLink.append(image, hint);
+  figure.append(photoLink, status, caption);
   figure.hidden = false;
   // Each selection owns its image, so a late response cannot reveal an old dish.
   image.onload = () => {
-    if (figure.firstElementChild === image && image.naturalWidth > 0) {
+    if (figure.firstElementChild === photoLink && image.naturalWidth > 0) {
       image.hidden = false;
+      photoLink.hidden = false;
       status.hidden = true;
     }
   };
   image.onerror = () => {
-    if (figure.firstElementChild === image) {
+    if (figure.firstElementChild === photoLink) {
       image.hidden = true;
       status.textContent = "照片暫時無法載入，可至官方圖片查看。";
       const link = node("a", "dish-photo-source-link", "查看官方圖片");
@@ -2096,7 +2183,7 @@ function renderDishPhoto(dish) {
       status.append(link);
     }
   };
-  image.src = `/api/dish-photo?dishId=${encodeURIComponent(url.pathname.split("/").pop())}`;
+  photoLink.photoRelease = MealPhotos.attach(image, url.pathname.split("/").pop());
 }
 
 function renderDishDetail() {
@@ -2550,21 +2637,40 @@ function renderHomeRecipe(recipe) {
   refs.recipeDetails.open = false;
 }
 
+function setWeekLabel(startDate, endDate, weekNumber = null, sample = false) {
+  const month = node("span", "week-month", LunchDateContext.weekMonthLabel(startDate, endDate));
+  refs.weekLabel.replaceChildren(month);
+  if (Number.isInteger(weekNumber) && weekNumber > 0) {
+    refs.weekLabel.append(node("span", "week-number", `· 第 ${weekNumber} 週`));
+  }
+  if (sample) refs.weekLabel.append(node("span", "week-sample", "功能範例"));
+  refs.weekLabel.title = `${startDate}–${endDate}`;
+}
+
 function renderWeek(dashboard) {
   const active = dashboard.selected;
-  refs.weekLabel.textContent = `${dashboard.isSample ? "功能範例 · " : ""}第 ${active.week} 週 · ${compactDate(active.weekStartDate)}–${compactDate(active.weekEndDate)}`;
+  setWeekLabel(active.weekStartDate, active.weekEndDate, active.week, dashboard.isSample);
   refs.weekDays.replaceChildren();
-  for (const day of dashboard.week) {
+  for (const plannedDay of dashboard.week) {
+    const record = dashboard.dailyRecords?.[plannedDay.date];
+    const actual = record?.mealDate === plannedDay.date && ["available", "no_meal"].includes(record.status);
+    const dishes = actual ? officialDishes(record, OfficialDiet.profile(record).hasVariants ? dashboard.mealType : null) : [];
+    const main = actual ? officialMainDish(dishes, record) : null;
+    const day = actual ? { ...plannedDay, meal: { ...plannedDay.meal,
+      mainDish: record.status === "no_meal" ? "當日不供餐" : main?.name || "官方供餐紀錄",
+      staple: "", sideDishes: dishes.filter((dish) => dish !== main).slice(0, 3).map((dish) => dish.name),
+    } } : plannedDay;
     const button = node("button", "day-card");
     button.type = "button";
     button.dataset.date = day.date;
+    button.setAttribute("aria-label", `${day.date} ${day.weekday}，${day.meal.mainDish}`);
     button.setAttribute("aria-current", String(day.date === active.date));
     const dateLine = node("div", "day-date");
     dateLine.append(node("span", "", day.weekday), node("strong", "", day.date.slice(-2)));
     const sides = [day.meal.staple, ...day.meal.sideDishes.slice(0, 2)].join(" · ");
     const hasTraceability = day.traceabilityStatus === "verified";
     const hasHistoricalMatch = day.traceabilityStatus === "matched_reference";
-    const traceabilityLabel = hasTraceability
+    const traceabilityLabel = dashboard.dataPriority ? (actual ? "官方當日紀錄" : "週菜單（預定）") : hasTraceability
       ? `${day.traceableIngredientCount} 項同日可追溯`
       : hasHistoricalMatch
         ? `${day.traceableIngredientCount} 項歷史匹配`
@@ -2728,6 +2834,7 @@ function selectedSchool() {
 function schoolDataScopeText(dashboard = state.dashboard) {
   if (dashboard?.isSample) return "功能範例 · 尚未選校";
   if (!dashboard?.school) return "尚未選擇學校";
+  if (dashboard.dataPriority === "weekly_planned") return "週菜單（預定）· 當日資料待公布";
   return dashboard.viewMode === "detailed" || dashboard.record?.schoolMenu
     ? "完整菜單＋官方紀錄"
     : "官方當日供餐紀錄";
@@ -2918,6 +3025,7 @@ function renderOfficialMeal(dashboard) {
   const heroDish = dishes[heroIndex];
   state.dishDetails = dishes;
   state.activeDishIndex = -1;
+  cancelMenuPhotos();
   refs.mealList.replaceChildren();
 
   if (!record) {
@@ -2933,7 +3041,7 @@ function renderOfficialMeal(dashboard) {
   }
 
   refs.heroDish.textContent = `${summary.dishCount} 道公開菜色`;
-  refs.mainDish.textContent = heroDish?.name || "本日無菜色";
+  refs.mainDish.textContent = heroDish?.name || (record?.status === "no_meal" ? "當日不供餐" : "本日無菜色");
   renderMenuPhoto(refs.mainDishButton, heroDish, { eager: true });
   if (heroDish) LunchI18n.keep(refs.mainDish);
   refs.mainDishButton.disabled = !heroDish;
@@ -3070,12 +3178,14 @@ function renderOfficialTraceability(dashboard) {
 }
 
 function renderOfficialWeek(dashboard) {
+  if (dashboard.weeklyDashboard) return renderWeek(dashboard.weeklyDashboard);
   const week = OfficialDiet.weekView(
     dashboard.availableDates || [],
     dashboard.selectedDate || localIsoDate(),
   );
   const dates = week.dates;
-  refs.weekLabel.textContent = `${compactDate(week.start)}–${compactDate(week.end)}`;
+  if (week.start && week.end) setWeekLabel(week.start, week.end);
+  else refs.weekLabel.replaceChildren();
   refs.weekDays.replaceChildren();
   for (const date of dates) {
     const record = dashboard.records?.[date] || (date === dashboard.selectedDate ? dashboard.record : null);
@@ -3086,6 +3196,7 @@ function renderOfficialWeek(dashboard) {
     const button = node("button", "day-card");
     button.type = "button";
     button.dataset.date = date;
+    button.setAttribute("aria-label", `${date}，${mainDish?.name || "無供餐紀錄"}`);
     button.setAttribute("aria-current", String(date === dashboard.selectedDate));
     const weekday = new Intl.DateTimeFormat("zh-TW", { weekday: "short" }).format(
       new Date(`${date}T12:00:00+08:00`),
@@ -3127,7 +3238,9 @@ function renderOfficial(dashboard) {
   const date = dashboard.selectedDate || localIsoDate();
   refs.todayLabel.textContent = formatDate(date, { year: "numeric", weekday: "long" });
   refs.mealMoment.textContent = dashboard.record ? `${dashboard.school.name}這天，` : `${dashboard.school.name}這天，`;
-  refs.introNote.textContent = dashboard.record
+  refs.introNote.textContent = dashboard.record?.status === "no_meal"
+    ? "官方當日紀錄註記不供餐；週菜單預定內容不代表實際供餐。"
+    : dashboard.record
     ? dashboard.record.schoolMenu
       ? `${profile.hasVariants ? `${state.mealType === "vegetarian" ? "素食" : "葷食"}：` : ""}校方完整菜單＋同日教育部食材紀錄。`
       : `${profile.hasVariants ? `${state.mealType === "vegetarian" ? "素食" : "葷食"}：` : ""}${summary.dishCount} 道菜、${summary.ingredientCount} 項食材，來自同日教育部公開紀錄。`
@@ -3192,11 +3305,13 @@ function render(dashboard) {
   refs.mealMoment.textContent = dashboard.isSample ? "先看一週，" : LunchDateContext.mealMoment(day.date, localIsoDate());
   refs.introNote.textContent = dashboard.isSample
     ? "先看看一週菜單、營養資訊、晚餐搭配與食材來源；選擇學校後會換成該校公開資料。"
+    : dashboard.dataPriority === "weekly_planned"
+    ? `${dashboard.isFallback ? `指定日期沒有週菜單，先顯示 ${formatDate(day.date)}。` : ""}目前為週菜單預定內容；取得同日官方資料後優先顯示，實際供餐以校方為準。`
     : dashboard.isFallback
     ? `指定日期沒有供餐資料，先顯示最近的 ${formatDate(day.date)}。`
     : `${dashboard.mealTypeLabel}：${day.meal.staple}、${day.meal.mainDish}；${day.meal.fruit ? `附餐 ${day.meal.fruit}；` : ""}食譜明細共 ${day.recipeDetails?.length || day.meal.sideDishes.length + 2} 道。`;
   renderMeal(day, {
-    personalizeAllergens: !dashboard.isFallback && !dashboard.isSample,
+    personalizeAllergens: !dashboard.isFallback && !dashboard.isSample && dashboard.dataPriority !== "weekly_planned",
     photoRecord: !dashboard.isSample && Number(dashboard.school?.fatraceSchoolId) === DEFAULT_SCHOOL_ID
       ? dashboard.officialRecord : null,
   });
@@ -3209,6 +3324,10 @@ function render(dashboard) {
       refs.dishPhotoDateButton.hidden = false;
       refs.dishPhotoDateButton.onclick = () => loadDashboard(photoDate, { announce: true });
     }
+  }
+  if (dashboard.dataPriority === "weekly_planned") {
+    refs.menuKicker.textContent = "週菜單（預定）";
+    refs.reviewBadge.textContent = "已校讀 · 預定";
   }
   renderPassportFoodChoices();
   renderNutrition(day.nutrition);
@@ -3260,8 +3379,9 @@ async function loadSampleDashboard(date, { announce = false, focusWeekDay = fals
     const data = await sampleSiteData();
     if (requestId !== state.sampleRequestId || state.schoolId) return;
     const payload = sampleDashboardFromStatic(data, date, state.mealType);
+    const unchanged = JSON.stringify(state.dashboard) === JSON.stringify(payload);
     state.dashboard = payload;
-    render(payload);
+    if (!unchanged) render(payload);
     if (!state.newsLoaded) loadNewsPreview();
     if (focusWeekDay) {
       refs.weekDays.querySelector(`.day-card[data-date="${payload.selected.date}"]`)?.focus({ preventScroll: true });
@@ -3274,6 +3394,15 @@ async function loadSampleDashboard(date, { announce = false, focusWeekDay = fals
   }
 }
 
+function markPendingDate(date = null) {
+  const selected = date || state.dashboard?.selectedDate || state.dashboard?.selected?.date;
+  refs.weekDays.setAttribute("aria-busy", String(Boolean(date)));
+  for (const button of refs.weekDays.querySelectorAll(".day-card[data-date]")) {
+    button.setAttribute("aria-current", String(button.dataset.date === selected));
+    button.classList.toggle("is-pending", Boolean(date) && button.dataset.date === date);
+  }
+}
+
 function cancelDashboardRequest() {
   state.dashboardRequestId += 1;
   state.dashboardAbortController?.abort();
@@ -3282,6 +3411,7 @@ function cancelDashboardRequest() {
 }
 
 async function loadDashboard(date, { announce = false, focusWeekDay = false, preferLatest = false } = {}) {
+  markPendingDate(date);
   state.dashboardAbortController?.abort();
   const controller = new AbortController();
   const requestId = ++state.dashboardRequestId;
@@ -3297,6 +3427,15 @@ async function loadDashboard(date, { announce = false, focusWeekDay = false, pre
     !controller.signal.aborted
   );
   try {
+    if (schoolId === DEFAULT_SCHOOL_ID && state.staticData) {
+      const weekly = dashboardFromStatic(state.staticData, date, mealType, preferLatest);
+      const cached = state.schoolDashboardCache.get(String(schoolId));
+      const known = cached?.dashboard || officialDashboardFromStatic(state.staticData, weekly.selected.date, schoolId, mealType);
+      if (isCurrentRequest()) {
+        state.dashboard = prioritizeDailyDashboard(weekly, known);
+        render(state.dashboard);
+      }
+    }
     const payload = await fetchDashboard(date, {
       preferLatest,
       schoolId,
@@ -3329,6 +3468,7 @@ async function loadDashboard(date, { announce = false, focusWeekDay = false, pre
         state.dashboardAbortController = null;
       }
       state.loading = false;
+      markPendingDate();
     }
   }
 }
@@ -3382,6 +3522,10 @@ async function selectMealType(mealType) {
     if (!OfficialDiet.profile(state.dashboard.record).hasVariants) return;
     state.mealType = mealType;
     window.localStorage.setItem("demeter-meal-type", mealType);
+    if (state.dashboard.weeklyDashboard) {
+      await loadDashboard(state.dashboard.selectedDate, { announce: true });
+      return;
+    }
     renderOfficial(state.dashboard);
     announceSelection(state.dashboard);
     return;

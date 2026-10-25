@@ -34,3 +34,13 @@ class DishPhotoTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 dish_photo.load_dish_photo("123")
             self.assertNotIn("123", dish_photo._cache)
+
+    def test_busy_source_does_not_queue_another_photo(self):
+        with patch.object(dish_photo._client, "get") as get:
+            dish_photo._lock.acquire()
+            try:
+                with self.assertRaises(dish_photo.PhotoSourceBusy):
+                    dish_photo.load_dish_photo("123")
+                get.assert_not_called()
+            finally:
+                dish_photo._lock.release()

@@ -142,7 +142,7 @@ class ReviewedMenuTests(unittest.TestCase):
                 stats["traceableIngredients"], expected_traceability_count
             )
             self.assertEqual(traceability_count, expected_traceability_count)
-            self.assertEqual(recipe_dish_count, 466)
+            self.assertEqual(recipe_dish_count, 467)
             self.assertEqual(recipe_ingredient_count, 1323)
 
     def test_reviewed_traceability_links_dishes_suppliers_and_certifications(self) -> None:

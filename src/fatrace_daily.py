@@ -13,6 +13,7 @@ from typing import Any
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
+from .archive_storage import write_archived_json
 from .http_client import HttpClient
 
 
@@ -395,7 +396,7 @@ class DailyMealStorage:
         )
         backup: Path | None = None
         try:
-            _write_json(staging / "raw.json", raw)
+            write_archived_json(staging / "raw.json.gz", raw)
             _write_json(staging / "candidate.json", candidate)
             if target.exists():
                 backup = target.with_name(f".{target.name}.backup-{uuid.uuid4().hex}")
@@ -446,7 +447,7 @@ def write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
 

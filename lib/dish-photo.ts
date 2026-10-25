@@ -1,16 +1,39 @@
 const MAX_BYTES = 5 * 1024 * 1024;
 let nextRequestAt = 0;
+let unavailableUntil = 0;
+const inFlight = new Map<string, Promise<Response>>();
 
 export async function dishPhoto(request: Request): Promise<Response> {
   const id = new URL(request.url).searchParams.get("dishId") || "";
   if (!/^[1-9]\d{0,19}$/.test(id)) return new Response("Invalid dish ID", { status: 400 });
-  const start = Math.max(Date.now(), nextRequestAt);
-  nextRequestAt = start + 1000;
-  await new Promise(resolve => setTimeout(resolve, Math.max(0, start - Date.now())));
+  const officialUrl = `https://fatraceschool.k12ea.gov.tw/dish/pic/${id}`;
+  const fallback = () => new Response(null, { status: 302, headers: {
+    location: officialUrl, "cache-control": "public, max-age=300",
+  } });
+  const cache = (globalThis.caches as unknown as { default?: Cache } | undefined)?.default;
+  const cacheKey = new Request(new URL(`/api/dish-photo?dishId=${id}`, request.url));
+  if (cache) {
+    try { const cached = await cache.match(cacheKey); if (cached) return cached; } catch { /* Cache failure must not block a photo. */ }
+  }
+  const pending = inFlight.get(id);
+  if (pending) return (await pending).clone();
+  // Preserve source request spacing without making visitors queue behind other photos.
+  if (Date.now() < nextRequestAt || Date.now() < unavailableUntil) return fallback();
+  nextRequestAt = Date.now() + 1000;
+  const operation = fetchPhoto(officialUrl, fallback);
+  inFlight.set(id, operation);
   try {
-    const upstream = await fetch(`https://fatraceschool.k12ea.gov.tw/dish/pic/${id}`, {
+    const response = await operation;
+    if (cache) { try { await cache.put(cacheKey, response.clone()); } catch { /* Delivery still succeeds. */ } }
+    return response.clone();
+  } finally { inFlight.delete(id); }
+}
+
+async function fetchPhoto(officialUrl: string, fallback: () => Response): Promise<Response> {
+  try {
+    const upstream = await fetch(officialUrl, {
       headers: { "User-Agent": "HaoHaoFood/1.0 (+https://haohaofood.cc; school lunch photo viewer)", Accept: "image/jpeg,image/png,image/webp" },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(2500),
       redirect: "error",
     });
     if (!upstream.ok || !upstream.body) throw new Error("Photo unavailable");
@@ -41,11 +64,8 @@ export async function dishPhoto(request: Request): Promise<Response> {
       "x-content-type-options": "nosniff",
     } });
   } catch {
-    // Some source protections reject data-center requests but allow visitors.
-    // Fall back to the same validated official image; never substitute another dish.
-    return new Response(null, { status: 302, headers: {
-      location: `https://fatraceschool.k12ea.gov.tw/dish/pic/${id}`,
-      "cache-control": "no-store",
-    } });
+    // A source that rejects data-center requests should not be probed for every thumbnail.
+    unavailableUntil = Date.now() + 60000;
+    return fallback();
   }
 }

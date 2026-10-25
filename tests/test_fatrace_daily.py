@@ -319,6 +319,10 @@ class FatraceDailyTests(unittest.TestCase):
                 (created.path / "candidate.json").read_text(encoding="utf-8")
             )
             self.assertEqual(saved["status"], "available")
+            import gzip
+            with gzip.open(created.path / "raw.json.gz", "rt", encoding="utf-8") as stream:
+                self.assertEqual(json.load(stream), raw)
+            self.assertFalse((created.path / "raw.json").exists())
 
     def _candidate(self, status: str, content_hash: str) -> dict:
         return {

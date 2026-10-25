@@ -18,6 +18,8 @@ from urllib.parse import quote, unquote, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
+from .archive_storage import open_archive
+
 
 API_ROOT = "https://fatraceschool.k12ea.gov.tw/cateringservice/openapi"
 DOWNLOAD_HOST = "fatraceschool.k12ea.gov.tw"
@@ -292,7 +294,7 @@ def validate_csv_file(
     path: Path, required_headers: Iterable[str] | None = None
 ) -> tuple[str, ...]:
     try:
-        with path.open("r", encoding="utf-8-sig", newline="") as stream:
+        with open_archive(path, "rt", encoding="utf-8-sig", newline="") as stream:
             reader = csv.reader(stream)
             headers = tuple((value or "").strip() for value in next(reader))
             first_row = next(reader, None)
@@ -355,16 +357,19 @@ def build_traceability_package(
     validate_csv_file(csv_path, TRACEABILITY_HEADERS)
     excluded = excluded_dates or set()
     rows: list[dict[str, str]] = []
-    with csv_path.open("r", encoding="utf-8-sig", newline="") as stream:
+    with open_archive(csv_path, "rt", encoding="utf-8-sig", newline="") as stream:
         for raw in csv.DictReader(stream):
-            row = {key: _clean_csv_value(value) for key, value in raw.items()}
-            if row.get("學校名稱") != school_name or row.get("市縣名稱") != county:
+            # Filter identity and date before normalizing every ingredient column.
+            # Most rows belong to other schools and never enter this package.
+            if (_clean_csv_value(raw.get("學校名稱")) != school_name
+                    or _clean_csv_value(raw.get("市縣名稱")) != county):
                 continue
-            menu_date = _normalize_date(row.get("供餐日期", ""))
+            menu_date = _normalize_date(_clean_csv_value(raw.get("供餐日期", "")))
             if not menu_date.startswith(f"{source_month}-"):
                 continue
             if menu_date not in available_dates or menu_date in excluded:
                 continue
+            row = {key: _clean_csv_value(value) for key, value in raw.items()}
             for required in ("菜色名稱", "食材名稱", "食材供應商名稱"):
                 if not row.get(required):
                     raise FatraceError(
@@ -451,7 +456,7 @@ def build_traceability_package(
             ingredient["platformMark"] = label
         dish["ingredients"].append(ingredient)
 
-    exported_at = _exported_at_from_filename(csv_path.name)
+    exported_at = _exported_at_from_filename(csv_path.name.removesuffix(".gz"))
     prior_source = (existing_payload or {}).get("source", {})
     prior_review = (existing_payload or {}).get("review", {})
     reviewed_at = (

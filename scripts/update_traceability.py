@@ -17,6 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.archive_storage import archive_file, archived_path, open_archive
 from src.fatrace_openapi import (  # noqa: E402
     FatraceClient,
     FatraceDataUnavailable,
@@ -148,9 +149,10 @@ def update_month(
         for item in staged:
             downloaded = item["downloaded"]
             destination = month_root / downloaded.filename
-            if destination.is_file():
+            if archived_path(destination).is_file():
                 continue
             os.replace(downloaded.path, destination)
+            archive_file(destination)
             new_files += 1
 
         manifest = {
@@ -232,7 +234,7 @@ def _check_archive_collisions(month_root: Path, staged: list[dict[str, Any]]) ->
     for item in staged:
         downloaded = item["downloaded"]
         destination = month_root / downloaded.filename
-        if destination.is_file() and _sha256(destination) != downloaded.sha256:
+        if archived_path(destination).is_file() and _sha256(destination) != downloaded.sha256:
             raise FatraceError(
                 f"既有 CSV 與新下載內容不同，為避免覆蓋已停止：{destination}"
             )
@@ -240,7 +242,7 @@ def _check_archive_collisions(month_root: Path, staged: list[dict[str, Any]]) ->
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
-    with path.open("rb") as stream:
+    with open_archive(path) as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
