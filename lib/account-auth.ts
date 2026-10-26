@@ -2,13 +2,13 @@ import { env } from "cloudflare:workers";
 
 export type AccountUser = {
   id: string;
-  email: string;
+  email: string | null;
   displayName: string;
 };
 
 type SessionUserRow = {
   auth_user_id: string;
-  email: string;
+  email: string | null;
   display_name: string | null;
 };
 
@@ -31,7 +31,7 @@ export async function getAccountUser(request: Request): Promise<AccountUser | nu
       )
       .bind(await digestSessionToken(token), new Date().toISOString())
       .first<SessionUserRow>();
-    if (!row?.email) return null;
+    if (!row?.auth_user_id) return null;
     return {
       id: row.auth_user_id,
       email: row.email,

@@ -1,5 +1,8 @@
 import {
   accountDatabase,
+  getAccountUser,
+  digestSessionToken,
+  sessionTokenFromRequest,
   authUserIdForEmail,
   createSession,
   digestVerificationCode,
@@ -11,6 +14,8 @@ import {
 
 type ChallengeRow = {
   id: string;
+  auth_user_id: string | null;
+  session_digest: string | null;
   email: string;
   code_digest: string;
   attempts: number;
@@ -41,7 +46,7 @@ export async function POST(request: Request) {
 
   const db = accountDatabase();
   const challenge = await db.prepare(
-    `SELECT id, email, code_digest, attempts, eligibility_confirmed_at, expires_at, consumed_at
+    `SELECT id, email, code_digest, attempts, eligibility_confirmed_at, expires_at, consumed_at, auth_user_id, session_digest
      FROM email_auth_challenges
      WHERE id = ?
      LIMIT 1`,
@@ -53,6 +58,14 @@ export async function POST(request: Request) {
       { status: 410 },
     );
   }
+  const user = await getAccountUser(request);
+  if (challenge.auth_user_id) {
+    const token = sessionTokenFromRequest(request);
+    if (!user || user.id !== challenge.auth_user_id || !token || await digestSessionToken(token) !== challenge.session_digest) {
+      return privateJson({ error: "帳號狀態已改變，請重新開始綁定 Email。" }, { status: 403 });
+    }
+    if (user.email && user.email !== challenge.email) return privateJson({ error: "帳號已有其他登入 Email，請重新整理。" }, { status: 409 });
+  } else if (user) return privateJson({ error: "你已登入，請重新開始。" }, { status: 409 });
   if (challenge.attempts >= 5) {
     return privateJson(
       { error: "驗證次數過多，請重新取得驗證碼。", code: "CODE_LOCKED" },
@@ -78,6 +91,21 @@ export async function POST(request: Request) {
      ORDER BY created_at
      LIMIT 1`,
   ).bind(challenge.email, challenge.email).first<AccountRow>();
+  if (challenge.auth_user_id && existing && existing.auth_user_id !== challenge.auth_user_id) {
+    return privateJson({ error: "這個 Email 已屬於另一個家庭帳號，無法綁定；系統不會自動合併家庭資料。" }, { status: 409 });
+  }
+  const consumed = await db.prepare("UPDATE email_auth_challenges SET consumed_at = ? WHERE id = ? AND consumed_at IS NULL AND expires_at > ? AND attempts < 5 RETURNING id")
+    .bind(now, challenge.id, now).first();
+  if (!consumed) return privateJson({ error: "驗證碼已使用或失效，請重新取得。" }, { status: 410 });
+  if (challenge.auth_user_id) {
+    try {
+      await db.prepare("UPDATE parent_accounts SET email = ?, email_normalized = ?, updated_at = ? WHERE auth_user_id = ?")
+        .bind(challenge.email, challenge.email, now, challenge.auth_user_id).run();
+    } catch {
+      return privateJson({ error: "目前無法完成 Email 綁定，請重新取得驗證碼後再試。" }, { status: 409 });
+    }
+    return privateJson({ ok: true, linkedEmail: true });
+  }
   const authUserId = existing?.auth_user_id || await authUserIdForEmail(challenge.email);
   const isNewAccount = !existing;
   const session = await createSession();

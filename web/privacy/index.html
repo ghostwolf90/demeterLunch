@@ -69,7 +69,7 @@
         <aside class="legal-meta" aria-label="政策日期與聯絡資訊">
           <dl>
             <div><dt>生效日期</dt><dd>2026 年 10 月 20 日</dd></div>
-            <div><dt>最後更新</dt><dd>2026 年 10 月 20 日</dd></div>
+            <div><dt>最後更新</dt><dd>2026 年 10 月 26 日</dd></div>
             <div><dt>隱私聯絡</dt><dd><a href="mailto:support@haohaofood.cc?subject=%E5%A5%BD%E5%A5%BD%E5%90%83%E9%A3%AF%E5%80%8B%E8%B3%87%E8%AB%8B%E6%B1%82">support@haohaofood.cc</a></dd></div>
           </dl>
         </aside>
@@ -114,7 +114,7 @@
               <table class="legal-table">
                 <thead><tr><th>類別</th><th>實際內容</th><th>補充說明</th></tr></thead>
                 <tbody>
-                  <tr><th>登入與成年資格</th><td>家長 Email、正規化 Email、由 Email 產生的不可直接辨識帳號代碼、成年確認時間、照顧者確認時間、驗證碼雜湊、驗證次數與到期／使用狀態。</td><td>出生日期只在提出驗證碼申請時用來判斷是否滿 18 歲，不寫入家庭帳號資料庫；系統只保存確認結果與時間。驗證碼也不以明碼保存。</td></tr>
+                  <tr><th>登入與成年資格</th><td>選用 Email 登入時的家長 Email、正規化 Email、由 Email 產生的不可直接辨識帳號代碼，或選用 LINE 登入時的 LINE 帳號識別碼與家庭帳號關聯、成年確認時間、照顧者確認時間、驗證碼雜湊、驗證次數與到期／使用狀態。</td><td>出生日期只在開始登入時用來判斷是否滿 18 歲，不寫入家庭帳號資料庫；系統只保存確認結果與時間。驗證碼也不以明碼保存。</td></tr>
                   <tr><th>防濫用與工作階段</th><td>由請求 IP 經秘密金鑰雜湊後產生的限制請求代碼、工作階段權杖的雜湊值、建立與到期時間。</td><td>家庭登入工作階段最長 30 天。Cookie 內是隨機權杖；資料庫保存其雜湊，不保存可直接拿來登入的明碼。</td></tr>
                   <tr><th>家長資料</th><td>姓名、選填暱稱、大頭貼物件鍵、預設學校、方案與訂閱狀態、建立與更新時間。</td><td>姓名和暱稱分開保存；有暱稱時介面優先顯示暱稱。</td></tr>
                   <tr><th>孩子資料</th><td>姓名、選填暱稱、年級群組、就讀學校、需留意的食物／過敏原代碼、大頭貼物件鍵、建立與更新時間。</td><td>不要求孩子提供 Email、生日或自行建立帳號。空的需留意食物清單只代表尚未設定，不代表沒有過敏。</td></tr>
@@ -182,13 +182,14 @@
                 <tbody>
                   <tr><th>OpenAI Sites</th><td>網站原始碼、部署版本、網域與專案管理；用於發布及維護本網站。</td><td>依 OpenAI 與其服務供應商的基礎設施處理，可能涉及台灣以外地區。</td></tr>
                   <tr><th>Cloudflare Workers、D1、R2 與 CDN</th><td>執行網站程式、提供內容、保存家庭帳號資料與大頭貼，並處理 IP、請求標頭及網路安全資料。</td><td>Cloudflare 為全球網路；請求可能在鄰近或其他資料中心處理。現有專案設定未宣稱 D1／R2 限定只存於台灣。</td></tr>
+                  <tr><th>LINE（LY Corporation）</th><td>選用 LINE 登入或綁定時驗證身分；本站只要求帳號識別權限，不讀取 LINE 姓名、大頭貼或 Email，也不將孩子資料與飲食紀錄傳給 LINE。一次性登入驗證資料保存在 D1，驗證用 Cookie 最長 10 分鐘。</td><td>依 LINE 平台的隱私權政策及基礎設施處理，可能涉及境外處理。</td></tr>
                   <tr><th>Resend</th><td>寄送登入驗證碼；接收收件 Email、信件內容與必要寄送狀態。</td><td>Resend 說明資料可能傳輸至並在美國處理。</td></tr>
                   <tr><th>Sentry</th><td>錯誤監控與抽樣效能追蹤；本站在送出前移除使用者、Cookie、標頭、本文、查詢參數與敏感欄位。</td><td>目前使用美國資料接收端點，屬境外處理。</td></tr>
                   <tr><th>學校與政府公開資料網站</th><td>本站整理其公開菜單與供餐資料。當你主動點擊原始資料連結時，外部網站會依其規則接收一般瀏覽請求資料。</td><td>以各來源網站的所在地與政策為準；本站不會把家庭紀錄附加到外部資料連結。</td></tr>
                 </tbody>
               </table>
             </div>
-            <p>你可參考各供應商的公開政策：<a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noreferrer">Cloudflare</a>、<a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noreferrer">Resend</a>、<a href="https://sentry.io/privacy/" target="_blank" rel="noreferrer">Sentry</a>、<a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer">OpenAI</a>。</p>
+            <p>你可參考各供應商的公開政策：<a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noreferrer">Cloudflare</a>、<a href="https://terms.line.me/line_rules/" target="_blank" rel="noreferrer">LINE</a>、<a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noreferrer">Resend</a>、<a href="https://sentry.io/privacy/" target="_blank" rel="noreferrer">Sentry</a>、<a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer">OpenAI</a>。</p>
           </section>
 
           <section class="legal-section card" id="cookies">
@@ -206,8 +207,8 @@
             <p class="kicker">08</p>
             <h2>你可以如何行使個資權利</h2>
             <p>依台灣個人資料保護法，你對自己的個人資料可依法提出：查詢或閱覽、請求製給複製本、補充或更正、停止蒐集／處理／利用，以及刪除。這些法定權利不會因使用服務而被預先放棄或任意限制。可參考<a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?PCode=I0050021" target="_blank" rel="noreferrer">全國法規資料庫的個人資料保護法</a>。</p>
-            <p>請寄信至 <a href="mailto:support@haohaofood.cc?subject=%E5%A5%BD%E5%A5%BD%E5%90%83%E9%A3%AF%E5%80%8B%E8%B3%87%E6%AC%8A%E5%88%A9%E8%AB%8B%E6%B1%82">support@haohaofood.cc</a>，說明你的請求範圍。為避免把資料交給錯誤的人，我們可能要求你由登入 Email 回覆，或提供足以核對請求的最少資訊；絕不會要求你提供登入驗證碼。若依法不能全部照辦，我們會說明理由與仍可處理的範圍。</p>
-            <p>你可以自由選擇是否建立家庭帳號。若不提供登入 Email，就仍可查詢公開菜單，但無法使用家庭帳號、孩子資料、大頭貼與一口護照；未提供選填暱稱、照片、年級或飲食補充內容，不影響其他可獨立使用的功能。</p>
+            <p>請寄信至 <a href="mailto:support@haohaofood.cc?subject=%E5%A5%BD%E5%A5%BD%E5%90%83%E9%A3%AF%E5%80%8B%E8%B3%87%E6%AC%8A%E5%88%A9%E8%AB%8B%E6%B1%82">support@haohaofood.cc</a>，說明你的請求範圍。為避免把資料交給錯誤的人，我們可能要求你由登入 Email 回覆；若使用 LINE 登入，則以登入後的帳號操作核對，或提供足以核對請求的最少資訊；絕不會要求你提供登入驗證碼。若依法不能全部照辦，我們會說明理由與仍可處理的範圍。</p>
+            <p>你可以自由選擇是否建立家庭帳號。你可選用 Email 或 LINE 登入；若兩者都不使用，仍可查詢公開菜單，但無法使用家庭帳號、孩子資料、大頭貼與一口護照；未提供選填暱稱、照片、年級或飲食補充內容，不影響其他可獨立使用的功能。</p>
           </section>
 
           <section class="legal-section card" id="security">

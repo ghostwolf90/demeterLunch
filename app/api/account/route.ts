@@ -12,6 +12,7 @@ import {
   accountSubscriptionDetails,
   preferredProfileName,
 } from "@/lib/account-profile";
+import { lineConfiguration } from "@/lib/line-auth";
 import { parseStoredAllergenCodes } from "@/lib/allergens";
 
 type ChildRow = {
@@ -64,6 +65,7 @@ export async function GET(request: Request) {
   if (!user) {
     return privateJson({
       authenticated: false,
+      lineLoginEnabled: Boolean(lineConfiguration(request)),
       user: null,
       children: [],
       child: null,
@@ -135,7 +137,10 @@ export async function GET(request: Request) {
         ])
       : [{ results: [] as EncounterRow[] }, { count: 0 }];
 
+    const lineIdentity = await db.prepare("SELECT subject FROM account_identities WHERE provider = 'line' AND auth_user_id = ?").bind(user.id).first();
     return privateJson({
+      lineLoginEnabled: Boolean(lineConfiguration(request)),
+      lineLinked: Boolean(lineIdentity),
       authenticated: true,
       user: {
         ...user,

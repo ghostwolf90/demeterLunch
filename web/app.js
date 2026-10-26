@@ -207,6 +207,9 @@ const ids = [
   "parentAvatarPreview", "parentAvatarInput", "removeParentAvatar", "parentProfileForm", "parentName",
   "parentNickname", "saveParentProfile", "parentProfileStatus", "accountChildList", "accountAddChild",
   "accountFamilyStatus", "accountChildEditor", "accountChildBack",
+  "emailLinkSettings", "emailLinkForm", "linkEmail", "requestLinkEmailCode", "emailLinkCodeForm", "linkEmailCode", "verifyLinkEmailCode", "cancelEmailLink", "emailLinkStatus",
+  "settingsSignOutSection", "settingsSignOutStatus", "emailEntryFields", "authEligibilityGate", "continueLineAuth", "backAuthMethod", "lineLoginOptions",
+  "lineSignIn", "lineLoginNote", "lineAccountSettings", "linkLineAccount", "lineLinkNote", "lineLinkStatus",
   "emailAuthForm", "authEmail", "authBirthDate", "authCaregiverConfirmed", "requestAuthCode", "authRequestStatus",
   "emailCodeStep", "authMaskedEmail", "emailCodeForm", "authCode", "verifyAuthCode", "authVerifyStatus",
   "changeAuthEmail", "accountSignOut",
@@ -1273,6 +1276,14 @@ function renderAccount() {
     refs.accountSupportEmail.removeAttribute("href");
     refs.accountSupportEmail.removeAttribute("aria-label");
   }
+  refs.emailLinkSettings.hidden = !authenticated || Boolean(account.user?.email);
+  refs.settingsSignOutSection.hidden = account.loading || !authenticated;
+  refs.lineSignIn.hidden = !account.lineLoginEnabled;
+  refs.lineLoginNote.hidden = !account.lineLoginEnabled;
+  refs.lineAccountSettings.hidden = !account.lineLoginEnabled && !account.lineLinked;
+  refs.linkLineAccount.disabled = Boolean(account.lineLinked) || !account.lineLoginEnabled;
+  refs.linkLineAccount.textContent = account.lineLinked ? "已綁定 LINE 登入" : "綁定 LINE 登入";
+  refs.lineLinkNote.textContent = account.lineLinked ? "你可以使用 LINE 登入這個家庭帳號。" : "綁定後可用 LINE 登入同一個家庭帳號，孩子資料與一口護照會保留。";
   renderEmailAuthStep();
   if (authenticated) {
     refs.accountIdentity.textContent = account.user?.email
@@ -1351,6 +1362,7 @@ function renderAccount() {
 
 function renderEmailAuthStep() {
   const awaitingCode = EMAIL_REGISTRATION_ENABLED && Boolean(state.authChallengeId);
+  refs.lineLoginOptions.hidden = !state.account.lineLoginEnabled || awaitingCode || !refs.authEligibilityGate.hidden;
   refs.emailAuthForm.hidden = awaitingCode;
   refs.emailCodeStep.hidden = !awaitingCode;
   refs.requestAuthCode.disabled = !EMAIL_REGISTRATION_ENABLED;
@@ -1402,9 +1414,44 @@ async function loadAccount({ childId = state.activeChildId } = {}) {
   if (state.onboardingActive && refs.accountDialog.open) void markOnboardingStarted();
 }
 
+async function startLineAuth(mode) {
+  const linking = mode === "link";
+  const status = linking ? refs.lineLinkStatus : refs.authRequestStatus;
+  const button = linking ? refs.linkLineAccount : refs.lineSignIn;
+  if (!linking && refs.authEligibilityGate.hidden) {
+    chooseAuthMethod("line");
+    return;
+  }
+  if (!linking && (!refs.authBirthDate.reportValidity() || !refs.authCaregiverConfirmed.reportValidity())) return;
+  button.disabled = true;
+  setFormStatus(status, "正在前往 LINE…", "loading");
+  try {
+    const response = await fetch("/api/auth/line/start", {
+      method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode, birthDate: linking ? undefined : refs.authBirthDate.value,
+        caregiverConfirmed: linking ? undefined : refs.authCaregiverConfirmed.checked }),
+    });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "目前無法使用 LINE 登入。");
+    const destination = new URL(payload.url);
+    if (destination.origin !== "https://access.line.me") throw new Error("登入網址有誤，請稍後再試。");
+    window.location.assign(destination.href);
+  } catch (error) {
+    setFormStatus(status, error instanceof Error ? error.message : "目前無法使用 LINE 登入。", "error");
+    button.disabled = false;
+  }
+}
+
+
 async function requestEmailAuthCode() {
+  if (!refs.authEligibilityGate.hidden && !refs.continueLineAuth.hidden) return startLineAuth("login");
   if (!EMAIL_REGISTRATION_ENABLED) {
     setFormStatus(refs.authRequestStatus, "免費註冊準備中，目前尚未開放。", "error");
+    return;
+  }
+  if (refs.authEligibilityGate.hidden) {
+    if (!refs.authEmail.reportValidity()) return;
+    chooseAuthMethod("email");
     return;
   }
   if (!refs.emailAuthForm.reportValidity()) return;
@@ -1491,7 +1538,31 @@ async function verifyEmailAuthCode() {
   }
 }
 
+function chooseAuthMethod(method) {
+  refs.authEligibilityGate.hidden = false;
+  refs.authBirthDate.disabled = false;
+  refs.authCaregiverConfirmed.disabled = false;
+  refs.emailEntryFields.hidden = method === "line";
+  refs.authEmail.disabled = method === "line";
+  refs.requestAuthCode.hidden = method === "line";
+  refs.continueLineAuth.hidden = method !== "line";
+  setFormStatus(refs.authRequestStatus);
+  renderEmailAuthStep();
+  refs.authBirthDate.focus();
+}
+
+function resetAuthMethod() {
+  refs.authEligibilityGate.hidden = true;
+  refs.authBirthDate.disabled = true;
+  refs.authCaregiverConfirmed.disabled = true;
+  refs.emailEntryFields.hidden = false;
+  refs.authEmail.disabled = false;
+  refs.requestAuthCode.hidden = false;
+  refs.continueLineAuth.hidden = true;
+}
+
 function resetEmailAuthForm() {
+  resetAuthMethod();
   state.authChallengeId = null;
   state.authEmail = null;
   refs.emailAuthForm.reset();
@@ -1601,10 +1672,21 @@ function closeAccountDialog(options) {
 function openRequestedAccountDialog() {
   const url = new URL(window.location.href);
   if (url.searchParams.get("account") !== "1") return;
+  const lineResult = url.searchParams.get("line");
+  url.searchParams.delete("line");
   url.searchParams.delete("account");
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   openSettingsDialog(refs.accountButton);
   openAccountDialog(refs.settingsFamilyAccount);
+  const messages = {
+    success: "已使用 LINE 登入。", linked: "LINE 已綁定，孩子資料與一口護照會保留。",
+    cancelled: "你已取消 LINE 授權，可以重新登入或使用 Email。",
+    expired: "登入已過期或帳號狀態改變，請重新開始。",
+    conflict: "這個 LINE 或家庭帳號已綁定其他帳號，請使用原本的登入方式。",
+    failed: "LINE 登入暫時無法完成，請重新開始或使用 Email。",
+  };
+  if (messages[lineResult]) setFormStatus(state.account.authenticated ? refs.lineLinkStatus : refs.authRequestStatus,
+    messages[lineResult], lineResult === "success" || lineResult === "linked" ? "success" : "error");
 }
 
 function openFamilyPlanDialog(trigger) {
@@ -3277,7 +3359,39 @@ function renderOfficial(dashboard) {
   refs.errorState.hidden = true;
 }
 
+// Fixed observances verified against FAO / UN calendars:
+// https://www.fao.org/world-pulses-day/en
+// https://www.un.org/en/observances/end-food-waste-day
+// https://www.fao.org/world-food-day/en
+function renderDailyFoodNote() {
+  const today = localIsoDate();
+  const observances = {
+    "02-10": "世界豆類日 · 和孩子聊聊，餐桌上有哪些豆子？",
+    "09-29": "國際糧食損失與浪費問題宣傳日 · 吃多少盛多少，餓了再添。",
+    "10-16": "世界糧食日 · 一起謝謝讓食物來到餐桌上的人。",
+  };
+  const prompts = [
+    "餐桌小聊 · 今天吃到最喜歡的一道菜是什麼？",
+    "食物觀察 · 找找看，今天餐桌上有幾種顏色？",
+    "一起認識食物 · 挑一樣蔬菜，聊聊它長在哪裡。",
+    "餐桌小聊 · 今天有吃到脆脆或軟軟的食物嗎？",
+    "珍惜每一口 · 先盛剛好的份量，餓了再添。",
+    "一起認識食物 · 問問孩子，最想一起做哪道菜？",
+    "食物觀察 · 今天有沒有聞到特別香的味道？",
+    "餐桌小聊 · 如果幫今天的晚餐取名字，你會叫它什麼？",
+  ];
+  let note = document.getElementById("dailyFoodNote");
+  if (!note) {
+    note = node("p", "daily-food-note");
+    note.id = "dailyFoodNote";
+    refs.introNote.after(note);
+  }
+  const dayIndex = Math.floor(Date.parse(`${today}T00:00:00Z`) / 86400000);
+  note.textContent = `今天 ${Number(today.slice(5, 7))}/${Number(today.slice(8))} · ${observances[today.slice(5)] || prompts[dayIndex % prompts.length]}`;
+}
+
 function render(dashboard) {
+  renderDailyFoodNote();
   refs.dishPhotoDateButton.hidden = true;
   refs.dishPhotoDateButton.onclick = null;
   if (dashboard.viewMode === "officialDaily") {
@@ -3306,7 +3420,7 @@ function render(dashboard) {
   refs.introNote.textContent = dashboard.isSample
     ? "先看看一週菜單、營養資訊、晚餐搭配與食材來源；選擇學校後會換成該校公開資料。"
     : dashboard.dataPriority === "weekly_planned"
-    ? `${dashboard.isFallback ? `指定日期沒有週菜單，先顯示 ${formatDate(day.date)}。` : ""}目前為週菜單預定內容；取得同日官方資料後優先顯示，實際供餐以校方為準。`
+    ? `${dashboard.isFallback ? `顯示 ${formatDate(day.date)} 預定菜單。` : ""}同日官方資料優先，供餐以校方為準。`
     : dashboard.isFallback
     ? `指定日期沒有供餐資料，先顯示最近的 ${formatDate(day.date)}。`
     : `${dashboard.mealTypeLabel}：${day.meal.staple}、${day.meal.mainDish}；${day.meal.fruit ? `附餐 ${day.meal.fruit}；` : ""}食譜明細共 ${day.recipeDetails?.length || day.meal.sideDishes.length + 2} 道。`;
@@ -3764,6 +3878,68 @@ refs.emailCodeForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   await verifyEmailAuthCode();
 });
+let emailLinkChallengeId = null;
+refs.emailLinkForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!refs.emailLinkForm.reportValidity()) return;
+  refs.requestLinkEmailCode.disabled = true;
+  setFormStatus(refs.emailLinkStatus, "正在寄送綁定驗證碼…", "loading");
+  try {
+    const response = await fetch("/api/auth/request-code", {
+      method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ purpose: "link_email", email: refs.linkEmail.value.trim() }),
+    });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "目前無法寄送驗證碼。");
+    emailLinkChallengeId = payload.challengeId;
+    refs.emailLinkCodeForm.hidden = false;
+    refs.emailLinkForm.hidden = true;
+    refs.linkEmailCode.value = "";
+    setFormStatus(refs.emailLinkStatus, `驗證碼已寄到 ${payload.maskedEmail}，10 分鐘內有效。`, "success");
+    refs.linkEmailCode.focus();
+  } catch (error) {
+    setFormStatus(refs.emailLinkStatus, error instanceof Error ? error.message : "目前無法寄送驗證碼。", "error");
+  } finally { refs.requestLinkEmailCode.disabled = false; }
+});
+refs.cancelEmailLink.addEventListener("click", resetEmailLink);
+function resetEmailLink() {
+  emailLinkChallengeId = null;
+  refs.emailLinkForm.reset();
+  refs.emailLinkCodeForm.reset();
+  refs.emailLinkForm.hidden = false;
+  refs.emailLinkCodeForm.hidden = true;
+  setFormStatus(refs.emailLinkStatus);
+}
+refs.emailLinkCodeForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!emailLinkChallengeId || !refs.emailLinkCodeForm.reportValidity()) return;
+  refs.verifyLinkEmailCode.disabled = true;
+  try {
+    const response = await fetch("/api/auth/verify-code", {
+      method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ challengeId: emailLinkChallengeId, code: refs.linkEmailCode.value }),
+    });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "目前無法綁定 Email。");
+    if (!payload.linkedEmail) throw new Error("帳號狀態改變，請重新整理後再試。");
+    resetEmailLink();
+    await loadAccount();
+    setFormStatus(refs.parentProfileStatus, "Email 已綁定，可使用 LINE 或 Email 登入同一個家庭帳號。", "success");
+  } catch (error) {
+    setFormStatus(refs.emailLinkStatus, error instanceof Error ? error.message : "目前無法綁定 Email。", "error");
+  } finally { refs.verifyLinkEmailCode.disabled = false; }
+});
+
+refs.continueLineAuth.addEventListener("click", () => void startLineAuth("login"));
+refs.backAuthMethod.addEventListener("click", () => {
+  resetAuthMethod();
+  renderEmailAuthStep();
+  setFormStatus(refs.authRequestStatus);
+  refs.authEmail.focus();
+});
+refs.lineSignIn.addEventListener("click", () => void startLineAuth("login"));
+refs.linkLineAccount.addEventListener("click", () => void startLineAuth("link"));
+
 refs.authCode.addEventListener("input", () => {
   refs.authCode.value = refs.authCode.value.normalize("NFKC").replace(/\D/g, "").slice(0, 6);
 });
@@ -3826,7 +4002,8 @@ refs.removeParentAvatar.addEventListener("click", async () => {
   }
 });
 refs.accountSignOut.addEventListener("click", async () => {
-  const settingsSession = state.settingsAccountSession;
+  resetEmailLink();
+  setFormStatus(refs.settingsSignOutStatus, "正在登出…", "loading");
   refs.accountSignOut.disabled = true;
   try {
     const response = await fetch("/api/auth/sign-out", {
@@ -3837,10 +4014,11 @@ refs.accountSignOut.addEventListener("click", async () => {
     if (!response.ok) throw new Error(payload.error || "暫時無法登出");
     resetEmailAuthForm();
     await loadAccount();
-    if (refs.settingsDialog.open) await completeSettingsAccountTask("已登出家庭帳號。", settingsSession);
-    if (refs.accountDialog.open && !state.account.authenticated) refs.authEmail.focus();
+    setFormStatus(refs.settingsStatus, "已登出家庭帳號。", "success");
+    setFormStatus(refs.settingsSignOutStatus);
+    refs.settingsFamilyAccount.focus();
   } catch (error) {
-    refs.accountIdentity.textContent = error instanceof Error ? error.message : "暫時無法登出";
+    setFormStatus(refs.settingsSignOutStatus, error instanceof Error ? error.message : "暫時無法登出", "error");
   } finally {
     refs.accountSignOut.disabled = false;
   }

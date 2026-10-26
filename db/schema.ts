@@ -119,6 +119,8 @@ export const emailAuthChallenges = sqliteTable(
     id: text("id").primaryKey(),
     email: text("email").notNull(),
     codeDigest: text("code_digest").notNull(),
+    authUserId: text("auth_user_id").references(() => parentAccounts.authUserId, { onDelete: "cascade" }),
+    sessionDigest: text("session_digest"),
     requestKey: text("request_key"),
     attempts: integer("attempts").notNull().default(0),
     eligibilityConfirmedAt: text("eligibility_confirmed_at").notNull(),
@@ -196,3 +198,35 @@ export const foodEncounters = sqliteTable(
     index("food_encounters_child_idx").on(table.childId, table.createdAt),
   ],
 );
+
+// Provider identities are separate from family profiles; email never implies ownership.
+export const accountIdentities = sqliteTable("account_identities", {
+  provider: text("provider").notNull(),
+  subject: text("subject").notNull(),
+  authUserId: text("auth_user_id").notNull().references(() => parentAccounts.authUserId, { onDelete: "cascade" }),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.provider, table.subject] }),
+  uniqueIndex("account_identities_owner_provider_idx").on(table.authUserId, table.provider),
+]);
+
+export const oauthChallenges = sqliteTable("oauth_challenges", {
+  stateDigest: text("state_digest").primaryKey(),
+  browserDigest: text("browser_digest").notNull(),
+  nonce: text("nonce").notNull(),
+  codeVerifier: text("code_verifier").notNull(),
+  authUserId: text("auth_user_id").references(() => parentAccounts.authUserId, { onDelete: "cascade" }),
+  sessionDigest: text("session_digest"),
+  eligibilityConfirmedAt: text("eligibility_confirmed_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
+}, (table) => [index("oauth_challenges_expiry_idx").on(table.expiresAt)]);
+
+export const maintenanceEvents = sqliteTable("maintenance_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  action: text("action").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  severity: text("severity").notNull(),
+  actorId: text("actor_id").notNull(),
+  createdAt: text("created_at").notNull(),
+});

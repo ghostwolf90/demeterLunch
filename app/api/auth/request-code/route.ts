@@ -1,6 +1,9 @@
 import {
   AUTH_CODE_TTL_MINUTES,
   accountDatabase,
+  getAccountUser,
+  digestSessionToken,
+  sessionTokenFromRequest,
   createVerificationCode,
   digestVerificationCode,
   emailAuthReady,
@@ -29,11 +32,15 @@ export async function POST(request: Request) {
     return privateJson({ error: "請重新確認填寫內容。" }, { status: 400 });
   }
   const record = body && typeof body === "object" ? body as Record<string, unknown> : {};
+  const linking = record.purpose === "link_email";
+  const user = await getAccountUser(request);
+  if (linking && !user) return privateJson({ error: "請先登入家庭帳號，再綁定 Email。" }, { status: 401 });
+  if (!linking && user) return privateJson({ error: "你已登入，請從家庭設定綁定 Email。" }, { status: 409 });
   const email = normalizeEmail(record.email);
   if (!email) {
     return privateJson({ error: "請輸入有效的 Email。" }, { status: 400 });
   }
-  if (!isAdultBirthDate(record.birthDate)) {
+  if (!linking && !isAdultBirthDate(record.birthDate)) {
     return privateJson(
       {
         error: "這項服務由成年家長或照顧者管理，請由年滿 18 歲的家長或照顧者註冊。",
@@ -42,7 +49,7 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   }
-  if (record.caregiverConfirmed !== true) {
+  if (!linking && record.caregiverConfirmed !== true) {
     return privateJson({ error: "請勾選確認你是孩子的成年家長或照顧者。" }, { status: 400 });
   }
   if (!emailAuthReady(request)) {
@@ -52,7 +59,15 @@ export async function POST(request: Request) {
     );
   }
 
+  if (linking && user?.email && user.email !== email) {
+    return privateJson({ error: "這個家庭帳號已有登入 Email，目前不支援在此更換。" }, { status: 409 });
+  }
   const db = accountDatabase();
+  if (linking) {
+    const owner = await db.prepare("SELECT auth_user_id FROM parent_accounts WHERE email_normalized = ? OR lower(email) = ? LIMIT 1")
+      .bind(email, email).first<{ auth_user_id: string }>();
+    if (owner && owner.auth_user_id !== user!.id) return privateJson({ error: "這個 Email 已屬於另一個家庭帳號，請登入原帳號後綁定 LINE；系統不會自動合併家庭資料。" }, { status: 409 });
+  }
   const now = new Date();
   const nowIso = now.toISOString();
   const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
@@ -78,8 +93,8 @@ export async function POST(request: Request) {
   const expiresAt = new Date(now.getTime() + AUTH_CODE_TTL_MINUTES * 60 * 1000).toISOString();
   await db.prepare(
     `INSERT INTO email_auth_challenges
-       (id, email, code_digest, request_key, attempts, eligibility_confirmed_at, created_at, expires_at, consumed_at)
-     VALUES (?, ?, ?, ?, 0, ?, ?, ?, NULL)`,
+       (id, email, code_digest, request_key, attempts, eligibility_confirmed_at, created_at, expires_at, consumed_at, auth_user_id, session_digest)
+     VALUES (?, ?, ?, ?, 0, ?, ?, ?, NULL, ?, ?)`,
   ).bind(
     challengeId,
     email,
@@ -88,6 +103,8 @@ export async function POST(request: Request) {
     nowIso,
     nowIso,
     expiresAt,
+    linking ? user!.id : null,
+    linking ? await digestSessionToken(sessionTokenFromRequest(request)!) : null,
   ).run();
 
   try {

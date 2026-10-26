@@ -460,3 +460,49 @@ python3 scripts/build_static_site.py
 `python3 scripts/compact_lunch_data.py` 預設僅盤點；加上 `--apply` 才執行。每日原始回應與月度 OpenAPI CSV 以 gzip 無損封存，每份檔案在刪除未壓縮版前都以解壓後 SHA-256 完整驗證。`candidate.json` 僅移除排版空白、保留所有欄位、值與修改時間；校讀流程維持原路徑。
 
 經審核的 `data/parsed/` JSON、SQLite、網站公開資料與照片機制不變，網站查詢不需解壓原始封存。後續每日抓取會直接保存壓縮回應及精簡候選 JSON；月度更新直接封存 CSV，雜湊比對仍使用原始未壓縮內容。舊 CSV 邏輯路徑會透過 `src.archive_storage.open_archive` 自動尋找 `.gz`；也可傳入 `.csv.gz`。`manifest.json` 的原始檔名、位元組數、SHA-256 均保持原始來源定義。手動檢查封存可使用 `gzip -dc <檔案.gz>`，不需先解壓整份資料。
+
+
+### LINE 登入與家庭帳號綁定
+
+LINE Console 的 Web app Callback URL 設為
+`https://haohaofood.cc/api/auth/line/callback`。此版只要求 `openid`，不需要
+Email address permission、Assertion Signing Key、LIFF 或 Messaging API。
+
+部署前先套用新產生的 D1 遷移，再於部署環境設定：
+
+- `LINE_CHANNEL_ID=2012225671`
+- `LINE_CHANNEL_SECRET`：使用重新核發後的機密值，透過平台 secret 設定，不提交 Git。
+- `LINE_REDIRECT_URI=https://haohaofood.cc/api/auth/line/callback`
+
+三項設定及 D1 均就緒且回呼網域相符時，登入頁才顯示 LINE 按鈕。
+公開站不得設定本機驗證碼。未設定 LINE 不影響 Email 登入。
+本機 HTTP 預覽不進行真實 LINE 回呼；需用已登記的 HTTPS 測試網域，
+並將其 callback 同時登記在 LINE Console 及測試環境。
+
+既有家長先用 Email 登入，再到家庭帳號設定按「綁定 LINE 登入」。
+新 LINE 帳號沒有 Email，透過獨立 provider identity 連結 D1 家庭帳號；
+不依 Email、名稱或照片自動合併帳號，也不複製孩子資料。
+LINE 身分資料及一次性驗證留在 D1，瀏覽器只使用 HttpOnly 登入／驗證 Cookie。
+每次授權使用 state、nonce、PKCE，10 分鐘過期，回呼一次性消耗；
+綁定必須維持原登入 session。完整生日不保存。
+
+手動驗收（不使用瀏覽器自動化）：在 Developing 下以管理員／Tester 測試
+新登入、成年確認、取消授權、重複回呼、過期回呼、原帳號綁定、登出後以 LINE
+再次登入、衝突帳號拒絕綁定，確認孩子資料仍屬原家庭。完成後才將 Channel
+改為 Published；此狀態不能切回 Developing。
+
+以 LINE 建立帳號後，可在家庭設定的「綁定 Email 登入」驗證信箱。
+驗證碼綁定原 session，必須在同一登入狀態下完成；不以輸入 Email 就建立關聯。
+若 Email 已屬其他帳號則拒絕綁定，不合併家庭資料；既有 Email 更換不在此功能範圍。
+
+### 獨立維護與營運後台
+
+後台是另一個獨立私人 Site，並非公開網站的路徑或管理頁。僅網站擁有者 `ghostwolf90@gmail.com` 可透過 ChatGPT 登入；Sites 的私人存取政策是第一層保護，後台 Worker 每次請求也要求已驗證的使用者身分。網址與原始碼由獨立 Site 管理。
+
+因 Sites 不提供跨 Site 直接綁定同一個 D1，此版本採使用者同意的受保護資料 API：後台伺服器呼叫主站 `/api/internal/operations`，只讀取彙總統計、讀寫維護公告。兩邊分別在伺服器秘密設定保存 `MAINTENANCE_API_TOKEN`；主站家庭登入 cookie 不提供管理權限，憑證不得送往瀏覽器。後台不建立第二套資料庫，也不複製家長或孩子資料。此架構依賴主站資料 API 可用，主站或 D1 全面中斷時無法操作，並非獨立災難備援。
+
+後台提供註冊總數、今日及近 7／30 天新增、近 30 天每日註冊、孩子與食物相遇紀錄筆數、近 7 天記錄家庭與登入概況、非 free 且 active／trialing 的方案數、已保存官方菜單日期與主站版本。近 7 天登入數來自仍存在的 session 建立時間，登出刪除紀錄後會減少，並非完整活躍人數或訪客數。訂閱統計不是營收。今日使用臺北日界，近 7／30 天為滾動期間。
+
+公告與操作紀錄保存在原 D1 的 `maintenance_events`，新增後不覆寫。草稿不改變公開公告；最新發布／撤下事件決定首頁狀態。資料 API 僅接受獨立服務憑證，寫入另要求同源 Origin、JSON 及最新 revision；後台代理對瀏覽器也要求同源 Origin。公告純文字顯示，首頁每分鐘與重新回到頁面時讀取一次，不依賴教育部來源。此版本不含自動偵測、Email 通知、停機開關、個人資料編輯或帳號刪除。
+
+人工驗證：私人後台的擁有者登入與拒絕其他帳號、手機排版及鍵盤操作、發布後首頁顯示、草稿不影響公開公告、撤下公告。專案禁止 GUI 瀏覽器自動化，以上互動需人工確認。

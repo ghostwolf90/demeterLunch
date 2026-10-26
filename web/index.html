@@ -57,6 +57,7 @@
     <link rel="stylesheet" href="./passport-memory.css?v=20261023-single-memory-list" />
     <link rel="stylesheet" href="./legal.css?v=20261020-brand-story" />
     <link rel="stylesheet" href="./styles.css?v=20261023-settings-version" />
+      <script src="/maintenance.js" defer></script>
   </head>
   <body>
     <header class="topbar">
@@ -511,6 +512,10 @@
           <p class="settings-note" id="settingsVersionStatus" role="status" aria-live="polite"></p>
           <button class="settings-retry-button" id="refreshSiteVersion" type="button" hidden>重新載入最新版</button>
         </section>
+        <div class="settings-sign-out" id="settingsSignOutSection" hidden>
+          <button class="account-sign-in secondary" id="accountSignOut" type="button">登出</button>
+          <p class="form-status" id="settingsSignOutStatus" role="status" aria-live="polite"></p>
+        </div>
       </div>
     </dialog>
 
@@ -550,23 +555,33 @@
           <p class="account-value-copy">登入後，可以保存孩子提過的食物、說過的話，還有你想記住的事。</p>
           <ul><li>免費建立 1 位孩子的飲食紀錄</li><li>記錄學校午餐與日常飲食</li><li>留下孩子對不同食物的感受與嘗試</li></ul>
           <form class="account-auth-form" id="emailAuthForm">
-            <label>家長 Email
+            <label id="emailEntryFields">家長 Email
               <input id="authEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" maxlength="254" required placeholder="請輸入電子郵件" />
             </label>
+            <div id="authEligibilityGate" class="account-auth-form" hidden>
             <label>家長／成年照顧者出生日期
-              <input id="authBirthDate" name="birthDate" type="date" autocomplete="bday" required />
+              <input id="authBirthDate" name="birthDate" type="date" autocomplete="bday" required disabled />
               <small>只用來確認已滿 18 歲；完整生日不會保存。</small>
             </label>
             <label class="account-consent">
-              <input id="authCaregiverConfirmed" name="caregiverConfirmed" type="checkbox" required />
+              <input id="authCaregiverConfirmed" name="caregiverConfirmed" type="checkbox" required disabled />
               <span>我確認我是年滿 18 歲的家長、法定監護人或獲家長授權的成年照顧者，此帳號不由孩子自行使用。</span>
             </label>
+            <button class="account-sign-in line-sign-in" id="continueLineAuth" type="button" hidden>確認並前往 LINE</button>
+            <button class="account-text-button" id="backAuthMethod" type="button">返回選擇登入方式</button>
+            </div>
             <button class="account-sign-in" id="requestAuthCode" type="submit" aria-disabled="false">寄送登入驗證碼</button>
             <p class="account-login-note">不需要設定密碼，透過 Email 驗證即可登入。</p>
             <p class="account-legal-note">繼續使用即表示你同意<a href="/terms">服務條款</a>，並已閱讀<a href="/privacy">隱私權政策</a>；公開午餐查詢不需要註冊。</p>
             <p class="account-registration-notice" id="authRegistrationNotice">驗證碼 10 分鐘內有效；完整生日不會保存。</p>
             <p class="form-status" id="authRequestStatus" role="status" aria-live="polite"></p>
           </form>
+          <div class="account-social-login" id="lineLoginOptions" hidden>
+            <p class="account-login-divider"><span>或使用其他方式登入</span></p>
+            <button class="line-icon-button" id="lineSignIn" type="button" aria-label="使用 LINE 登入或免費註冊" title="使用 LINE 登入或免費註冊"><img src="/assets/line-login-icon.png" width="64" height="64" alt="" /></button>
+            <p id="lineLoginNote" class="account-login-note">使用 LINE 登入／免費註冊</p>
+            <p class="account-login-note">已有家庭帳號？先用 Email 登入，再到家庭設定綁定 LINE。</p>
+          </div>
           <div class="account-code-step" id="emailCodeStep" hidden>
             <p>已寄出驗證碼，請查看 <strong id="authMaskedEmail">—</strong> 的信箱，並在 10 分鐘內輸入。</p>
             <form class="account-auth-form" id="emailCodeForm">
@@ -578,7 +593,7 @@
             </form>
             <button class="account-text-button" id="changeAuthEmail" type="button">返回並重新寄送驗證碼</button>
           </div>
-          <details class="account-privacy"><summary>資料使用說明</summary><p>我們保存已驗證的家長 Email、成年確認結果，以及家長自行填寫的家庭成員姓名、暱稱、大頭貼與飲食紀錄。完整生日不會寫入資料庫，也不要求孩子提供 Email 或生日；大頭貼只供登入後的家庭帳號讀取。<a href="/privacy">查看完整隱私權政策</a></p></details>
+          <details class="account-privacy"><summary>資料使用說明</summary><p>我們保存已驗證的家長 Email 或 LINE 帳號識別碼、成年確認結果，以及家長自行填寫的家庭成員姓名、暱稱、大頭貼與飲食紀錄。完整生日不會寫入資料庫，也不要求孩子提供 Email 或生日；大頭貼只供登入後的家庭帳號讀取。<a href="/privacy">查看完整隱私權政策</a></p></details>
           <p class="account-public-menu-note">只想查看學校午餐嗎？不需要註冊，也能免費使用。</p>
         </div>
         <div id="accountSignedInView" hidden>
@@ -586,6 +601,25 @@
             <div class="profile-avatar-preview is-parent" id="parentAvatarPreview" aria-hidden="true">家</div>
             <div><p class="kicker">家庭帳號</p><h2>個人設定</h2><p id="accountIdentity">—</p></div>
           </div>
+          <div id="lineAccountSettings" hidden>
+            <button class="account-sign-in line-sign-in" id="linkLineAccount" type="button">綁定 LINE 登入</button>
+            <p class="account-login-note" id="lineLinkNote">綁定後可用 LINE 登入同一個家庭帳號，孩子資料與一口護照會保留。</p>
+            <p class="form-status" id="lineLinkStatus" role="status" aria-live="polite"></p>
+          </div>
+          <section id="emailLinkSettings" hidden>
+            <h3>綁定 Email 登入</h3>
+            <p class="account-login-note">驗證信箱後，也能用 Email 登入同一個家庭帳號。</p>
+            <form class="account-auth-form" id="emailLinkForm">
+              <label>家長 Email<input id="linkEmail" type="email" autocomplete="email" maxlength="254" required /></label>
+              <button class="account-sign-in secondary" id="requestLinkEmailCode" type="submit">寄送綁定驗證碼</button>
+            </form>
+            <form class="account-auth-form" id="emailLinkCodeForm" hidden>
+              <label>六位數驗證碼<input id="linkEmailCode" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required /></label>
+              <button class="account-sign-in" id="verifyLinkEmailCode" type="submit">驗證並綁定 Email</button>
+              <button class="account-text-button" id="cancelEmailLink" type="button">重新填寫 Email</button>
+            </form>
+            <p class="form-status" id="emailLinkStatus" role="status" aria-live="polite"></p>
+          </section>
           <form class="profile-settings-form" id="parentProfileForm">
             <div class="profile-photo-actions account-photo-actions">
               <label for="parentAvatarInput">更換大頭貼</label>
@@ -675,7 +709,6 @@
             <a class="account-support-email" id="accountSupportEmail"></a>
             <div class="account-support-links"><a href="/support">前往支援中心</a><a href="/privacy">隱私權政策</a><a href="/terms">服務條款</a></div>
           </div>
-          <button class="account-sign-in secondary" id="accountSignOut" type="button">登出</button>
         </div>
       </div>
     </dialog>

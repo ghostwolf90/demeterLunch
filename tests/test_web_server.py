@@ -518,7 +518,7 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("知道多少，就說多少", about_html)
 
         self.assertIn("服務經營者：</strong>待確認", privacy_html)
-        self.assertIn("出生日期只在提出驗證碼申請時用來判斷是否滿 18 歲", privacy_html)
+        self.assertIn("出生日期只在開始登入時用來判斷是否滿 18 歲", privacy_html)
         self.assertIn("目前尚未提供帳號內的一鍵停用或刪除功能", privacy_html)
         self.assertIn("Cloudflare Workers、D1、R2 與 CDN", privacy_html)
         self.assertIn("Resend", privacy_html)

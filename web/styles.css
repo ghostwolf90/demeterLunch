@@ -112,6 +112,7 @@ h1 em { color: var(--orange); font-style: normal; }
 .intro-display { margin: 0 0 22px; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(54px, 7.1vw, 104px); font-weight: 700; line-height: .98; letter-spacing: -.065em; }
 .intro-display em { color: var(--orange); font-style: normal; }
 .intro-note { max-width: 520px; margin: 0; color: var(--ink-soft); font-size: 16px; line-height: 1.8; }
+.daily-food-note { max-width: 520px; margin: 12px 0 0; color: var(--ink-soft); font-size: 14px; line-height: 1.7; }
 .sample-mode-banner { margin: 0 0 6px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border: 1px solid rgba(170,71,41,.24); border-radius: 20px; background: rgba(255,253,248,.78); box-shadow: 0 12px 35px rgba(47,54,56,.07); }
 .sample-mode-banner > div { display: flex; align-items: center; gap: 15px; }
 .sample-mode-label { flex: 0 0 auto; padding: 7px 10px; border-radius: 999px; color: #8b3d27; background: rgba(238,117,78,.15); font-size: var(--text-xs); font-weight: 850; letter-spacing: .08em; }
@@ -634,7 +635,8 @@ body[data-view-mode="official"] .official-menu-board .main-dish span { margin: 0
 .is-child-settings-view > .profile-settings-form,
 .is-child-settings-view > .account-plan-panel,
 .is-child-settings-view > .account-support,
-.is-child-settings-view > #accountSignOut,
+.is-child-settings-view > #lineAccountSettings,
+.is-child-settings-view > #emailLinkSettings,
 .is-child-settings-view .account-section-heading,
 .is-child-settings-view .account-child-list,
 .is-child-settings-view .account-family-status { display: none; }
@@ -644,7 +646,8 @@ body[data-view-mode="official"] .official-menu-board .main-dish span { margin: 0
 .is-onboarding > .profile-settings-form,
 .is-onboarding > .account-plan-panel,
 .is-onboarding > .account-support,
-.is-onboarding > .account-sign-in.secondary,
+.is-onboarding > #lineAccountSettings,
+.is-onboarding > #emailLinkSettings,
 .is-onboarding .account-section-heading,
 .is-onboarding .account-child-list,
 .is-onboarding .account-family-status { display: none; }
@@ -1505,3 +1508,39 @@ html[lang="en"] .mobile-nav button span { font-size: 10px; }
   .day-card:active { transform: scale(.97); }
 }
 .day-card.is-pending { outline: 2px solid var(--orange); outline-offset: 2px; }
+
+/* LINE actions use the existing account controls and do not add motion. */
+.line-sign-in { background: #06c755; color: #fff; }
+.line-sign-in:hover { background: #05ad49; }
+.line-sign-in:disabled { opacity: .65; cursor: default; }
+#lineAccountSettings { margin-block: 16px; }
+
+.account-social-login { margin-block: 24px 16px; text-align: center; }
+.account-login-divider { display: flex; align-items: center; gap: 14px; color: var(--ink-soft); font-size: 12px; }
+.account-login-divider::before, .account-login-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.line-icon-button { display: grid; place-items: center; width: 64px; height: 64px; padding: 0; margin: 22px auto 12px; border: 0; border-radius: 50%; background: #06c755; cursor: pointer; }
+.line-icon-button img { display: block; width: 64px; height: 64px; }
+.line-icon-button:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+.line-icon-button:active { background: #048b3b; }
+.line-icon-button:disabled { opacity: .5; cursor: wait; }
+.settings-sign-out { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 24px; }
+.settings-sign-out .account-sign-in.secondary { width: 100%; margin-top: 16px; color: #a53e35; border-color: var(--line); }
+@media (hover: hover) and (pointer: fine) {
+  .line-icon-button:hover { background: #05b34c; }
+}
+
+
+.maintenance-dialog { overflow: auto; overscroll-behavior: contain; border: 1px solid #dce1d6; border-radius: 24px; padding: 0; width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); margin: auto; color: #283c33; background: #fffdf7; box-shadow: 0 24px 80px #142c3433; opacity: 0; transform: translateY(12px); transition: opacity 320ms ease, transform 320ms cubic-bezier(.32,.72,0,1); }
+.maintenance-dialog::backdrop { background: rgba(15,30,28,0); backdrop-filter: blur(0); transition: background-color 320ms ease, backdrop-filter 320ms ease; }
+.maintenance-dialog.is-visible { opacity: 1; transform: translateY(0); }
+.maintenance-dialog.is-visible::backdrop { background: rgba(15,30,28,.48); backdrop-filter: blur(4px); }
+.maintenance-dialog-panel { padding: 28px; }
+.maintenance-dialog-label { margin: 0 0 12px; color: #6b765c; font-size: 13px; font-weight: 700; letter-spacing: .06em; }
+.maintenance-dialog h2 { margin: 0 0 16px; font-size: clamp(21px, 5vw, 26px); line-height: 1.4; overflow-wrap: anywhere; }
+#maintenanceNoticeBody { margin: 0 0 20px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 16px; line-height: 1.8; }
+#maintenanceNoticeTime { display: block; color: #687367; font-size: 12px; }
+.maintenance-dialog-confirm { width: 100%; min-height: 48px; margin-top: 24px; padding: 12px 20px; border: 0; border-radius: 14px; font: inherit; font-weight: 700; background: #315b43; color: #fff; cursor: pointer; }
+.maintenance-dialog-confirm:focus-visible { outline: 3px solid #b48a41; outline-offset: 4px; }
+@media (max-width: 480px) { .maintenance-dialog-panel { padding: 24px 20px; } }
+@media (prefers-reduced-motion: reduce) { .maintenance-dialog { transform: none; transition: opacity 120ms ease; } .maintenance-dialog::backdrop { backdrop-filter: none; transition: background-color 120ms ease; } .maintenance-dialog.is-visible::backdrop { backdrop-filter: none; } }
+@media (prefers-reduced-transparency: reduce) { .maintenance-dialog::backdrop, .maintenance-dialog.is-visible::backdrop { backdrop-filter: none; } }
