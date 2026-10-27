@@ -46,11 +46,14 @@ def _read_json(path: Path) -> Any:
         raise ManualPublishError(f"無法讀取有效 JSON：{path}") from exc
 
 
-def build_publish_bundle(project_root: Path, meal_date: date) -> dict[str, Any]:
+def build_publish_bundle(
+    project_root: Path, meal_date: date, *, report: dict[str, Any] | None = None
+) -> dict[str, Any]:
     project_root = project_root.resolve()
     date_text = meal_date.isoformat()
     report_path = project_root / "data/raw/fatrace-daily" / date_text / "report.json"
-    report = _read_json(report_path)
+    if report is None:
+        report = _read_json(report_path)
     if not isinstance(report, dict) or report.get("mealDate") != date_text:
         raise ManualPublishError(f"抓取報告日期不符：{report_path}")
 

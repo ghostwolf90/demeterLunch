@@ -242,7 +242,7 @@ data/raw/fatrace-daily/YYYY-MM-DD/report.json
 
 單校、多校與全市資料都會經過「抓取 → 校讀 → 發布」。發布器會依當次 `report.json` 的學校數量建立批次，可以是 1 校、數校或全市 243 校；批次內不能有抓取失敗，且 `available` 或 `no_meal` 必須有對應的 reviewed JSON。部分批次只會 upsert 該批次的學校紀錄，不會刪除或覆蓋其他學校的資料。
 
-#### 忠信國小：三步驟發布（最常用）
+#### 單校／多校：手動分步發布（選用）
 
 只想直接照做：把下面三行**依序執行**即可。
 
@@ -279,26 +279,78 @@ python3 scripts/build_static_site.py
 
 多校流程相同；抓取時可重複使用 `--school 學校名稱`，後續校讀與發布指令不變。
 
-#### 抓取全市後直接發布（正式流程）
+#### 逐區下載、驗證與發布（建議使用）
 
-完成一次手動發布憑證設定後，使用下列單一指令抓取全市 243 校，並自動完成校讀、測試、建置與發布：
-
-```bash
-python3 scripts/update_all_taichung_schools.py --date 2026-10-14 --publish
-```
-
-若全市資料已經抓取、校讀並建置完成，可先驗證發布包，再正式發布：
+希望家長不用等全市收集完，可改用這個單一入口。預設以臺北時區當天為供餐日期，依啟用名冊的行政區順序處理全市 243 校；**預設會發布**，不必加 `--publish`，也不必另跑下載、校讀或發布指令。使用既有 `.secrets/site_publish_token` 發布憑證，憑證缺少或權限不符時會在抓取前停止。
 
 ```bash
-python3 scripts/publish_school_meals.py --date 2026-10-14 --dry-run
-python3 scripts/publish_school_meals.py --date 2026-10-14
+python3 scripts/update_school_meals_by_district.py
 ```
 
-`--dry-run` 只驗證本機資料，不會寫入公開 Site。正式發布成功時會顯示 `"status": "published"`；重複發布相同內容時為冪等操作，記錄會顯示為 `unchanged`。
+每區抓完後，只將該區通過來源／日期／內容雜湊及結構驗證、尚未發布或內容有變的同日資料上傳到既有 Site。成功發布後，該區使用者即可查到資料，不必等待其他區。單校抓取或驗證失敗不阻擋同區成功學校發布，也不阻擋下一區；官方明確不供餐的紀錄可以發布，尚未公布的空菜單不發布、不覆蓋有效資料。
+
+```bash
+# 指定日期；中斷或失敗後重跑同一行即可接續
+python3 scripts/update_school_meals_by_district.py --date 2026-10-27
+
+# 只處理指定區，可重複指定多個區
+python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --district 西區 --district 北區
+
+# 只下載與驗證，不上傳；之後移除 --no-publish 可直接補傳
+python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --no-publish
+
+# 重新檢查已完成學校；內容相同不重傳
+python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --refresh-all
+```
+
+預設逐道收集食材；`--skip-ingredients` 可只抓菜色。網路設定 `--timeout`、`--interval`、`--retries` 預設為 `20` 秒、`1.2` 秒、`2` 次重試，並沿用具描述性的 User-Agent。
+
+抓取進度與發布進度分開保存：已完成並發布的跳過；抓取／驗證失敗、官方尚未公布或尚未檢查的下次補抓；抓好但上傳失敗的直接補傳。若伺服器已收到資料但本機未收到成功回應，下次可能重傳該區待發布資料，伺服器依既有冪等機制處理。進度以每校內容雜湊判斷；重查後內容有變才再次上傳。
+
+每區與全程結束均輸出中文總結：學校總數、有菜單、官方不供餐、尚未公布、抓取／驗證失敗、尚未檢查、已發布、有效資料待發布及耗時；最後另列待處理學校。這些是所選範圍的目前累計狀態，「已發布」包含前次成功的資料，本區本次發布校數會另外顯示。
+
+```text
+data/monitor/district-updates/YYYY-MM-DD/with-ingredients.json
+data/monitor/district-updates/YYYY-MM-DD/dishes-only.json
+```
+
+兩種食材模式分開記進度，切換模式會重新收集。這個新入口不會匯入舊入口的 `report.json` 進度，因此首次執行會重新檢查所選範圍；之後沿用自己的進度。原始資料仍存於 `data/raw/fatrace-daily/`，驗證通過的 JSON 存於 `data/parsed/schools/fatrace/`，不改寫舊入口的 `report.json`。請勿與舊入口或其他會更新相同日期資料的程序同時執行；新入口本身會阻止同時啟動多份。
+
+全程處理結束後，有有效資料時會自動重建本機 SQLite、檢查 JavaScript 語法及重建 `dist/`；不逐區重建整站、不部署網站程式版本。這裡的每區「驗證」是實際發布資料的來源與結構驗證，並非每區重跑整套開發測試。按 Ctrl+C 會保存進度並顯示全程總結，下次重跑會接續並在完成後重建本機資料。
+
+結束碼：`0` 表示所選範圍完成（`--no-publish` 時只代表本機資料完成）；`1` 表示抓取／驗證、發布或本機重建失敗；`2` 表示仍有官方未公布或未檢查學校；`130` 表示使用者中斷。若同時有失敗與尚未公布，以 `1` 回報。
+
+#### 全市整批更新與發布（原有入口）
+
+完成一次手動發布憑證設定後，平常只需執行下列單一指令。日期預設為臺北時區當天，會接續抓取全市 243 校，自動完成校讀、SQLite 重建、測試、JavaScript 檢查、靜態建置及午餐資料發布：
+
+```bash
+python3 scripts/update_all_taichung_schools.py --publish
+```
+
+需要處理指定供餐日期時：
+
+```bash
+python3 scripts/update_all_taichung_schools.py --date 2026-10-27 --publish
+```
+
+**上述指令已包含發布，不必再執行 `publish_school_meals.py --dry-run` 或 `publish_school_meals.py`。** 抓取中斷或失敗後，重跑相同指令即可接續；全部檢查成功後才會發布。
+
+只有在先前未加 `--publish`、已完成本機抓取／校讀／建置，而且現在只想發布既有結果時，才需要獨立發布指令：
+
+```bash
+# 選用：只驗證發布包，不會發布
+python3 scripts/publish_school_meals.py --date 2026-10-27 --dry-run
+
+# 發布該日期已校讀的既有資料
+python3 scripts/publish_school_meals.py --date 2026-10-27
+```
+
+`--dry-run` 是選用檢查，不是必要步驟。正式發布成功時會顯示 `"status": "published"`；重複發布相同內容時為冪等操作，記錄會顯示為 `unchanged`。
 
 > 注意：`fetch_school_meals.py` 每次執行都會以該次的抓取範圍重建當日 `report.json`。發布器只會發布當前報告所列的學校；既有其他學校紀錄不會被刪除。
 
-確認候選資料的學校、日期與內容後，執行結構校讀與晉升：
+若採手動分步流程，確認候選資料的學校、日期與內容後，可執行以下校讀與重建指令；全市更新指令已包含這些步驟，無須重複執行：
 
 ```bash
 python3 scripts/review_school_meals.py --date 2026-10-08
@@ -310,13 +362,13 @@ python3 scripts/build_static_site.py
 
 SQLite 會把啟用學校的名冊、供餐日、餐次、菜色、食材與認證拆成關聯資料表；公開網站則提供可擴充的行政區與學校選單。`data/reference/taichung-elementary-schools.json` 保存教育部公開清單中的臺中市 29 個行政區、242 所國小及 School ID，`data/reference/taichung-elementary-schools.md` 則提供方便人工檢查的行政區清單；兩份資料均以一次行政區查詢與一次全市國小名冊查詢整理，沒有逐號掃描 School ID。`data/reference/taichung-active-elementary-schools.json` 是網站目前啟用的名冊，另納入教育部分類為「高中職／五專」的臺中市南區私立明德高中附設國小，因此共涵蓋 29 個行政區、243 所學校。使用者可把一間學校設為「我的最愛」並保存在自己的瀏覽器；下次進站只會優先讀取那間學校。沒有設定最愛時，網站停在選校畫面，不會先讀取任何學校的午餐資料。忠信國小保留校方週菜單、營養分析、葷素餐與家庭晚餐建議等完整體驗；其餘學校目前顯示教育部同日實際供餐公開紀錄。同日的主食、主菜中若同時出現有「素」字與未標示「素」的菜色，網站會開放葷食／素食切換：主食、主菜與副菜依名稱的「素」字分組，蔬菜、湯品與附餐列為共用。這只是方便閱讀的菜名分組，不等同素食認證，仍須以官方食材明細判斷內容。指定日期沒有紀錄時不會退回較早日期冒充今天。
 
-平常可用一條指令完成收集、校讀、資料庫重建、測試、JavaScript 檢查與靜態網站重建：
+若只要更新預設西區範圍的本機資料，可用下列指令完成收集、校讀、資料庫重建、測試、JavaScript 檢查與靜態網站重建（不含發布）：
 
 ```bash
 python3 scripts/update_school_meals.py --date 2026-10-08 --verify-and-build
 ```
 
-若要一次收集啟用名冊中的全臺中市 29 個行政區、243 所學校，並自動完成上述驗證與建置，可執行：
+若只要更新全市 29 個行政區、243 所學校的本機資料，完成驗證與建置而暫不發布，可省略 `--publish`：
 
 ```bash
 python3 scripts/update_all_taichung_schools.py

@@ -3452,7 +3452,7 @@ function render(dashboard) {
   refs.introNote.textContent = dashboard.isSample
     ? "先看看一週菜單、營養資訊、晚餐搭配與食材來源；選擇學校後會換成該校公開資料。"
     : dashboard.dataPriority === "weekly_planned"
-    ? `${dashboard.isFallback ? `顯示 ${formatDate(day.date)} 預定菜單。` : ""}同日官方資料優先，供餐以校方為準。`
+    ? "當日菜單於上午 11 點後陸續更新。同日官方資料優先，供餐以校方為準。"
     : dashboard.isFallback
     ? `指定日期沒有供餐資料，先顯示最近的 ${formatDate(day.date)}。`
     : `${dashboard.mealTypeLabel}：${day.meal.staple}、${day.meal.mainDish}；${day.meal.fruit ? `附餐 ${day.meal.fruit}；` : ""}食譜明細共 ${day.recipeDetails?.length || day.meal.sideDishes.length + 2} 道。`;
