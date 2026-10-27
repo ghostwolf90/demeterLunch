@@ -3359,6 +3359,38 @@ function renderOfficial(dashboard) {
   refs.errorState.hidden = true;
 }
 
+// Taiwan 2026 dates: DGPA official calendar (festival dates, not substitute holidays).
+// https://www.dgpa.gov.tw/uploads/dgpa/files/202510/115%E5%B9%B4%E8%BE%A6%E5%85%AC%E6%97%A5%E6%9B%86%E8%A1%A8-2.pdf
+// Movable festivals are year-specific; never reuse their Gregorian dates next year.
+function taiwanFestivalNote(date) {
+  const fixed = {
+    "01-01": "元旦 · 新的一年，一起說說最想吃的家常菜。",
+    "04-04": "兒童節 · 今天讓孩子分享一道喜歡的菜。",
+    "08-08": "父親節 · 和爸爸聊聊他小時候愛吃的菜。",
+    "09-28": "教師節 · 餐桌上，聊聊想謝謝哪位老師。",
+    "10-10": "國慶日 · 一起聊聊最喜歡的臺灣家鄉味。",
+  };
+  const calendar = {
+    "2026-02-16": "除夕 · 圍爐團圓，聊聊家裡年菜的故事。",
+    "2026-02-17": "農曆新年・初一 · 新年快樂！你最期待哪道年菜？",
+    "2026-02-18": "農曆新年・初二 · 和家人相聚，分享熟悉的家常味。",
+    "2026-02-19": "農曆新年・初三 · 慢慢吃飯，聽家人說一段過年故事。",
+    "2026-02-20": "農曆新年・初四 · 聊聊年糕、蘿蔔糕的吉祥話。",
+    "2026-02-21": "農曆新年・初五 · 新春餐桌，你最喜歡哪一道？",
+    "2026-03-03": "元宵節 · 元宵和湯圓，你知道有什麼不同嗎？",
+    "2026-04-05": "清明節 · 一起聊聊潤餅、草仔粿的家鄉記憶。",
+    "2026-05-10": "母親節 · 謝謝媽媽，也一起分擔備餐與收拾。",
+    "2026-06-19": "端午節 · 粽葉飄香，你家的粽子裡包了什麼？",
+    "2026-08-19": "七夕 · 用一句謝謝，送給陪你吃飯的人。",
+    "2026-08-23": "祖父母節 · 聽阿公阿嬤說說小時候的餐桌。",
+    "2026-08-27": "中元節 · 聊聊家裡的習俗，也珍惜準備好的食物。",
+    "2026-09-25": "中秋節 · 月圓人團圓，月餅一起分著品嚐。",
+    "2026-10-18": "重陽節 · 陪長輩吃頓飯，聽聽他們的拿手菜。",
+    "2026-12-22": "冬至 · 今天想聊聊鹹湯圓，還是甜湯圓？",
+  };
+  return calendar[date] || fixed[date.slice(5)] || "";
+}
+
 // Fixed observances verified against FAO / UN calendars:
 // https://www.fao.org/world-pulses-day/en
 // https://www.un.org/en/observances/end-food-waste-day
@@ -3387,7 +3419,7 @@ function renderDailyFoodNote() {
     refs.introNote.after(note);
   }
   const dayIndex = Math.floor(Date.parse(`${today}T00:00:00Z`) / 86400000);
-  note.textContent = `今天 ${Number(today.slice(5, 7))}/${Number(today.slice(8))} · ${observances[today.slice(5)] || prompts[dayIndex % prompts.length]}`;
+  note.textContent = `今天 ${Number(today.slice(5, 7))}/${Number(today.slice(8))} · ${taiwanFestivalNote(today) || observances[today.slice(5)] || prompts[dayIndex % prompts.length]}`;
 }
 
 function render(dashboard) {

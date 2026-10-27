@@ -322,24 +322,43 @@ python3 scripts/update_school_meals.py --date 2026-10-08 --verify-and-build
 python3 scripts/update_all_taichung_schools.py
 ```
 
-指定日期或只先抓菜色的範例：
+### 全市更新參數與接續進度
+
+`update_all_taichung_schools.py` 會自動指定全市範圍與 `--verify-and-build`，日期預設為臺北時區當天。不加 `--publish` 時只更新本機資料與 `dist/`；加上後才會在收集、校讀及所有檢查成功後發布午餐資料。
 
 ```bash
-python3 scripts/update_all_taichung_schools.py --date 2026-10-08
-python3 scripts/update_all_taichung_schools.py --skip-ingredients
+# 更新臺北時區今天的全市資料，完成後發布
+python3 scripts/update_all_taichung_schools.py --publish
+
+# 指定供餐日期，只更新本機
+python3 scripts/update_all_taichung_schools.py --date 2026-10-27
+
+# 中斷或失敗後，重跑相同日期即可接續
+python3 scripts/update_all_taichung_schools.py --date 2026-10-27 --publish
+
+# 重新查詢全部學校，包含同日已完成的學校
+python3 scripts/update_all_taichung_schools.py --date 2026-10-27 --refresh-all
+
+# 只收集菜色，不逐道查詢食材
+python3 scripts/update_all_taichung_schools.py --date 2026-10-27 --skip-ingredients
 ```
 
-日期預設為臺北時區當天。完整模式會逐道查詢食材，執行期間請保持網路連線並避免電腦休眠；`--skip-ingredients` 只收集菜色，速度較快。每次執行會把開始、完成時間、總秒數與每校平均秒數寫入當日 `report.json`，並在終端顯示耗時摘要。任一學校收集失敗時指令會以非零狀態結束，不會繼續重建可部署快照；重新執行即可利用已儲存的有效資料再次收集。
+| 參數 | 說明 |
+| --- | --- |
+| `--date YYYY-MM-DD` | 指定供餐日期；省略時使用臺北時區當天。 |
+| `--resume` | 接續同日進度，為此入口的預設模式，不必另外加上。 |
+| `--refresh-all` | 忽略既有完成進度，重新檢查全市；不能與 `--resume` 同時使用。 |
+| `--skip-ingredients` | 只抓菜色；省略時逐道查詢食材。 |
+| `--publish` | 本機流程全部成功後，透過已設定的發布憑證更新公開午餐資料。 |
+| `--timeout`、`--interval`、`--retries` | 連線逾時秒數、請求間隔秒數與重試次數，預設分別為 `20`、`1.2`、`2`。 |
 
-若官方尚未發布，指令會以 pending 狀態結束並保留既有有效資料。當日仍有抓取失敗時不會發佈，重新執行即可利用已保存的有效資料補抓。
+預設續抓會沿用同日期、同食材收集模式的有效進度，保留已完成的 `available` 與 `no_meal` 紀錄，依序補抓 `failed`、`not_published` 與尚未檢查的學校。若候選檔案遺失或狀態不符，也會重新抓取；切換 `--skip-ingredients` 模式時不沿用另一模式的進度。若要確認已完成學校後續是否有官方修正，請使用 `--refresh-all`。
 
-若全市報告只有少數 `failed`，可只補抓失敗學校並原子合併回原本的完整報告；成功後會自動校讀、重建 SQLite、執行測試、檢查 JavaScript 並重建 `dist/`：
+進度會寫入 `data/raw/fatrace-daily/YYYY-MM-DD/report.json`，包含每校狀態、嘗試次數、未發布學校清單，以及本次檢查與沿用完成的校數。執行中會逐校保存；中斷後以相同日期及模式重跑即可，無須刪除報告。每次執行也會記錄開始、完成時間、總秒數與本次每校平均秒數，並在終端顯示耗時摘要。完整模式會逐道查詢食材，請保持網路連線並避免電腦休眠。
 
-```bash
-python3 scripts/update_all_taichung_schools.py --date 2026-10-15 --retry-failed
-```
+任一學校抓取失敗時會以非零狀態結束，不會繼續校讀、建置或發布。若官方尚未發布任何完整紀錄，會保留既有 reviewed JSON、SQLite 與 `dist/` 並以狀態碼 `2` 結束；`not_published` 不會晉升為公開菜單，下次續抓會再次檢查。報告仍保留全市範圍，不會縮成這次補抓的學校。
 
-補抓完成後，`report.json` 仍會保留原本全市學校，不會縮成單校報告。若補抓仍失敗，指令會維持非零狀態且不發布；稍後重複相同指令即可。也可在確認本機發布憑證已設定後加上 `--publish`，於補抓、驗證及建置全部成功後直接發布完整批次。
+此入口不支援 `--retry-failed`；一般補抓請直接重跑相同指令，預設續抓也會重新檢查未發布及尚未檢查的學校。
 
 正式發布會先核對當次報告必須為零失敗、reviewed JSON 數量、學校代碼、日期、來源網址與內容雜湊，再以本機 `.secrets/site_publish_token` 的私密憑證透過 HTTPS 寫入 Site 的 D1 與 R2。憑證目錄已被 Git 忽略，指令不會顯示或上傳憑證內容。
 
