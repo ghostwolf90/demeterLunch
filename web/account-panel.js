@@ -3,6 +3,7 @@ const accountPanelTriggers = document.querySelectorAll("[data-account-panel-trig
 if (accountPanelTriggers.length) {
   const state = {
     account: {
+      loading: true,
       authenticated: false,
       user: null,
       children: [],
@@ -276,9 +277,13 @@ if (accountPanelTriggers.length) {
 
   function renderHeaderAccount() {
     const authenticated = state.account.authenticated === true;
+    const pending = state.account.loading === true;
+    const unresolved = pending || Boolean(state.account.error);
     const displayName = profileDisplayName(state.account.user);
     for (const trigger of accountPanelTriggers) {
       trigger.classList.toggle("is-authenticated", authenticated);
+      trigger.disabled = pending;
+      trigger.setAttribute("aria-busy", String(pending));
       const label = trigger.querySelector("[data-account-label]");
       const status = trigger.querySelector("[data-account-status]");
       const avatar = trigger.querySelector("[data-account-avatar]");
@@ -296,12 +301,12 @@ if (accountPanelTriggers.length) {
         const signedOutLabel = label?.dataset.signedOutLabel || "帳號";
         if (label) label.textContent = signedOutLabel;
         if (status) {
-          status.textContent = "未登入";
-          status.hidden = false;
+          status.textContent = unresolved ? "" : "未登入";
+          status.hidden = unresolved;
         }
         if (avatar) renderProfileAvatar(avatar, null);
-        trigger.setAttribute("aria-label", `${signedOutLabel}，未登入`);
-        trigger.title = "登入或建立免費家庭帳號";
+        trigger.setAttribute("aria-label", unresolved ? signedOutLabel : `${signedOutLabel}，未登入`);
+        trigger.title = unresolved ? "家庭帳號" : "登入或建立免費家庭帳號";
       }
     }
   }

@@ -107,7 +107,7 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('href="/schools">學校目錄</a>', news_html)
         self.assertIn('href="/#news">午餐消息</a>', news_html)
         self.assertIn('id="newsAccountButton" data-account-panel-trigger type="button"', news_html)
-        self.assertIn('<strong data-account-label>帳號</strong><small data-account-status>未登入</small>', news_html)
+        self.assertIn('<strong data-account-label>帳號</strong><small data-account-status hidden></small>', news_html)
         self.assertIn('/account-panel.js?v=20261023-family-copy', news_html)
 
     def test_static_fragment_links_point_to_existing_sections(self) -> None:
@@ -202,7 +202,7 @@ class SiteLayoutTests(unittest.TestCase):
             self.assertIn('data-account-panel-trigger type="button" aria-haspopup="dialog"', html)
             self.assertNotIn('href="/?account=1"', html)
             self.assertIn('<span class="account-avatar" data-account-avatar', html)
-            self.assertIn('<strong data-account-label>帳號</strong><small data-account-status>未登入</small>', html)
+            self.assertIn('<strong data-account-label>帳號</strong><small data-account-status hidden></small>', html)
             self.assertIn('/account-panel.js?v=20261023-family-copy', html)
 
         support_html = pages[0].read_text(encoding="utf-8")

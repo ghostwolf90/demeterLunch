@@ -1246,10 +1246,10 @@ function renderAccount() {
   renderProfileAvatar(refs.accountAvatar, authenticated ? account.user : null);
   refs.accountButton.disabled = account.loading || (!authenticated && !EMAIL_REGISTRATION_ENABLED);
   refs.accountButton.setAttribute("aria-busy", String(account.loading));
-  refs.accountButton.title = account.loading ? "正在確認登入狀態" : authenticated ? "設定與家庭帳號" : "設定與登入";
+  refs.accountButton.title = account.loading || account.error ? "家庭帳號" : authenticated ? "設定與家庭帳號" : "設定與登入";
   refs.accountLoadingStatus.hidden = !account.loading;
   refs.accountButton.setAttribute("aria-disabled", String(refs.accountButton.disabled));
-  refs.accountButtonText.textContent = account.loading ? "正在確認登入…" : authenticated
+  refs.accountButtonText.textContent = account.loading || account.error ? "帳號" : authenticated
     ? profileDisplayName(account.user, "家庭帳號")
     : EMAIL_REGISTRATION_ENABLED ? "登入／免費註冊" : "登入／免費註冊（準備中）";
   if (authenticated && !account.loading) LunchI18n.keep(refs.accountButtonText);

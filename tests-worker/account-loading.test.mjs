@@ -18,14 +18,14 @@ function renderHeader(account) {
 
 test('initial HTML waits for session verification before offering login', () => {
   assert.match(html, /id="accountButton"[^>]*aria-busy="true"[^>]*disabled/);
-  assert.match(html, /id="accountButtonText">正在確認登入…/);
+  assert.match(html, /id="accountButtonText">帳號/);
   assert.match(html, /id="passportLocked" hidden/);
 });
 
 test('pending session never appears signed out, then resolves to the verified state', () => {
   let refs = renderHeader({ loading: true, authenticated: false });
   assert.equal(refs.accountButton.disabled, true);
-  assert.equal(refs.accountButtonText.textContent, '正在確認登入…');
+  assert.equal(refs.accountButtonText.textContent, '帳號');
   assert.equal(refs.accountSignedOutView.hidden, true);
   assert.equal(refs.accountSignedInView.hidden, true);
   refs = renderHeader({ loading: false, authenticated: true, user: { nickname: '家長暱稱' }, child: { nickname: '小米' } });
