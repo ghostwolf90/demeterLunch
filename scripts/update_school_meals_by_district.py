@@ -71,11 +71,16 @@ def summary(rows: list[dict], *, publishing: bool) -> dict:
 
 def print_summary(label: str, totals: dict, elapsed: float) -> None:
     print(
-        f"\n【{label}】共 {totals['schools']} 校；有菜單 {totals['available']} 校、"
-        f"官方不供餐 {totals['noMeal']} 校、尚未公布 {totals['notPublished']} 校、"
-        f"抓取／驗證失敗 {totals['failed']} 校、尚未檢查 {totals['notChecked']} 校；"
-        f"已發布 {totals['published']} 校、有效資料待發布 {totals['unpublished']} 校；"
-        f"耗時 {elapsed:.1f} 秒。", flush=True,
+        f"\n【{label}】\n"
+        f"  學校總數：{totals['schools']} 校\n"
+        f"  有菜單：{totals['available']} 校\n"
+        f"  官方不供餐：{totals['noMeal']} 校\n"
+        f"  尚未公布：{totals['notPublished']} 校\n"
+        f"  抓取／驗證失敗：{totals['failed']} 校\n"
+        f"  尚未檢查：{totals['notChecked']} 校\n\n"
+        f"  已發布：{totals['published']} 校\n"
+        f"  有效資料待發布：{totals['unpublished']} 校\n\n"
+        f"  耗時：{elapsed:.1f} 秒\n", flush=True,
     )
 
 
