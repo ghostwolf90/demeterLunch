@@ -331,7 +331,7 @@ def load_site_dashboard(
             "schoolDirectory": catalog["schools"],
             "officialRecord": catalog["records"]
             .get(str(DEFAULT_SCHOOL_ID), {})
-            .get(dashboard["selected"]["date"]),
+            .get(selected_date or dashboard["selected"]["date"]),
         }
     )
     return dashboard

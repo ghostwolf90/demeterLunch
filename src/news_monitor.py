@@ -442,7 +442,7 @@ def merge_news_items(
         titles[title] = index
     return sorted(
         retained,
-        key=lambda item: (parse_datetime(item["publishedAt"]), item["url"]),
+        key=lambda item: (item.get("pinned") is True, parse_datetime(item["publishedAt"]), item["url"]),
         reverse=True,
     )
 
@@ -460,6 +460,7 @@ def payload_fingerprint(payload: dict[str, Any]) -> str:
                 "category",
                 "whyItMatters",
                 "important",
+                "pinned",
             )
         }
         for item in payload.get("items", [])

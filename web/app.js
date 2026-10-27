@@ -1857,26 +1857,34 @@ function isAbortError(error) {
   return error?.name === "AbortError";
 }
 
-// Weekly plans remain the navigation baseline; only exact-date official evidence replaces them.
+// Plans provide navigation only; exact requested-date evidence replaces the entire meal.
 function prioritizeDailyDashboard(weekly, daily) {
-  const date = weekly.selected.date;
-  const records = daily?.records || {};
-  const record = records[date] || (daily?.selectedDate === date ? daily.record : null);
+  const date = weekly.requestedDate || weekly.selected.date;
+  const withoutWeekly = (record) => {
+    if (!record) return record;
+    const { schoolMenu, ...official } = record;
+    return official;
+  };
+  const records = Object.fromEntries(Object.entries(daily?.records || {}).map(
+    ([date, record]) => [date, withoutWeekly(record)],
+  ));
+  const record = records[date] || (daily?.selectedDate === date ? withoutWeekly(daily.record) : null);
   const valid = Number(daily?.school?.fatraceSchoolId) === DEFAULT_SCHOOL_ID
     && record?.mealDate === date && ["available", "no_meal"].includes(record.status);
   const plan = { ...weekly, dataPriority: "weekly_planned", dailyRecords: records };
   if (!valid) return plan;
-  return { ...daily, requestedDate: weekly.requestedDate, selectedDate: date,
-    record, records, isMissing: false, isFallback: weekly.isFallback,
+  return { ...daily, requestedDate: date, selectedDate: date,
+    record, records, isMissing: false, isFallback: false,
     mealType: weekly.mealType, mealTypeLabel: weekly.mealTypeLabel,
-    weeklyDashboard: plan, dataPriority: "official_daily",
+    weeklyDashboard: weekly.selected.date === date ? plan : null,
+    dataPriority: "official_daily",
     sourceUrl: record.source?.url || daily.sourceUrl };
 }
 
 async function fetchWeeklyDashboard(date, { mealType, preferLatest, signal }) {
   const data = await publicSiteData(signal);
   const weekly = dashboardFromStatic(data, date, mealType, preferLatest);
-  const selectedDate = weekly.selected.date;
+  const selectedDate = date;
   const snapshot = officialDashboardFromStatic(data, selectedDate, DEFAULT_SCHOOL_ID, mealType);
   const cached = state.schoolDashboardCache.get(String(DEFAULT_SCHOOL_ID));
   if (cached && Date.now() - cached.fetchedAt < 60000) {
@@ -2001,7 +2009,7 @@ async function loadNewsPreview() {
   try {
     const payload = await fetchNews();
     const items = Array.isArray(payload.items)
-      ? [...payload.items].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 2)
+      ? [...payload.items].sort((a, b) => Number(b.pinned === true) - Number(a.pinned === true) || Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 2)
       : [];
     refs.latestNews.replaceChildren(...items.map(newsCard));
     if (!items.length) {
@@ -3350,6 +3358,12 @@ function renderOfficial(dashboard) {
     : null;
   renderOfficialMeal(dashboard);
   if (nutritionSnapshots.length) renderOfficialNutrition(nutritionSnapshots);
+  else {
+    refs.nutritionBars.replaceChildren();
+    refs.calories.textContent = "未提供";
+    refs.calorieUnit.textContent = "";
+    refs.nutritionSourceNote.textContent = "官方當日紀錄未提供營養分析，不沿用週菜單設計值。";
+  }
   if (dinnerSuggestion) renderDinner(dinnerSuggestion);
   renderPassportFoodChoices();
   renderOfficialTraceability(dashboard);

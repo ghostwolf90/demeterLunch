@@ -10,7 +10,7 @@ function setup() {
   const record = { mealDate: '2026-10-22', status: 'available', meals: [{ dishes: [{ name: '實際午餐' }] }] };
   const snapshot = { school: { fatraceSchoolId: 193609 }, records: {}, selectedDate: '2026-10-22', viewMode: 'officialDaily' };
   const ctx = vm.createContext({ DEFAULT_SCHOOL_ID: 193609, state: { schoolDashboardCache: new Map() }, Date: { now: () => now }, encodeURIComponent, console,
-    publicSiteData: async () => data, dashboardFromStatic: (_, date, mealType) => ({ ...weekly, mealType, selected: { date } }),
+    publicSiteData: async () => data, dashboardFromStatic: (_, date, mealType) => ({ ...weekly, requestedDate: date, mealType, selected: { date } }),
     officialDashboardFromStatic: () => snapshot, isAbortError: e => e.name === 'AbortError',
     fetch: async () => { calls++; return { ok: true, headers: new Headers({ 'content-type': 'application/json' }), json: async () => ({ ...snapshot, records: { '2026-10-22': record } }) }; },
   });
@@ -39,4 +39,40 @@ test('date changes reuse the whole official catalog, including missing days, unt
   assert.equal((await ctx.fetchWeeklyDashboard('2026-10-23', opts)).dataPriority, 'weekly_planned');
   assert.equal(calls(), 1);
   advance(); await ctx.fetchWeeklyDashboard('2026-10-22', opts); assert.equal(calls(), 2);
+});
+
+test('requested-day actual record wins even when the weekly plan falls back to an older date', () => {
+  const { ctx, snapshot, record } = setup();
+  const oldPlan = { ...weekly, requestedDate: '2026-10-27', selected: { date: '2026-10-23' }, isFallback: true };
+  const actual = { ...record, mealDate: '2026-10-27', meals: [{ dishes: [{ name: '蒜香奶油雞翅' }] }],
+    schoolMenu: { dishes: [{ name: '咖哩骰子豬' }], nutritionSnapshots: [{ nutrition: { caloriesKcal: 697 } }] } };
+  const result = ctx.prioritizeDailyDashboard(oldPlan, { ...snapshot, records: { '2026-10-27': actual } });
+  assert.equal(result.selectedDate, '2026-10-27');
+  assert.equal(result.dataPriority, 'official_daily');
+  assert.equal(result.isFallback, false);
+  assert.equal(result.weeklyDashboard, null);
+  assert.equal(result.record.meals[0].dishes[0].name, '蒜香奶油雞翅');
+  assert.equal(result.record.schoolMenu, undefined);
+  assert.equal(result.records['2026-10-27'].schoolMenu, undefined);
+  assert.ok(actual.schoolMenu, 'source record is preserved');
+});
+
+test('an older official record must not be treated as the requested-day meal', () => {
+  const { ctx, snapshot, record } = setup();
+  const oldPlan = { ...weekly, requestedDate: '2026-10-27', isFallback: true };
+  const result = ctx.prioritizeDailyDashboard(oldPlan, { ...snapshot, records: { '2026-10-22': record } });
+  assert.equal(result.dataPriority, 'weekly_planned');
+});
+
+test('live lookup asks for the requested date rather than the weekly fallback date', async () => {
+  const { ctx, snapshot, record } = setup();
+  ctx.dashboardFromStatic = (_, date, mealType) => ({ ...weekly, requestedDate: date, selected: { date: '2026-10-23' }, mealType, isFallback: true });
+  let requested;
+  ctx.fetch = async url => { requested = url; return { ok: true,
+    headers: new Headers({ 'content-type': 'application/json' }),
+    json: async () => ({ ...snapshot, records: { '2026-10-27': { ...record, mealDate: '2026-10-27' } } }) }; };
+  const result = await ctx.fetchWeeklyDashboard('2026-10-27', { mealType: 'meat' });
+  assert.match(requested, /date=2026-10-27/);
+  assert.equal(result.selectedDate, '2026-10-27');
+  assert.equal(result.dataPriority, 'official_daily');
 });

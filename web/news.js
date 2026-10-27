@@ -125,9 +125,9 @@ async function loadNews() {
     if (!response?.ok) response = await fetch("/data/news.json", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const payload = await response.json();
-    state.items = Array.isArray(payload.items) ? [...payload.items].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)) : [];
+    state.items = Array.isArray(payload.items) ? [...payload.items].sort((a, b) => Number(b.pinned === true) - Number(a.pinned === true) || Date.parse(b.publishedAt) - Date.parse(a.publishedAt)) : [];
     populateMonths();
-    refs.newsRange.textContent = `共保留 ${state.items.length} 則消息，依原始發布日期排列。`;
+    refs.newsRange.textContent = `共保留 ${state.items.length} 則消息，置頂消息優先，其餘依原始發布日期排列。`;
     refs.sourcePolicy.textContent = payload.sourcePolicy || refs.sourcePolicy.textContent;
     setNewsStatus("ready", `更新於 ${formatDate(payload.generatedAt)}`);
     render();

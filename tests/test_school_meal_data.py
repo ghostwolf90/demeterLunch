@@ -81,7 +81,28 @@ class ReviewedSchoolMealTests(unittest.TestCase):
                 for result in report["results"]
                 if result["recordStatus"] in {"available", "no_meal"}
             }
-            self.assertEqual(actual_ids, publishable_ids)
+            # A later failed fetch must not invalidate an earlier complete,
+            # verified same-day candidate that the district publisher preserved.
+            for record in daily_records:
+                school_id = record["school"]["fatraceSchoolId"]
+                if school_id in publishable_ids:
+                    continue
+                candidate_path = report_path.parent / str(school_id) / "candidate.json"
+                if candidate_path.is_file():
+                    candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+                    verified = promote_candidate(
+                        candidate,
+                        reviewed_at=record["review"]["reviewedAt"],
+                        reviewed_by="preserved-candidate-test",
+                    )
+                    self.assertEqual(verified["contentHash"], record["contentHash"])
+                    self.assertEqual(verified["mealDate"], meal_date)
+                    self.assertEqual(verified["school"]["fatraceSchoolId"], school_id)
+                    publishable_ids.add(school_id)
+            # A full-city fetch report can precede per-district review/publication.
+            # Every reviewed school must be eligible, but other candidates may
+            # legitimately still be waiting for review.
+            self.assertTrue(actual_ids.issubset(publishable_ids))
         for record in records:
             school_id = record["school"]["fatraceSchoolId"]
             meal_date = record["mealDate"]

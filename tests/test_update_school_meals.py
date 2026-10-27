@@ -78,60 +78,29 @@ class UpdateSchoolMealsTests(unittest.TestCase):
         self.assertIn("--refresh-all", fetch)
         self.assertNotIn("--resume", fetch)
 
-    def test_citywide_wrapper_enables_full_build_by_default(self) -> None:
-        with patch.object(
-            update_all_taichung_schools,
-            "update_school_meals",
-            return_value=0,
-        ) as update:
-            status = update_all_taichung_schools.main(
-                ["--date", "2026-10-12", "--skip-ingredients"]
-            )
-
+    def test_citywide_wrapper_preserves_local_only_without_publish(self) -> None:
+        with patch.object(update_all_taichung_schools, "update_by_district", return_value=0) as update:
+            status = update_all_taichung_schools.main(["--date", "2026-10-12", "--skip-ingredients"])
         self.assertEqual(status, 0)
-        self.assertEqual(
-            update.call_args.args[0],
-            [
-                "--all-schools",
-                "--verify-and-build",
-                "--resume",
-                "--date",
-                "2026-10-12",
-                "--skip-ingredients",
-            ],
-        )
+        update.assert_called_once_with(["--date", "2026-10-12", "--skip-ingredients", "--no-publish"])
 
-    def test_citywide_wrapper_can_publish_after_success(self) -> None:
-        with patch.object(
-            update_all_taichung_schools,
-            "update_school_meals",
-            return_value=0,
-        ), patch.object(
-            update_all_taichung_schools,
-            "publish_school_meals",
-            return_value=0,
-        ) as publish:
-            status = update_all_taichung_schools.main(
-                ["--date", "2026-10-13", "--publish"]
-            )
-
-        self.assertEqual(status, 0)
-        publish.assert_called_once_with(["--date", "2026-10-13"])
+    def test_citywide_wrapper_uses_partial_publication_pipeline(self) -> None:
+        with patch.object(update_all_taichung_schools, "update_by_district", return_value=1) as update:
+            status = update_all_taichung_schools.main(["--date", "2026-10-13", "--publish", "--resume", "--verify-and-build"])
+        self.assertEqual(status, 1)  # Remaining failed schools do not hide partial publication status.
+        update.assert_called_once_with(["--date", "2026-10-13"])
 
     def test_citywide_wrapper_can_ignore_progress_and_refresh_every_school(self) -> None:
-        with patch.object(
-            update_all_taichung_schools,
-            "update_school_meals",
-            return_value=0,
-        ) as update:
-            status = update_all_taichung_schools.main(
-                ["--date", "2026-10-13", "--refresh-all"]
-            )
-
+        with patch.object(update_all_taichung_schools, "update_by_district", return_value=0) as update:
+            status = update_all_taichung_schools.main(["--date", "2026-10-13", "--refresh-all", "--publish"])
         self.assertEqual(status, 0)
-        forwarded = update.call_args.args[0]
-        self.assertIn("--refresh-all", forwarded)
-        self.assertNotIn("--resume", forwarded)
+        update.assert_called_once_with(["--date", "2026-10-13", "--refresh-all"])
+
+    def test_citywide_wrapper_rejects_conflicting_modes(self) -> None:
+        with patch.object(update_all_taichung_schools, "update_by_district") as update:
+            self.assertEqual(update_all_taichung_schools.main(["--resume", "--refresh-all"]), 1)
+            self.assertEqual(update_all_taichung_schools.main(["--publish", "--no-publish"]), 1)
+        update.assert_not_called()
 
 
 if __name__ == "__main__":

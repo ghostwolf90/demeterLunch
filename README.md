@@ -240,6 +240,8 @@ data/raw/fatrace-daily/YYYY-MM-DD/report.json
 
 ### 每日操作流程
 
+同一學校、同一供餐日期取得有效官方實際供餐紀錄後，公開餐盤與週瀏覽的該日菜色以官方當日資料為準，整筆取代原先預定內容，不把舊菜色或週菜單的食材用量、營養設計值與新菜單混用。忠信國小即使尚無所選日期的週菜單，也會先查詢該日期的官方紀錄，不改查週菜單的回退日期。官方未公布、抓取失敗、其他日期或別校紀錄都不能取代有效資料。週菜單原始檔保留作為來源紀錄，不改寫孩子既有的食物相遇紀錄。
+
 單校、多校與全市資料都會經過「抓取 → 校讀 → 發布」。發布器會依當次 `report.json` 的學校數量建立批次，可以是 1 校、數校或全市 243 校；批次內不能有抓取失敗，且 `available` 或 `no_meal` 必須有對應的 reviewed JSON。部分批次只會 upsert 該批次的學校紀錄，不會刪除或覆蓋其他學校的資料。
 
 #### 單校／多校：手動分步發布（選用）
@@ -314,39 +316,23 @@ data/monitor/district-updates/YYYY-MM-DD/with-ingredients.json
 data/monitor/district-updates/YYYY-MM-DD/dishes-only.json
 ```
 
-兩種食材模式分開記進度，切換模式會重新收集。這個新入口不會匯入舊入口的 `report.json` 進度，因此首次執行會重新檢查所選範圍；之後沿用自己的進度。原始資料仍存於 `data/raw/fatrace-daily/`，驗證通過的 JSON 存於 `data/parsed/schools/fatrace/`，不改寫舊入口的 `report.json`。請勿與舊入口或其他會更新相同日期資料的程序同時執行；新入口本身會阻止同時啟動多份。
+兩種食材模式分開記進度，切換模式會重新收集。逐區引擎不會自動匯入舊版整批流程的 `report.json` 進度，因此尚無逐區進度的日期首次執行會重新檢查所選範圍；之後兩個全市入口共用逐區進度。原始資料仍存於 `data/raw/fatrace-daily/`，驗證通過的 JSON 存於 `data/parsed/schools/fatrace/`，不改寫舊入口的 `report.json`。兩個全市入口共用執行鎖，會阻止同時啟動；也請勿同時執行其他會更新相同日期資料的抓取程序。
 
 全程處理結束後，有有效資料時會自動重建本機 SQLite、檢查 JavaScript 語法及重建 `dist/`；不逐區重建整站、不部署網站程式版本。這裡的每區「驗證」是實際發布資料的來源與結構驗證，並非每區重跑整套開發測試。按 Ctrl+C 會保存進度並顯示全程總結，下次重跑會接續並在完成後重建本機資料。
 
 結束碼：`0` 表示所選範圍完成（`--no-publish` 時只代表本機資料完成）；`1` 表示抓取／驗證、發布或本機重建失敗；`2` 表示仍有官方未公布或未檢查學校；`130` 表示使用者中斷。若同時有失敗與尚未公布，以 `1` 回報。
 
-#### 全市整批更新與發布（原有入口）
+#### 舊全市指令（相容入口）
 
-完成一次手動發布憑證設定後，平常只需執行下列單一指令。日期預設為臺北時區當天，會接續抓取全市 243 校，自動完成校讀、SQLite 重建、測試、JavaScript 檢查、靜態建置及午餐資料發布：
-
-```bash
-python3 scripts/update_all_taichung_schools.py --publish
-```
-
-需要處理指定供餐日期時：
+`update_all_taichung_schools.py` 現在也會轉用同一套逐區流程，不再因少數學校失敗而擋住全部成功資料。保留舊指令的發布選擇：**加 `--publish` 才上傳**，省略則只下載、驗證及重建本機資料。
 
 ```bash
 python3 scripts/update_all_taichung_schools.py --date 2026-10-27 --publish
 ```
 
-**上述指令已包含發布，不必再執行 `publish_school_meals.py --dry-run` 或 `publish_school_meals.py`。** 抓取中斷或失敗後，重跑相同指令即可接續；全部檢查成功後才會發布。
+它與 `update_school_meals_by_district.py --date 2026-10-27` 共用進度檔。每區成功資料先發布，失敗學校不阻擋其他學校；相同日期與食材模式重跑只補抓失敗、未公布或尚未檢查的學校，抓好但上傳失敗的直接補傳。已發布且內容未變的不重傳。`--resume` 與 `--verify-and-build` 舊參數仍可使用，逐區流程預設已包含接續與本機重建。
 
-只有在先前未加 `--publish`、已完成本機抓取／校讀／建置，而且現在只想發布既有結果時，才需要獨立發布指令：
-
-```bash
-# 選用：只驗證發布包，不會發布
-python3 scripts/publish_school_meals.py --date 2026-10-27 --dry-run
-
-# 發布該日期已校讀的既有資料
-python3 scripts/publish_school_meals.py --date 2026-10-27
-```
-
-`--dry-run` 是選用檢查，不是必要步驟。正式發布成功時會顯示 `"status": "published"`；重複發布相同內容時為冪等操作，記錄會顯示為 `unchanged`。
+一般不必另跑 `publish_school_meals.py`。獨立發布器仍是嚴格的整批入口，若直接對含失敗學校的舊 `report.json` 發布，仍會拒絕；日常更新請使用上述相容入口或新的逐區入口。
 
 > 注意：`fetch_school_meals.py` 每次執行都會以該次的抓取範圍重建當日 `report.json`。發布器只會發布當前報告所列的學校；既有其他學校紀錄不會被刪除。
 
@@ -376,43 +362,22 @@ python3 scripts/update_all_taichung_schools.py
 
 ### 全市更新參數與接續進度
 
-`update_all_taichung_schools.py` 會自動指定全市範圍與 `--verify-and-build`，日期預設為臺北時區當天。不加 `--publish` 時只更新本機資料與 `dist/`；加上後才會在收集、校讀及所有檢查成功後發布午餐資料。
-
-```bash
-# 更新臺北時區今天的全市資料，完成後發布
-python3 scripts/update_all_taichung_schools.py --publish
-
-# 指定供餐日期，只更新本機
-python3 scripts/update_all_taichung_schools.py --date 2026-10-27
-
-# 中斷或失敗後，重跑相同日期即可接續
-python3 scripts/update_all_taichung_schools.py --date 2026-10-27 --publish
-
-# 重新查詢全部學校，包含同日已完成的學校
-python3 scripts/update_all_taichung_schools.py --date 2026-10-27 --refresh-all
-
-# 只收集菜色，不逐道查詢食材
-python3 scripts/update_all_taichung_schools.py --date 2026-10-27 --skip-ingredients
-```
+兩個全市入口使用相同逐區引擎、相同逐校抓取／發布進度與中文總結。日期預設為臺北時區當天。新入口 `update_school_meals_by_district.py` 預設發布；相容入口 `update_all_taichung_schools.py` 則維持加上 `--publish` 才發布。
 
 | 參數 | 說明 |
 | --- | --- |
-| `--date YYYY-MM-DD` | 指定供餐日期；省略時使用臺北時區當天。 |
-| `--resume` | 接續同日進度，為此入口的預設模式，不必另外加上。 |
-| `--refresh-all` | 忽略既有完成進度，重新檢查全市；不能與 `--resume` 同時使用。 |
-| `--skip-ingredients` | 只抓菜色；省略時逐道查詢食材。 |
-| `--publish` | 本機流程全部成功後，透過已設定的發布憑證更新公開午餐資料。 |
-| `--timeout`、`--interval`、`--retries` | 連線逾時秒數、請求間隔秒數與重試次數，預設分別為 `20`、`1.2`、`2`。 |
+| `--date YYYY-MM-DD` | 指定供餐日期。 |
+| `--refresh-all` | 重新檢查所選學校；內容相同不重傳。 |
+| `--skip-ingredients` | 只抓菜色，與完整食材模式分開記進度。 |
+| `--district 行政區` | 只處理指定區，可重複使用。 |
+| `--no-publish` | 只處理本機資料。 |
+| `--timeout`、`--interval`、`--retries` | 預設為 `20` 秒、`1.2` 秒、`2` 次重試。 |
 
-預設續抓會沿用同日期、同食材收集模式的有效進度，保留已完成的 `available` 與 `no_meal` 紀錄，依序補抓 `failed`、`not_published` 與尚未檢查的學校。若候選檔案遺失或狀態不符，也會重新抓取；切換 `--skip-ingredients` 模式時不沿用另一模式的進度。若要確認已完成學校後續是否有官方修正，請使用 `--refresh-all`。
+相容入口另接受 `--publish`、`--resume`、`--verify-and-build`；後兩者為相容參數，預設就會接續進度並在全程結束後重建本機 SQLite 與 `dist/`。`--resume` 不得與 `--refresh-all` 同用，`--publish` 不得與 `--no-publish` 同用。兩個入口均不使用 `--retry-failed`，直接重跑相同日期即可補抓。
 
-進度會寫入 `data/raw/fatrace-daily/YYYY-MM-DD/report.json`，包含每校狀態、嘗試次數、未發布學校清單，以及本次檢查與沿用完成的校數。執行中會逐校保存；中斷後以相同日期及模式重跑即可，無須刪除報告。每次執行也會記錄開始、完成時間、總秒數與本次每校平均秒數，並在終端顯示耗時摘要。完整模式會逐道查詢食材，請保持網路連線並避免電腦休眠。
+本機已完成的 10/27 資料已經過驗證並匯入逐區進度，之後使用任一入口都會沿用；其他尚未建立逐區進度的日期，首次使用仍會重新檢查。
 
-任一學校抓取失敗時會以非零狀態結束，不會繼續校讀、建置或發布。若官方尚未發布任何完整紀錄，會保留既有 reviewed JSON、SQLite 與 `dist/` 並以狀態碼 `2` 結束；`not_published` 不會晉升為公開菜單，下次續抓會再次檢查。報告仍保留全市範圍，不會縮成這次補抓的學校。
-
-此入口不支援 `--retry-failed`；一般補抓請直接重跑相同指令，預設續抓也會重新檢查未發布及尚未檢查的學校。
-
-正式發布會先核對當次報告必須為零失敗、reviewed JSON 數量、學校代碼、日期、來源網址與內容雜湊，再以本機 `.secrets/site_publish_token` 的私密憑證透過 HTTPS 寫入 Site 的 D1 與 R2。憑證目錄已被 Git 忽略，指令不會顯示或上傳憑證內容。
+每區發布僅包含成功通過驗證且待上傳的學校，會核對該批 reviewed JSON 數量、學校代碼、日期、來源網址與內容雜湊，再以本機 `.secrets/site_publish_token` 的私密憑證透過 HTTPS 寫入 Site 的 D1 與 R2。憑證目錄已被 Git 忽略，指令不會顯示或上傳憑證內容。
 
 `prepare_site_publish.py` 保留給需要更新網站程式碼的 Sites 版本部署；日常午餐資料發佈不再需要 Sites Git 短效憑證或 Codex。
 
