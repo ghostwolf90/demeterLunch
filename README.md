@@ -1,544 +1,286 @@
-# 忠信國小營養午餐資料收集系統
+# 好好吃飯｜孩子午餐，晚餐靈感
 
-這是一個供個人家庭用途使用的資料整理工具。它會從[忠信國小午餐網](https://zxes.blogspot.com/)取得每週菜單文章，保存原始圖片，再將校讀後的每日菜單與營養資料整理成 SQLite，供本機午餐助手使用。
+本文件說明每日學校午餐的下載、驗證、逐區發布與失敗續跑。公開網站：[好好吃飯](https://haohaofood.cc)。
 
-目前範圍從 2026-09-01 起。跨越此日期的 `0831-0904` 第 1 週也會納入。
+目前預設處理臺中市 29 個行政區、243 所學校，來源為教育部校園食材登錄平臺的同日公開供餐紀錄。
 
-## 功能
+## 1. 日常使用：選一個入口即可
 
-- Blogger Atom feed 優先，HTML crawler fallback
-- 解析學年度、學期、週次及日期區間
-- 正確處理跨月、跨年與第二學期年份
-- 將 Blogger 縮圖網址正規化成 `s0` 原始尺寸
-- 驗證下載內容確實為圖片，記錄大小、尺寸及 SHA-256
-- 以 Blogger post ID 和 `updatedAt` 避免重複下載
-- 更新時先完整寫入 staging directory，再替換既有資料
-- 單篇失敗不會中止整批匯入
-- 6 週、27 個供餐日的葷食與素食菜單已轉成 54 組可查詢的每日菜單與營養資料
-- 葷、素食譜用量明細表已逐格校讀成 312 道菜、900 筆食材與設計用量
-- 可在網站切換葷食／素食，並分別開啟該餐別的食譜用量明細原圖
-- 將校園食材平臺資料整理成菜色、食材、製造／生產者、產地、供應商、認證與經營者溯源關聯
-- 每道菜可展開查看食材、設計用量與原表色塊宣稱；原表宣稱不會冒充官方認證
-- 食材溯源只以同日官方資料代表該餐紀錄；當月資料尚未發布時，明確標示官方資料待更新
-- 缺少同日資料時，只將菜名或明細食材可明確匹配的舊資料列為「歷史食材紀錄／過往供餐參考」，並顯示實際供餐日期與來源，不將其冒充為今日食材、產地、供應商或批次
-- 今日餐盤、整週瀏覽與跨週營養趨勢
-- 依國小 1–3／4–6 年級及官方目標值／階段值，判讀週間平均供應情形
-- 不以單一百分比評分；缺少乳品、鈉、鈣等原始數值時明確標示資料不足
-- 依午餐蛋白質、蔬菜、水果與烹調方式產生晚餐搭配靈感
-- 每日食育小卡，以食材觀察與親子對話延伸午餐內容
-- 依當日菜色提供家庭靈感版料理，明確區分於校方原始配方
-- 定期偵測 Blogger 新文章與既有菜單更新
-- 每日彙整近 30 天校園午餐政策、食安、供應與食育消息
-- 新聞以官方與可信媒體 RSS 為來源，自動篩選、去重並保留原文連結
-- 每筆資料可回到校方文章及原始菜單圖片核對
-
-## 環境需求
-
-- Python 3.10 以上
-- 不需要第三方 Python 套件
-
-## 執行歷史匯入
-
-從 2026 年 9 月開始匯入目前所有菜單：
+請在專案根目錄執行。以下兩行的結果相同，**擇一執行，不必先後各跑一次**：
 
 ```bash
-python3 scripts/import_history.py
-```
-
-可調整日期、連線間隔或資料位置：
-
-```bash
-python3 scripts/import_history.py \
-  --since 2026-09-01 \
-  --interval 1.0 \
-  --data-dir data/raw
-```
-
-## 取得最新菜單
-
-```bash
-python3 scripts/fetch_latest.py
-```
-
-若文章與圖片都已存在且 `updatedAt` 未改變，執行結果會是 `skipped`。
-
-只檢查 Blogger 是否出現新文章或原圖更新：
-
-```bash
-python3 scripts/check_for_updates.py
-```
-
-偵測到變化時一併保存原始圖片：
-
-```bash
-python3 scripts/check_for_updates.py --download
-```
-
-檢查狀態會以原子方式寫入 `data/monitor/state.json`。第一次執行只建立比較基準，不會把既有文章誤報為新菜單；之後會回報 `new`、`updated` 或 `unchanged`。
-
-## 網站自動檢查流程
-
-公開網站連結的排程每天讀取相同 Site 原始碼，並依下列步驟執行：
-
-1. 從網站原始碼取得本專案，執行 `python3 scripts/check_for_updates.py --download`。
-2. Atom feed 是主要來源；只有 Atom 無法使用時才回退到 Blogger HTML。
-3. `initialized` 或 `unchanged` 時保持安靜，不更新公開菜單。
-4. `new` 或 `updated` 時保存 `data/monitor/state.json` 與完整原始圖片，通知使用者文章標題、日期區間和變更類型。
-5. 新資料只停留在原始資料層；不得自動修改 `data/parsed/`、營養數字、過敏原或公開頁面，也不得把未校讀內容部署到網站。
-6. 暫時性網路錯誤可重試一次；仍失敗時保留上一個有效狀態並通知使用者，不得以空資料覆蓋既有內容。
-
-這個流程需要 Blogger 的公開讀取權限，以及同一個 Site 原始碼的讀寫權限；不使用個人帳號、Cookie 或其他憑證。
-
-## 午餐觀察自動更新
-
-手動檢查一次近期消息：
-
-```bash
-python3 scripts/check_news_updates.py
-```
-
-預設會讀取臺中市政府市政新聞、教育部即時新聞，以及中央通訊社政治、生活與地方 RSS。臺中市政府來源優先使用 RSS；只有 RSS 無法讀取或沒有有效條目時，才會改讀 `https://www.taichung.gov.tw/9962/Lpsimplelist` 的市政新聞列表。只收錄近 30 天且標題明確涉及學校午餐、營養午餐、供餐、團膳或食農教育的消息，最多保留 20 則。
-
-更新結果寫入：
-
-```text
-data/news/news.json
-data/news/state.json
-```
-
-`news.json` 是網站使用的有效資料；`state.json` 記錄最近檢查結果。來源暫時失敗時會保留上一份有效資料，不會用空內容覆蓋。每則只保存標題、日期、來源、原文網址、分類與本站規則式關聯說明，不轉載全文或新聞圖片。
-
-公開網站的新聞排程應依下列步驟執行：
-
-1. 取得同一個 Site 的最新原始碼，執行 `python3 scripts/check_news_updates.py`。
-2. `status` 為 `unchanged` 時保持安靜，不建立新版本。
-3. `status` 為 `updated` 時執行 `python3 scripts/build_static_site.py`、完整測試與 JavaScript 語法檢查，再發佈同一個 Site 的新版本。
-4. 一般新增消息不通知；只有臺中本地食安／供餐重大消息、更新失敗或需要人工處理時才通知使用者。
-5. 任一來源失敗時不得刪除舊消息；所有來源都無法讀取時，保留上一份有效 `news.json` 並回報失敗。
-
-此流程只讀取公開 RSS 與臺中市政府公開新聞列表，不需要個人帳號、Cookie 或新聞網站登入資訊。
-
-## 開啟本機網站
-
-要預覽免費登入、一口護照營養午餐紀錄與本機 D1 私人資料，請使用 Node.js 22.13 以上：
-
-```bash
-EMAIL_AUTH_SECRET=local-preview-secret \
-EMAIL_AUTH_DEV_CODE=123456 \
-npm run dev
-```
-
-第一次啟動會自動套用 `drizzle/` 內尚未執行的本機 D1 遷移，然後在
-`http://127.0.0.1:5173/` 開啟網站。本機用任意有效 Email、成年生日及照顧者
-聲明註冊，再輸入上述 `EMAIL_AUTH_DEV_CODE` 即可完成測試；只有 loopback 網址
-可以使用這組本機驗證碼，不會寄信或建立外部帳號。完整生日只用來即時計算
-是否已滿 18 歲，不會寫入資料庫；孩子資料與
-營養午餐與其他場合的食物紀錄保存在 `.wrangler/state/` 的本機 D1，不寫入瀏覽器儲存空間。
-孩子的午餐紀錄會綁定一所就讀國小；網站上方仍可自由查看其他學校的公開午餐，但
-不會因此變更孩子的學校，也不會把別校菜色帶進孩子的紀錄。孩子資料編輯畫面
-可隨時取消返回。首頁只顯示最近五筆午餐紀錄，超過五筆時可進入完整紀錄頁，
-依供餐日期與月份回看每天的食物經驗。同一天的多筆食物會集中呈現，也可展開
-查看所屬學校、日期與餐別的完整同日菜單；沒有同日紀錄時不會拿其他日期代替。
-新增紀錄會分開保存孩子這次接觸到哪一步、可複選的感受、孩子原話與家長筆記，
-不把感受混成單一分數。
-新增紀錄時會先保存來源菜色，再保存孩子提到的食物（例如「扣肉」來自
-「梅干扣肉」）；家裡或其他場合遇到的食物可另外標示。舊紀錄若未保存來源
-菜色，畫面會如實標示為「舊紀錄未記錄菜色來源」，不會依名稱猜測。
-
-若要測試 MAAC Go Email API，不要設定 `EMAIL_AUTH_DEV_CODE`，改用測試金鑰：
-
-```bash
-EMAIL_AUTH_SECRET=local-preview-secret \
-MAACGO_AUTH='Bearer sk_test_完整測試金鑰' \
-npm run dev
-```
-
-`sk_test_` 只會在 MAAC Go 留下寄送紀錄，不會把驗證碼送到真實信箱，也不會
-產生費用。正式寄送時改用 `sk_live_`；金鑰只放在本機環境或 Sites secret，
-不得提交到 Git。
-
-原有的純公開資料預覽仍可使用下列方式：
-
-macOS 可以直接雙擊專案根目錄的 `啟動午餐網站.command`。它會建立資料庫、啟動本機伺服器並開啟正確網址。
-
-請不要直接以 `file:///.../web/index.html` 開啟網頁檔案；網站需要由本機伺服器提供 API。若誤開 `index.html`，頁面會自動轉到 `http://127.0.0.1:8000/`。
-
-校讀後的 JSON 有更新時，先重建 SQLite：
-
-```bash
-python3 scripts/build_database.py
-```
-
-## 每月校園食材 OpenAPI 更新
-
-`scripts/update_traceability.py` 會先以 `POST /opendatadataset/` 查詢指定月份的臺中市資料集清單（回應同時包含符合條件的全國資料集），再以 `POST /opendatadownload/` 取得臺中市國中小與全國 CSV 的官方下載連結。預設抓取執行日的上一個月，保存完整原始 CSV 與 SHA-256 manifest，並只把「臺中市西區忠信國小」且已有校讀菜單的同日資料轉成 reviewed `traceability-YYYY-MM.json`。既有同日人工校讀紀錄優先，不會被較少欄位的月資料覆蓋。
-
-access code 不得寫入程式碼或提交 Git。可設為 `FATRACE_ACCESS_CODE` 環境變數，或存入已由 Git 忽略的 `.secrets/fatrace_access_code`，並把檔案權限限制為只有目前使用者可讀：
-
-```bash
-mkdir -p .secrets
-chmod 700 .secrets
-read -s FATRACE_CODE
-printf '%s' "$FATRACE_CODE" > .secrets/fatrace_access_code
-unset FATRACE_CODE
-chmod 600 .secrets/fatrace_access_code
-```
-
-每月 6 日執行：
-
-```bash
-python3 scripts/update_traceability.py --verify-and-build
-```
-
-成功且有新追溯資料時，指令會重建 SQLite、執行完整單元測試、檢查 `web/app.js`，再重建 `dist/`。若當月官方資料尚未發布，指令會以狀態 `pending` 結束，不會覆蓋原有 CSV、JSON、SQLite 或靜態網站。所有請求都有逾時、描述性 User-Agent、有限次重試與請求間隔。
-
-接著啟動網站：
-
-```bash
-python3 scripts/serve.py
-```
-
-接著用瀏覽器開啟：
-
-```text
-http://127.0.0.1:8000
-```
-
-macOS 可直接雙擊專案根目錄的 `啟動資料後台.command`。也可以確認每月 OpenAPI 排程、下載檔案、reviewed JSON、SQLite 與靜態網站的本機狀態：
-
-```text
-http://127.0.0.1:8000/admin/
-```
-
-後台只允許 loopback 用戶端存取，不顯示 access code，也不會被 `build_static_site.py` 複製到公開的 `dist/`。
-
-後台的「下載並整合」按鈕可手動執行與每月排程相同的本機流程。按下後會要求確認，再依序下載、驗證、整合、重建 SQLite、執行測試並重建 `dist/`；執行期間不可重複啟動。若官方資料尚未發布或更新失敗，既有有效資料會保留。公開 Site 的部署需要短效雲端憑證，因此不由本機網頁保存或直接執行；後台可複製一段發布請求，交由 Codex 讀取線上最新 Site 原始碼後安全發布。
-
-## 多校每日公開紀錄
-
-`scripts/fetch_school_meals.py` 會依 `data/reference/taichung-active-elementary-schools.json` 的教育部查詢代碼，從校園食材登錄平臺公開頁面使用的唯讀接口，依序收集臺中市 29 個行政區、243 所國小的當日或歷史實際供餐紀錄：
-
-```bash
-python3 scripts/fetch_school_meals.py --date 2026-10-08 --district 西區
-```
-
-只測試單一學校：
-
-```bash
-python3 scripts/fetch_school_meals.py --date 2026-10-08 --school 忠信國小
-```
-
-每校資料以完整目錄原子替換，保存於：
-
-```text
-data/raw/fatrace-daily/YYYY-MM-DD/<fatraceSchoolId>/raw.json.gz
-data/raw/fatrace-daily/YYYY-MM-DD/<fatraceSchoolId>/candidate.json
-data/raw/fatrace-daily/YYYY-MM-DD/report.json
-```
-
-`raw.json.gz` 無損壓縮保存官方接口的完整回應（舊的 `raw.json` 仍可讀取）；`candidate.json` 是統一格式的待校讀候選資料。候選資料固定標示 `review.status: pending`，不會自動進入 reviewed `data/parsed/`、SQLite 或公開網站。若官方明確回傳不供餐設定，狀態為 `no_meal`；空菜單且沒有官方原因則標示 `not_published`，不可解讀為今日沒有供餐。既有 `available` 或 `no_meal` 紀錄不會被後續空回應覆蓋。
-
-### 每日操作流程
-
-同一學校、同一供餐日期取得有效官方實際供餐紀錄後，公開餐盤與週瀏覽的該日菜色以官方當日資料為準，整筆取代原先預定內容，不把舊菜色或週菜單的食材用量、營養設計值與新菜單混用。忠信國小即使尚無所選日期的週菜單，也會先查詢該日期的官方紀錄，不改查週菜單的回退日期。官方未公布、抓取失敗、其他日期或別校紀錄都不能取代有效資料。週菜單原始檔保留作為來源紀錄，不改寫孩子既有的食物相遇紀錄。
-
-單校、多校與全市資料都會經過「抓取 → 校讀 → 發布」。發布器會依當次 `report.json` 的學校數量建立批次，可以是 1 校、數校或全市 243 校；批次內不能有抓取失敗，且 `available` 或 `no_meal` 必須有對應的 reviewed JSON。部分批次只會 upsert 該批次的學校紀錄，不會刪除或覆蓋其他學校的資料。
-
-#### 單校／多校：手動分步發布（選用）
-
-只想直接照做：把下面三行**依序執行**即可。
-
-```bash
-python3 scripts/fetch_school_meals.py --date 2026-10-14 --school 忠信國小
-python3 scripts/review_school_meals.py --date 2026-10-14
-python3 scripts/publish_school_meals.py --date 2026-10-14
-```
-
-> 三行的日期必須相同。要處理其他日期時，把三行中的 `2026-10-14` 一起換掉。
-
-每一行在做什麼：
-
-1. **抓取**：`fetch_school_meals.py` 從官方來源下載忠信國小當日午餐，產生待校讀資料；這一步還不會發布。
-2. **校讀**：`review_school_meals.py` 檢查抓取結果，並產生可發布的 reviewed JSON；這一步也還不會發布。
-3. **發布**：`publish_school_meals.py` 將當次已校讀的資料寫入公開 Site。單校批次只更新該校，不會刪除或覆蓋其他學校的資料。
-
-想在正式發布前先檢查資料，可選擇執行：
-
-```bash
-python3 scripts/publish_school_meals.py --date 2026-10-14 --dry-run
-```
-
-`--dry-run` 只驗證發布資料，不會寫入公開 Site。正式發布成功時會顯示 `"status": "published"` 與 `"submittedSchools": 1`。
-
-若也要更新本機 SQLite 與 `dist/`，可再執行：
-
-```bash
-python3 scripts/build_database.py
-python3 -m unittest discover -s tests -v
-node --check web/app.js
-python3 scripts/build_static_site.py
-```
-
-多校流程相同；抓取時可重複使用 `--school 學校名稱`，後續校讀與發布指令不變。
-
-#### 逐區下載、驗證與發布（建議使用）
-
-希望家長不用等全市收集完，可改用這個單一入口。預設以臺北時區當天為供餐日期，依啟用名冊的行政區順序處理全市 243 校；**預設會發布**，不必加 `--publish`，也不必另跑下載、校讀或發布指令。使用既有 `.secrets/site_publish_token` 發布憑證，憑證缺少或權限不符時會在抓取前停止。
-
-```bash
+# 建議使用：預設就會發布
 python3 scripts/update_school_meals_by_district.py
+
+# 相容原有指令：必須加 --publish 才會發布
+python3 scripts/update_all_taichung_schools.py --publish
 ```
 
-每區抓完後，只將該區通過來源／日期／內容雜湊及結構驗證、尚未發布或內容有變的同日資料上傳到既有 Site。成功發布後，該區使用者即可查到資料，不必等待其他區。單校抓取或驗證失敗不阻擋同區成功學校發布，也不阻擋下一區；官方明確不供餐的紀錄可以發布，尚未公布的空菜單不發布、不覆蓋有效資料。
+未指定日期時，使用**臺北時區當天**。兩個入口共用同一套逐區流程、進度檔與執行鎖。
+
+| 使用方式 | 下載與驗證 | 每區完成後發布 | 結束後重建本機資料 |
+| --- | --- | --- | --- |
+| `update_school_meals_by_district.py` | 是 | 是 | 是 |
+| `update_school_meals_by_district.py --no-publish` | 是 | 否 | 是 |
+| `update_all_taichung_schools.py --publish` | 是 | 是 | 是 |
+| `update_all_taichung_schools.py` | 是 | 否 | 是 |
+
+本機重建會在所選範圍有有效資料時執行。這兩個入口都已整合下載、資料驗證與發布，日常操作不必另跑下載器、校讀器或獨立發布器。
+
+## 2. 執行前準備
+
+- Python 3.10 以上，下載與驗證使用標準函式庫，無須額外安裝 Python 套件。
+- Node.js 22.13 以上，用於結束時的 JavaScript 語法檢查。
+- macOS 或 Linux；目前執行鎖使用 `fcntl`，不支援直接在 Windows Python 執行。
+- 保持網路連線，長時間收集時避免電腦休眠。
+- 發布需要已設定的本機憑證 `.secrets/site_publish_token`。
+
+確認執行環境：
 
 ```bash
-# 指定日期；中斷或失敗後重跑同一行即可接續
+python3 --version
+node --version
+```
+
+發布憑證由網站既有的發布設定提供，不是自行輸入任意字串即可使用。已設定者不必重新建立。憑證檔只能讓目前使用者讀取：
+
+```bash
+chmod 700 .secrets
+chmod 600 .secrets/site_publish_token
+```
+
+憑證不得提交 Git、貼到訊息或放入公開檔案。缺少憑證、內容格式不符或權限過寬時，發布模式會在抓取前停止；只想先下載及驗證，可用 `--no-publish`。
+
+## 3. 常用指令
+
+### 更新指定日期並發布
+
+```bash
 python3 scripts/update_school_meals_by_district.py --date 2026-10-27
-
-# 只處理指定區，可重複指定多個區
-python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --district 西區 --district 北區
-
-# 只下載與驗證，不上傳；之後移除 --no-publish 可直接補傳
-python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --no-publish
-
-# 重新檢查已完成學校；內容相同不重傳
-python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --refresh-all
 ```
 
-預設逐道收集食材；`--skip-ingredients` 可只抓菜色。網路設定 `--timeout`、`--interval`、`--retries` 預設為 `20` 秒、`1.2` 秒、`2` 次重試，並沿用具描述性的 User-Agent。
-
-抓取進度與發布進度分開保存：已完成並發布的跳過；抓取／驗證失敗、官方尚未公布或尚未檢查的下次補抓；抓好但上傳失敗的直接補傳。若伺服器已收到資料但本機未收到成功回應，下次可能重傳該區待發布資料，伺服器依既有冪等機制處理。進度以每校內容雜湊判斷；重查後內容有變才再次上傳。
-
-每區與全程結束均輸出中文總結：學校總數、有菜單、官方不供餐、尚未公布、抓取／驗證失敗、尚未檢查、已發布、有效資料待發布及耗時；最後另列待處理學校。這些是所選範圍的目前累計狀態，「已發布」包含前次成功的資料，本區本次發布校數會另外顯示。
-
-```text
-data/monitor/district-updates/YYYY-MM-DD/with-ingredients.json
-data/monitor/district-updates/YYYY-MM-DD/dishes-only.json
-```
-
-兩種食材模式分開記進度，切換模式會重新收集。逐區引擎不會自動匯入舊版整批流程的 `report.json` 進度，因此尚無逐區進度的日期首次執行會重新檢查所選範圍；之後兩個全市入口共用逐區進度。原始資料仍存於 `data/raw/fatrace-daily/`，驗證通過的 JSON 存於 `data/parsed/schools/fatrace/`，不改寫舊入口的 `report.json`。兩個全市入口共用執行鎖，會阻止同時啟動；也請勿同時執行其他會更新相同日期資料的抓取程序。
-
-全程處理結束後，有有效資料時會自動重建本機 SQLite、檢查 JavaScript 語法及重建 `dist/`；不逐區重建整站、不部署網站程式版本。這裡的每區「驗證」是實際發布資料的來源與結構驗證，並非每區重跑整套開發測試。按 Ctrl+C 會保存進度並顯示全程總結，下次重跑會接續並在完成後重建本機資料。
-
-結束碼：`0` 表示所選範圍完成（`--no-publish` 時只代表本機資料完成）；`1` 表示抓取／驗證、發布或本機重建失敗；`2` 表示仍有官方未公布或未檢查學校；`130` 表示使用者中斷。若同時有失敗與尚未公布，以 `1` 回報。
-
-#### 舊全市指令（相容入口）
-
-`update_all_taichung_schools.py` 現在也會轉用同一套逐區流程，不再因少數學校失敗而擋住全部成功資料。保留舊指令的發布選擇：**加 `--publish` 才上傳**，省略則只下載、驗證及重建本機資料。
+相容入口的等效寫法：
 
 ```bash
 python3 scripts/update_all_taichung_schools.py --date 2026-10-27 --publish
 ```
 
-它與 `update_school_meals_by_district.py --date 2026-10-27` 共用進度檔。每區成功資料先發布，失敗學校不阻擋其他學校；相同日期與食材模式重跑只補抓失敗、未公布或尚未檢查的學校，抓好但上傳失敗的直接補傳。已發布且內容未變的不重傳。`--resume` 與 `--verify-and-build` 舊參數仍可使用，逐區流程預設已包含接續與本機重建。
+### 中斷、抓取失敗或發布失敗後接續
 
-一般不必另跑 `publish_school_meals.py`。獨立發布器仍是嚴格的整批入口，若直接對含失敗學校的舊 `report.json` 發布，仍會拒絕；日常更新請使用上述相容入口或新的逐區入口。
-
-> 注意：`fetch_school_meals.py` 每次執行都會以該次的抓取範圍重建當日 `report.json`。發布器只會發布當前報告所列的學校；既有其他學校紀錄不會被刪除。
-
-若採手動分步流程，確認候選資料的學校、日期與內容後，可執行以下校讀與重建指令；全市更新指令已包含這些步驟，無須重複執行：
+**重跑原本相同日期、相同食材模式的指令即可**，不必刪資料或加補抓參數：
 
 ```bash
-python3 scripts/review_school_meals.py --date 2026-10-08
-python3 scripts/build_database.py
-python3 scripts/build_static_site.py
+python3 scripts/update_school_meals_by_district.py --date 2026-10-27
 ```
 
-只有 `available` 或官方明確標示的 `no_meal` 才能晉升。流程會核對學校代碼、完整校名、來源網址日期、供餐批次、菜色、食材、內容雜湊與校讀資訊；`not_published` 不會進入公開資料。reviewed JSON 保存於 `data/parsed/schools/fatrace/<fatraceSchoolId>/YYYY-MM-DD.json`，並作為 SQLite 與靜態網站的來源真相。
+若是補昨天的資料，務必保留 `--date`；省略日期會改為處理今天。
 
-SQLite 會把啟用學校的名冊、供餐日、餐次、菜色、食材與認證拆成關聯資料表；公開網站則提供可擴充的行政區與學校選單。`data/reference/taichung-elementary-schools.json` 保存教育部公開清單中的臺中市 29 個行政區、242 所國小及 School ID，`data/reference/taichung-elementary-schools.md` 則提供方便人工檢查的行政區清單；兩份資料均以一次行政區查詢與一次全市國小名冊查詢整理，沒有逐號掃描 School ID。`data/reference/taichung-active-elementary-schools.json` 是網站目前啟用的名冊，另納入教育部分類為「高中職／五專」的臺中市南區私立明德高中附設國小，因此共涵蓋 29 個行政區、243 所學校。使用者可把一間學校設為「我的最愛」並保存在自己的瀏覽器；下次進站只會優先讀取那間學校。沒有設定最愛時，網站停在選校畫面，不會先讀取任何學校的午餐資料。忠信國小保留校方週菜單、營養分析、葷素餐與家庭晚餐建議等完整體驗；其餘學校目前顯示教育部同日實際供餐公開紀錄。同日的主食、主菜中若同時出現有「素」字與未標示「素」的菜色，網站會開放葷食／素食切換：主食、主菜與副菜依名稱的「素」字分組，蔬菜、湯品與附餐列為共用。這只是方便閱讀的菜名分組，不等同素食認證，仍須以官方食材明細判斷內容。指定日期沒有紀錄時不會退回較早日期冒充今天。
-
-若只要更新預設西區範圍的本機資料，可用下列指令完成收集、校讀、資料庫重建、測試、JavaScript 檢查與靜態網站重建（不含發布）：
+### 只處理部分行政區
 
 ```bash
-python3 scripts/update_school_meals.py --date 2026-10-08 --verify-and-build
+python3 scripts/update_school_meals_by_district.py \
+  --date 2026-10-27 \
+  --district 西區 \
+  --district 北區
 ```
 
-若只要更新全市 29 個行政區、243 所學校的本機資料，完成驗證與建置而暫不發布，可省略 `--publish`：
+`--district` 可重複使用。處理順序依名冊中的行政區順序，不依參數排列。區域進度仍保存在相同日期的共用進度檔，下次執行全市範圍時可以接續。
+
+### 只下載與驗證，暫不發布
 
 ```bash
-python3 scripts/update_all_taichung_schools.py
+python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --no-publish
 ```
 
-### 全市更新參數與接續進度
+之後移除 `--no-publish`，會沿用有效資料並補傳：
 
-兩個全市入口使用相同逐區引擎、相同逐校抓取／發布進度與中文總結。日期預設為臺北時區當天。新入口 `update_school_meals_by_district.py` 預設發布；相容入口 `update_all_taichung_schools.py` 則維持加上 `--publish` 才發布。
+```bash
+python3 scripts/update_school_meals_by_district.py --date 2026-10-27
+```
 
-| 參數 | 說明 |
-| --- | --- |
-| `--date YYYY-MM-DD` | 指定供餐日期。 |
-| `--refresh-all` | 重新檢查所選學校；內容相同不重傳。 |
-| `--skip-ingredients` | 只抓菜色，與完整食材模式分開記進度。 |
-| `--district 行政區` | 只處理指定區，可重複使用。 |
-| `--no-publish` | 只處理本機資料。 |
-| `--timeout`、`--interval`、`--retries` | 預設為 `20` 秒、`1.2` 秒、`2` 次重試。 |
+### 官方修正菜單後，重新檢查已完成學校
 
-相容入口另接受 `--publish`、`--resume`、`--verify-and-build`；後兩者為相容參數，預設就會接續進度並在全程結束後重建本機 SQLite 與 `dist/`。`--resume` 不得與 `--refresh-all` 同用，`--publish` 不得與 `--no-publish` 同用。兩個入口均不使用 `--retry-failed`，直接重跑相同日期即可補抓。
+一般續跑會跳過有效的已完成資料，**不會自動重新查詢這些學校是否有後續修正**。需要重新核對時使用 `--refresh-all`，也可搭配行政區縮小範圍：
 
-本機已完成的 10/27 資料已經過驗證並匯入逐區進度，之後使用任一入口都會沿用；其他尚未建立逐區進度的日期，首次使用仍會重新檢查。
+```bash
+python3 scripts/update_school_meals_by_district.py \
+  --date 2026-10-27 \
+  --district 西區 \
+  --refresh-all
+```
 
-每區發布僅包含成功通過驗證且待上傳的學校，會核對該批 reviewed JSON 數量、學校代碼、日期、來源網址與內容雜湊，再以本機 `.secrets/site_publish_token` 的私密憑證透過 HTTPS 寫入 Site 的 D1 與 R2。憑證目錄已被 Git 忽略，指令不會顯示或上傳憑證內容。
+重新抓取後，內容雜湊相同的不重傳；內容有變則發布新資料，取代該校同日紀錄。
 
-`prepare_site_publish.py` 保留給需要更新網站程式碼的 Sites 版本部署；日常午餐資料發佈不再需要 Sites Git 短效憑證或 Codex。
+### 只收集菜色，不逐道查詢食材
 
-這條每日資料線與每月 OpenAPI 不同。它只代表平臺公開查詢頁當下可見的實際供餐紀錄，不能提供下週預定菜單；下週資料仍須由各校公告、Atom/RSS 或菜單圖片取得。收集器預設使用 20 秒逾時、有限次重試、描述性 User-Agent 與 1.2 秒請求間隔。若只想先驗證菜色、不逐道查詢食材，可加上 `--skip-ingredients`。
+```bash
+python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingredients
+```
 
-### Telegram 抓取通知
+省略 `--skip-ingredients` 才是完整食材模式。兩種模式分開保存進度；切換模式可能重新下載並再次發布該校同日資料，請依需求選定模式，避免反覆切換。
 
-雲端三批抓取與下午補抓會透過 Telegram 通知抓取開始、單校失敗、批次結束及全日總結。通知事件會先寫入 D1 的 `telegram_notifications`，用事件鍵避免排程重試造成重複訊息；通知失敗不會中斷午餐資料收集，下一次相同工具呼叫可再次嘗試。
+## 4. 每次執行的處理邏輯
 
-寫入工具以 Sites 提供的已驗證帳號信箱比對 `MCP_OWNER_EMAIL`，避免把每個 Site 都不同的使用者 ID 誤當成全域帳號 ID。15:30 補抓除了重試 `failed` 與 `not_published`，也會接手當天完全沒有執行紀錄的學校。
+1. **讀取名冊與進度**：預設讀取啟用學校名冊，按行政區分組；有指定區域時只處理該範圍。取得執行鎖，避免兩個入口同時操作。
+2. **逐校下載或沿用資料**：有效的已完成候選資料可沿用；失敗、未公布、未檢查或檔案遺失的學校重新查詢。預設先查供餐狀態，有菜單才取得完整菜色與食材。
+3. **驗證與保存**：核對所要求的學校、日期、來源、內容雜湊及資料結構。通過後保存 reviewed JSON；未驗證的候選資料不能直接發布。
+4. **逐區發布**：一區處理完，就只上傳該區通過驗證、尚未發布或內容有變的學校。該區部分學校失敗，不阻擋其他成功學校，也不阻擋下一區。
+5. **保存發布結果**：只有收到伺服器成功確認，才記錄該校已發布的內容雜湊；否則保留待發布狀態。
+6. **輸出每區中文總結**，繼續下一區。
+7. **更新本機資料**：全程處理結束後，若有有效資料，自動重建 SQLite、執行 `node --check web/app.js`，再重建 `dist/`。
+8. **輸出全程中文總結**及待處理學校清單。
 
-若官方來源拒絕 Site 雲端出口，可暫時設定 `FATRACE_COLLECTION_PAUSED=true`。三批與補抓工具會回覆安全暫停且不送出來源請求，避免重複 403 與大量錯誤通知；改用可連線的抓取執行環境後再移除此設定。
+這裡的「驗證」是每筆發布資料的來源與結構驗證，不是每區重跑整套開發測試。
 
-後端需要下列 Sites 環境變數；實際值只存於 Sites，不得寫入原始碼、排程提示或 `.openai/hosting.json`：
+### 成功的先上線，失敗的下次補
+
+例如某區有 10 校，8 校取得有效菜單、1 校抓取失敗、1 校官方尚未公布：
+
+- 先發布成功的 8 校，家長不用等其他區完成。
+- 記錄另外 2 校的狀態，再處理下一區。
+- 下次相同日期與模式重跑，補查這 2 校；已完成的 8 校沿用資料。
+- 若 8 校資料抓好了但上傳失敗，下次直接補傳，不重新下載。
+
+伺服器已收件但本機沒收到成功回應時，下一次可能重傳；後端以內容雜湊做冪等更新，避免重複建立同一校同一天的紀錄。冪等更新仍會使用上傳流量。
+
+### 資料取代與保留規則
+
+- `available`：有有效菜單，可驗證並發布。
+- `no_meal`：官方明確表示不供餐，可驗證並發布。
+- `not_published`：尚未公布完整資料，不等於不供餐，不發布空菜單。
+- 下載或驗證失敗不刪除原本有效資料，也不能用別校或其他日期代替。
+- 發布只新增或更新該批學校的同日紀錄，不清除其他學校或其他日期。
+- 同日官方實際菜單優先於原本週菜單。公開餐盤與該日週瀏覽使用實際菜色，不混用舊菜色、舊食材用量或舊營養設計值；週菜單來源原檔留存備查，孩子既有食物相遇紀錄不改寫。
+
+每日來源代表當下公開的實際供餐紀錄，不能預測下一餐或下週菜單。沒有偵測到過敏原不代表安全；嚴重過敏仍須向校方確認實際食材、製程與交叉接觸。
+
+## 5. 中文總結怎麼看
+
+每區結束會顯示類似內容：
 
 ```text
-TELEGRAM_BOT_TOKEN
-TELEGRAM_CHAT_ID
-EMAIL_AUTH_SECRET
-MAACGO_AUTH
-RESEND_API_KEY
-AUTH_EMAIL_FROM
-SENTRY_DSN
+西區：本次發布成功 6 校。
+
+【西區處理總結】共 6 校；有菜單 6 校、官方不供餐 0 校、尚未公布 0 校、抓取／驗證失敗 0 校、尚未檢查 0 校；已發布 6 校、有效資料待發布 0 校；耗時 12.3 秒。
 ```
 
-`EMAIL_AUTH_SECRET` 是用來雜湊驗證碼與產生帳號識別的隨機密鑰；優先使用
-`MAACGO_AUTH`（`Bearer sk_test_...` 或 `Bearer sk_live_...`）寄送登入驗證碼。
-`RESEND_API_KEY` 與 `AUTH_EMAIL_FROM` 保留為備援，且 `AUTH_EMAIL_FROM` 必須是
-寄信服務已驗證的寄件者。`EMAIL_AUTH_DEV_CODE` 僅限本機預覽，不得設定在公開 Site。
-`SENTRY_DSN` 可覆寫程式內的公開 Worker DSN；監控預設不傳送個人資料、會移除
-請求內容與登入資料，並只抽樣 10% 的效能追蹤。Source map 上傳使用的
-`SENTRY_AUTH_TOKEN` 是機密，不得寫入原始碼或公開環境變數。
+全程結束會顯示：
 
-網站的日常分析讀取 `data/lunch.db`，原圖則從 `data/raw/` 提供。兩者都在本機，不需要安裝前端套件。按 `Ctrl+C` 可停止伺服器。
+```text
+【本次全程總結】共 243 校；有菜單 243 校、官方不供餐 0 校、尚未公布 0 校、抓取／驗證失敗 0 校、尚未檢查 0 校；已發布 243 校、有效資料待發布 0 校；耗時 78.4 秒。
+進度檔：…/data/monitor/district-updates/2026-10-27/with-ingredients.json
+```
 
-## 執行測試
+以上校數與秒數僅為範例。若只指定部分區域，全程總結也只統計所選範圍。
+
+| 欄位 | 意義 |
+| --- | --- |
+| 有菜單 | 已取得且驗證成功的供餐資料。 |
+| 官方不供餐 | 官方明確註記不供餐。 |
+| 尚未公布 | 官方尚未提供完整資料，下次重跑會再查。 |
+| 抓取／驗證失敗 | 來源連線或資料驗證失敗，下次補抓。 |
+| 尚未檢查 | 尚未完成檢查，可能是執行中斷。 |
+| 已發布 | 目前有效內容已獲伺服器成功確認，包含前次完成的資料。 |
+| 有效資料待發布 | 資料已驗證，但尚未獲得發布成功確認。 |
+| 耗時 | 該區或本次全程的實際耗時。 |
+
+「本次發布成功」才是本輪實際上傳的校數；總結的「已發布」包含沿用的先前結果。使用 `--no-publish` 時，待發布校數可能大於零，這不代表下載失敗。
+
+最後會列出待處理學校與原因。按 Ctrl+C 會保存進度、輸出全程總結，下次可接續；若參數、憑證或執行鎖在開始前就有問題，會直接顯示錯誤，不會進入逐區總結。
+
+## 6. 參數對照
+
+### 兩個入口共同支援
+
+| 參數 | 預設／用途 |
+| --- | --- |
+| `--date YYYY-MM-DD` | 臺北時區當天。 |
+| `--district 行政區` | 不指定時處理名冊全部行政區，可重複指定。 |
+| `--registry 路徑` | `data/reference/taichung-active-elementary-schools.json`。 |
+| `--no-publish` | 只處理本機，不上傳。 |
+| `--refresh-all` | 重新查詢所選範圍，包括已完成學校。 |
+| `--skip-ingredients` | 只抓菜色；省略則包含食材。 |
+| `--timeout 秒數` | `20`；必須大於零。 |
+| `--interval 秒數` | `1.2`；不得小於零，保留來源請求間隔。 |
+| `--retries 次數` | `2`；不得小於零，限制暫時性錯誤的重試。 |
+| `--help` | 顯示該入口的說明。 |
+
+### 只有相容入口接受
+
+| 參數 | 用途 |
+| --- | --- |
+| `--publish` | 啟用逐區發布；相容入口省略時只處理本機。 |
+| `--resume` | 保留舊用法；目前預設就會接續進度。 |
+| `--verify-and-build` | 保留舊用法；目前預設就會驗證並在全程結束後重建本機資料。 |
+
+新入口不需要也不接受 `--publish`、`--resume` 或 `--verify-and-build`。相容入口不得同時使用 `--publish` 與 `--no-publish`，也不得同時使用 `--resume` 與 `--refresh-all`。
+
+兩個入口均不使用 `--retry-failed`；直接重跑相同日期與模式即可。
+
+## 7. 進度與資料位置
+
+```text
+data/reference/taichung-active-elementary-schools.json  啟用名冊
+
+data/raw/fatrace-daily/YYYY-MM-DD/<學校代碼>/
+  raw.json.gz                                         官方原始回應
+  candidate.json                                      待驗證候選資料
+
+data/parsed/schools/fatrace/<學校代碼>/YYYY-MM-DD.json  已驗證資料，SQLite 的來源真相
+
+data/monitor/district-updates/YYYY-MM-DD/
+  with-ingredients.json                               完整食材模式進度
+  dishes-only.json                                    只抓菜色模式進度
+
+data/lunch.db                                         本機 SQLite
+dist/                                                 本機可部署快照
+```
+
+進度檔分開記錄抓取狀態、內容雜湊、已發布雜湊、發布時間及錯誤。不要為了補抓刪除進度檔，否則會失去避免重抓、重傳的依據。
+
+兩種食材模式的進度檔分開，但原始候選檔位置共用；切換模式後可能因內容不同而重新查詢。
+
+這套流程不以舊版 `data/raw/fatrace-daily/YYYY-MM-DD/report.json` 決定發布範圍，也不更新該報告。舊報告可能留有先前失敗狀態，請以逐區進度與最新中文總結判斷本次結果。尚無逐區進度的日期，首次執行會重新檢查；本機有資料不代表已自動登記為發布成功。
+
+兩個入口共用鎖，不能同時執行；也不要同時啟動其他會改寫相同日期資料的抓取器。移動專案或改用另一台電腦時，須一併保留必要的進度與資料；發布憑證另以安全方式設定。
+
+## 8. 常見問題
+
+### 抓到很多學校，網站卻沒更新？
+
+先確認指令是否開啟發布：新入口預設發布；相容入口必須有 `--publish`。再看中文總結的「已發布」與「有效資料待發布」，不能只看本機候選檔或舊全市報告。
+
+### 有幾校 HTTP 500／502，是否要重抓全部？
+
+不必。保留進度，稍後重跑相同日期與模式。成功資料仍會逐區發布，失敗學校下次補抓。官方來源錯誤不代表當天沒有供餐。
+
+### 發布失敗，要重新下載嗎？
+
+有效候選資料與進度都還在時，不必。重跑會重新驗證本機資料並補傳，只有缺少、無效或需重新查詢的資料才補抓。
+
+### 全部已發布，但指令仍回報失敗？
+
+可能是最後的本機 SQLite、JavaScript 檢查或靜態重建失敗。已發布結果會保留；修正錯誤後重跑，可再次重建，未變更的已發布資料不會重新上傳。
+
+### 可以換成全臺灣名冊嗎？
+
+檔名已不限定縣市，但目前預設名冊與網站後端仍以臺中市啟用學校為範圍。`--registry` 只指定本機名冊，不會自動擴充網站允許發布的學校；擴充全臺灣前仍須同步調整名冊、分區與後端驗證。
+
+## 9. 結束碼與開發檢查
+
+| 結束碼 | 意義 |
+| --- | --- |
+| `0` | 所選範圍已完成；`--no-publish` 時只代表本機流程完成。 |
+| `1` | 抓取、驗證、發布、本機重建或啟動檢查有失敗。 |
+| `2` | 仍有尚未公布／未檢查學校；參數格式錯誤也可能使用此碼，請看錯誤訊息。 |
+| `130` | 使用者按 Ctrl+C 中斷，已保存進度。 |
+
+同時有失敗與尚未公布時，以 `1` 回報。指令非零結束不代表其他成功學校未發布，請看總結中的發布校數。
+
+修改程式或文件後執行：
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
 
-## 資料位置
-
-```text
-data/raw/
-└── 2026/
-    └── semester-1/
-        └── week-02/
-            ├── metadata.json
-            ├── menu-01.png
-            ├── menu-02.jpg
-            └── menu-03.jpg
-
-data/parsed/2026/semester-1/week-02/menu.json
-data/parsed/2026/semester-1/week-02/recipe-details.json
-data/parsed/2026/semester-1/week-01/traceability.json
-data/reference/taichung-active-elementary-schools.json
-data/reference/taichung-elementary-schools.json
-data/reference/taichung-elementary-schools.md
-data/reference/school-lunch-nutrition-rules.json
-data/lunch.db
-```
-
-`metadata.json` 會保存文章 ID、標題、網址、發布／更新時間、解析後日期，以及每張圖片的來源網址、本地檔名、Content-Type、位元組數、尺寸和 SHA-256。
-
-`data/parsed/` 是校讀後的結構化來源。`menu.json` 保存每日葷食與素食的菜單總表、營養份數、信心值與可辨識過敏原；`recipe-details.json` 保存每道菜底下的材料、設計用量，以及原表的「初級加工／非基改、在地、安全蔬菜」色塊宣稱。每週另保存菜單總表、葷食用量明細與素食用量明細三張來源圖。校園食材平臺的月資料先校讀成 `traceability.json`；六校同日公開紀錄則保存於 `schools/fatrace/`。原始接口回應或 CSV 不會直接進入網站。`data/reference/school-lunch-nutrition-rules.json` 保存由 109 年 12 月 28 日修訂版官方文件逐頁核對的國小營養建議量、食物內容目標值、階段值與 ±8% 週間容許範圍。`scripts/build_database.py` 會先驗證日期、餐別、必填欄位、關聯及重複資料，再以原子替換方式產生 `data/lunch.db`。
-
-## 本機 API
-
-- `GET /api/dashboard?date=2026-10-01&mealType=meat&schoolId=193609`：忠信國小完整菜單；其他六校代碼回傳該校同日官方實際供餐紀錄
-- `GET /api/schools`：只回傳行政區與學校名冊，供尚未選校時建立選單；不回傳午餐內容
-- `GET /api/menus`：原始文章與圖片清單
-- `GET /api/health`：伺服器狀態
-
-## 建立可發佈的靜態版本
-
-```bash
-python3 scripts/build_static_site.py
-```
-
-輸出位於 `dist/`，包含手機版網站、葷素兩種結構化資料快照、西區六校已校讀的同日官方紀錄，以及每週的菜單總表、葷食用量明細與素食用量明細原圖。公開版不依賴本機 Python 或 SQLite 服務。
-
-## 抓取策略
-
-1. 以每頁 50 筆讀取 Blogger Atom feed，並跟隨 `rel="next"`。
-2. 依文章標題及標籤篩選「菜單及營養素分析」。
-3. 從 Atom entry 的文章 HTML 找出實際 `<img>`，優先採用圖片外層連結。
-4. 對已知 Blogger 圖片網址使用 `s0` 取得原始尺寸。
-5. Feed 不可用時，才從首頁開始跟隨「較舊的文章」分頁。
-
-## 資料品質與限制
-
-- 校園食材平臺 OpenAPI 的每月資料於次月 6 日執行排程，因此無法用來即時確認當月供餐內容。例如 2026 年 9 月資料於 2026 年 10 月 6 日更新，2026 年 10 月資料則於 2026 年 11 月 6 日更新；資料發布後才能回補該日的正式紀錄。
-- 若已取得校園食材登錄平臺的同日學校頁面，會先以人工校讀截圖補入當日追溯資料，並保留供餐日期與校讀來源；菜名、食材名稱與設計用量仍以忠信國小餐單及用量明細為準。2026-10-06 原餐單僅寫「水果」，同日平臺頁面已補充為「芭樂」。
-- 菜單圖片的中文字體與注音裝飾容易造成 OCR 誤讀，因此目前 7 週的葷食與素食菜名、營養數字、菜內材料與設計用量均經人工視覺校讀；原始明細圖仍保留供逐項核對。
-- 校園食材平臺資料沒有葷素欄位；同日比對會再用所選餐別的菜內明細篩選，避免把葷食材料誤列到素食。歷史匹配只代表過去同名菜色或相符食材曾出現過的供應紀錄，不代表今日實際使用的食材、產地、供應商或批次，介面不得將其標示為今日溯源。
-- 食譜明細表的色塊只代表供餐廠商在原表上的分類或文字宣稱；正式供應商、認證編號與認證經營者只取自校園食材平臺及其官方連結。
-- 若素食明細原表列出可能含動物性來源的材料（例如柴魚），系統會忠實保留並供核對，不會自行改寫來源資料。
-- 晚餐內容是規則式搭配靈感，不是個人化醫療或營養建議。
-- 營養基準只使用校方明示的食譜設計值；蛋白質克數、脂肪、鈣、鈉、乳品與深色蔬菜份數未提供時不推估，所有結果也不代表學生實際攝取量。
-- 過敏原只整理原圖明示或可由菜名辨識的項目，有過敏需求時仍應以校方公告與食材現場資訊為準。
-- 圖片沒有可靠的 alt 文字，因此仍按來源順序命名為 `menu-01`、`menu-02` 等；metadata 另記錄 `summary`、`meat_detail`、`vegetarian_detail` 角色。
-- 未解析的新標題格式仍會保存到 `data/raw/unparsed/`，並在 log 中提出警告。
-- Blogger 或 Google 可能限流；遇到 429 或 5xx 時只會做有限次重試，不會繞過網站限制。
-- Blogger 偶爾會讓 `s0` 仍只回傳較小版本；下載器會重試並在 metadata 的 `matchesDeclaredDimensions` 標示是否符合文章宣告尺寸。
-- 不使用 GitHub Actions；公開網站的來源偵測由連結到 Site 的排程負責。
-
-## 自動發布版本
-
-正式建置請使用 `npm run build`，會先自動執行 `npm run release:prepare`。發布版本記錄於 `.openai/release.json`：來源內容改變時遞增修訂版本與建置序號，同一來源的重試沿用原版本。一般測試與靜態快照重建不遞增；產生的資料庫與建置輸出不列入來源指紋。
-
-首頁與靜態輸出會嵌入相同版本資料，核心 CSS／JavaScript 的快取識別也會同步更新。設定最底部保留目前頁面的版本，並透過不快取的 `/api/version` 檢查線上版本；出現更新時由使用者選擇重新載入，檢查失敗時不宣稱已是最新版。單純重新部署相同建置仍是同一版本，回復舊建置則顯示該建置的真實版本。
-
-## 本機午餐資料容量整理
-
-`python3 scripts/compact_lunch_data.py` 預設僅盤點；加上 `--apply` 才執行。每日原始回應與月度 OpenAPI CSV 以 gzip 無損封存，每份檔案在刪除未壓縮版前都以解壓後 SHA-256 完整驗證。`candidate.json` 僅移除排版空白、保留所有欄位、值與修改時間；校讀流程維持原路徑。
-
-經審核的 `data/parsed/` JSON、SQLite、網站公開資料與照片機制不變，網站查詢不需解壓原始封存。後續每日抓取會直接保存壓縮回應及精簡候選 JSON；月度更新直接封存 CSV，雜湊比對仍使用原始未壓縮內容。舊 CSV 邏輯路徑會透過 `src.archive_storage.open_archive` 自動尋找 `.gz`；也可傳入 `.csv.gz`。`manifest.json` 的原始檔名、位元組數、SHA-256 均保持原始來源定義。手動檢查封存可使用 `gzip -dc <檔案.gz>`，不需先解壓整份資料。
-
-
-### LINE 登入與家庭帳號綁定
-
-LINE Console 的 Web app Callback URL 設為
-`https://haohaofood.cc/api/auth/line/callback`。此版只要求 `openid`，不需要
-Email address permission、Assertion Signing Key、LIFF 或 Messaging API。
-
-部署前先套用新產生的 D1 遷移，再於部署環境設定：
-
-- `LINE_CHANNEL_ID=2012225671`
-- `LINE_CHANNEL_SECRET`：使用重新核發後的機密值，透過平台 secret 設定，不提交 Git。
-- `LINE_REDIRECT_URI=https://haohaofood.cc/api/auth/line/callback`
-
-三項設定及 D1 均就緒且回呼網域相符時，登入頁才顯示 LINE 按鈕。
-公開站不得設定本機驗證碼。未設定 LINE 不影響 Email 登入。
-本機 HTTP 預覽不進行真實 LINE 回呼；需用已登記的 HTTPS 測試網域，
-並將其 callback 同時登記在 LINE Console 及測試環境。
-
-既有家長先用 Email 登入，再到家庭帳號設定按「綁定 LINE 登入」。
-新 LINE 帳號沒有 Email，透過獨立 provider identity 連結 D1 家庭帳號；
-不依 Email、名稱或照片自動合併帳號，也不複製孩子資料。
-LINE 身分資料及一次性驗證留在 D1，瀏覽器只使用 HttpOnly 登入／驗證 Cookie。
-每次授權使用 state、nonce、PKCE，10 分鐘過期，回呼一次性消耗；
-綁定必須維持原登入 session。完整生日不保存。
-
-手動驗收（不使用瀏覽器自動化）：在 Developing 下以管理員／Tester 測試
-新登入、成年確認、取消授權、重複回呼、過期回呼、原帳號綁定、登出後以 LINE
-再次登入、衝突帳號拒絕綁定，確認孩子資料仍屬原家庭。完成後才將 Channel
-改為 Published；此狀態不能切回 Developing。
-
-以 LINE 建立帳號後，可在家庭設定的「綁定 Email 登入」驗證信箱。
-驗證碼綁定原 session，必須在同一登入狀態下完成；不以輸入 Email 就建立關聯。
-若 Email 已屬其他帳號則拒絕綁定，不合併家庭資料；既有 Email 更換不在此功能範圍。
-
-### 獨立維護與營運後台
-
-後台是另一個獨立私人 Site，並非公開網站的路徑或管理頁。僅網站擁有者 `ghostwolf90@gmail.com` 可透過 ChatGPT 登入；Sites 的私人存取政策是第一層保護，後台 Worker 每次請求也要求已驗證的使用者身分。網址與原始碼由獨立 Site 管理。
-
-因 Sites 不提供跨 Site 直接綁定同一個 D1，此版本採使用者同意的受保護資料 API：後台伺服器呼叫主站 `/api/internal/operations`，只讀取彙總統計、讀寫維護公告。兩邊分別在伺服器秘密設定保存 `MAINTENANCE_API_TOKEN`；主站家庭登入 cookie 不提供管理權限，憑證不得送往瀏覽器。後台不建立第二套資料庫，也不複製家長或孩子資料。此架構依賴主站資料 API 可用，主站或 D1 全面中斷時無法操作，並非獨立災難備援。
-
-後台提供註冊總數、今日及近 7／30 天新增、近 30 天每日註冊、孩子與食物相遇紀錄筆數、近 7 天記錄家庭與登入概況、非 free 且 active／trialing 的方案數、已保存官方菜單日期與主站版本。近 7 天登入數來自仍存在的 session 建立時間，登出刪除紀錄後會減少，並非完整活躍人數或訪客數。訂閱統計不是營收。今日使用臺北日界，近 7／30 天為滾動期間。
-
-公告與操作紀錄保存在原 D1 的 `maintenance_events`，新增後不覆寫。草稿不改變公開公告；最新發布／撤下事件決定首頁狀態。資料 API 僅接受獨立服務憑證，寫入另要求同源 Origin、JSON 及最新 revision；後台代理對瀏覽器也要求同源 Origin。公告純文字顯示，首頁每分鐘與重新回到頁面時讀取一次，不依賴教育部來源。此版本不含自動偵測、Email 通知、停機開關、個人資料編輯或帳號刪除。
-
-人工驗證：私人後台的擁有者登入與拒絕其他帳號、手機排版及鍵盤操作、發布後首頁顯示、草稿不影響公開公告、撤下公告。專案禁止 GUI 瀏覽器自動化，以上互動需人工確認。
+日常腳本發布的是午餐資料，透過既有網站的資料 API 寫入 D1 與 R2，不會重新部署整個網站程式，也不遞增網站版本。若要正式發布網站程式變更，需另依專案規則使用 `npm run build` 產生正式版本，不能把本機 `dist/` 重建當成已完成網站程式部署。
