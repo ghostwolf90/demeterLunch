@@ -134,6 +134,22 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
             user_agent=DAILY_USER_AGENT,
         ), include_ingredients=not args.skip_ingredients)
         storage = DailyMealStorage(raw_root)
+        def needs_fetch(school):
+            row = rows.get(str(school.fatrace_school_id), {})
+            if args.refresh_all or row.get("status") not in STABLE_STATUSES:
+                return True
+            try:
+                stored = read_json(storage.target_path(school, args.date) / "candidate.json")
+                return not (stored.get("contentHash") == row.get("contentHash")
+                            and stored.get("mealDate") == args.date.isoformat()
+                            and stored.get("school") == school.as_dict())
+            except (OSError, ValueError):
+                return True
+
+        # Keep district publication batches, but visit districts needing downloads first.
+        if not args.refresh_all:
+            districts.sort(key=lambda district: not any(
+                needs_fetch(school) for school in schools if school.district == district))
         started = time.monotonic()
         build_ok = True
 
@@ -145,7 +161,10 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
             for district in districts:
                 district_started = time.monotonic()
                 selected = [school for school in schools if school.district == district]
+                selected.sort(key=lambda school: not needs_fetch(school))
+                pending = sum(needs_fetch(school) for school in selected)
                 print(f"\n開始處理 {district}，共 {len(selected)} 校（{args.date}）。", flush=True)
+                print(f"  待抓取 {pending} 校；沿用成功資料 {len(selected) - pending} 校。", flush=True)
                 ready = []
                 for school in selected:
                     key = str(school.fatrace_school_id)
@@ -154,11 +173,13 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
                     candidate_path = storage.target_path(school, args.date) / "candidate.json"
                     try:
                         candidate = None
+                        reused = False
                         if not args.refresh_all and row.get("status") in STABLE_STATUSES:
                             try:
                                 stored = read_json(candidate_path)
                                 if stored.get("contentHash") == row.get("contentHash"):
                                     candidate = stored
+                                    reused = True
                             except (OSError, ValueError):
                                 pass
                         if candidate is None:
@@ -182,7 +203,9 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
                         if (candidate.get("mealDate") != args.date.isoformat()
                                 or candidate.get("school") != school.as_dict()):
                             raise ValueError("已存資料的日期或學校不符")
-                        row.update(status=candidate["status"], checkedAt=now(), error=None)
+                        row.update(status=candidate["status"], error=None)
+                        if not reused:
+                            row["checkedAt"] = now()
                         if candidate["status"] in STABLE_STATUSES:
                             reviewed = promote_candidate(candidate, reviewed_at=now(),
                                 reviewed_by="Demeter 逐區結構驗證與來源核對")
@@ -190,10 +213,10 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
                             row["contentHash"] = reviewed["contentHash"]
                             if row.get("publishedHash") != reviewed["contentHash"]:
                                 ready.append(school)
-                        print(f"  {school.name}：" + {
+                        print(f"  {school.name}：" + ("沿用已成功資料，未重新抓取" if reused else {
                             "available": "菜單驗證完成", "no_meal": "官方明確不供餐",
                             "not_published": "官方尚未公布，下次補查",
-                        }[row["status"]], flush=True)
+                        }[row["status"]]), flush=True)
                     except Exception as exc:
                         row.update(status="failed", checkedAt=now(), error=str(exc))
                         print(f"  {school.name}：抓取／驗證失敗：{exc}", flush=True)

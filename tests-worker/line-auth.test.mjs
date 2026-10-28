@@ -228,3 +228,26 @@ test("LINE choice needs no email; returning restores the email entry and disable
   assert.equal(refs.authEligibilityGate.hidden, true);
   assert.equal(refs.authBirthDate.disabled, true);
 });
+
+test("LINE registration receipt is server-signed, session-bound, consumed by cookie clearing and absent on returning login", async () => {
+  const h = harness();
+  const first = await h.callback(await h.begin());
+  const cookies = first.headers.getSetCookie();
+  const session = cookies.find(x => x.startsWith("demeter_family_session=")).split(";")[0];
+  const receipt = cookies.find(x => x.startsWith("demeter_registration_event="));
+  assert.match(receipt, /HttpOnly; SameSite=Strict; Max-Age=600; Secure/);
+  const eventCookie = receipt.split(";")[0];
+  const consume = h.load("app/api/auth/registration-event/route").POST;
+  const valid = await consume(h.post("/api/auth/registration-event", {}, `${session}; ${eventCookie}`));
+  assert.equal((await valid.json()).isNewAccount, true);
+  assert.match(valid.headers.get("set-cookie"), /Max-Age=0/);
+  assert.match(valid.headers.get("cache-control"), /no-store/);
+  assert.equal((await (await consume(h.post("/api/auth/registration-event", {}, session))).json()).isNewAccount, false);
+  assert.equal((await (await consume(h.post("/api/auth/registration-event", {}, eventCookie))).json()).isNewAccount, false);
+  assert.equal((await (await consume(h.post("/api/auth/registration-event", {}, `${session}; ${eventCookie}0`))).json()).isNewAccount, false);
+  assert.equal((await consume(h.post("/api/auth/registration-event", {}, `${session}; ${eventCookie}`, "https://attacker.test"))).status, 403);
+  const second = await h.callback(await h.begin());
+  assert.match(second.headers.getSetCookie().find(x => x.startsWith("demeter_registration_event=")), /Max-Age=0/);
+  const unrelated = await h.parent("unrelated");
+  assert.equal((await (await consume(h.post("/api/auth/registration-event", {}, `${unrelated}; ${eventCookie}`))).json()).isNewAccount, false);
+});

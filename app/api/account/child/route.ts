@@ -9,7 +9,6 @@ import {
 import { findSchool } from "@/lib/schools";
 import { accountPlanDetails } from "@/lib/account-plan";
 import {
-  MAX_CHILD_NAME_LENGTH,
   MAX_NICKNAME_LENGTH,
   normalizeOptionalProfileText,
 } from "@/lib/account-profile";
@@ -33,7 +32,6 @@ export async function POST(request: Request) {
 
   const record = body && typeof body === "object" ? body as Record<string, unknown> : {};
   const childId = optionalChildId(record.childId);
-  const name = normalizeOptionalProfileText(record.name, MAX_CHILD_NAME_LENGTH);
   const nickname = normalizeOptionalProfileText(record.nickname, MAX_NICKNAME_LENGTH);
   const gradeGroup = typeof record.gradeGroup === "string" ? record.gradeGroup : "not_set";
   const schoolId = Number(record.schoolId);
@@ -42,8 +40,7 @@ export async function POST(request: Request) {
   if (record.childId !== null && record.childId !== undefined && record.childId !== "" && childId === null) {
     return privateJson({ error: "孩子資料有誤，請重新確認。" }, { status: 400 });
   }
-  if (!name) return privateJson({ error: "請填寫 1–40 個字的孩子姓名" }, { status: 400 });
-  if (nickname === null) return privateJson({ error: "孩子暱稱最多 20 個字" }, { status: 400 });
+  if (!nickname) return privateJson({ error: "請填寫 1–20 個字的孩子暱稱" }, { status: 400 });
   if (!gradeGroups.has(gradeGroup)) {
     return privateJson({ error: "年級資料不正確" }, { status: 400 });
   }
@@ -72,9 +69,9 @@ export async function POST(request: Request) {
     if (childId !== null) {
       const result = await db.prepare(
         `UPDATE child_profiles
-         SET name = ?, nickname = ?, grade_group = ?, school_id = ?, allergen_codes = ?, updated_at = ?
+         SET nickname = ?, grade_group = ?, school_id = ?, allergen_codes = ?, updated_at = ?
          WHERE id = ? AND auth_user_id = ?`,
-      ).bind(name, nickname, gradeGroup, schoolId, JSON.stringify(allergenCodes), now, childId, user.id).run();
+      ).bind(nickname, gradeGroup, schoolId, JSON.stringify(allergenCodes), now, childId, user.id).run();
       if (!result.meta.changes) {
         return privateJson({ error: "找不到這位孩子", code: "CHILD_NOT_FOUND" }, { status: 404 });
       }
@@ -112,7 +109,7 @@ export async function POST(request: Request) {
              AND (SELECT COUNT(*) FROM child_profiles WHERE auth_user_id = ?) < ?`,
         ).bind(
           user.id,
-          name,
+          null,
           nickname,
           gradeGroup,
           schoolId,
@@ -131,7 +128,7 @@ export async function POST(request: Request) {
            WHERE (SELECT COUNT(*) FROM child_profiles WHERE auth_user_id = ?) < ?`,
         ).bind(
           user.id,
-          name,
+          null,
           nickname,
           gradeGroup,
           schoolId,

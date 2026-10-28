@@ -1,5 +1,9 @@
 /* English interface copy. Chinese source copy is intentionally unchanged. */
 window.LunchEnglish = {
+  "分享菜單": "Share menu",
+  "菜單連結已複製。": "Menu link copied.",
+  "已完成分享。": "Menu shared.",
+  "目前無法分享，請稍後再試。": "Sharing is unavailable. Please try again later.",
   "2026 年 10 月 26 日": "October 26, 2026",
   "或使用其他方式登入": "Or sign in with",
   "確認並前往 LINE": "Continue to LINE",
@@ -373,6 +377,13 @@ window.LunchEnglish = {
   "孩子大頭貼": "Child's photo",
   "選填，照片只會顯示在登入後的家庭帳號。": "Optional. Photos are visible only within your signed-in family account.",
   "選擇照片": "Choose photo",
+  "填寫孩子的暱稱即可，不需要提供本名。": "Use your child’s nickname. Their real name is not needed.",
+  "用家裡平常的稱呼就好，不需要填寫本名。": "Use the name you call them at home. No real name is needed.",
+  "請先在家庭設定中填寫孩子的暱稱與就讀學校；大頭貼與需要留意的食物可稍後再補。": "Add your child’s nickname and school in family settings. A photo and foods to watch for can be added later.",
+  "請填寫 1–20 個字的孩子暱稱": "Enter a child’s nickname of 1–20 characters.",
+  "官方當日紀錄未提供營養分析。": "The official record for this date does not include a nutrition analysis.",
+  "當日不供餐，沒有可搭配的學校午餐紀錄。": "No school lunch is served on this date, so there is no lunch record to base dinner ideas on.",
+  "取得所選日期的菜單後，再提供晚餐搭配參考。": "Dinner ideas will be available once the menu for the selected date is published.",
   "孩子本名": "Child's name",
   "例如：林小禾": "For example: Alex Lin",
   "孩子暱稱": "Child's nickname",

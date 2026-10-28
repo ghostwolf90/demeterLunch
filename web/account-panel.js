@@ -96,7 +96,7 @@ if (accountPanelTriggers.length) {
               <div class="account-child-editor-heading">
                 <p class="kicker">孩子設定</p>
                 <h4 id="sharedChildSetupTitle">編輯孩子設定</h4>
-                <p id="sharedChildSetupDescription">姓名只用在家庭帳號內；可另外設定暱稱，畫面會優先顯示暱稱。</p>
+                <p id="sharedChildSetupDescription">填寫孩子的暱稱即可，不需要提供本名。</p>
               </div>
               <form class="child-form" id="sharedChildForm">
                 <div class="profile-photo-field child-photo-field">
@@ -111,8 +111,7 @@ if (accountPanelTriggers.length) {
                     </div>
                   </div>
                 </div>
-                <label><span class="field-heading">孩子本名</span><input id="sharedChildName" name="name" maxlength="40" autocomplete="off" required placeholder="例如：林小禾" /></label>
-                <label><span class="field-heading">孩子暱稱 <span class="field-optional">選填</span></span><input id="sharedChildNickname" name="nickname" maxlength="20" autocomplete="off" placeholder="例如：小禾" /><small>有填暱稱時，網站會優先顯示暱稱。</small></label>
+                <label class="child-nickname-field"><span class="field-heading">孩子暱稱</span><input id="sharedChildNickname" name="nickname" maxlength="20" autocomplete="off" required placeholder="例如：小禾" /><small>用家裡平常的稱呼就好，不需要填寫本名。</small></label>
                 <label><span class="field-heading">年級</span><select id="sharedChildGradeGroup" name="gradeGroup"><option value="not_set">暫不設定</option><option value="elementary_lower">國小 1–3 年級</option><option value="elementary_upper">國小 4–6 年級</option></select></label>
                 <label class="child-school-field"><span class="field-heading">孩子就讀國小</span><select id="sharedChildSchool" name="schoolId" required><option value="">正在讀取學校名冊…</option></select><small>這是孩子午餐紀錄所屬學校；切換公開學校只會查看，不會改掉這裡。</small></label>
                 <fieldset class="child-allergen-fieldset">
@@ -178,7 +177,7 @@ if (accountPanelTriggers.length) {
     "sharedAccountChildList", "sharedAccountFamilyStatus", "sharedAccountChildEditor",
     "sharedChildSetupTitle", "sharedChildSetupDescription", "sharedChildForm",
     "sharedChildAvatarPreview", "sharedChildAvatarInput", "sharedRemoveChildAvatar",
-    "sharedChildName", "sharedChildNickname", "sharedChildGradeGroup", "sharedChildSchool",
+    "sharedChildNickname", "sharedChildGradeGroup", "sharedChildSchool",
     "sharedChildFormSubmit", "sharedCancelChildEdit", "sharedChildFormStatus",
     "sharedAccountPlanPanel", "sharedAccountPlanName", "sharedAccountSubscriptionState",
     "sharedAccountPlanDescription", "sharedAccountSubscriptionDetail", "sharedAccountChildUsage",
@@ -379,7 +378,7 @@ if (accountPanelTriggers.length) {
       const school = schoolById(child.schoolId);
       copy.append(
         LunchI18n.keep(node("strong", "", profileDisplayName(child, "孩子"))),
-        node("span", "", `${school?.name || "尚未設定學校"}${child.nickname ? ` · 姓名 ${child.name}` : ""}`),
+        node("span", "", school?.name || "尚未設定學校"),
       );
       const edit = node("button", "", "修改");
       edit.type = "button";
@@ -425,10 +424,9 @@ if (accountPanelTriggers.length) {
       refs.sharedChildSetupTitle.textContent = child ? "新增孩子資料" : "建立第一位孩子的資料";
       refs.sharedChildSetupDescription.textContent = child
         ? `目前有 ${(state.account.children || []).length} 位，${state.account.planDetails?.name || "目前方案"}最多可建立 ${state.account.childLimit || 1} 位孩子。`
-        : "姓名只用在家庭帳號內；可另外設定暱稱，畫面會優先顯示暱稱。";
+        : "填寫孩子的暱稱即可，不需要提供本名。";
       refs.sharedChildFormSubmit.textContent = child ? "新增孩子" : "建立免費飲食紀錄";
       refs.sharedCancelChildEdit.textContent = "取消";
-      refs.sharedChildName.value = "";
       refs.sharedChildNickname.value = "";
       refs.sharedChildGradeGroup.value = "not_set";
       renderProfileAvatar(refs.sharedChildAvatarPreview, null, state.childAvatarPreviewUrl);
@@ -443,7 +441,6 @@ if (accountPanelTriggers.length) {
     refs.sharedChildSetupDescription.textContent = "就讀學校只會在這裡變更；公開選校只是查看其他學校的午餐。";
     refs.sharedChildFormSubmit.textContent = "儲存孩子資料";
     refs.sharedCancelChildEdit.textContent = "取消";
-    refs.sharedChildName.value = child.name || displayName;
     refs.sharedChildNickname.value = child.nickname || "";
     refs.sharedChildGradeGroup.value = child.gradeGroup || "not_set";
     renderProfileAvatar(refs.sharedChildAvatarPreview, child, state.childAvatarPreviewUrl);
@@ -604,6 +601,7 @@ if (accountPanelTriggers.length) {
       });
       const payload = await responsePayload(response);
       if (!response.ok) throw new Error(payload.error || "目前無法確認驗證碼，請稍後再試。");
+      window.ProductAnalytics?.emailSignup(payload);
       resetEmailAuthForm();
       await loadAccount();
       if (state.onboardingActive) {
@@ -731,7 +729,7 @@ if (accountPanelTriggers.length) {
         return;
       }
       refs.sharedAccountChildEditor.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      refs.sharedChildName.focus({ preventScroll: true });
+      refs.sharedChildNickname.focus({ preventScroll: true });
     });
   }
 
@@ -943,7 +941,6 @@ if (accountPanelTriggers.length) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           childId: wasEditing ? state.account.child?.id : null,
-          name: refs.sharedChildName.value,
           nickname: refs.sharedChildNickname.value,
           gradeGroup: refs.sharedChildGradeGroup.value,
           schoolId: refs.sharedChildSchool.value,

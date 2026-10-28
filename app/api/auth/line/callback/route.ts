@@ -1,3 +1,4 @@
+import { clearRegistrationEventCookie, registrationEventCookie } from "@/lib/registration-event";
 import { accountDatabase, createSession, digestSessionToken, getAccountUser, sessionCookie, sessionTokenFromRequest } from "@/lib/account-auth";
 import { lineConfiguration } from "@/lib/line-auth";
 import { oauthBrowserToken, oauthCookie, oauthDigest, verifiedLineSubject } from "@/lib/line-oauth";
@@ -9,12 +10,13 @@ type Challenge = {
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const finish = (status: string, session?: string) => {
+  const finish = (status: string, session?: string, registration?: string) => {
     const headers = new Headers({
       location: `/?account=1&line=${status}`, "cache-control": "private, no-store",
       "referrer-policy": "no-referrer",
     });
     headers.append("set-cookie", oauthCookie(request, "", true));
+    headers.append("set-cookie", registration || clearRegistrationEventCookie(request));
     if (session) headers.append("set-cookie", sessionCookie(request, session));
     return new Response(null, { status: 303, headers });
   };
@@ -71,7 +73,7 @@ export async function GET(request: Request) {
     statements.push(db.prepare(`INSERT INTO account_sessions (token_digest, auth_user_id, created_at, expires_at)
       VALUES (?, ?, ?, ?)`).bind(session.tokenDigest, accountId, session.createdAt, session.expiresAt));
     await db.batch(statements);
-    return finish("success", session.token);
+    return finish("success", session.token, !identity ? await registrationEventCookie(request, session.token) : undefined);
   } catch {
     // Do not log callback codes, provider tokens, secrets, or identity claims.
     console.error("LINE authentication could not be completed");

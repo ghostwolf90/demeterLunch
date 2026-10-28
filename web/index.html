@@ -141,6 +141,8 @@
             <button class="official-source-action school-menu-source" id="schoolMenuNutritionButton" type="button" hidden>查看份量與營養表</button>
             <a class="official-source-action" id="officialSourceLink" target="_blank" rel="noreferrer" hidden>查看教育部當日公開頁 ↗</a>
           </div>
+          <button class="official-source-action" id="shareMenu" type="button" disabled>分享菜單</button>
+          <p class="source-note" id="shareMenuStatus" role="status" aria-live="polite"></p>
           <p class="detail-menu-note" id="mealTypeNote">用量為供餐廠商的每人食譜設計值，不代表實際攝取量。</p>
         </article>
 
@@ -197,19 +199,11 @@
           </div>
         </article>
 
-        <div class="passport-child-toolbar card" id="passportChildToolbar" hidden>
-          <div>
-            <div class="child-switcher" id="childSwitcher" role="group" aria-label="孩子設定捷徑"></div>
-            <button class="child-plan-summary" id="childPlanSummary" type="button" aria-haspopup="dialog">免費方案 · 0/1 位孩子</button>
-          </div>
-          <button id="addChildButton" type="button">＋ 新增孩子</button>
-        </div>
-
         <article class="passport-setup card" id="passportSetup" hidden>
           <div class="passport-setup-copy">
             <p class="kicker">先新增孩子資料</p>
             <h3>新增孩子的資料後，就可以開始記錄飲食</h3>
-            <p>請先在家庭設定中填寫孩子的姓名、就讀學校與需要留意的食物；暱稱與大頭貼可稍後再補。</p>
+            <p>請先在家庭設定中填寫孩子的暱稱與就讀學校；大頭貼與需要留意的食物可稍後再補。</p>
           </div>
           <button class="passport-settings-button" id="openChildSettings" type="button">開啟孩子設定</button>
         </article>
@@ -217,8 +211,8 @@
         <div class="passport-workspace" id="passportWorkspace" hidden>
           <article class="passport-entry card">
             <div class="passport-entry-heading">
-              <div><p class="kicker">今天的營養午餐</p><h3><span id="passportChildName">孩子</span>今天記得哪一道菜？</h3><p class="passport-child-school">紀錄學校：<strong id="passportChildSchool">尚未設定</strong></p></div>
-              <button class="child-edit-button" id="editChildButton" type="button">孩子資料</button>
+              <div><p class="kicker">今天的營養午餐</p><h3><button class="passport-child-avatar" id="passportChildAvatar" type="button" aria-haspopup="dialog" aria-label="孩子資料" hidden></button><span id="passportChildName">孩子</span>今天記得哪一道菜？</h3><p class="passport-child-school">紀錄學校：<strong id="passportChildSchool">尚未設定</strong></p></div>
+              <button class="child-edit-button" id="editChildButton" type="button" aria-haspopup="dialog">孩子資料</button>
             </div>
             <div class="passport-school-notice" id="passportSchoolNotice" hidden>
               <p id="passportSchoolNoticeText"></p>
@@ -645,7 +639,7 @@
               <div class="account-child-editor-heading">
                 <p class="kicker" id="childSetupKicker">孩子資料</p>
                 <h4 id="childSetupTitle">編輯孩子設定</h4>
-                <p id="childSetupDescription">姓名只用在家庭帳號內；可另外設定暱稱，畫面會優先顯示暱稱。</p>
+                <p id="childSetupDescription">填寫孩子的暱稱即可，不需要提供本名。</p>
               </div>
               <form class="child-form" id="childForm">
                 <div class="profile-photo-field child-photo-field">
@@ -660,8 +654,7 @@
                     </div>
                   </div>
                 </div>
-                <label><span class="field-heading">孩子本名</span><input id="childName" name="name" maxlength="40" autocomplete="off" required placeholder="例如：林小禾" /></label>
-                <label><span class="field-heading">孩子暱稱 <span class="field-optional">選填</span></span><input id="childNickname" name="nickname" maxlength="20" autocomplete="off" placeholder="例如：小禾" /><small>有填暱稱時，網站會優先顯示暱稱。</small></label>
+                <label class="child-nickname-field"><span class="field-heading">孩子暱稱</span><input id="childNickname" name="nickname" maxlength="20" autocomplete="off" required placeholder="例如：小禾" /><small>用家裡平常的稱呼就好，不需要填寫本名。</small></label>
                 <label><span class="field-heading">年級</span><select id="childGradeGroup" name="gradeGroup"><option value="not_set">暫不設定</option><option value="elementary_lower">國小 1–3 年級</option><option value="elementary_upper">國小 4–6 年級</option></select></label>
                 <label class="child-school-field"><span class="field-heading">孩子就讀國小</span><select id="childSchool" name="schoolId" required><option value="">正在讀取學校名冊…</option></select><small>這是孩子午餐紀錄所屬學校；上方切換學校只會查看公開午餐，不會改掉這裡。</small></label>
                 <fieldset class="child-allergen-fieldset">
@@ -831,6 +824,7 @@
     <script src="./sample-dashboard.js" defer></script>
     <script src="./passport-memory.js?v=20261023-single-memory-list" defer></script>
     <script src="./meal-photos.js" defer></script>
+    <script src="./product-analytics.js" defer></script>
     <script src="./app.js?v=20261023-settings-version" defer></script>
   </body>
 </html>

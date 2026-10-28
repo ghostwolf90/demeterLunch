@@ -119,6 +119,32 @@ class DistrictUpdateTests(unittest.TestCase):
             self.assertEqual(client.calls, [])
             self.assertEqual(len(batches), 2)
 
+    def test_resume_visits_pending_first_and_labels_reused_records(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            args = self.setup_run(root, no_publish=True)
+            self.execute(root, args, FakeClient({3: 'not_published'}), None)
+            path = root / 'data/monitor/district-updates/2026-10-27/with-ingredients.json'
+            before = json.loads(path.read_text())['schools']['1']
+            client = FakeClient()
+            status, output = self.execute(root, args, client, None)
+            self.assertEqual(status, 0)
+            self.assertEqual(client.calls, [3])
+            self.assertLess(output.index('開始處理 北區'), output.index('開始處理 西區'))
+            self.assertIn('沿用已成功資料，未重新抓取', output)
+            after = json.loads(path.read_text())['schools']['1']
+            self.assertEqual(before['checkedAt'], after['checkedAt'])
+            self.assertEqual(before['attempts'], after['attempts'])
+
+    def test_resume_pending_school_precedes_cached_school_in_same_district(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            args = self.setup_run(root, no_publish=True)
+            self.execute(root, args, FakeClient({2: 'failed'}), None)
+            status, output = self.execute(root, args, FakeClient(), None)
+            self.assertEqual(status, 0)
+            self.assertLess(output.index('乙國小：'), output.index('甲國小：'))
+
     def test_pending_and_invalid_date_never_published(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

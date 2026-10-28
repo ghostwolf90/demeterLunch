@@ -189,11 +189,10 @@ const ids = [
   "mealTypeSwitch", "menuBoard", "menuKicker", "menuHeading", "reviewBadge",
   "officialSourceLink", "schoolMenuSourceButton", "schoolMenuNutritionButton", "nutritionCard", "dinnerCard", "standard", "learn",
   "week", "todayGrid", "traceability", "news", "insights", "source", "traceabilityKicker", "traceabilityHeading",
-  "passport", "passportLocked", "passportUnlock", "passportSetup", "openChildSettings", "childForm", "childName", "childNickname",
+  "passport", "passportLocked", "passportUnlock", "passportSetup", "openChildSettings", "childForm", "childNickname",
   "childAvatarPreview", "childAvatarInput", "removeChildAvatar",
   "childGradeGroup", "childSchool", "childFormSubmit", "cancelChildEdit", "childSetupKicker", "childSetupTitle",
-  "childSetupDescription", "childFormStatus", "passportWorkspace", "passportChildName", "passportChildSchool",
-  "passportChildToolbar", "childSwitcher", "childPlanSummary", "addChildButton",
+  "childSetupDescription", "childFormStatus", "passportWorkspace", "passportChildAvatar", "passportChildName", "passportChildSchool",
   "passportSchoolNotice", "passportSchoolNoticeText", "returnChildSchool", "editChildButton",
   "encounterForm", "passportFoodChoices", "passportOptionalDetails", "passportOptionalBadge", "customFoodRequirement", "customFoodName", "customFoodHint", "experienceChoices", "noEatDetails", "reactionChoices",
   "encounterChildQuote", "encounterPreparation", "encounterNote",
@@ -233,6 +232,38 @@ function accountNeedsOnboarding(account = state.account) {
   return account?.authenticated === true
     && account?.onboarding?.required === true
     && !account?.child;
+}
+
+function displayedMenuContext(dashboard = state.dashboard) {
+  if (!dashboard || dashboard.isSample || Number(dashboard.school?.fatraceSchoolId) !== state.schoolId) return null;
+  const official = dashboard.viewMode === "officialDaily";
+  const date = official ? dashboard.selectedDate : dashboard.selected?.date;
+  const hasMeal = official
+    ? dashboard.record?.status === "available" && officialDishes(dashboard.record,
+      OfficialDiet.profile(dashboard.record).hasVariants ? state.mealType : null).length > 0
+    : Boolean(dashboard.selected?.meal?.mainDish || dashboard.selected?.meal?.staple);
+  if (!hasMeal || !/^\d{4}-\d{2}-\d{2}$/.test(date || "")) return null;
+  return {
+    school_id: String(dashboard.school.fatraceSchoolId), menu_date: date,
+    meal_type: state.mealType,
+    data_source: official ? "official_daily" : dashboard.dataPriority === "weekly_planned" ? "weekly_planned" : "reviewed_menu",
+  };
+}
+
+function watchProductContent(dashboard) {
+  const context = displayedMenuContext(dashboard);
+  window.ProductAnalytics?.watch(refs.menuBoard, "lunch_viewed", context);
+  const hasDinner = context && refs.dinnerPicks.children.length > 0;
+  window.ProductAnalytics?.watch(refs.dinnerCard, "dinner_idea_viewed", hasDinner ? context : null);
+  const share = document.getElementById("shareMenu");
+  if (share) share.disabled = !context;
+}
+
+function clearProductContent() {
+  window.ProductAnalytics?.watch(refs.menuBoard, "lunch_viewed", null);
+  window.ProductAnalytics?.watch(refs.dinnerCard, "dinner_idea_viewed", null);
+  const share = document.getElementById("shareMenu");
+  if (share) share.disabled = true;
 }
 
 function trackOnboardingEvent(name) {
@@ -290,6 +321,36 @@ async function skipOnboarding() {
   } finally {
     refs.cancelChildEdit.disabled = false;
   }
+}
+
+function renderPassportChildAvatar() {
+  const button = refs.passportChildAvatar;
+  const child = state.account.authenticated ? state.account.child : null;
+  const source = child?.avatarUrl;
+  if (!source) {
+    button.hidden = true;
+    button.replaceChildren();
+    delete button.dataset.source;
+    return;
+  }
+  button.setAttribute("aria-label", `開啟${profileDisplayName(child, "孩子")}的孩子設定`);
+  if (button.dataset.source === source) return;
+  button.hidden = true;
+  button.dataset.source = source;
+  const image = document.createElement("img");
+  image.alt = "";
+  image.width = 44;
+  image.height = 44;
+  image.decoding = "async";
+  image.referrerPolicy = "no-referrer";
+  image.onload = () => {
+    if (button.firstElementChild === image) button.hidden = false;
+  };
+  image.onerror = () => {
+    if (button.firstElementChild === image) button.hidden = true;
+  };
+  button.replaceChildren(image);
+  image.src = source;
 }
 
 function renderProfileAvatar(container, profile, previewUrl = null) {
@@ -851,41 +912,6 @@ function accountEndpoint(childId = state.activeChildId) {
     : "/api/account";
 }
 
-function renderChildNavigation() {
-  const account = state.account;
-  const children = Array.isArray(account.children) ? account.children : [];
-  const authenticated = Boolean(account.authenticated);
-  refs.passportChildToolbar.hidden = !authenticated || !children.length;
-  refs.childSwitcher.replaceChildren();
-  children.forEach((child) => {
-    const button = node("button", "");
-    button.type = "button";
-    const avatar = node("span", "child-switcher-avatar");
-    renderProfileAvatar(avatar, child);
-    const displayName = profileDisplayName(child, "孩子");
-    button.append(avatar, LunchI18n.keep(node("span", "child-switcher-name", displayName)));
-    const active = Number(child.id) === Number(account.child?.id);
-    if (active) button.classList.add("is-active");
-    button.setAttribute(
-      "aria-label",
-      `開啟${displayName}的孩子設定${active ? "，目前使用中的一口護照" : ""}`,
-    );
-    button.title = `開啟${displayName}的孩子設定`;
-    button.addEventListener("click", () => openPassportChildSettings(child.id, button));
-    refs.childSwitcher.append(button);
-  });
-  const planName = account.planDetails?.name || "免費方案";
-  const childLimit = Number(account.childLimit || account.planDetails?.childLimit || 1);
-  refs.childPlanSummary.textContent = `${planName} · ${children.length}/${childLimit} 位孩子`;
-  const paidPlan = account.plan === "family_monthly" || account.plan === "family_yearly";
-  refs.addChildButton.disabled = false;
-  refs.addChildButton.textContent = account.canAddChild
-    ? "＋ 新增孩子"
-    : paidPlan ? "查看目前方案" : "查看目前限制";
-  if (account.canAddChild) refs.addChildButton.removeAttribute("aria-haspopup");
-  else refs.addChildButton.setAttribute("aria-haspopup", "dialog");
-}
-
 function renderAccountChildren() {
   const children = Array.isArray(state.account.children) ? state.account.children : [];
   refs.accountChildList.replaceChildren();
@@ -903,7 +929,7 @@ function renderAccountChildren() {
     const school = schoolById(child.schoolId);
     copy.append(
       LunchI18n.keep(node("strong", "", profileDisplayName(child, "孩子"))),
-      node("span", "", `${school?.name || "尚未設定學校"}${child.nickname ? ` · 姓名 ${child.name}` : ""}`),
+      node("span", "", school?.name || "尚未設定學校"),
     );
     const edit = node("button", "", "修改");
     edit.type = "button";
@@ -913,7 +939,7 @@ function renderAccountChildren() {
         rememberActiveChild(child);
         await loadAccount({ childId: Number(child.id) });
       }
-      openChildEditor(refs.childName, { trigger: edit });
+      openChildEditor(refs.childNickname, { trigger: edit });
     });
     row.append(avatar, copy, edit);
     refs.accountChildList.append(row);
@@ -1260,8 +1286,8 @@ function renderAccount() {
   refs.accountSignedInView.classList.toggle("is-onboarding", onboardingActive);
   renderSettings();
   refs.accountChildBack.hidden = !childSettingsView;
-  renderChildNavigation();
   renderAccountChildren();
+  renderPassportChildAvatar();
   renderAccountPlan();
   renderFamilyPlan();
   const supportEmail = authenticated && typeof account.supportEmail === "string"
@@ -1320,7 +1346,6 @@ function renderAccount() {
     refs.childFormSubmit.textContent = "新增孩子";
     refs.cancelChildEdit.textContent = "取消";
     refs.cancelChildEdit.hidden = false;
-    refs.childName.value = "";
     refs.childNickname.value = "";
     renderProfileAvatar(refs.childAvatarPreview, null, state.childAvatarPreviewUrl);
     refs.removeChildAvatar.hidden = true;
@@ -1328,7 +1353,6 @@ function renderAccount() {
   } else if (authenticated && account.child) {
     const childDisplayName = profileDisplayName(account.child, "孩子");
     refs.passportChildName.textContent = childDisplayName; LunchI18n.keep(refs.passportChildName);
-    refs.childName.value = account.child.name || childDisplayName;
     refs.childNickname.value = account.child.nickname || "";
     renderProfileAvatar(refs.childAvatarPreview, account.child, state.childAvatarPreviewUrl);
     refs.removeChildAvatar.hidden = !account.child.avatarUrl;
@@ -1347,11 +1371,10 @@ function renderAccount() {
   } else if (authenticated) {
     refs.childSetupKicker.textContent = "孩子設定";
     refs.childSetupTitle.textContent = "建立第一位孩子的資料";
-    refs.childSetupDescription.textContent = "姓名只用在家庭帳號內；可另外設定暱稱，畫面會優先顯示暱稱。";
+    refs.childSetupDescription.textContent = "填寫孩子的暱稱即可，不需要提供本名。";
     refs.childFormSubmit.textContent = "建立免費飲食紀錄";
     refs.cancelChildEdit.textContent = "取消";
     refs.cancelChildEdit.hidden = true;
-    refs.childName.value = "";
     refs.childNickname.value = "";
     renderProfileAvatar(refs.childAvatarPreview, null, state.childAvatarPreviewUrl);
     refs.removeChildAvatar.hidden = true;
@@ -1506,6 +1529,7 @@ async function verifyEmailAuthCode() {
     });
     const payload = await responsePayload(response);
     if (!response.ok) throw new Error(payload.error || "目前無法確認驗證碼，請稍後再試。");
+    window.ProductAnalytics?.emailSignup(payload);
     PassportMemory.clear();
     resetEmailAuthForm();
     await loadAccount();
@@ -1520,7 +1544,7 @@ async function verifyEmailAuthCode() {
     }
     if (state.onboardingActive) {
       void markOnboardingStarted();
-      focusAccountChildEditor(refs.childName);
+      focusAccountChildEditor(refs.childNickname);
     } else {
       await closeAccountDialog();
       if (state.account.child && !refs.settingsDialog.open) {
@@ -1673,6 +1697,7 @@ function openRequestedAccountDialog() {
   const url = new URL(window.location.href);
   if (url.searchParams.get("account") !== "1") return;
   const lineResult = url.searchParams.get("line");
+  if (lineResult === "success" && !window.opener) void window.ProductAnalytics?.lineSignup();
   url.searchParams.delete("line");
   url.searchParams.delete("account");
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
@@ -3028,8 +3053,10 @@ function setViewMode(mode, { showOfficialMealTypes = false } = {}) {
   );
   refs.mealTypeMeat.textContent = "葷食";
   refs.mealTypeVegetarian.textContent = "素食";
-  refs.nutritionCard.hidden = official;
-  refs.dinnerCard.hidden = official;
+  refs.nutritionCard.hidden = false;
+  refs.dinnerCard.hidden = false;
+  refs.nutritionCard.classList.remove("is-unavailable");
+  refs.dinnerCard.classList.remove("is-unavailable");
   refs.standard.hidden = official;
   refs.learn.hidden = official;
   refs.insights.hidden = official;
@@ -3054,6 +3081,7 @@ function setViewMode(mode, { showOfficialMealTypes = false } = {}) {
 }
 
 async function renderNoSchoolSelected() {
+  clearProductContent();
   cancelDashboardRequest();
   state.schoolId = null;
   state.dashboard = null;
@@ -3321,8 +3349,8 @@ function renderOfficial(dashboard) {
   const dinnerSuggestion = OfficialDiet.dinnerSuggestion(dashboard.record, state.mealType);
   renderSchoolContext(dashboard);
   setViewMode("officialDaily", { showOfficialMealTypes: profile.hasVariants });
-  refs.nutritionCard.hidden = nutritionSnapshots.length === 0;
-  refs.dinnerCard.hidden = !dinnerSuggestion;
+  refs.nutritionCard.classList.toggle("is-unavailable", nutritionSnapshots.length === 0);
+  refs.dinnerCard.classList.toggle("is-unavailable", !dinnerSuggestion);
   refs.mealTypeMeat.setAttribute("aria-pressed", String(state.mealType === "meat"));
   refs.mealTypeVegetarian.setAttribute("aria-pressed", String(state.mealType === "vegetarian"));
   const date = dashboard.selectedDate || localIsoDate();
@@ -3359,18 +3387,29 @@ function renderOfficial(dashboard) {
   renderOfficialMeal(dashboard);
   if (nutritionSnapshots.length) renderOfficialNutrition(nutritionSnapshots);
   else {
-    refs.nutritionBars.replaceChildren();
+    refs.nutritionBars.classList.remove("has-multiple-snapshots");
+    refs.nutritionBars.replaceChildren(node("p", "nutrition-empty", "官方當日紀錄未提供營養分析。"));
     refs.calories.textContent = "未提供";
     refs.calorieUnit.textContent = "";
     refs.nutritionSourceNote.textContent = "官方當日紀錄未提供營養分析，不沿用週菜單設計值。";
   }
   if (dinnerSuggestion) renderDinner(dinnerSuggestion);
+  else {
+    refs.dinnerTitle.textContent = "今晚吃什麼？從孩子的午餐找靈感";
+    refs.dinnerPicks.replaceChildren();
+    refs.dinnerNotes.replaceChildren();
+    refs.dinnerReason.textContent = dashboard.record?.status === "no_meal"
+      ? "當日不供餐，沒有可搭配的學校午餐紀錄。"
+      : "取得所選日期的菜單後，再提供晚餐搭配參考。";
+    refs.disclaimer.textContent = "";
+  }
   renderPassportFoodChoices();
   renderOfficialTraceability(dashboard);
   renderOfficialWeek(dashboard);
   const count = summary.dishCount;
   setDashboardStatus("ready", dashboard.record ? `同日官方紀錄 · ${count} 道菜` : "指定日期尚無資料");
   refs.errorState.hidden = true;
+  watchProductContent(dashboard);
 }
 
 // Taiwan 2026 dates: DGPA official calendar (festival dates, not substitute holidays).
@@ -3508,6 +3547,7 @@ function render(dashboard) {
   }
   setDashboardStatus("ready", dashboard.isSample ? "功能範例 · 選校後顯示該校資料" : `已整理 ${dashboard.totalDays} 個供餐日`);
   refs.errorState.hidden = true;
+  watchProductContent(dashboard);
 }
 
 function announceSelection(dashboard) {
@@ -3571,6 +3611,7 @@ function cancelDashboardRequest() {
 }
 
 async function loadDashboard(date, { announce = false, focusWeekDay = false, preferLatest = false } = {}) {
+  clearProductContent();
   markPendingDate(date);
   state.dashboardAbortController?.abort();
   const controller = new AbortController();
@@ -3703,7 +3744,7 @@ async function selectMealType(mealType) {
 refs.mealTypeMeat.addEventListener("click", () => selectMealType("meat"));
 refs.mealTypeVegetarian.addEventListener("click", () => selectMealType("vegetarian"));
 
-async function selectSchool(schoolId) {
+async function selectSchool(schoolId, { trackSelection = false } = {}) {
   state.sampleRequestId += 1;
   const nextSchoolId = Number(schoolId);
   const exists = state.schoolDirectory.some(
@@ -3715,11 +3756,31 @@ async function selectSchool(schoolId) {
   }
   if (nextSchoolId === state.schoolId && state.dashboard) return;
   state.schoolId = nextSchoolId;
+  if (trackSelection) window.ProductAnalytics?.event("school_selected", {
+    school_id: String(nextSchoolId), selection_source: "school_selector",
+  });
   if (state.account.child) refs.encounterForm.hidden = true;
   await loadDashboard(localIsoDate(), { announce: true, preferLatest: true });
 }
 
-refs.schoolSelect.addEventListener("change", () => selectSchool(refs.schoolSelect.value));
+document.getElementById("shareMenu")?.addEventListener("click", async () => {
+  const context = displayedMenuContext();
+  if (!context || state.loading) return;
+  const button = document.getElementById("shareMenu");
+  const status = document.getElementById("shareMenuStatus");
+  button.disabled = true;
+  status.textContent = "";
+  try {
+    const result = await window.ProductAnalytics.shareMenu(context);
+    status.textContent = result === "copied" ? "菜單連結已複製。" : "已完成分享。";
+  } catch (error) {
+    if (error.name !== "AbortError") status.textContent = "目前無法分享，請稍後再試。";
+  } finally {
+    button.disabled = state.loading || !displayedMenuContext();
+  }
+});
+
+refs.schoolSelect.addEventListener("change", () => selectSchool(refs.schoolSelect.value, { trackSelection: true }));
 refs.districtSelect.addEventListener("change", async () => {
   state.district = refs.districtSelect.value;
   await renderNoSchoolSelected();
@@ -4101,7 +4162,7 @@ function openChildEditor(focusTarget, { trigger = document.activeElement, childO
 async function openPassportChildSettings(childId, trigger) {
   await selectAccountChild(childId);
   if (!state.account.child) return;
-  openChildEditor(refs.childName, { trigger, childOnly: true });
+  openChildEditor(refs.childNickname, { trigger, childOnly: true });
 }
 
 async function selectAccountChild(childId) {
@@ -4133,19 +4194,21 @@ function startChildCreation(trigger = document.activeElement) {
   setFormStatus(refs.accountFamilyStatus);
   renderAccount();
   if (!refs.accountDialog.open) openAccountDialog(trigger);
-  focusAccountChildEditor(refs.childName);
+  focusAccountChildEditor(refs.childNickname);
 }
 
+refs.passportChildAvatar.addEventListener("click", () => {
+  void openPassportChildSettings(state.account.child?.id, refs.passportChildAvatar);
+});
+
 refs.editChildButton.addEventListener("click", () => {
-  openChildEditor(refs.childName, { trigger: refs.editChildButton });
+  void openPassportChildSettings(state.account.child?.id, refs.editChildButton);
 });
 
 refs.editChildFromSchoolPicker.addEventListener("click", () => {
   openChildEditor(refs.childSchool, { trigger: refs.editChildFromSchoolPicker });
 });
 
-refs.childPlanSummary.addEventListener("click", () => openFamilyPlanDialog(refs.childPlanSummary));
-refs.addChildButton.addEventListener("click", () => startChildCreation(refs.addChildButton));
 refs.accountAddChild.addEventListener("click", () => startChildCreation(refs.accountAddChild));
 refs.openChildSettings.addEventListener("click", () => startChildCreation(refs.openChildSettings));
 
@@ -4231,7 +4294,6 @@ refs.childForm.addEventListener("submit", async (event) => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         childId: wasEditing ? state.account.child?.id : null,
-        name: refs.childName.value,
         nickname: refs.childNickname.value,
         gradeGroup: refs.childGradeGroup.value,
         schoolId: refs.childSchool.value,
@@ -4554,11 +4616,20 @@ async function initialize() {
     openRequestedAccountDialog();
     if (state.onboardingActive) {
       if (!refs.accountDialog.open) openAccountDialog(refs.accountButton);
-      focusAccountChildEditor(refs.childName);
+      focusAccountChildEditor(refs.childNickname);
     }
     const defaultSchool = schoolById(state.account.defaultSchoolId);
     const childSchool = schoolById(state.account.child?.schoolId);
-    const initialSchool = defaultSchool || childSchool;
+    const shared = new URL(window.location.href);
+    const sharedSchool = schoolById(Number(shared.searchParams.get("school")));
+    const sharedDate = shared.searchParams.get("date");
+    const validSharedDate = /^\d{4}-\d{2}-\d{2}$/.test(sharedDate || "")
+      && !Number.isNaN(Date.parse(`${sharedDate}T12:00:00Z`))
+      && new Date(`${sharedDate}T12:00:00Z`).toISOString().slice(0, 10) === sharedDate;
+    const initialSchool = sharedSchool || defaultSchool || childSchool;
+    if (sharedSchool && ["meat", "vegetarian"].includes(shared.searchParams.get("meal"))) {
+      state.mealType = shared.searchParams.get("meal");
+    }
     if (!initialSchool) {
       renderAccount();
       await sampleRequest;
@@ -4569,7 +4640,7 @@ async function initialize() {
     state.district = districtKey(initialSchool);
     populateSchoolSelectors();
     renderAccount();
-    await loadDashboard(localIsoDate());
+    await loadDashboard(sharedSchool && validSharedDate ? sharedDate : localIsoDate());
   } catch (error) {
     refs.errorState.hidden = false;
     console.error("Unable to initialize school lunch site", error);

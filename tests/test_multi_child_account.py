@@ -60,8 +60,8 @@ class MultiChildAccountTests(unittest.TestCase):
         app = self.read("web/app.js")
         records = self.read("web/records.js")
 
-        self.assertIn('id="childSwitcher"', index)
-        self.assertIn('id="addChildButton"', index)
+        self.assertNotIn('id="passportChildToolbar"', index)
+        self.assertIn('id="accountAddChild"', index)
         self.assertIn('id="accountPlanOptions" hidden', index)
         self.assertIn('id="familyPlanComparison"', index)
         self.assertIn('aria-labelledby="familyPlanComparisonTitle" hidden', index)
@@ -71,21 +71,21 @@ class MultiChildAccountTests(unittest.TestCase):
         self.assertIn('account.billingEnabled === true && account.subscriptionPlansVisible === true', app)
         self.assertIn('refs.accountPlanOptions.replaceChildren()', app)
         self.assertIn('refs.familyPlanComparison.replaceChildren()', app)
-        self.assertIn('查看目前限制', app)
         self.assertIn('demeter-active-child-id', app)
         self.assertIn('selectAccountChild', app)
         self.assertIn('recordsChildSelect', records)
 
-    def test_passport_child_chip_opens_only_that_child_settings(self) -> None:
+    def test_passport_child_details_opens_only_that_child_settings(self) -> None:
         index = self.read("web/index.html")
         app = self.read("web/app.js")
         styles = self.read("web/styles.css")
 
-        self.assertIn('id="childSwitcher" role="group" aria-label="孩子設定捷徑"', index)
+        self.assertNotIn('id="childSwitcher"', index)
+        self.assertIn('id="editChildButton" type="button" aria-haspopup="dialog"', index)
         self.assertIn('id="accountChildBack" type="button" hidden', index)
-        self.assertIn('button.addEventListener("click", () => openPassportChildSettings(child.id, button));', app)
+        self.assertIn('void openPassportChildSettings(state.account.child?.id, refs.editChildButton);', app)
         self.assertIn('function openPassportChildSettings(childId, trigger)', app)
-        self.assertIn('openChildEditor(refs.childName, { trigger, childOnly: true });', app)
+        self.assertIn('openChildEditor(refs.childNickname, { trigger, childOnly: true });', app)
         self.assertIn('state.accountDialogView = childOnly ? "child" : "family";', app)
         self.assertIn('refs.accountSignedInView.classList.toggle("is-child-settings-view", childSettingsView);', app)
         self.assertIn('if (state.accountDialogView === "child") {', app)
@@ -112,10 +112,7 @@ class MultiChildAccountTests(unittest.TestCase):
         self.assertNotIn('data-plan-id="family_monthly"', family_plan)
         self.assertNotIn('data-plan-id="family_yearly"', family_plan)
         self.assertIn('function openFamilyPlanDialog(trigger)', app)
-        self.assertIn(
-            'refs.childPlanSummary.addEventListener("click", () => openFamilyPlanDialog(refs.childPlanSummary));',
-            app,
-        )
+        self.assertNotIn('refs.childPlanSummary', app)
         self.assertIn('openFamilyPlanDialog(trigger);', app)
         self.assertIn('state.lastFamilyPlanTrigger = trigger || document.activeElement;', app)
         self.assertIn('card.setAttribute("aria-current", "true")', app)

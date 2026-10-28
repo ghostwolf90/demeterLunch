@@ -31,7 +31,7 @@ class FamilyProfileSettingsTests(unittest.TestCase):
         self.assertIn("env.BUCKET", avatar)
         self.assertIn("MAX_AVATAR_BYTES", avatar)
         self.assertIn('cache-control", "private', avatar)
-        self.assertIn("preferredProfileName(name, nickname", account)
+        self.assertIn('displayName: nickname || "孩子"', account)
         self.assertIn("accountSubscriptionDetails", account)
 
     def test_account_settings_expose_parent_children_and_subscription(self) -> None:
@@ -45,13 +45,13 @@ class FamilyProfileSettingsTests(unittest.TestCase):
             "accountChildList",
             "accountSubscriptionState",
             "accountSubscriptionDetail",
-            "childName",
             "childNickname",
             "childAvatarInput",
         ):
             self.assertIn(f'id="{element_id}"', html)
         self.assertIn('profileDisplayName(account.user, "家庭帳號")', app)
-        self.assertIn('name: refs.childName.value', app)
+        self.assertNotIn('name: refs.childName.value', app)
+        self.assertIn('nickname: refs.childNickname.value', app)
         self.assertIn('await uploadAvatar("child"', app)
         self.assertIn('await uploadAvatar("parent"', app)
         self.assertIn("childDisplayName(state.account.child)", records)
@@ -74,9 +74,9 @@ class FamilyProfileSettingsTests(unittest.TestCase):
         ]
         self.assertNotIn('id="childForm"', passport_prompt)
         self.assertIn('id="childForm"', account_editor)
-        self.assertIn('class="field-heading">孩子本名', account_editor)
+        self.assertNotIn('孩子本名', account_editor)
         self.assertIn('class="field-heading">孩子暱稱', account_editor)
-        self.assertIn('openChildEditor(refs.childName, { trigger: edit })', app)
+        self.assertIn('openChildEditor(refs.childNickname, { trigger: edit })', app)
         self.assertNotIn('await closeAccountDialog({ restoreFocus: false })', app)
         self.assertIn('.profile-settings-grid input { width: 100%; height: 44px;', styles)
         self.assertIn('.child-form > label > input, .child-form > label > select { height: 46px;', styles)

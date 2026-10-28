@@ -210,14 +210,13 @@ function childIdFromUrl(value: string): number | null {
 }
 
 function publicChild(child: ChildRow) {
-  const legacyProfile = !child.name?.trim();
-  const name = child.name?.trim() || child.nickname.trim() || "孩子";
-  const nickname = legacyProfile ? null : child.nickname.trim() || null;
+  const name = child.name?.trim() || null;
+  const nickname = child.nickname.trim() || null;
   return {
     id: child.id,
     name,
     nickname,
-    displayName: preferredProfileName(name, nickname, "孩子"),
+    displayName: nickname || "孩子",
     avatarUrl: child.avatar_key ? avatarUrl("child", child.updated_at, child.id) : null,
     gradeGroup: child.grade_group,
     schoolId: child.school_id,

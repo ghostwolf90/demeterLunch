@@ -175,7 +175,7 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("target.scrollIntoView({ block: \"start\" })", app_js)
         self.assertIn("await restoreInitialSectionPosition();", app_js)
         self.assertLess(
-            app_js.index("await loadDashboard(localIsoDate());"),
+            app_js.index("await loadDashboard(sharedSchool && validSharedDate ? sharedDate : localIsoDate());"),
             app_js.index("await restoreInitialSectionPosition();"),
         )
 
