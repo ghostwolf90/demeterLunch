@@ -247,7 +247,7 @@ window.LunchEnglish = {
   "例如：菇菇像雨傘": "For example: mushrooms look like umbrellas",
   "孩子說了一句話": "Something your child said",
   "記下當時的情況": "Note what happened",
-  "選一種開始，也可以切換補充；已填內容會一起保存。": "Start with either option and switch to add more. Everything you enter is saved together.",
+  "想記哪些內容？可以複選，同時填寫；收起欄位仍會保留並儲存已填內容。": "Choose any combination to fill in together. Collapsed fields keep their contents and are saved too.",
   "孩子對這個食物的感覺如何？（可不填，再按一次可取消）": "How did your child feel about this food? (optional; tap again to clear)",
   "和吃了多少分開記；孩子沒有提到，也可以略過。": "Record this separately from how much they ate. Skip it if your child did not say.",
   "很喜歡": "Loved it",

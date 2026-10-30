@@ -4404,13 +4404,23 @@ function setMemoryMode(mode) {
   document.querySelectorAll("[data-memory-mode]").forEach(button => {
     button.setAttribute("aria-pressed", String(button.dataset.memoryMode === mode));
   });
+  renderMemoryFields();
+}
+
+function renderMemoryFields() {
   for (const [key, id] of [["quote", "memoryQuoteField"], ["note", "memoryNoteField"], ["experience", "memoryExperienceField"]]) {
-    document.getElementById(id).hidden = key !== mode;
+    const button = document.querySelector(`[data-memory-mode="${key}"]`);
+    document.getElementById(id).hidden = button?.getAttribute("aria-pressed") !== "true";
+    button?.setAttribute("aria-controls", id);
   }
 }
 document.querySelectorAll("[data-memory-mode]").forEach(button => {
-  button.addEventListener("click", () => setMemoryMode(button.dataset.memoryMode));
+  button.addEventListener("click", () => {
+    button.setAttribute("aria-pressed", String(button.getAttribute("aria-pressed") !== "true"));
+    renderMemoryFields();
+  });
 });
+renderMemoryFields();
 
 function updateNoEatDetails() {
   const show = refs.experienceChoices.querySelector('input[name="experience"]:checked')?.value === "not_eaten";
