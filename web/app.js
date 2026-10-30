@@ -642,7 +642,7 @@ function renderPassportSchoolContext() {
 }
 
 function renderPassportFoodChoices() {
-  const previous = refs.passportFoodChoices.querySelector('input[name="dishSource"]:checked')?.value;
+  const previous = new Set([...refs.passportFoodChoices.querySelectorAll('input[name="dishSource"]:checked')].map(input => input.value));
   refs.passportFoodChoices.replaceChildren();
   const child = state.account.child;
   if (child) renderPassportSchoolContext();
@@ -668,10 +668,10 @@ function renderPassportFoodChoices() {
   choices.forEach(({ value, label: text }) => {
     const label = document.createElement("label");
     const input = document.createElement("input");
-    input.type = "radio";
+    input.type = "checkbox";
     input.name = "dishSource";
     input.value = value;
-    input.checked = value === previous;
+    input.checked = previous.has(value);
     label.append(input, LunchI18n.keep(node("span", "", text)));
     refs.passportFoodChoices.append(label);
   });
@@ -4324,25 +4324,18 @@ refs.encounterForm.addEventListener("submit", async (event) => {
     if (!refs.returnChildSchool.hidden) refs.returnChildSchool.focus();
     return;
   }
-  const selectedSource = refs.passportFoodChoices.querySelector('input[name="dishSource"]:checked')?.value;
+  const selectedSources = [...refs.passportFoodChoices.querySelectorAll('input[name="dishSource"]:checked')].map(input => input.value);
   const mealContext = "school_lunch";
-  const dishName = selectedSource || null;
-  const foodName = refs.customFoodName.value.trim() || dishName || "";
+  const customFoodName = refs.customFoodName.value.trim();
   const formData = new FormData(refs.encounterForm);
   let experience = formData.get("experience") || "unrecorded";
   if (experience === "not_eaten") experience = formData.get("noEatContact") || experience;
   const reaction = formData.get("reaction");
   const reactions = reaction ? [reaction] : [];
   const familiarity = formData.get("familiarity");
-  if (!selectedSource || !passportFoodOptions().includes(selectedSource)) {
+  if (!selectedSources.length || selectedSources.some(source => !passportFoodOptions().includes(source))) {
     setFormStatus(refs.encounterFormStatus, "請先選擇孩子學校這一天的來源菜色；尚未取得菜單時，請稍後再記。", "error");
     refs.passportFoodChoices.querySelector("input")?.focus();
-    return;
-  }
-  if (!foodName) {
-    setFormStatus(refs.encounterFormStatus, "請選擇這次午餐的來源菜色。", "error");
-    refs.passportOptionalDetails.open = true;
-    refs.customFoodName.focus();
     return;
   }
   if (experience === "unrecorded" && !reactions.length && !refs.encounterChildQuote.value.trim() && !refs.encounterNote.value.trim()) {
@@ -4353,43 +4346,51 @@ refs.encounterForm.addEventListener("submit", async (event) => {
   const submit = refs.encounterForm.querySelector('button[type="submit"]');
   submit.disabled = true;
   setFormStatus(refs.encounterFormStatus, "正在儲存這筆紀錄…");
+  refs.encounterForm.inert = true;
+  let savedCount = 0;
   try {
-    const response = await fetch("/api/account/encounters", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        childId: state.account.child?.id,
-        schoolId: state.account.child?.schoolId,
-        mealDate: selectedMealDate(),
-        mealType: state.mealType,
-        mealContext,
-        dishName,
-        foodName,
-        experience,
-        reactions,
-        childQuote: refs.encounterChildQuote.value,
-        firstEncounter: familiarity === "first" ? true : familiarity === "previous" ? false : null,
-        preparation: refs.encounterPreparation.value,
-        note: refs.encounterNote.value,
-      }),
-    });
-    const payload = await responsePayload(response);
-    if (!response.ok) throw new Error(payload.error || "目前無法儲存這筆飲食紀錄，請稍後再試。");
+    let payload;
+    for (const dishName of selectedSources) {
+      const response = await fetch("/api/account/encounters", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          childId: state.account.child?.id,
+          schoolId: state.account.child?.schoolId,
+          mealDate: selectedMealDate(),
+          mealType: state.mealType,
+          mealContext,
+          dishName,
+          foodName: customFoodName || dishName,
+          experience,
+          reactions,
+          childQuote: refs.encounterChildQuote.value,
+          firstEncounter: familiarity === "first" ? true : familiarity === "previous" ? false : null,
+          preparation: refs.encounterPreparation.value,
+          note: refs.encounterNote.value,
+        }),
+      });
+      payload = await responsePayload(response);
+      if (!response.ok) throw new Error(payload.error || "目前無法儲存這筆飲食紀錄，請稍後再試。");
+      savedCount += 1;
+      refs.passportFoodChoices.querySelectorAll('input[name="dishSource"]').forEach(input => { if (input.value === dishName) input.checked = false; });
+    }
     if (state.account.child?.id !== savingChildId) return;
     refs.encounterForm.reset();
     updateNoEatDetails();
     resetPassportOptionalDetails();
     setMemoryMode("quote");
-    setFormStatus(refs.encounterFormStatus, "已留下這次的記憶。", "success");
+    setFormStatus(refs.encounterFormStatus, `已留下 ${savedCount} 道菜的記憶。`, "success");
     await loadAccount({ childId: savingChildId });
     if (state.account.child?.id !== savingChildId) return;
     refs.encounterEntry.open = false;
-    if (payload.encounter) PassportMemory.saved(payload.encounter, savingChildId, refreshPassportMemories);
+    if (savedCount === 1 && payload.encounter) PassportMemory.saved(payload.encounter, savingChildId, refreshPassportMemories);
     else refs.encounterEntryToggle.focus({ preventScroll: true });
   } catch (error) {
-    setFormStatus(refs.encounterFormStatus, error instanceof Error ? error.message : "目前無法儲存這筆飲食紀錄，請稍後再試。", "error");
+    setFormStatus(refs.encounterFormStatus, `${savedCount ? `已儲存 ${savedCount} 道菜，剩餘勾選菜色尚未儲存。` : ""}${error instanceof Error ? error.message : "目前無法儲存，請稍後再試。"}`, "error");
   } finally {
+    refs.encounterForm.inert = false;
     submit.disabled = false;
   }
 });
@@ -4404,23 +4405,13 @@ function setMemoryMode(mode) {
   document.querySelectorAll("[data-memory-mode]").forEach(button => {
     button.setAttribute("aria-pressed", String(button.dataset.memoryMode === mode));
   });
-  renderMemoryFields();
-}
-
-function renderMemoryFields() {
   for (const [key, id] of [["quote", "memoryQuoteField"], ["note", "memoryNoteField"], ["experience", "memoryExperienceField"]]) {
-    const button = document.querySelector(`[data-memory-mode="${key}"]`);
-    document.getElementById(id).hidden = button?.getAttribute("aria-pressed") !== "true";
-    button?.setAttribute("aria-controls", id);
+    document.getElementById(id).hidden = key !== mode;
   }
 }
 document.querySelectorAll("[data-memory-mode]").forEach(button => {
-  button.addEventListener("click", () => {
-    button.setAttribute("aria-pressed", String(button.getAttribute("aria-pressed") !== "true"));
-    renderMemoryFields();
-  });
+  button.addEventListener("click", () => setMemoryMode(button.dataset.memoryMode));
 });
-renderMemoryFields();
 
 function updateNoEatDetails() {
   const show = refs.experienceChoices.querySelector('input[name="experience"]:checked')?.value === "not_eaten";

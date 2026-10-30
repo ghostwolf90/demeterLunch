@@ -20,27 +20,29 @@ test('entire entry is collapsed initially, while history and status remain outsi
   assert.doesNotMatch(choices, /其他地方|OTHER_FOOD_CONTEXT/);
 });
 
-async function submit({ ok = true, selected = '油菜', experience = 'tasted', quote = '' } = {}) {
+async function submit({ ok = true, selected = '油菜', experience = 'tasted', quote = '', failAt = 0 } = {}) {
   let listener, body, resets = 0, focused = false;
+  const bodies = [];
+  const choices = (Array.isArray(selected) ? selected : [selected]).filter(Boolean).map(value => ({ value, checked: true }));
   const button = {};
   const refs = {
     encounterEntry: { open: true }, encounterEntryToggle: { focus() { focused = true; } },
     encounterForm: { addEventListener(_, callback) { listener = callback; }, querySelector() { return button; }, reset() { resets++; } },
-    passportFoodChoices: { querySelector() { return { value: selected, focus() {} }; } },
+    passportFoodChoices: { querySelectorAll(selector) { return selector.includes(":checked") ? choices.filter(input => input.checked) : choices; }, querySelector() { return { value: selected, focus() {} }; } },
     customFoodName: { value: '' }, encounterFormStatus: {},
     encounterChildQuote: { value: quote }, encounterPreparation: { value: '' }, encounterNote: { value: '' },
   };
   vm.runInNewContext(handler, {
     refs, state: { account: { child: { id: 7 } }, mealType: 'meat' },
-    isViewingChildSchool: () => true, passportFoodOptions: () => ['油菜'], selectedMealDate: () => '2026-10-22',
+    isViewingChildSchool: () => true, passportFoodOptions: () => ['油菜', '雞排'], selectedMealDate: () => '2026-10-22',
     FormData: class { get(key) { return key === 'experience' ? experience : null; } },
     setFormStatus() {}, updateNoEatDetails() {}, resetPassportOptionalDetails() {}, loadAccount: async () => {},
     setMemoryMode() {},
     responsePayload: async () => ({}),
-    fetch: async (_, options) => { body = JSON.parse(options.body); return { ok }; },
+    fetch: async (_, options) => { body = JSON.parse(options.body); bodies.push(body); return { ok: ok && bodies.length !== failAt }; },
   });
   await listener({ preventDefault() {} });
-  return { refs, body, resets, focused };
+  return { refs, body, bodies, choices, resets, focused };
 }
 
 test('saving creates a school lunch record and collapses after success', async () => {
@@ -73,3 +75,19 @@ test('a quote alone saves without inferring contact, while empty drafts stay ope
   assert.equal(empty.body, undefined);
   assert.equal(empty.resets, 0);
 });
+
+ test('multiple dishes save separate sources and food names', async () => {
+ const result = await submit({ selected: ['油菜', '雞排'] });
+ assert.deepEqual(result.bodies.map(item => item.dishName), ['油菜', '雞排']);
+ assert.deepEqual(result.bodies.map(item => item.foodName), ['油菜', '雞排']);
+ assert.equal(result.resets, 1);
+ });
+ test('partial failure keeps only unsaved dishes selected and preserves draft', async () => {
+ const result = await submit({ selected: ['油菜', '雞排'], failAt: 2 });
+ assert.deepEqual(result.choices.map(item => item.checked), [false, true]);
+ assert.equal(result.resets, 0);
+ assert.equal(result.refs.encounterEntry.open, true);
+ });
+ test('empty selection cannot save', async () => {
+ assert.equal((await submit({ selected: [] })).body, undefined);
+ });
