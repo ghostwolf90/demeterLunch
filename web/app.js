@@ -255,15 +255,11 @@ function watchProductContent(dashboard) {
   window.ProductAnalytics?.watch(refs.menuBoard, "lunch_viewed", context);
   const hasDinner = context && refs.dinnerPicks.children.length > 0;
   window.ProductAnalytics?.watch(refs.dinnerCard, "dinner_idea_viewed", hasDinner ? context : null);
-  const share = document.getElementById("shareMenu");
-  if (share) share.disabled = !context;
 }
 
 function clearProductContent() {
   window.ProductAnalytics?.watch(refs.menuBoard, "lunch_viewed", null);
   window.ProductAnalytics?.watch(refs.dinnerCard, "dinner_idea_viewed", null);
-  const share = document.getElementById("shareMenu");
-  if (share) share.disabled = true;
 }
 
 function trackOnboardingEvent(name) {
@@ -3762,23 +3758,6 @@ async function selectSchool(schoolId, { trackSelection = false } = {}) {
   if (state.account.child) refs.encounterForm.hidden = true;
   await loadDashboard(localIsoDate(), { announce: true, preferLatest: true });
 }
-
-document.getElementById("shareMenu")?.addEventListener("click", async () => {
-  const context = displayedMenuContext();
-  if (!context || state.loading) return;
-  const button = document.getElementById("shareMenu");
-  const status = document.getElementById("shareMenuStatus");
-  button.disabled = true;
-  status.textContent = "";
-  try {
-    const result = await window.ProductAnalytics.shareMenu(context);
-    status.textContent = result === "copied" ? "菜單連結已複製。" : "已完成分享。";
-  } catch (error) {
-    if (error.name !== "AbortError") status.textContent = "目前無法分享，請稍後再試。";
-  } finally {
-    button.disabled = state.loading || !displayedMenuContext();
-  }
-});
 
 refs.schoolSelect.addEventListener("change", () => selectSchool(refs.schoolSelect.value, { trackSelection: true }));
 refs.districtSelect.addEventListener("change", async () => {
