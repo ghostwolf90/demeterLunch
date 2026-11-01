@@ -28,6 +28,7 @@ type EncounterRow = {
   meal_type: string;
   meal_context: string;
   dish_name: string | null;
+  dish_names: string | null;
   food_name: string;
   experience: string;
   reactions: string | null;
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
     }
     const encounters = await db
       .prepare(
-        `SELECT id, meal_date, school_id, meal_type, meal_context, dish_name, food_name, experience,
+        `SELECT id, meal_date, school_id, meal_type, meal_context, dish_name, dish_names, food_name, experience,
                 reactions, child_quote, first_encounter, preparation, note, created_at
          FROM food_encounters
          WHERE auth_user_id = ? AND child_id = ?
@@ -75,6 +76,7 @@ export async function GET(request: Request) {
           ? item.meal_context
           : "unknown",
         dishName: item.dish_name,
+        dishNames: item.dish_names ? JSON.parse(item.dish_names) : item.dish_name ? [item.dish_name] : [],
         foodName: item.food_name,
         experience: item.experience,
         reactions: parseStoredReactions(item.reactions),
@@ -111,6 +113,14 @@ export async function POST(request: Request) {
   const mealType = typeof record.mealType === "string" ? record.mealType : "meat";
   const mealContext = typeof record.mealContext === "string" ? record.mealContext : "";
   const dishName = optionalText(record.dishName, 80);
+  const suppliedDishes = record.dishNames;
+  if (suppliedDishes !== undefined && (!Array.isArray(suppliedDishes) || !suppliedDishes.length || suppliedDishes.length > 20 || suppliedDishes.some(value => typeof value !== "string" || !value.trim() || value.trim().length > 80))) {
+    return privateJson({ error: "請確認來源菜色" }, { status: 400 });
+  }
+  const dishNames = suppliedDishes ? [...new Set((suppliedDishes as string[]).map(value => value.trim()))] : dishName ? [dishName] : [];
+  if (suppliedDishes && (mealContext !== "school_lunch" || dishNames[0] !== dishName)) {
+    return privateJson({ error: "來源菜色與午餐情境不一致" }, { status: 400 });
+  }
   const reactions = validReactions(record.reactions);
   const childQuote = optionalText(record.childQuote, 160);
   const firstEncounter = optionalBoolean(record.firstEncounter);
@@ -170,9 +180,9 @@ export async function POST(request: Request) {
     const inserted = await db
       .prepare(
         `INSERT INTO food_encounters
-           (child_id, auth_user_id, meal_date, school_id, meal_type, meal_context, dish_name, food_name,
+           (child_id, auth_user_id, meal_date, school_id, meal_type, meal_context, dish_name, dish_names, food_name,
             experience, reactions, child_quote, first_encounter, preparation, note, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         child.id,
@@ -182,6 +192,7 @@ export async function POST(request: Request) {
         mealType,
         mealContext,
         dishName,
+        JSON.stringify(dishNames),
         foodName,
         experience,
         JSON.stringify(reactions),
@@ -194,7 +205,7 @@ export async function POST(request: Request) {
       .run();
     return privateJson({ ok: true, encounter: {
       id: Number(inserted.meta.last_row_id), mealDate, schoolId: mealContext === "school_lunch" ? child.school_id : null,
-      mealType, mealContext, dishName, foodName, experience, reactions, childQuote, firstEncounter, preparation, note, createdAt: now,
+      mealType, mealContext, dishName, dishNames, foodName, experience, reactions, childQuote, firstEncounter, preparation, note, createdAt: now,
     } }, { status: 201 });
   } catch (error) {
     console.error("Unable to save food encounter", error);

@@ -96,6 +96,7 @@ function schoolById(schoolId) {
 }
 
 function encounterOriginText(encounter) {
+  if (encounter.mealContext === "school_lunch" && encounter.dishNames?.length > 1) return `來源菜色：${encounter.dishNames.join("、")}`;
   if (encounter.mealContext === "school_lunch" && encounter.dishName) {
     return encounter.foodName === encounter.dishName
       ? `記錄整道「${encounter.dishName}」`
@@ -368,7 +369,7 @@ function renderMealSnapshot(container, snapshot, encounters) {
   }
   const linkedDishes = encounters
     .filter((encounter) => encounter.mealContext === "school_lunch" && encounter.dishName)
-    .map((encounter) => encounter.dishName);
+    .flatMap((encounter) => encounter.dishNames?.length ? encounter.dishNames : [encounter.dishName]);
   const list = node("ul", "encounter-meal-list");
   snapshot.items.forEach((mealItem) => {
     const row = document.createElement("li");

@@ -691,6 +691,7 @@ function resetPassportOptionalDetails() {
 }
 
 function encounterOriginText(encounter) {
+  if (encounter.mealContext === "school_lunch" && encounter.dishNames?.length > 1) return `來源菜色：${encounter.dishNames.join("、")}`;
   if (encounter.mealContext === "school_lunch" && encounter.dishName) {
     return encounter.foodName === encounter.dishName
       ? `記錄整道「${encounter.dishName}」`
@@ -862,7 +863,8 @@ function renderEncounterMealPreview(container, snapshot, encounter) {
     node("span", "", `${formatDate(encounter.mealDate)} · ${snapshot.mealTypeLabel}`),
   );
   container.append(heading);
-  const linkedDish = encounter.mealContext === "school_lunch" ? encounter.dishName : null;
+  const linkedDishes = encounter.mealContext === "school_lunch" ? (encounter.dishNames?.length ? encounter.dishNames : encounter.dishName ? [encounter.dishName] : []) : [];
+  const linkedDish = linkedDishes.join("、") || null;
   const relation = linkedDish
     ? encounter.foodName === linkedDish
       ? `這筆記錄的是整道「${linkedDish}」。`
@@ -880,7 +882,7 @@ function renderEncounterMealPreview(container, snapshot, encounter) {
   let linkedDishFound = false;
   for (const mealItem of snapshot.items) {
     const row = document.createElement("li");
-    if (linkedDish && sameFood(mealItem.name, linkedDish)) {
+    if (linkedDishes.some(dish => sameFood(mealItem.name, dish))) {
       row.classList.add("is-recorded");
       linkedDishFound = true;
     }
@@ -1892,7 +1894,15 @@ function prioritizeDailyDashboard(weekly, daily) {
   const record = records[date] || (daily?.selectedDate === date ? withoutWeekly(daily.record) : null);
   const valid = Number(daily?.school?.fatraceSchoolId) === DEFAULT_SCHOOL_ID
     && record?.mealDate === date && ["available", "no_meal"].includes(record.status);
-  const plan = { ...weekly, dataPriority: "weekly_planned", dailyRecords: records };
+  // A fallback weekly menu may display an earlier day than the requested day.
+  // Attach only that displayed day's exact official evidence for photo matching.
+  const displayedDate = weekly.selected.date;
+  const displayedRecord = records[displayedDate]
+    || (daily?.selectedDate === displayedDate ? withoutWeekly(daily.record) : null);
+  const photoRecord = Number(daily?.school?.fatraceSchoolId) === DEFAULT_SCHOOL_ID
+    && displayedRecord?.mealDate === displayedDate && displayedRecord.status === "available"
+    ? displayedRecord : null;
+  const plan = { ...weekly, dataPriority: "weekly_planned", dailyRecords: records, officialRecord: photoRecord };
   if (!valid) return plan;
   return { ...daily, requestedDate: date, selectedDate: date,
     record, records, isMissing: false, isFallback: false,
@@ -4347,48 +4357,45 @@ refs.encounterForm.addEventListener("submit", async (event) => {
   submit.disabled = true;
   setFormStatus(refs.encounterFormStatus, "正在儲存這筆紀錄…");
   refs.encounterForm.inert = true;
-  let savedCount = 0;
   try {
-    let payload;
-    for (const dishName of selectedSources) {
-      const response = await fetch("/api/account/encounters", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          childId: state.account.child?.id,
-          schoolId: state.account.child?.schoolId,
-          mealDate: selectedMealDate(),
-          mealType: state.mealType,
-          mealContext,
-          dishName,
-          foodName: customFoodName || dishName,
-          experience,
-          reactions,
-          childQuote: refs.encounterChildQuote.value,
-          firstEncounter: familiarity === "first" ? true : familiarity === "previous" ? false : null,
-          preparation: refs.encounterPreparation.value,
-          note: refs.encounterNote.value,
-        }),
-      });
-      payload = await responsePayload(response);
-      if (!response.ok) throw new Error(payload.error || "目前無法儲存這筆飲食紀錄，請稍後再試。");
-      savedCount += 1;
-      refs.passportFoodChoices.querySelectorAll('input[name="dishSource"]').forEach(input => { if (input.value === dishName) input.checked = false; });
-    }
+    const dishName = selectedSources[0];
+    const response = await fetch("/api/account/encounters", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        childId: state.account.child?.id,
+        schoolId: state.account.child?.schoolId,
+        mealDate: selectedMealDate(),
+        mealType: state.mealType,
+        mealContext,
+        dishName,
+        dishNames: selectedSources,
+        foodName: customFoodName || selectedSources.join("、").slice(0, 80),
+        experience,
+        reactions,
+        childQuote: refs.encounterChildQuote.value,
+        firstEncounter: familiarity === "first" ? true : familiarity === "previous" ? false : null,
+        preparation: refs.encounterPreparation.value,
+        note: refs.encounterNote.value,
+      }),
+    });
+    const payload = await responsePayload(response);
+    if (!response.ok) throw new Error(payload.error || "目前無法儲存這筆飲食紀錄，請稍後再試。");
+
     if (state.account.child?.id !== savingChildId) return;
     refs.encounterForm.reset();
     updateNoEatDetails();
     resetPassportOptionalDetails();
     setMemoryMode("quote");
-    setFormStatus(refs.encounterFormStatus, `已留下 ${savedCount} 道菜的記憶。`, "success");
+    setFormStatus(refs.encounterFormStatus, "已留下這次的記憶。", "success");
     await loadAccount({ childId: savingChildId });
     if (state.account.child?.id !== savingChildId) return;
     refs.encounterEntry.open = false;
-    if (savedCount === 1 && payload.encounter) PassportMemory.saved(payload.encounter, savingChildId, refreshPassportMemories);
+    if (payload.encounter) PassportMemory.saved(payload.encounter, savingChildId, refreshPassportMemories);
     else refs.encounterEntryToggle.focus({ preventScroll: true });
   } catch (error) {
-    setFormStatus(refs.encounterFormStatus, `${savedCount ? `已儲存 ${savedCount} 道菜，剩餘勾選菜色尚未儲存。` : ""}${error instanceof Error ? error.message : "目前無法儲存，請稍後再試。"}`, "error");
+    setFormStatus(refs.encounterFormStatus, error instanceof Error ? error.message : "目前無法儲存，請稍後再試。", "error");
   } finally {
     refs.encounterForm.inert = false;
     submit.disabled = false;

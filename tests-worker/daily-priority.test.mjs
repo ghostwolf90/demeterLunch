@@ -76,3 +76,30 @@ test('live lookup asks for the requested date rather than the weekly fallback da
   assert.equal(result.selectedDate, '2026-10-27');
   assert.equal(result.dataPriority, 'official_daily');
 });
+
+test('first weekend load attaches only photos for the displayed October 30 menu', () => {
+ const { ctx, snapshot } = setup();
+ const photo = {mealDate:'2026-10-30', status:'available', meals:[{dishes:[{name:'雞排', imageUrl:'https://fatraceschool.k12ea.gov.tw/dish/pic/123'}]}]};
+ const fallback = {...weekly, requestedDate:'2026-11-01', selected:{date:'2026-10-30'}, isFallback:true};
+ const result = ctx.prioritizeDailyDashboard(fallback, {...snapshot, selectedDate:'2026-11-01', records:{'2026-10-30':photo}});
+ assert.deepEqual(JSON.parse(JSON.stringify(result.officialRecord)), photo);
+ assert.equal(result.selected.date, '2026-10-30');
+ assert.equal(result.requestedDate, '2026-11-01');
+ assert.equal(result.dataPriority, 'weekly_planned');
+ assert.equal(result.isFallback, true);
+ for (const invalid of [{...photo, mealDate:'2026-10-29'}, {...photo,status:'not_published'}]) {
+ assert.equal(ctx.prioritizeDailyDashboard(fallback,{...snapshot,records:{'2026-10-30':invalid}}).officialRecord,null);
+ }
+ assert.equal(ctx.prioritizeDailyDashboard(fallback,{...snapshot,school:{fatraceSchoolId:123},records:{'2026-10-30':photo}}).officialRecord,null);
+});
+
+test('fresh first-load request merges displayed-date photos without a date toggle', async () => {
+ const {ctx,snapshot} = setup();
+ snapshot.records = {'2026-10-30':{mealDate:'2026-10-30',status:'available',meals:[{dishes:[{imageUrl:'same-day-photo'}]}]}};
+ ctx.dashboardFromStatic = (_,date,mealType) => ({...weekly,requestedDate:date,selected:{date:'2026-10-30'},mealType,isFallback:true});
+ const first = await ctx.fetchWeeklyDashboard('2026-11-01',{mealType:'meat'});
+ assert.equal(first.officialRecord.meals[0].dishes[0].imageUrl,'same-day-photo');
+ assert.equal(first.selected.date,'2026-10-30');
+ const cached = await ctx.fetchWeeklyDashboard('2026-11-01',{mealType:'meat'});
+ assert.equal(cached.officialRecord.mealDate,'2026-10-30');
+});

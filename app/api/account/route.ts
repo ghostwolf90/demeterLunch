@@ -48,6 +48,7 @@ type EncounterRow = {
   meal_type: string;
   meal_context: string;
   dish_name: string | null;
+  dish_names: string | null;
   food_name: string;
   experience: string;
   reactions: string | null;
@@ -117,7 +118,7 @@ export async function GET(request: Request) {
       ? await Promise.all([
           db
             .prepare(
-              `SELECT id, meal_date, school_id, meal_type, meal_context, dish_name, food_name, experience,
+              `SELECT id, meal_date, school_id, meal_type, meal_context, dish_name, dish_names, food_name, experience,
                       reactions, child_quote, first_encounter, preparation, note, created_at
                FROM food_encounters
                WHERE auth_user_id = ? AND child_id = ?
@@ -175,6 +176,7 @@ export async function GET(request: Request) {
           ? item.meal_context
           : "unknown",
         dishName: item.dish_name,
+        dishNames: item.dish_names ? JSON.parse(item.dish_names) : item.dish_name ? [item.dish_name] : [],
         foodName: item.food_name,
         experience: item.experience,
         reactions: parseReactions(item.reactions),

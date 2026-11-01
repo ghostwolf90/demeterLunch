@@ -225,7 +225,7 @@ window.LunchEnglish = {
   "回到孩子的學校": "Back to your child's school",
   "記一筆午餐經驗 ＋": "Add a lunch memory ＋",
   "1. 今天午餐想記下哪些菜？": "1. Which lunch dishes would you like to record?",
-  "可複選，再點一次取消。下方內容會分別記到每一道勾選的菜；不同感受請分次記錄。": "Select one or more dishes. The details below apply to each selected dish; record different experiences separately.",
+  "可複選，再點一次取消。勾選的菜會一起保存在同一筆紀錄；不同感受可分次記錄。": "Select one or more dishes. Selected dishes are saved together in one memory; record different experiences separately.",
   "食物名稱（可不填）": "Food name (optional)",
   "不填會記下整道菜；填寫時仍會保留上一步選的來源菜色。": "Leave this blank to record the whole dish. If you name a food, the selected dish is still saved as its source.",
   "例如：扣肉、紅蘿蔔絲": "For example: braised pork, shredded carrots",

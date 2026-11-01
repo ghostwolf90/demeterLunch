@@ -184,6 +184,7 @@ export const foodEncounters = sqliteTable(
     mealType: text("meal_type").notNull().default("meat"),
     mealContext: text("meal_context").notNull().default("unknown"),
     dishName: text("dish_name"),
+    dishNames: text("dish_names"),
     foodName: text("food_name").notNull(),
     experience: text("experience").notNull(),
     reactions: text("reactions"),

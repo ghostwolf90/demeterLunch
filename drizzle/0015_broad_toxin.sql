@@ -1,0 +1,1 @@
+ALTER TABLE `food_encounters` ADD `dish_names` text;

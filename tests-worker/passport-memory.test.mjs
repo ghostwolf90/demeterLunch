@@ -10,7 +10,7 @@ function fixture() {
   sqlite.exec(`CREATE TABLE child_profiles(id INTEGER PRIMARY KEY, auth_user_id TEXT, school_id INTEGER);
     INSERT INTO child_profiles VALUES(1,'parent-a',193609),(2,'parent-a',64601),(3,'parent-b',64602);
     CREATE TABLE food_encounters(id INTEGER PRIMARY KEY, child_id INTEGER, auth_user_id TEXT,
-    meal_date TEXT, school_id INTEGER, meal_type TEXT, meal_context TEXT, dish_name TEXT, food_name TEXT,
+    meal_date TEXT, school_id INTEGER, meal_type TEXT, meal_context TEXT, dish_name TEXT, dish_names TEXT, food_name TEXT,
     experience TEXT, reactions TEXT, child_quote TEXT, first_encounter INTEGER, preparation TEXT, note TEXT, created_at TEXT);`);
   const db = { prepare(sql) { return { bind(...values) {
     const statement = sqlite.prepare(sql);
@@ -82,4 +82,31 @@ test('legacy edits never invent provenance; deletion removes record from subsequ
   assert.equal((await api.DELETE(request('DELETE', { id: 1, childId: 1 }))).status, 200);
   const after = await (await api.GET(request('GET', null, '?childId=1'))).json(); assert.equal(after.encounterCount, 0);
   sqlite.close();
+});
+
+test('multiple dish sources roundtrip in one row and mutate as one memory', async () => {
+ const { sqlite, api, request, base } = fixture();
+ const dishes = [base.dishName, '炒青菜'];
+ const created = await api.POST(request('POST', {...base, dishNames: dishes}));
+ assert.equal(created.status, 201);
+ const {encounter} = await created.json();
+ assert.deepEqual(encounter.dishNames, dishes);
+ assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM food_encounters').get().n, 1);
+ const loaded = await (await api.GET(request('GET', null, '?childId=1'))).json();
+ assert.deepEqual(loaded.encounters[0].dishNames, dishes);
+ assert.equal(loaded.encounterCount, 1);
+ assert.equal((await api.PATCH(request('PATCH', {id:encounter.id, childId:1, childQuote:'一起很好吃', experience:'unrecorded', reactions:[]}))).status, 200);
+ const edited = await (await api.GET(request('GET', null, '?childId=1'))).json();
+ assert.deepEqual(edited.encounters[0].dishNames, dishes);
+ assert.equal(edited.encounters[0].childQuote, '一起很好吃');
+ assert.equal((await api.DELETE(request('DELETE', {childId:1, id:encounter.id}))).status, 200);
+ sqlite.close();
+});
+test('dish lists reject malformed and incompatible contexts without writing', async () => {
+ const { sqlite, api, request, base } = fixture();
+ for (const dishNames of [[], [''], [4], ['wrong-first'], Array(21).fill(base.dishName)]) {
+ assert.equal((await api.POST(request('POST', {...base, dishNames}))).status, 400);
+ }
+ assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM food_encounters').get().n, 0);
+ sqlite.close();
 });

@@ -76,17 +76,17 @@ test('a quote alone saves without inferring contact, while empty drafts stay ope
   assert.equal(empty.resets, 0);
 });
 
- test('multiple dishes save separate sources and food names', async () => {
+ test('multiple dishes are submitted once as one memory', async () => {
  const result = await submit({ selected: ['油菜', '雞排'] });
- assert.deepEqual(result.bodies.map(item => item.dishName), ['油菜', '雞排']);
- assert.deepEqual(result.bodies.map(item => item.foodName), ['油菜', '雞排']);
+ assert.equal(result.bodies.length, 1);
+ assert.deepEqual(result.body.dishNames, ['油菜', '雞排']);
+ assert.equal(result.body.foodName, '油菜、雞排');
  assert.equal(result.resets, 1);
  });
- test('partial failure keeps only unsaved dishes selected and preserves draft', async () => {
- const result = await submit({ selected: ['油菜', '雞排'], failAt: 2 });
- assert.deepEqual(result.choices.map(item => item.checked), [false, true]);
+ test('failed grouped save retains all selected dishes and the draft', async () => {
+ const result = await submit({ selected: ['油菜', '雞排'], ok: false });
+ assert.deepEqual(result.choices.map(item => item.checked), [true, true]);
  assert.equal(result.resets, 0);
- assert.equal(result.refs.encounterEntry.open, true);
  });
  test('empty selection cannot save', async () => {
  assert.equal((await submit({ selected: [] })).body, undefined);

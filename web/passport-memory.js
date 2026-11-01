@@ -20,6 +20,7 @@
   }
   function origin(item) {
     if (item.mealContext === "other") return "家裡／其他地方";
+    if (item.mealContext === "school_lunch" && item.dishNames?.length > 1) return `來源菜色：${item.dishNames.join("、")}`;
     return item.mealContext === "school_lunch" && item.dishName ? `來源菜色：${item.dishName}` : "舊紀錄未記錄菜色來源";
   }
   async function json(response) {
