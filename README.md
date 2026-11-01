@@ -2,7 +2,7 @@
 
 本文件說明每日學校午餐的下載、驗證、逐區發布與失敗續跑。公開網站：[好好吃飯](https://haohaofood.cc)。
 
-目前預設處理臺中市 29 個行政區、243 所學校，來源為教育部校園食材登錄平臺的同日公開供餐紀錄。
+目前預設依序處理臺中市、臺南市，共 438 所已驗證學校（臺中 243 校、臺南 195 校）。來源為教育部校園食材登錄平臺的同日公開供餐紀錄。
 
 ## 1. 日常使用：選一個入口即可
 
@@ -12,8 +12,8 @@
 # 建議使用：預設就會發布
 python3 scripts/update_school_meals_by_district.py
 
-# 相容原有指令：必須加 --publish 才會發布
-python3 scripts/update_all_taichung_schools.py --publish
+# 多縣市入口：必須加 --publish 才會發布
+python3 scripts/update_all_school_meals.py --publish
 ```
 
 未指定日期時，使用**臺北時區當天**。兩個入口共用同一套逐區流程、進度檔與執行鎖。
@@ -22,8 +22,8 @@ python3 scripts/update_all_taichung_schools.py --publish
 | --- | --- | --- | --- |
 | `update_school_meals_by_district.py` | 是 | 是 | 是 |
 | `update_school_meals_by_district.py --no-publish` | 是 | 否 | 是 |
-| `update_all_taichung_schools.py --publish` | 是 | 是 | 是 |
-| `update_all_taichung_schools.py` | 是 | 否 | 是 |
+| `update_all_school_meals.py --publish` | 是 | 是 | 是 |
+| `update_all_school_meals.py` | 是 | 否 | 是 |
 
 本機重建會在所選範圍有有效資料時執行。這兩個入口都已整合下載、資料驗證與發布，日常操作不必另跑下載器、校讀器或獨立發布器。
 
@@ -59,10 +59,10 @@ chmod 600 .secrets/site_publish_token
 python3 scripts/update_school_meals_by_district.py --date 2026-10-27
 ```
 
-相容入口的等效寫法：
+多縣市入口的等效寫法：
 
 ```bash
-python3 scripts/update_all_taichung_schools.py --date 2026-10-27 --publish
+python3 scripts/update_all_school_meals.py --date 2026-10-27 --publish
 ```
 
 ### 中斷、抓取失敗或發布失敗後接續
@@ -80,11 +80,12 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27
 ```bash
 python3 scripts/update_school_meals_by_district.py \
   --date 2026-10-27 \
+  --city 臺中市 \
   --district 西區 \
   --district 北區
 ```
 
-`--district` 可重複使用。處理順序依名冊中的行政區順序，不依參數排列。區域進度仍保存在相同日期的共用進度檔，下次執行全市範圍時可以接續。
+`--city` 與 `--district` 都可重複使用。合併名冊有跨縣市同名行政區，因此指定 `--district` 時必須同時指定一個 `--city`。未指定城市時固定先臺中、再臺南；區域進度仍保存在相同日期的共用進度檔。
 
 ### 只下載與驗證，暫不發布
 
@@ -180,14 +181,14 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingr
 
 ```text
 【本次全程總結】
-  學校總數：243 校
-  有菜單：243 校
+  學校總數：438 校
+  有菜單：438 校
   官方不供餐：0 校
   尚未公布：0 校
   抓取／驗證失敗：0 校
   尚未檢查：0 校
 
-  已發布：243 校
+  已發布：438 校
   有效資料待發布：0 校
 
   耗時：78.4 秒
@@ -219,8 +220,9 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingr
 | 參數 | 預設／用途 |
 | --- | --- |
 | `--date YYYY-MM-DD` | 臺北時區當天。 |
+| `--city 縣市` | 不指定時依名冊順序先臺中、再臺南；可重複指定。 |
 | `--district 行政區` | 不指定時處理名冊全部行政區，可重複指定。 |
-| `--registry 路徑` | `data/reference/taichung-active-elementary-schools.json`。 |
+| `--registry 路徑` | `data/reference/active-elementary-schools.json`。 |
 | `--no-publish` | 只處理本機，不上傳。 |
 | `--refresh-all` | 重新查詢所選範圍，包括已完成學校。 |
 | `--skip-ingredients` | 只抓菜色；省略則包含食材。 |
@@ -244,7 +246,10 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingr
 ## 7. 進度與資料位置
 
 ```text
-data/reference/taichung-active-elementary-schools.json  啟用名冊
+data/reference/taichung-active-elementary-schools.json  臺中啟用名冊
+data/reference/tainan-active-elementary-schools.json    臺南啟用名冊
+data/reference/active-elementary-schools.json           合併啟用名冊（臺中在前、臺南在後）
+data/reference/school-refresh-groups.json               多縣市刷新批次
 
 data/raw/fatrace-daily/YYYY-MM-DD/<學校代碼>/
   raw.json.gz                                         官方原始回應
@@ -286,9 +291,13 @@ dist/                                                 本機可部署快照
 
 可能是最後的本機 SQLite、JavaScript 檢查或靜態重建失敗。已發布結果會保留；修正錯誤後重跑，可再次重建，未變更的已發布資料不會重新上傳。
 
-### 可以換成全臺灣名冊嗎？
+### 每校的日期來源網址是什麼？
 
-檔名已不限定縣市，但目前預設名冊與網站後端仍以臺中市啟用學校為範圍。`--registry` 只指定本機名冊，不會自動擴充網站允許發布的學校；擴充全臺灣前仍須同步調整名冊、分區與後端驗證。
+臺中與臺南共用同一個來源格式：`https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=<School ID>&period=<YYYY-MM-DD>`。抓取器會保存這個公開查詢頁網址，並使用該頁背後的官方公開端點取得結構化菜單。
+
+### 可以再加入其他縣市嗎？
+
+可以，但不能只替換 `--registry`。必須先建立經核對的城市名冊，再同步調整合併名冊、刷新批次、網站後端驗證與前端縣市選單；未驗證的 School ID 不得直接加入。
 
 ## 9. 結束碼與開發檢查
 

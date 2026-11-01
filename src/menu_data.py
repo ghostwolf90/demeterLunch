@@ -371,7 +371,7 @@ def build_database(parsed_root: Path, database_path: Path) -> dict[str, int]:
     except SchoolMealValidationError as exc:
         raise DataValidationError(str(exc)) from exc
     registry_path = (
-        parsed_root.parent / "reference" / "taichung-active-elementary-schools.json"
+        parsed_root.parent / "reference" / "active-elementary-schools.json"
     )
     try:
         school_registry = load_school_registry(registry_path) if registry_path.is_file() else []

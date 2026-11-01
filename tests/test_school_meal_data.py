@@ -34,6 +34,12 @@ ACTIVE_REGISTRY = (
     PROJECT_ROOT
     / "data"
     / "reference"
+    / "active-elementary-schools.json"
+)
+TAICHUNG_REGISTRY = (
+    PROJECT_ROOT
+    / "data"
+    / "reference"
     / "taichung-active-elementary-schools.json"
 )
 
@@ -45,18 +51,22 @@ class ReviewedSchoolMealTests(unittest.TestCase):
         expected_ids = {
             row["fatraceSchoolId"] for row in registry["schools"]
         }
+        taichung_ids = {
+            row["fatraceSchoolId"]
+            for row in json.loads(TAICHUNG_REGISTRY.read_text(encoding="utf-8"))["schools"]
+        }
         records_by_date = {
             meal_date: [record for record in records if record["mealDate"] == meal_date]
             for meal_date in {record["mealDate"] for record in records}
         }
 
-        self.assertEqual(len(records_by_date["2026-10-08"]), 243)
+        self.assertEqual(len(records_by_date["2026-10-08"]), len(taichung_ids))
         self.assertEqual(
             {
                 record["school"]["fatraceSchoolId"]
                 for record in records_by_date["2026-10-08"]
             },
-            expected_ids,
+            taichung_ids,
         )
         for meal_date, daily_records in records_by_date.items():
             actual_ids = {
@@ -180,7 +190,8 @@ class ReviewedSchoolMealTests(unittest.TestCase):
                 )
             }
 
-        self.assertEqual(counts["schools"], 243)
+        registry = json.loads(ACTIVE_REGISTRY.read_text(encoding="utf-8"))
+        self.assertEqual(counts["schools"], len(registry["schools"]))
         for table, expected in expected_counts.items():
             self.assertEqual(counts[table], expected)
 
@@ -212,7 +223,8 @@ class ReviewedSchoolMealTests(unittest.TestCase):
         dashboard = load_site_dashboard(DATABASE, "2026-10-08", "meat", 193609)
 
         self.assertEqual(catalog["defaultSchoolId"], 193609)
-        self.assertEqual(len(catalog["schools"]), 243)
+        registry = json.loads(ACTIVE_REGISTRY.read_text(encoding="utf-8"))
+        self.assertEqual(len(catalog["schools"]), len(registry["schools"]))
         self.assertEqual(catalog["schools"][0]["district"], "西區")
         self.assertEqual(dashboard["viewMode"], "detailed")
         self.assertEqual(dashboard["school"]["name"], "忠信國小")

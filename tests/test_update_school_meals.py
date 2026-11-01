@@ -6,7 +6,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts import update_all_taichung_schools, update_school_meals
+from scripts import (
+    update_all_school_meals,
+    update_all_taichung_schools,
+    update_school_meals,
+)
 
 
 class UpdateSchoolMealsTests(unittest.TestCase):
@@ -82,25 +86,46 @@ class UpdateSchoolMealsTests(unittest.TestCase):
         with patch.object(update_all_taichung_schools, "update_by_district", return_value=0) as update:
             status = update_all_taichung_schools.main(["--date", "2026-10-12", "--skip-ingredients"])
         self.assertEqual(status, 0)
-        update.assert_called_once_with(["--date", "2026-10-12", "--skip-ingredients", "--no-publish"])
+        update.assert_called_once_with([
+            "--date", "2026-10-12", "--skip-ingredients",
+            "--city", "臺中市", "--no-publish",
+        ])
 
     def test_citywide_wrapper_uses_partial_publication_pipeline(self) -> None:
         with patch.object(update_all_taichung_schools, "update_by_district", return_value=1) as update:
             status = update_all_taichung_schools.main(["--date", "2026-10-13", "--publish", "--resume", "--verify-and-build"])
         self.assertEqual(status, 1)  # Remaining failed schools do not hide partial publication status.
-        update.assert_called_once_with(["--date", "2026-10-13"])
+        update.assert_called_once_with(["--date", "2026-10-13", "--city", "臺中市"])
 
     def test_citywide_wrapper_can_ignore_progress_and_refresh_every_school(self) -> None:
         with patch.object(update_all_taichung_schools, "update_by_district", return_value=0) as update:
             status = update_all_taichung_schools.main(["--date", "2026-10-13", "--refresh-all", "--publish"])
         self.assertEqual(status, 0)
-        update.assert_called_once_with(["--date", "2026-10-13", "--refresh-all"])
+        update.assert_called_once_with([
+            "--date", "2026-10-13", "--refresh-all", "--city", "臺中市",
+        ])
 
     def test_citywide_wrapper_rejects_conflicting_modes(self) -> None:
         with patch.object(update_all_taichung_schools, "update_by_district") as update:
             self.assertEqual(update_all_taichung_schools.main(["--resume", "--refresh-all"]), 1)
             self.assertEqual(update_all_taichung_schools.main(["--publish", "--no-publish"]), 1)
         update.assert_not_called()
+
+    def test_multi_city_wrapper_is_local_only_by_default(self) -> None:
+        with patch.object(update_all_school_meals, "update_by_district", return_value=0) as update:
+            status = update_all_school_meals.main(["--date", "2026-10-30"])
+        self.assertEqual(status, 0)
+        update.assert_called_once_with(["--date", "2026-10-30", "--no-publish"])
+
+    def test_multi_city_wrapper_forwards_explicit_tainan_scope(self) -> None:
+        with patch.object(update_all_school_meals, "update_by_district", return_value=0) as update:
+            status = update_all_school_meals.main([
+                "--date", "2026-10-30", "--city", "臺南市", "--no-publish",
+            ])
+        self.assertEqual(status, 0)
+        update.assert_called_once_with([
+            "--date", "2026-10-30", "--city", "臺南市", "--no-publish",
+        ])
 
 
 if __name__ == "__main__":

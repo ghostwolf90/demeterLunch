@@ -6,6 +6,7 @@ import {
   type SiteEnv,
 } from "@/lib/refresh";
 import { authorizeSiteWriter } from "@/lib/mcp-auth";
+import { refreshGroupIds } from "@/lib/schools";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +21,11 @@ const tools = [
   {
     name: "refresh_school_group",
     description:
-      "依既定的三個 81 校批次，從教育部校園食材登錄平臺抓取指定日期的同日午餐，完成結構驗證後把 reviewed JSON 寫入 R2，並更新 D1 索引。每次只處理少量學校；若 remaining 大於 0，請用相同參數繼續呼叫。",
+      "依既定的縣市批次（臺中在前、臺南在後），從教育部校園食材登錄平臺抓取指定日期的同日午餐，完成結構驗證後把 reviewed JSON 寫入 R2，並更新 D1 索引。每次只處理少量學校；若 remaining 大於 0，請用相同參數繼續呼叫。",
     inputSchema: {
       type: "object",
       properties: {
-        group: { type: "integer", enum: [1, 2, 3] },
+        group: { type: "integer", enum: refreshGroupIds() },
         meal_date: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
         max_schools: { type: "integer", minimum: 1, maximum: 3, default: 2 },
       },
@@ -47,7 +48,7 @@ const tools = [
   },
   {
     name: "get_refresh_status",
-    description: "查看指定日期三批抓取工作與最新學校狀態，不會向來源網站送出請求。",
+    description: "查看指定日期各縣市批次抓取工作與最新學校狀態，不會向來源網站送出請求。",
     inputSchema: {
       type: "object",
       properties: {

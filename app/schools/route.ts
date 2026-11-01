@@ -15,9 +15,20 @@ export async function GET(request: Request) {
       headers: { ...publicHtmlHeaders(60), "retry-after": "300" },
     });
   }
-  const groups = Map.groupBy(schools, (school) => school.district);
-  const title = "臺中市國小營養午餐學校目錄｜好好吃飯";
-  const description = `依行政區查找好好吃飯目前收錄的 ${schools.length} 所臺中市國小，直接前往各校已公布的每日營養午餐頁面。`;
+  const cityGroups = [...Map.groupBy(schools, (school) => school.city).entries()].map(
+    ([city, citySchools], cityIndex) => ({
+      city,
+      districts: [...Map.groupBy(citySchools, (school) => school.district).entries()].map(
+        ([district, districtSchools], districtIndex) => ({
+          district,
+          schools: districtSchools,
+          id: `district-${cityIndex + 1}-${districtIndex + 1}`,
+        }),
+      ),
+    }),
+  );
+  const title = "臺中市、臺南市國小營養午餐學校目錄｜好好吃飯";
+  const description = `依縣市與行政區查找好好吃飯目前收錄的 ${schools.length} 所國小，直接前往各校已公布的每日營養午餐頁面。`;
   const html = `<!doctype html>
 <html lang="zh-Hant">
   <head>
@@ -43,9 +54,9 @@ export async function GET(request: Request) {
     <header class="topbar school-public-topbar"><a class="brand" href="/" aria-label="好好吃飯首頁"><img class="brand-mark" src="/icon-192x192.png?v=20261020" alt="" aria-hidden="true" width="43" height="43" /><span><strong>好好吃飯</strong><small>國小午餐助手</small></span></a><nav aria-label="主要導覽"><a href="/">午餐查詢</a><a href="/schools" aria-current="page">學校目錄</a><a href="/#news">午餐消息</a><a href="/support">支援中心</a></nav></header>
     <main class="school-public-main school-directory-main">
       <nav class="school-breadcrumbs" aria-label="麵包屑"><a href="/">首頁</a><span aria-hidden="true">/</span><span aria-current="page">學校目錄</span></nav>
-      <section class="school-directory-hero"><p class="kicker">臺中市國小營養午餐</p><h1>找到孩子的學校，<br /><em>直接看已公布菜單</em></h1><p>目前收錄 ${schools.length} 所臺中市國小。每個連結都是可直接開啟的公開學校頁面；若今天尚未公布，頁面會清楚標示，不會用其他日期代替。</p></section>
-      <nav class="district-jump" aria-label="依行政區快速前往">${[...groups.keys()].map((district) => `<a href="#district-${escapeHtml(district)}">${escapeHtml(district)}</a>`).join("")}</nav>
-      <div class="school-directory-groups">${[...groups.entries()].map(([district, districtSchools]) => `<section class="school-directory-group" id="district-${escapeHtml(district)}"><header><h2>${escapeHtml(district)}</h2><span>${districtSchools.length} 所</span></header><div class="school-link-grid">${districtSchools.map((school) => `<a href="/schools/${school.fatraceSchoolId}"><strong>${escapeHtml(school.name)}</strong><small>${escapeHtml(school.fullName)}</small></a>`).join("")}</div></section>`).join("")}</div>
+      <section class="school-directory-hero"><p class="kicker">臺中市、臺南市國小營養午餐</p><h1>找到孩子的學校，<br /><em>直接看已公布菜單</em></h1><p>目前收錄 ${schools.length} 所國小。每個連結都是可直接開啟的公開學校頁面；若今天尚未公布，頁面會清楚標示，不會用其他日期代替。</p></section>
+      <nav class="district-jump" aria-label="依縣市與行政區快速前往">${cityGroups.flatMap(({ city, districts }) => districts.map(({ district, id }) => `<a href="#${id}">${escapeHtml(city)} · ${escapeHtml(district)}</a>`)).join("")}</nav>
+      <div class="school-directory-groups">${cityGroups.map(({ city, districts }) => `<section class="school-directory-city"><h2>${escapeHtml(city)}</h2>${districts.map(({ district, schools: districtSchools, id }) => `<section class="school-directory-group" id="${id}"><header><h3>${escapeHtml(district)}</h3><span>${districtSchools.length} 所</span></header><div class="school-link-grid">${districtSchools.map((school) => `<a href="/schools/${school.fatraceSchoolId}"><strong>${escapeHtml(school.name)}</strong><small>${escapeHtml(school.fullName)}</small></a>`).join("")}</div></section>`).join("")}</section>`).join("")}</div>
     </main>
     <footer><div class="footer-brand"><strong>好好吃飯</strong><span>公開午餐資訊不需登入 · 菜單以各校實際公布為準</span></div><nav class="footer-links" aria-label="服務資訊"><a href="/">午餐查詢</a><a href="/privacy">隱私權政策</a><a href="/terms">服務條款</a><a href="/support">支援中心</a></nav></footer>
   </body>

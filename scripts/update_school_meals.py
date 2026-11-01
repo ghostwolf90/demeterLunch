@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
         default=PROJECT_ROOT
         / "data"
         / "reference"
-        / "taichung-active-elementary-schools.json",
+        / "active-elementary-schools.json",
     )
     parser.add_argument("--timeout", type=float, default=20.0)
     parser.add_argument("--interval", type=float, default=1.2)
@@ -86,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
         str(args.retries),
     ]
     if args.all_schools:
-        print("收集範圍：臺中市啟用名冊全部學校", flush=True)
+        print("收集範圍：啟用名冊全部學校（依名冊縣市順序）", flush=True)
     elif args.school:
         for school in args.school:
             fetch.extend(["--school", school])

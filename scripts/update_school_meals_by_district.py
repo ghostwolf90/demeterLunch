@@ -105,6 +105,20 @@ def rebuild_local(root: Path) -> bool:
 def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundle,
         token: str | None = None, rebuild=rebuild_local) -> int:
     schools = load_school_registry(args.registry)
+    requested_cities = [
+        value for value in (getattr(args, "city", None) or []) if value
+    ]
+    available_cities = list(dict.fromkeys(school.city for school in schools))
+    if requested_cities:
+        unknown_cities = set(requested_cities) - set(available_cities)
+        if unknown_cities:
+            raise ValueError(f"名冊找不到縣市：{'、'.join(sorted(unknown_cities))}")
+        schools = [school for school in schools if school.city in requested_cities]
+        city_order = [city for city in requested_cities if city in available_cities]
+    else:
+        city_order = available_cities
+    if args.district and len(city_order) != 1:
+        raise ValueError("多縣市名冊使用 --district 時必須同時指定一個 --city")
     districts = list(dict.fromkeys(school.district for school in schools))
     if args.district:
         unknown = set(args.district) - set(districts)
@@ -112,6 +126,13 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
             raise ValueError(f"名冊找不到行政區：{'、'.join(sorted(unknown))}")
         districts = [item for item in districts if item in args.district]
         schools = [school for school in schools if school.district in districts]
+    scopes = [
+        (city, district)
+        for city in city_order
+        for district in dict.fromkeys(
+            school.district for school in schools if school.city == city
+        )
+    ]
     raw_root = root / "data/raw/fatrace-daily"
     progress_root = root / "data/monitor/district-updates" / args.date.isoformat()
     mode = "dishes-only" if args.skip_ingredients else "with-ingredients"
@@ -146,10 +167,19 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
             except (OSError, ValueError):
                 return True
 
-        # Keep district publication batches, but visit districts needing downloads first.
+        # Keep the requested city order (Taichung before Tainan), while visiting
+        # pending districts first inside each city.
         if not args.refresh_all:
-            districts.sort(key=lambda district: not any(
-                needs_fetch(school) for school in schools if school.district == district))
+            ordered_scopes = []
+            for city in city_order:
+                city_scopes = [scope for scope in scopes if scope[0] == city]
+                city_scopes.sort(key=lambda scope: not any(
+                    needs_fetch(school)
+                    for school in schools
+                    if (school.city, school.district) == scope
+                ))
+                ordered_scopes.extend(city_scopes)
+            scopes = ordered_scopes
         started = time.monotonic()
         build_ok = True
 
@@ -158,18 +188,21 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
             write_json_atomic(progress_path, progress)
 
         try:
-            for district in districts:
+            for city, district in scopes:
                 district_started = time.monotonic()
-                selected = [school for school in schools if school.district == district]
+                selected = [
+                    school for school in schools
+                    if school.city == city and school.district == district
+                ]
                 selected.sort(key=lambda school: not needs_fetch(school))
                 pending = sum(needs_fetch(school) for school in selected)
-                print(f"\n開始處理 {district}，共 {len(selected)} 校（{args.date}）。", flush=True)
+                print(f"\n開始處理 {city} {district}，共 {len(selected)} 校（{args.date}）。", flush=True)
                 print(f"  待抓取 {pending} 校；沿用成功資料 {len(selected) - pending} 校。", flush=True)
                 ready = []
                 for school in selected:
                     key = str(school.fatrace_school_id)
                     row = rows.setdefault(key, {})
-                    row.update(school=school.name, district=district)
+                    row.update(school=school.name, city=city, district=district)
                     candidate_path = storage.target_path(school, args.date) / "candidate.json"
                     try:
                         candidate = None
@@ -238,15 +271,15 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
                         for school in ready:
                             row = rows[str(school.fatrace_school_id)]
                             row.update(publishedHash=row["contentHash"], publishedAt=now(), publishError=None)
-                        print(f"  {district}：本次發布成功 {len(ready)} 校。", flush=True)
+                        print(f"  {city} {district}：本次發布成功 {len(ready)} 校。", flush=True)
                     except Exception as exc:
                         for school in ready:
                             rows[str(school.fatrace_school_id)]["publishError"] = str(exc)
-                        print(f"  {district}：發布失敗，下次直接補傳：{exc}", flush=True)
+                        print(f"  {city} {district}：發布失敗，下次直接補傳：{exc}", flush=True)
                     checkpoint()
                 totals = summary([rows[str(s.fatrace_school_id)] for s in selected],
                                  publishing=not args.no_publish)
-                print_summary(f"{district}處理總結", totals, time.monotonic() - district_started)
+                print_summary(f"{city} {district}處理總結", totals, time.monotonic() - district_started)
             if any(rows[str(s.fatrace_school_id)].get("status") in STABLE_STATUSES for s in schools):
                 build_ok = rebuild(root)
         except KeyboardInterrupt:
@@ -263,7 +296,7 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
                 row = rows.get(str(school.fatrace_school_id), {})
                 if row.get("status") in {"failed", "not_published", "not_checked", None} or (
                         not args.no_publish and row.get("publishedHash") != row.get("contentHash")):
-                    print(f"  待處理：{school.district} {school.name}："
+                    print(f"  待處理：{school.city} {school.district} {school.name}："
                           f"{row.get('error') or row.get('publishError') or {'not_published': '官方尚未公布', 'not_checked': '尚未檢查'}.get(row.get('status'), '待發布')}", flush=True)
             print(f"進度檔：{progress_path}", flush=True)
         if not build_ok or totals["failed"] or (not args.no_publish and totals["unpublished"]):
@@ -272,9 +305,10 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="依行政區下載、驗證及發布學校午餐，預設接續進度並發布。")
+    parser = argparse.ArgumentParser(description="依縣市、行政區下載、驗證及發布學校午餐，預設接續進度並發布。")
     parser.add_argument("--date", type=date.fromisoformat, default=datetime.now(TAIPEI).date())
-    parser.add_argument("--registry", type=Path, default=PROJECT_ROOT / "data/reference/taichung-active-elementary-schools.json")
+    parser.add_argument("--registry", type=Path, default=PROJECT_ROOT / "data/reference/active-elementary-schools.json")
+    parser.add_argument("--city", action="append", help="只處理指定縣市，可重複使用；依指定順序執行")
     parser.add_argument("--district", action="append", help="只處理指定行政區，可重複使用")
     parser.add_argument("--no-publish", action="store_true", help="只下載與驗證，不發布")
     parser.add_argument("--refresh-all", action="store_true", help="重查所有選定學校；相同內容不重傳")

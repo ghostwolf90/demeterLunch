@@ -329,6 +329,7 @@ class SiteLayoutTests(unittest.TestCase):
         app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
 
         self.assertIn('id="schoolSelect"', index_html)
+        self.assertIn('id="citySelect"', index_html)
         self.assertIn('id="districtSelect"', index_html)
         self.assertIn('id="defaultSchoolButton"', index_html)
         self.assertIn("☆ 設為預設學校", index_html)
@@ -356,6 +357,8 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("renderAccountIntentNotice", app_js)
         self.assertIn("renderNoSchoolSelected", app_js)
         self.assertIn("fetchSchoolDirectory", app_js)
+        self.assertIn('item.city === state.city', app_js)
+        self.assertIn('node("option", "", district.district)', app_js)
         self.assertIn("initialize();", app_js)
 
     def test_public_data_loading_is_split_and_progressive(self) -> None:
@@ -552,7 +555,7 @@ class SiteLayoutTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
 
         self.assertIn("好好吃飯｜國小營養午餐查詢、每日菜單與晚餐搭配", index_html)
-        self.assertIn("好好吃飯提供臺中市國小每日營養午餐查詢", index_html)
+        self.assertIn("好好吃飯提供臺中市、臺南市國小每日營養午餐查詢", index_html)
         self.assertIn("過敏原注意事項", index_html)
         self.assertNotIn("過敏安全保證", index_html)
         self.assertNotIn("查詢臺中市國小每日及每週營養午餐菜單", index_html)
@@ -698,9 +701,11 @@ class SiteLayoutTests(unittest.TestCase):
             styles.index("@media (max-width: 720px)")
         ]
 
-        self.assertIn("minmax(190px, .7fr) minmax(190px, 1fr) auto", styles)
-        self.assertIn("minmax(190px, .8fr) minmax(150px, 1fr)", tablet_rules)
+        self.assertIn("minmax(120px, .55fr) minmax(145px, .65fr) minmax(190px, 1fr) auto", styles)
+        self.assertIn("minmax(150px, .8fr) minmax(170px, 1fr)", tablet_rules)
+        self.assertIn(".school-picker .school-field:nth-child(3) { grid-column: 1 / -1; }", tablet_rules)
         self.assertIn(".default-school-button { grid-column: 1 / -1; }", tablet_rules)
+        self.assertIn("@media (max-width: 620px)", styles)
 
     def test_brand_colors_meet_normal_text_contrast(self) -> None:
         styles = (

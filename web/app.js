@@ -13,6 +13,7 @@ const state = {
   schoolDashboardCache: new Map(),
   schoolId: null,
   schoolDirectory: [],
+  city: null,
   district: null,
   newsLoaded: false,
   mealType: savedMealType === "vegetarian" ? "vegetarian" : "meat",
@@ -184,7 +185,7 @@ const ids = [
   "standardPeriod", "standardBasis", "standardDescription", "standardSummary",
   "standardMetrics", "standardGuidance", "standardObservations", "standardMethod",
   "standardCoverage", "standardSource", "standardRevision",
-  "districtSelect", "schoolSelect", "defaultSchoolButton", "schoolDataScope", "schoolBrowserNote", "schoolBrowserNoteText", "editChildFromSchoolPicker", "brandSchoolLabel", "footerSource",
+  "citySelect", "districtSelect", "schoolSelect", "defaultSchoolButton", "schoolDataScope", "schoolBrowserNote", "schoolBrowserNoteText", "editChildFromSchoolPicker", "brandSchoolLabel", "footerSource",
   "sampleModeBanner", "sampleModeDate", "sampleSelectSchool",
   "mealTypeSwitch", "menuBoard", "menuKicker", "menuHeading", "reviewBadge",
   "officialSourceLink", "schoolMenuSourceButton", "schoolMenuNutritionButton", "nutritionCard", "dinnerCard", "standard", "learn",
@@ -2985,24 +2986,48 @@ function renderDefaultSchoolButton() {
 }
 
 function populateSchoolSelectors() {
+  const cities = [];
+  const seenCities = new Set();
+  for (const school of state.schoolDirectory) {
+    if (!seenCities.has(school.city)) {
+      seenCities.add(school.city);
+      cities.push(school.city);
+    }
+  }
+
+  const activeSchool = selectedSchool();
+  if (activeSchool) {
+    state.city = activeSchool.city;
+    state.district = districtKey(activeSchool);
+  }
+  if (!state.city || !seenCities.has(state.city)) {
+    state.city = cities[0] || null;
+  }
+
   const districts = [];
   const seenDistricts = new Set();
-  for (const school of state.schoolDirectory) {
+  for (const school of state.schoolDirectory.filter((item) => item.city === state.city)) {
     const key = districtKey(school);
     if (!seenDistricts.has(key)) {
       seenDistricts.add(key);
       districts.push({ key, city: school.city, district: school.district });
     }
   }
-  const activeSchool = selectedSchool();
-  if (activeSchool) state.district = districtKey(activeSchool);
   if (!state.district || !seenDistricts.has(state.district)) {
     state.district = districts[0]?.key || null;
   }
 
+  refs.citySelect.replaceChildren();
+  for (const city of cities) {
+    const option = node("option", "", city);
+    option.value = city;
+    refs.citySelect.append(option);
+  }
+  refs.citySelect.value = state.city || "";
+
   refs.districtSelect.replaceChildren();
   for (const district of districts) {
-    const option = node("option", "", `${district.city} · ${district.district}`);
+    const option = node("option", "", district.district);
     option.value = district.key;
     refs.districtSelect.append(option);
   }
@@ -3027,6 +3052,7 @@ function renderSchoolContext(dashboard) {
   }
   if (dashboard.school) {
     state.schoolId = Number(dashboard.school.fatraceSchoolId);
+    state.city = dashboard.school.city;
     state.district = districtKey(dashboard.school);
     populateSchoolSelectors();
     refs.brandSchoolLabel.textContent = "孩子午餐，晚餐靈感";
@@ -3770,6 +3796,12 @@ async function selectSchool(schoolId, { trackSelection = false } = {}) {
 }
 
 refs.schoolSelect.addEventListener("change", () => selectSchool(refs.schoolSelect.value, { trackSelection: true }));
+refs.citySelect.addEventListener("change", async () => {
+  state.city = refs.citySelect.value;
+  state.district = null;
+  await renderNoSchoolSelected();
+  refs.districtSelect.focus();
+});
 refs.districtSelect.addEventListener("change", async () => {
   state.district = refs.districtSelect.value;
   await renderNoSchoolSelected();
@@ -4624,6 +4656,7 @@ async function initialize() {
     }
     state.sampleRequestId += 1;
     state.schoolId = Number(initialSchool.fatraceSchoolId);
+    state.city = initialSchool.city;
     state.district = districtKey(initialSchool);
     populateSchoolSelectors();
     renderAccount();

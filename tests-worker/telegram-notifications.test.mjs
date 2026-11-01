@@ -45,7 +45,7 @@ test("Telegram messages cover start, problem, finish, and daily summary", () => 
       notPublished: 20,
       failed: 0,
     }),
-    /今日臺中市國小午餐總結[\s\S]*243\/243[\s\S]*流程已完成/,
+    /今日臺中市、臺南市國小午餐總結[\s\S]*243\/243[\s\S]*流程已完成/,
   );
 });
 

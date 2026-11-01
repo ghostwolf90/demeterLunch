@@ -40,6 +40,8 @@ def main(argv: list[str] | None = None) -> int:
     publish = "--publish" in arguments
     forwarded = [argument for argument in arguments
                  if argument not in {"--publish", "--resume", "--verify-and-build"}]
+    if "--city" not in forwarded:
+        forwarded.extend(["--city", "臺中市"])
     # Preserve the old entry point's explicit publication opt-in.
     if not publish and "--no-publish" not in forwarded:
         forwarded.append("--no-publish")

@@ -1,5 +1,12 @@
 import { FatraceClient, reviewCandidate, toPublicRecord } from "@/lib/fatrace";
-import { allSchools, findSchool, schoolsForGroup, type School } from "@/lib/schools";
+import {
+  allSchools,
+  findSchool,
+  refreshGroupIds,
+  refreshGroupLabel,
+  schoolsForGroup,
+  type School,
+} from "@/lib/schools";
 import {
   deliverTelegramEvent,
   formatDailySummary,
@@ -48,7 +55,9 @@ export async function refreshSchoolGroup(
   input: { group: number; meal_date?: string; max_schools?: number },
 ) {
   const group = Number(input.group);
-  if (![1, 2, 3].includes(group)) throw new Error("group 必須是 1、2 或 3");
+  if (!refreshGroupIds().includes(group)) {
+    throw new Error(`group 必須是 ${refreshGroupIds().join("、")}`);
+  }
   const mealDate = input.meal_date || taipeiDate();
   requireIsoDate(mealDate);
   const maxSchools = boundedChunkSize(input.max_schools);
@@ -605,7 +614,9 @@ async function loadLatestAttempts(db: D1Database, mealDate: string) {
 }
 
 function jobLabel(kind: string, groupId: number | null) {
-  return kind === "retry" ? "15:30 下午補抓" : `第 ${groupId} 批（81 校）`;
+  return kind === "retry" || groupId === null
+    ? "15:30 下午補抓"
+    : refreshGroupLabel(groupId);
 }
 
 function collectionPaused(env: SiteEnv) {

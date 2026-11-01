@@ -191,7 +191,7 @@ export function formatDailySummary(input: {
   failed: number;
 }) {
   return [
-    "📊 今日臺中市國小午餐總結",
+    "📊 今日臺中市、臺南市國小午餐總結",
     `日期：${input.mealDate}`,
     `已檢查：${input.checked}/${input.expected} 間`,
     `有供餐：${input.available}｜無供餐：${input.noMeal}`,

@@ -173,6 +173,8 @@ window.LunchEnglish = {
   "正在確認登入…": "Checking sign-in…",
   "正在確認登入狀態…": "Checking sign-in status…",
   "國小營養午餐查詢": "Elementary school lunch menus",
+  "縣市": "City / county",
+  "選擇縣市": "Choose a city or county",
   "行政區": "District",
   "選擇行政區": "Choose a district",
   "國小": "Elementary school",

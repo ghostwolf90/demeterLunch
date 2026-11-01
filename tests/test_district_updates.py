@@ -130,7 +130,10 @@ class DistrictUpdateTests(unittest.TestCase):
             status, output = self.execute(root, args, client, None)
             self.assertEqual(status, 0)
             self.assertEqual(client.calls, [3])
-            self.assertLess(output.index('開始處理 北區'), output.index('開始處理 西區'))
+            self.assertLess(
+                output.index('開始處理 臺中市 北區'),
+                output.index('開始處理 臺中市 西區'),
+            )
             self.assertIn('沿用已成功資料，未重新抓取', output)
             after = json.loads(path.read_text())['schools']['1']
             self.assertEqual(before['checkedAt'], after['checkedAt'])
@@ -199,6 +202,28 @@ class DistrictUpdateTests(unittest.TestCase):
             with run_lock(root / 'data/monitor/district-updates/.lock'):
                 with self.assertRaisesRegex(ValueError, '已有逐區更新'):
                     self.execute(root, args, FakeClient(), None)
+
+    def test_duplicate_district_names_stay_city_scoped_and_taichung_runs_first(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            registry = root / 'registry.json'
+            registry.write_text(json.dumps({'schemaVersion': 1, 'schools': [
+                {'city': '臺中市', 'district': '東區', 'level': '國小',
+                 'name': '臺中甲國小', 'fullName': '臺中市東區臺中甲國小', 'fatraceSchoolId': 1},
+                {'city': '臺南市', 'district': '東區', 'level': '國小',
+                 'name': '臺南乙國小', 'fullName': '臺南市東區臺南乙國小', 'fatraceSchoolId': 2},
+            ]}), encoding='utf-8')
+            args = Namespace(date=date(2026, 10, 30), registry=registry, city=None,
+                             district=None, no_publish=True, skip_ingredients=False,
+                             refresh_all=False, timeout=20, interval=1.2, retries=2)
+            client = FakeClient()
+            status, output = self.execute(root, args, client, None)
+            self.assertEqual(status, 0)
+            self.assertEqual(client.calls, [1, 2])
+            self.assertLess(
+                output.index('開始處理 臺中市 東區'),
+                output.index('開始處理 臺南市 東區'),
+            )
 
     def test_interruption_prints_final_and_saves_progress(self):
         with tempfile.TemporaryDirectory() as tmp:

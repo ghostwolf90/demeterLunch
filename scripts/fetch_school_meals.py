@@ -134,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
         default=PROJECT_ROOT
         / "data"
         / "reference"
-        / "taichung-active-elementary-schools.json",
+        / "active-elementary-schools.json",
     )
     parser.add_argument(
         "--output-dir",

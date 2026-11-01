@@ -88,7 +88,7 @@ body[data-view-mode] .intro { min-height: 340px; padding-block: 48px 36px; }
 body[data-view-mode] .intro-display { font-size: clamp(50px, 6.2vw, 86px); }
 body[data-view-mode] .doodle { min-height: 245px; }
 .eyebrow, .kicker { margin: 0 0 11px; color: var(--orange); font-size: var(--text-xs); font-weight: 800; letter-spacing: .19em; }
-.school-picker { width: min(620px, 100%); margin: 0 0 14px; display: grid; grid-template-columns: minmax(190px, .7fr) minmax(190px, 1fr) auto; align-items: end; gap: 8px; }
+.school-picker { width: min(800px, 100%); margin: 0 0 14px; display: grid; grid-template-columns: minmax(120px, .55fr) minmax(145px, .65fr) minmax(190px, 1fr) auto; align-items: end; gap: 8px; }
 .school-field { display: grid; gap: 6px; }
 .school-picker label { color: var(--ink-soft); font-size: var(--text-xs); font-weight: 800; letter-spacing: .08em; }
 .school-picker select { min-width: 0; min-height: 44px; padding: 9px 38px 9px 14px; border: 1px solid var(--line); border-radius: 13px; color: var(--ink); background: rgba(255,253,248,.84); font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
@@ -957,7 +957,8 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   body.records-page { padding-bottom: 0; }
   .topbar { grid-template-columns: 1fr auto; }
   .topbar nav { display: none; }
-  .school-picker { grid-template-columns: minmax(190px, .8fr) minmax(150px, 1fr); }
+  .school-picker { grid-template-columns: minmax(150px, .8fr) minmax(170px, 1fr); }
+  .school-picker .school-field:nth-child(3) { grid-column: 1 / -1; }
   .default-school-button { grid-column: 1 / -1; }
   .today-grid, body[data-view-mode="official"] .today-grid { grid-template-columns: 1fr 1fr; }
   .dinner-card { grid-column: 1 / -1; }
@@ -1185,6 +1186,11 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   .dish-detail-header h2 { font-size: 34px; }
   .dish-detail-ingredients { margin-top: 22px; }
   .dish-detail-ingredient { padding: 14px; }
+}
+
+@media (max-width: 620px) {
+  .school-picker { grid-template-columns: 1fr; }
+  .school-picker .school-field:nth-child(3), .default-school-button, .school-picker > span { grid-column: 1; }
 }
 
 @media (max-width: 390px) {

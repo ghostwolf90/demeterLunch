@@ -125,7 +125,13 @@ test("school selection counts only explicit valid changes, not restoration or re
   const state = { schoolId: 1, schoolDirectory: [{ fatraceSchoolId: 1 }, { fatraceSchoolId: 2 }], dashboard: {}, account: {} };
   const ctx = vm.createContext({ state, refs: {}, window: { ProductAnalytics: { event: (...args) => events.push(args) } },
     renderNoSchoolSelected: async () => {}, loadDashboard: async () => {}, localIsoDate: () => "2026-10-28" });
-  vm.runInContext(app.slice(app.indexOf("async function selectSchool("), app.indexOf('document.getElementById("shareMenu")?.addEventListener')), ctx);
+  vm.runInContext(
+    app.slice(
+      app.indexOf("async function selectSchool("),
+      app.indexOf('refs.schoolSelect.addEventListener'),
+    ),
+    ctx,
+  );
   await ctx.selectSchool(2); assert.equal(events.length, 0);
   await ctx.selectSchool(2, { trackSelection: true }); assert.equal(events.length, 0);
   await ctx.selectSchool(999, { trackSelection: true }); assert.equal(events.length, 0);
