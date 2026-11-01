@@ -324,6 +324,10 @@ if (accountPanelTriggers.length) {
     return state.schools.find((school) => Number(school.fatraceSchoolId) === Number(schoolId)) || null;
   }
 
+  function districtNamePriority(district) {
+    return Array.from(String(district || "")).length === 2 ? 0 : 1;
+  }
+
   function renderChildSchools(preferredSchoolId) {
     refs.sharedChildSchool.replaceChildren();
     const placeholder = node("option", "", state.schools.length ? "請選擇孩子就讀的國小" : "正在讀取學校名冊…");
@@ -335,7 +339,18 @@ if (accountPanelTriggers.length) {
       if (!groups.has(label)) groups.set(label, []);
       groups.get(label).push(school);
     }
-    for (const [label, schools] of groups) {
+    const cityOrder = new Map();
+    for (const [, schools] of groups) {
+      const city = schools[0]?.city;
+      if (!cityOrder.has(city)) cityOrder.set(city, cityOrder.size);
+    }
+    const orderedGroups = [...groups.entries()].sort(([, firstSchools], [, secondSchools]) => {
+      const first = firstSchools[0];
+      const second = secondSchools[0];
+      return (cityOrder.get(first?.city) ?? 0) - (cityOrder.get(second?.city) ?? 0)
+        || districtNamePriority(first?.district) - districtNamePriority(second?.district);
+    });
+    for (const [label, schools] of orderedGroups) {
       const group = document.createElement("optgroup");
       group.label = label;
       for (const school of schools) {

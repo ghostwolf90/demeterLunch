@@ -18,6 +18,8 @@ python3 scripts/update_all_school_meals.py --publish
 
 未指定日期時，使用**臺北時區當天**。兩個入口共用同一套逐區流程、進度檔與執行鎖。
 
+> **不要用 `scripts/update_all_taichung_schools.py` 更新兩個縣市。** 這是保留舊操作方式的臺中入口；未指定 `--city` 時，程式會自動限制為 `臺中市`，**不會包含臺南市**。要同時更新臺中與臺南，請使用上面的 `update_school_meals_by_district.py`，或執行 `update_all_school_meals.py --publish`。
+
 | 使用方式 | 下載與驗證 | 每區完成後發布 | 結束後重建本機資料 |
 | --- | --- | --- | --- |
 | `update_school_meals_by_district.py` | 是 | 是 | 是 |
@@ -64,6 +66,8 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27
 ```bash
 python3 scripts/update_all_school_meals.py --date 2026-10-27 --publish
 ```
+
+以上兩種寫法都會依序處理臺中市與臺南市。舊指令 `update_all_taichung_schools.py` 預設只處理臺中市，不能作為兩個縣市的等效寫法。
 
 ### 中斷、抓取失敗或發布失敗後接續
 

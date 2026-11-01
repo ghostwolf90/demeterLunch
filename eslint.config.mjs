@@ -6,8 +6,11 @@ export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
   {
-    files: ["tests/**/*.js", "tests/**/*.cjs"],
-    rules: { "@typescript-eslint/no-require-imports": "off" },
+    files: ["tests/**/*.js", "tests/**/*.cjs", "tests-worker/**/*.mjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@next/next/no-assign-module-variable": "off",
+    },
   },
   globalIgnores([
     ".next/**",
@@ -15,6 +18,8 @@ export default defineConfig([
     "public/**",
     "node_modules/**",
     "build/**",
+    ".work/**",
+    "web/lunch-island/vendor/**",
     "cloudflare-env.d.ts",
   ]),
 ]);

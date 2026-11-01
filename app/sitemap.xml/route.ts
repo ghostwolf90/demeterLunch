@@ -17,6 +17,7 @@ export async function GET(request: Request) {
   const urls = [
     `${SITE_ORIGIN}/`,
     `${SITE_ORIGIN}/about`,
+    `${SITE_ORIGIN}/lunch-island/`,
     `${SITE_ORIGIN}/schools`,
     `${SITE_ORIGIN}/news`,
     `${SITE_ORIGIN}/support`,

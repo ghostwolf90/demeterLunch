@@ -7,6 +7,10 @@ import {
 
 export const dynamic = "force-dynamic";
 
+function districtNamePriority(district: string) {
+  return Array.from(district).length === 2 ? 0 : 1;
+}
+
 export async function GET(request: Request) {
   const schools = await loadIndexableSchools(request);
   if (!schools.length) {
@@ -18,7 +22,11 @@ export async function GET(request: Request) {
   const cityGroups = [...Map.groupBy(schools, (school) => school.city).entries()].map(
     ([city, citySchools], cityIndex) => ({
       city,
-      districts: [...Map.groupBy(citySchools, (school) => school.district).entries()].map(
+      districts: [...Map.groupBy(citySchools, (school) => school.district).entries()].sort(
+        ([firstDistrict], [secondDistrict]) => (
+          districtNamePriority(firstDistrict) - districtNamePriority(secondDistrict)
+        ),
+      ).map(
         ([district, districtSchools], districtIndex) => ({
           district,
           schools: districtSchools,

@@ -265,6 +265,13 @@ def make_handler(
             except (OSError, ValueError):
                 self.send_error(404, "Not found")
                 return
+            if requested.is_dir():
+                requested = (requested / "index.html").resolve(strict=True)
+                try:
+                    requested.relative_to(root_resolved)
+                except ValueError:
+                    self.send_error(404, "Not found")
+                    return
             if not requested.is_file():
                 self.send_error(404, "Not found")
                 return

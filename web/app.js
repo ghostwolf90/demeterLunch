@@ -546,6 +546,24 @@ function schoolById(schoolId) {
   ) || null;
 }
 
+function districtNamePriority(district) {
+  return Array.from(String(district || "")).length === 2 ? 0 : 1;
+}
+
+function districtGroupsTwoCharactersFirst(groups) {
+  const cityOrder = new Map();
+  for (const [, schools] of groups) {
+    const city = schools[0]?.city;
+    if (!cityOrder.has(city)) cityOrder.set(city, cityOrder.size);
+  }
+  return groups.sort(([, firstSchools], [, secondSchools]) => {
+    const first = firstSchools[0];
+    const second = secondSchools[0];
+    return (cityOrder.get(first?.city) ?? 0) - (cityOrder.get(second?.city) ?? 0)
+      || districtNamePriority(first?.district) - districtNamePriority(second?.district);
+  });
+}
+
 function populateChildSchoolSelect(preferredSchoolId) {
   const selectedId = Number(preferredSchoolId) || Number(refs.childSchool.value) || Number(state.schoolId);
   refs.childSchool.replaceChildren();
@@ -563,7 +581,7 @@ function populateChildSchoolSelect(preferredSchoolId) {
     if (!groups.has(label)) groups.set(label, []);
     groups.get(label).push(school);
   }
-  for (const [label, schools] of groups) {
+  for (const [label, schools] of districtGroupsTwoCharactersFirst([...groups.entries()])) {
     const group = document.createElement("optgroup");
     group.label = label;
     for (const school of schools) {
@@ -3013,6 +3031,9 @@ function populateSchoolSelectors() {
       districts.push({ key, city: school.city, district: school.district });
     }
   }
+  districts.sort((first, second) => (
+    districtNamePriority(first.district) - districtNamePriority(second.district)
+  ));
   if (!state.district || !seenDistricts.has(state.district)) {
     state.district = districts[0]?.key || null;
   }
