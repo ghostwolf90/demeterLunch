@@ -2,6 +2,7 @@
 window.LunchEnglish = {
   "營養午餐小鎮｜好好吃飯": "Lunch Town | Hao Hao Food",
   "2D 午餐小鎮": "2D Lunch Town",
+  "午餐小鎮": "Lunch Town",
   "回到好好吃飯首頁": "Back to Hao Hao Food home",
   "好好吃飯": "Hao Hao Food",
   "孩子午餐，晚餐靈感": "School lunch, dinner inspiration",
@@ -43,7 +44,7 @@ window.LunchEnglish = {
   "查看附近學校午餐": "View a nearby school's lunch",
   "午餐小鎮探索資訊": "Lunch Town exploration information",
   "走訪臺中 29 區學校": "Visit schools across Taichung's 29 districts",
-  "從海線、城區、山線與屯區出發，探索每一區的地方特色、和人物聊聊，再到校門查看指定日期實際公布的午餐。探索街區依主題編排；行政位置與比例請以官方地圖為準。": "Set out across Taichung's Coast, City, Mountain, and Tun areas, discover each district's local character, chat with townspeople, and visit school gates to view published lunches. Districts are arranged by theme; refer to official maps for geographic positions and scale.",
+  "從海線、城區、山線與屯區出發，探索每一區的地方特色、和人物聊聊，再到校門查看指定日期實際公布的午餐。探索街區依行政區相對方位編排；北方在上、東方在右，位置與比例請以官方地圖為準。": "Set out across Taichung's Coast, City, Mountain, and Tun areas, discover each district's local character, chat with townspeople, and visit school gates to view published lunches. Districts follow their relative geographic positions, with north at the top and east on the right; refer to official maps for exact locations and scale.",
   "探索進度": "Exploration progress",
   "臺中 29 區學校清單": "School list for Taichung's 29 districts",
   "臺中特色街區｜海線・城區・山線・屯區": "Taichung district stories | Coast · City · Mountain · Tun",

@@ -1,7 +1,5 @@
 const WIDTH = 960;
 const HEIGHT = 640;
-const WORLD_WIDTH = 3370;
-const WORLD_HEIGHT = 1810;
 const DEFAULT_DATE = "2026-10-30";
 const SHOWCASE_CITY = "臺中市";
 const DISTRICT_GROUP_ORDER = ["海線", "城區", "山線", "屯區"];
@@ -13,6 +11,14 @@ const DISTRICT_ZONE_GAP_X = 34;
 const DISTRICT_ZONE_GAP_Y = 34;
 const DISTRICT_ZONE_ORIGIN_X = 28;
 const DISTRICT_ZONE_ORIGIN_Y = 28;
+const DISTRICT_GRID_COLUMNS = 8;
+const DISTRICT_GRID_ROWS = 6;
+const WORLD_WIDTH = DISTRICT_ZONE_ORIGIN_X * 2
+  + DISTRICT_GRID_COLUMNS * DISTRICT_ZONE_WIDTH
+  + (DISTRICT_GRID_COLUMNS - 1) * DISTRICT_ZONE_GAP_X;
+const WORLD_HEIGHT = DISTRICT_ZONE_ORIGIN_Y * 2
+  + DISTRICT_GRID_ROWS * DISTRICT_ZONE_HEIGHT
+  + (DISTRICT_GRID_ROWS - 1) * DISTRICT_ZONE_GAP_Y;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const canvas = document.querySelector("#townCanvas");
@@ -353,8 +359,17 @@ async function loadDistrictThemes() {
 function configureDistrictThemes(payload) {
   state.districtGroups = Array.isArray(payload.groups) ? payload.groups : [];
   state.mapNote = String(payload.mapNote || "");
+  const occupiedGridCells = new Set();
   payload.districts.forEach((theme) => {
-    const [column, row] = theme.grid;
+    const [column, row] = payload.cardinalGrid?.[theme.name] || theme.grid;
+    if (!Number.isInteger(column) || !Number.isInteger(row)
+      || column < 0 || column >= DISTRICT_GRID_COLUMNS
+      || row < 0 || row >= DISTRICT_GRID_ROWS) {
+      throw new Error(`${theme.name}的行政區方位座標不正確`);
+    }
+    const gridKey = `${column},${row}`;
+    if (occupiedGridCells.has(gridKey)) throw new Error(`${theme.name}的行政區方位座標重複`);
+    occupiedGridCells.add(gridKey);
     const zone = {
       x: DISTRICT_ZONE_ORIGIN_X + column * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X),
       y: DISTRICT_ZONE_ORIGIN_Y + row * (DISTRICT_ZONE_HEIGHT + DISTRICT_ZONE_GAP_Y),
@@ -705,6 +720,7 @@ function drawTown(now) {
   });
   drawNearbyNpcMarker();
   context.restore();
+  drawCompass();
 }
 
 function drawGround() {
@@ -745,7 +761,7 @@ function drawWaterEdges(now) {
 }
 
 function drawRoads() {
-  for (let column = 1; column < 7; column += 1) {
+  for (let column = 1; column < DISTRICT_GRID_COLUMNS; column += 1) {
     const x = DISTRICT_ZONE_ORIGIN_X + column * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X) - DISTRICT_ZONE_GAP_X / 2;
     context.fillStyle = COLORS.roadEdge;
     context.fillRect(x - 15, 0, 30, WORLD_HEIGHT);
@@ -754,7 +770,7 @@ function drawRoads() {
     context.fillStyle = COLORS.roadLine;
     for (let y = 18; y < WORLD_HEIGHT; y += 48) context.fillRect(x - 2, y, 4, 24);
   }
-  for (let row = 1; row < 5; row += 1) {
+  for (let row = 1; row < DISTRICT_GRID_ROWS; row += 1) {
     const y = DISTRICT_ZONE_ORIGIN_Y + row * (DISTRICT_ZONE_HEIGHT + DISTRICT_ZONE_GAP_Y) - DISTRICT_ZONE_GAP_Y / 2;
     context.fillStyle = COLORS.roadEdge;
     context.fillRect(0, y - 15, WORLD_WIDTH, 30);
@@ -766,7 +782,7 @@ function drawRoads() {
 }
 
 function drawTownSquare() {
-  const x = DISTRICT_ZONE_ORIGIN_X + 6 * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X) + DISTRICT_ZONE_WIDTH / 2;
+  const x = DISTRICT_ZONE_ORIGIN_X + 1 * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X) + DISTRICT_ZONE_WIDTH / 2;
   const y = DISTRICT_ZONE_ORIGIN_Y + 4 * (DISTRICT_ZONE_HEIGHT + DISTRICT_ZONE_GAP_Y) + DISTRICT_ZONE_HEIGHT / 2;
   if (!isVisibleRect({ x: x - 120, y: y - 70, w: 240, h: 140 }, 30)) return;
   context.fillStyle = "#e5d7af";
@@ -781,6 +797,32 @@ function drawTownSquare() {
   context.fillRect(x - 4, y - 34, 8, 20);
   drawMarketStall(x - 108, y - 34, "#d65d42");
   drawMarketStall(x + 72, y + 16, "#e9bd52");
+}
+
+function drawCompass() {
+  const centerX = WIDTH - 52;
+  const centerY = 54;
+  context.fillStyle = "rgba(255, 248, 231, 0.94)";
+  context.fillRect(centerX - 34, centerY - 38, 68, 76);
+  context.strokeStyle = COLORS.ink;
+  context.lineWidth = 2;
+  context.strokeRect(centerX - 34, centerY - 38, 68, 76);
+  context.fillStyle = COLORS.roof;
+  context.beginPath();
+  context.moveTo(centerX, centerY - 26);
+  context.lineTo(centerX - 7, centerY - 10);
+  context.lineTo(centerX + 7, centerY - 10);
+  context.closePath();
+  context.fill();
+  context.fillStyle = COLORS.ink;
+  context.font = "bold 14px ui-monospace, monospace";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText("北", centerX, centerY + 2);
+  context.font = "11px ui-monospace, monospace";
+  context.fillText("西", centerX - 20, centerY + 22);
+  context.fillText("南", centerX, centerY + 22);
+  context.fillText("東", centerX + 20, centerY + 22);
 }
 
 function drawDistrictLabels() {

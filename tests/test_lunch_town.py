@@ -17,14 +17,14 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('id="townAnnouncement" aria-live="polite"', html)
         self.assertIn('id="mealDialog" aria-labelledby="mealDialogTitle"', html)
         self.assertIn('id="npcDialogue" role="dialog" aria-modal="false"', html)
-        self.assertIn('href="/lunch-town/">2D 午餐小鎮</a>', self.read("web/index.html"))
+        self.assertIn('href="/lunch-town/">午餐小鎮</a>', self.read("web/index.html"))
         self.assertNotIn("lunch-island", html)
 
     def test_town_is_original_retro_canvas_without_threejs(self) -> None:
         html = self.read("web/lunch-town/index.html")
         app = self.read("web/lunch-town/app.js")
         styles = self.read("web/lunch-town/styles.css")
-        self.assertIn("探索街區依主題編排；行政位置與比例請以官方地圖為準", html)
+        self.assertIn("探索街區依行政區相對方位編排；北方在上、東方在右", html)
         self.assertNotIn("three.module", html.lower())
         self.assertNotIn("THREE.", app)
         self.assertIn("context.imageSmoothingEnabled = false", app)
@@ -105,11 +105,26 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("createSchoolLayouts", app)
         self.assertIn("WORLD_WIDTH", app)
         self.assertIn("updateCamera", app)
+        self.assertIn("drawCompass", app)
         self.assertIn("state.camera.x", app)
         self.assertNotIn(".slice(0, layouts.length)", app)
         self.assertNotIn("SHOWCASE_DISTRICT =", app)
         self.assertIn("臺中 29 區營養午餐小鎮", html)
-        self.assertIn("探索街區依主題編排；行政位置與比例請以官方地圖為準", html)
+        self.assertIn("探索街區依行政區相對方位編排；北方在上、東方在右", html)
+
+    def test_town_district_grid_follows_relative_cardinal_geography(self) -> None:
+        themes = json.loads(self.read("web/lunch-town/taichung-district-themes.json"))
+        grid = {name: tuple(position) for name, position in themes["cardinalGrid"].items()}
+        self.assertEqual(set(grid), {item["name"] for item in themes["districts"]})
+        self.assertEqual(len(set(grid.values())), 29)
+        self.assertTrue(all(0 <= column < 8 and 0 <= row < 6 for column, row in grid.values()))
+        self.assertLess(grid["北區"][1], grid["南區"][1])
+        self.assertLess(grid["北屯區"][1], grid["南屯區"][1])
+        self.assertLess(grid["大安區"][1], grid["大肚區"][1])
+        self.assertGreater(grid["東區"][0], grid["西區"][0])
+        self.assertGreater(grid["東勢區"][0], grid["西屯區"][0])
+        self.assertEqual(grid["和平區"][0], max(column for column, _ in grid.values()))
+        self.assertGreater(grid["霧峰區"][1], grid["豐原區"][1])
 
     def test_npcs_are_named_role_matched_and_support_varied_dialogue(self) -> None:
         app = self.read("web/lunch-town/app.js")

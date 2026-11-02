@@ -85,7 +85,7 @@ class SiteLayoutTests(unittest.TestCase):
         project_root = Path(__file__).resolve().parents[1]
         index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
         news_html = (project_root / "web" / "news.html").read_text(encoding="utf-8")
-        expected_labels = ["今日菜單", "2D 午餐小鎮", "本週菜單", "食材來源", "飲食紀錄", "營養基準", "供應趨勢", "午餐消息", "支援中心"]
+        expected_labels = ["今日菜單", "本週菜單", "食材來源", "飲食紀錄", "午餐小鎮", "營養基準", "供應趨勢", "午餐消息", "支援中心"]
 
         def primary_navigation_labels(html: str) -> list[str]:
             navigation = re.search(
