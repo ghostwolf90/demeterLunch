@@ -17,7 +17,12 @@ function harness() {
   const cache = new Map();
   function load(file) {
     if (cache.has(file)) return cache.get(file);
-    const code = ts.transpileModule(readFileSync(new URL(`../${file}.ts`, import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+    if (file.endsWith('.json')) {
+      const value = JSON.parse(readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
+      cache.set(file, value);
+      return value;
+    }
+    const code = ts.transpileModule(readFileSync(new URL(`../${file}.ts`, import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true, resolveJsonModule: true } }).outputText;
     const module = { exports: {} }; cache.set(file, module.exports);
     vm.runInNewContext(code, { module, exports: module.exports, require(name) { return name === 'cloudflare:workers' ? { env } : load(name.slice(2)); }, crypto, TextEncoder, btoa, Date, Intl, URL, Response, Request, Headers, console: { error() {} } });
     return module.exports;
@@ -30,7 +35,16 @@ function harness() {
     return `${auth.SESSION_COOKIE}=${s.token}`;
   }
   const request = (cookie = '', body, origin = 'https://haohaofood.cc') => new Request('https://haohaofood.cc/api/operations', { headers: { authorization: cookie, origin, 'content-type': 'application/json' }, ...(body ? { method: 'POST', body: JSON.stringify(body) } : {}) });
-  return { sqlite, load, parent, request, route: load('app/api/internal/operations/route'), publicRoute: load('app/api/maintenance/route') };
+  return {
+    sqlite,
+    load,
+    parent,
+    request,
+    route: load('app/api/internal/operations/route'),
+    cityRoute: load('app/api/internal/operations/cities/route'),
+    schoolsRoute: load('app/api/schools/route'),
+    publicRoute: load('app/api/maintenance/route'),
+  };
 }
 const ownerToken = 'Bearer test-maintenance-token-with-32-characters';
 const notice = { action: 'publish', title: '教育部來源異常', body: '<script>alert(1)</script>\n請確認供餐日期', severity: 'warning', revision: 0 };
@@ -74,4 +88,23 @@ test('overview returns aggregate facts without parent or child personal records'
   assert.equal(data.accounts.total,2); assert.equal(data.accounts.today,2); assert.equal(data.accounts.paid,0);
   assert.equal(data.usage.recentSignIns,2); assert.equal(data.usage.children,0);
   assert.equal(JSON.stringify(data).includes('private@example.com'), false);
+});
+
+test('city visibility is owner-protected, stored in D1 and applied to the public school API', async () => {
+  const h = harness();
+  assert.equal((await h.cityRoute.GET(h.request())).status, 403);
+  const initial = await (await h.cityRoute.GET(h.request(ownerToken))).json();
+  assert.deepEqual(initial.cities.map(city => [city.name, city.enabled]), [
+    ['臺中市', true],
+    ['臺南市', true],
+  ]);
+  assert.equal((await h.cityRoute.POST(h.request(ownerToken, { city: '臺南市', enabled: false }, 'https://attacker.test'))).status, 403);
+  const changed = await h.cityRoute.POST(h.request(ownerToken, { city: '臺南市', enabled: false }));
+  assert.equal(changed.status, 200);
+  assert.equal(h.sqlite.prepare('SELECT enabled FROM city_visibility_settings WHERE city = ?').get('臺南市').enabled, 0);
+  const directory = await h.schoolsRoute.GET();
+  assert.match(directory.headers.get('cache-control'), /no-store/);
+  const schools = (await directory.json()).schools;
+  assert.ok(schools.some(school => school.city === '臺中市'));
+  assert.equal(schools.some(school => school.city === '臺南市'), false);
 });

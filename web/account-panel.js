@@ -545,7 +545,7 @@ if (accountPanelTriggers.length) {
 
   async function loadSchools() {
     try {
-      const response = await fetch("/api/schools", { cache: "force-cache" });
+      const response = await fetch("/api/schools", { cache: "no-store" });
       const payload = await responsePayload(response);
       if (!response.ok || !Array.isArray(payload.schools)) throw new Error("無法讀取學校名冊");
       state.schools = payload.schools;

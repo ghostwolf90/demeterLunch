@@ -1,4 +1,5 @@
 import type { School } from "@/lib/schools";
+import { findSchoolIdentityMismatch } from "@/lib/school-record-identity";
 
 const API_ROOT = "https://fatraceschool.k12ea.gov.tw";
 const PUBLIC_SEARCH_URL = `${API_ROOT}/frontend/search.html`;
@@ -328,10 +329,11 @@ export async function validateReviewedRecordForImport(
   }
 
   const school = expectObject(record.school, "school");
-  for (const [key, expected] of Object.entries(expectedSchool)) {
-    if (school[key] !== expected) {
-      throw new FatraceError(`學校資料不一致：${expectedSchool.fatraceSchoolId}.${key}`);
-    }
+  const mismatchedSchoolKey = findSchoolIdentityMismatch(school, expectedSchool);
+  if (mismatchedSchoolKey) {
+    throw new FatraceError(
+      `學校資料不一致：${expectedSchool.fatraceSchoolId}.${mismatchedSchoolKey}`,
+    );
   }
   const review = expectObject(record.review, "review");
   if (review.status !== "reviewed" || !cleanText(review.reviewedAt)) {

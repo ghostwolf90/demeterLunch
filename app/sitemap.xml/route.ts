@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const urls = [
     `${SITE_ORIGIN}/`,
     `${SITE_ORIGIN}/about`,
-    `${SITE_ORIGIN}/lunch-island/`,
+    `${SITE_ORIGIN}/lunch-town/`,
     `${SITE_ORIGIN}/schools`,
     `${SITE_ORIGIN}/news`,
     `${SITE_ORIGIN}/support`,
@@ -30,7 +30,7 @@ ${urls.map((url) => `  <url><loc>${escapeHtml(url)}</loc></url>`).join("\n")}
   return new Response(xml, {
     headers: {
       "content-type": "application/xml; charset=utf-8",
-      "cache-control": "public, max-age=3600, stale-while-revalidate=86400",
+      "cache-control": "no-store",
       "x-content-type-options": "nosniff",
     },
   });

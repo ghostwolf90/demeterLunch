@@ -19,7 +19,6 @@ export default defineConfig([
     "node_modules/**",
     "build/**",
     ".work/**",
-    "web/lunch-island/vendor/**",
     "cloudflare-env.d.ts",
   ]),
 ]);

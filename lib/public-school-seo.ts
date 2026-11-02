@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { enabledCityNames } from "@/lib/city-visibility";
 import { allSchools, findSchool, type School } from "@/lib/schools";
 
 export const SITE_ORIGIN = "https://haohaofood.cc";
@@ -76,7 +77,10 @@ export async function loadIndexableSchools(request: Request): Promise<School[]> 
     const ids = new Set(
       (payload.schoolIds ?? []).filter((value) => Number.isInteger(value) && value > 0),
     );
-    return allSchools().filter((school) => ids.has(school.fatraceSchoolId));
+    const visibleCities = await enabledCityNames();
+    return allSchools().filter(
+      (school) => ids.has(school.fatraceSchoolId) && visibleCities.has(school.city),
+    );
   } catch {
     return [];
   }
@@ -88,6 +92,7 @@ export async function loadPublicSchoolPageData(
 ): Promise<PublicSchoolPageData | null> {
   const school = findSchool(schoolId);
   if (!school) return null;
+  if (!(await enabledCityNames()).has(school.city)) return null;
 
   const [publishedAsset, databaseRecords] = await Promise.all([
     loadPublishedAsset(request, schoolId),

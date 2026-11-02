@@ -18,6 +18,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from scripts.prepare_release import load_release_metadata, public_release, render_release_html
 
 from src.dashboard import load_dashboard  # noqa: E402
+from src.city_visibility import visible_schools  # noqa: E402
 from src.menu_data import build_database  # noqa: E402
 from src.school_dashboard import load_school_meal_catalog  # noqa: E402
 from src.school_weekly_data import weekly_menu_image_paths  # noqa: E402
@@ -133,6 +134,7 @@ def build_static_site(
     }
     latest = {meal_type: values[dates[-1]] for meal_type, values in dashboards.items()}
     official_school_meals = load_school_meal_catalog(database_path, parsed_root)
+    public_schools = visible_schools(official_school_meals["schools"])
     generated_at = datetime.now(timezone.utc).isoformat()
     public_official_school_meals = {
         **official_school_meals,
@@ -232,7 +234,7 @@ def build_static_site(
             {
                 "schemaVersion": 1,
                 "generatedAt": generated_at,
-                "schools": official_school_meals["schools"],
+                "schools": public_schools,
             },
             ensure_ascii=False,
             separators=(",", ":"),
@@ -264,7 +266,7 @@ def build_static_site(
     (data_output / "seo-schools.json").write_text(
         json.dumps(
             _seo_school_manifest(
-                official_school_meals["schools"],
+                public_schools,
                 official_school_meals.get("records", {}),
             ),
             ensure_ascii=False,

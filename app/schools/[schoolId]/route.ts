@@ -22,7 +22,9 @@ export async function GET(request: Request, context: RouteContext) {
   if (!/^[1-9]\d*$/.test(schoolIdParam)) return notFound();
   const data = await loadPublicSchoolPageData(request, Number(schoolIdParam));
   if (!data) return notFound();
-  return new Response(renderSchoolPage(data), { headers: publicHtmlHeaders() });
+  return new Response(renderSchoolPage(data), {
+    headers: { ...publicHtmlHeaders(0), "cache-control": "no-store" },
+  });
 }
 
 function renderSchoolPage(data: PublicSchoolPageData) {
@@ -178,7 +180,10 @@ function findRecordDate(data: PublicSchoolPageData, target: PublicMealRecord | n
 
 function notFound() {
   const html = `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><meta name="robots" content="noindex,follow" /><title>找不到學校頁面｜好好吃飯</title><link rel="stylesheet" href="/styles.css" /><link rel="stylesheet" href="/schools.css" /></head><body class="school-public-page"><main class="school-not-found"><p class="kicker">404</p><h1>找不到這所學校的公開頁面</h1><p>學校代碼不存在，或目前沒有可公開呈現的已審核菜單資料。</p><a class="primary-action" href="/schools">查看學校目錄</a></main></body></html>`;
-  return new Response(html, { status: 404, headers: publicHtmlHeaders(60) });
+  return new Response(html, {
+    status: 404,
+    headers: { ...publicHtmlHeaders(0), "cache-control": "no-store" },
+  });
 }
 
 function analyticsHead() {

@@ -2011,7 +2011,7 @@ async function fetchDashboard(date, {
 }
 
 async function fetchSchoolDirectory() {
-  const response = await fetch("./data/schools.json");
+  const response = await fetch("/api/schools", { cache: "no-store" });
   if (!response.ok) throw new Error(`無法讀取學校名冊（HTTP ${response.status}）`);
   const payload = await response.json();
   if (!Array.isArray(payload.schools)) throw new Error("學校名冊格式不正確");
@@ -3068,9 +3068,6 @@ function populateSchoolSelectors() {
 }
 
 function renderSchoolContext(dashboard) {
-  if (Array.isArray(dashboard.schoolDirectory) && dashboard.schoolDirectory.length) {
-    state.schoolDirectory = dashboard.schoolDirectory;
-  }
   if (dashboard.school) {
     state.schoolId = Number(dashboard.school.fatraceSchoolId);
     state.city = dashboard.school.city;

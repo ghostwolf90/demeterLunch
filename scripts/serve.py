@@ -26,6 +26,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.admin_actions import AdminActionRunner  # noqa: E402
 from src.admin_status import load_admin_status  # noqa: E402
+from src.city_visibility import visible_schools  # noqa: E402
 from src.dashboard import load_site_dashboard  # noqa: E402
 from src.dish_photo import PhotoSourceBusy, load_dish_photo  # noqa: E402
 from src.http_client import RequestError  # noqa: E402
@@ -138,7 +139,11 @@ def make_handler(
                 self._send_json(
                     {
                         "schemaVersion": 1,
-                        "schools": catalog["schools"],
+                        "schools": visible_schools(
+                            catalog["schools"],
+                            project_root / "data" / "reference" / "city-visibility.json",
+                            project_root / "data" / "reference" / "active-elementary-schools.json",
+                        ),
                     }
                 )
                 return
@@ -175,6 +180,12 @@ def make_handler(
                         meal_type,
                         school_id,
                     )
+                    if isinstance(dashboard.get("schoolDirectory"), list):
+                        dashboard["schoolDirectory"] = visible_schools(
+                            dashboard["schoolDirectory"],
+                            project_root / "data" / "reference" / "city-visibility.json",
+                            project_root / "data" / "reference" / "active-elementary-schools.json",
+                        )
                 except (OSError, TypeError, ValueError) as exc:
                     LOGGER.exception("Unable to load dashboard")
                     self._send_json({"error": str(exc)}, status=500)

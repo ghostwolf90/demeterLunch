@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#18394a" />
+    <meta name="description" content="走進原創復古像素風格的臺中 29 區營養午餐小鎮，探索各區地方特色、和鎮上角色對話並查看各校指定日期午餐。" />
+    <title>營養午餐小鎮｜好好吃飯</title>
+    <script src="/locales/en.js?v=20261102-lunch-town-launch-copy"></script>
+    <script src="/i18n.js?v=20261102-lunch-town-launch-copy"></script>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="town-topbar">
+      <a class="town-brand" href="/" aria-label="回到好好吃飯首頁">
+        <img src="/icon-192x192.png" width="38" height="38" alt="" />
+        <span><strong>好好吃飯</strong><small>孩子午餐，晚餐靈感</small></span>
+      </a>
+      <nav aria-label="營養午餐小鎮導覽">
+        <a href="/">午餐查詢</a>
+        <span aria-current="page">2D 午餐小鎮</span>
+      </nav>
+    </header>
+
+    <main class="town-layout" id="townApp" aria-busy="true">
+      <section class="game-card" aria-labelledby="townTitle">
+        <div class="game-hud">
+          <div>
+            <p class="pixel-kicker">TAICHUNG 29 DISTRICTS · LUNCH QUEST</p>
+            <h1 id="townTitle">臺中 29 區營養午餐小鎮</h1>
+          </div>
+          <label class="date-picker" for="mealDate">
+            <span>供餐日期</span>
+            <select id="mealDate"></select>
+          </label>
+        </div>
+
+        <div class="game-screen" id="gameScreen">
+          <canvas id="townCanvas" width="960" height="640" tabindex="0" role="application" aria-label="可操作的 2D 營養午餐小鎮地圖"></canvas>
+          <div class="loading-screen" id="loadingScreen" role="status" aria-live="polite">
+            <span class="loading-sprite" aria-hidden="true"></span>
+            <strong>正在建立午餐小鎮</strong>
+            <span>載入臺中 29 區學校、地方特色與小鎮角色中…</span>
+          </div>
+          <section class="district-card" aria-live="polite">
+            <strong class="district-badge" id="districtBadge">臺中小鎮</strong>
+            <span id="districtFeature">臺中特色街區｜海線・城區・山線・屯區</span>
+            <a id="districtSource" href="#" target="_blank" rel="noreferrer" hidden>官方特色來源</a>
+          </section>
+          <div class="interaction-prompt" id="interactionPrompt" hidden></div>
+          <section class="npc-dialogue" id="npcDialogue" role="dialog" aria-modal="false" aria-labelledby="npcName" hidden>
+            <div class="npc-dialogue-heading">
+              <div>
+                <strong id="npcName"></strong>
+                <span id="npcRole"></span>
+              </div>
+              <button id="npcClose" type="button" aria-label="結束人物對話">×</button>
+            </div>
+            <p id="npcText"></p>
+            <button class="npc-next" id="npcNext" type="button">再聊一句</button>
+          </section>
+        </div>
+
+        <div class="game-controls" aria-label="遊戲操作方式">
+          <span>方向鍵／WASD：移動</span>
+          <span>Enter／空白鍵：對話或查看午餐</span>
+          <span>也可以直接點選人物或學校</span>
+        </div>
+
+        <div class="mobile-pad" id="mobilePad" aria-label="觸控方向鍵">
+          <button type="button" data-direction="up" aria-label="向上移動">▲</button>
+          <button type="button" data-direction="left" aria-label="向左移動">◀</button>
+          <button class="action-button" type="button" data-action="interact" aria-label="查看附近學校午餐">A</button>
+          <button type="button" data-direction="right" aria-label="向右移動">▶</button>
+          <button type="button" data-direction="down" aria-label="向下移動">▼</button>
+        </div>
+      </section>
+
+      <aside class="quest-panel" aria-label="午餐小鎮探索資訊">
+        <p class="quest-label">TODAY'S QUEST</p>
+        <h2>走訪臺中 29 區學校</h2>
+        <p>從海線、城區、山線與屯區出發，探索每一區的地方特色、和人物聊聊，再到校門查看指定日期實際公布的午餐。探索街區依主題編排；行政位置與比例請以官方地圖為準。</p>
+
+        <div class="quest-progress" aria-live="polite">
+          <span>探索進度</span>
+          <strong id="visitProgress">0 / 243</strong>
+        </div>
+
+        <div class="school-list" id="schoolList" aria-label="臺中 29 區學校清單"></div>
+
+        <div class="map-legend">
+          <strong>地圖圖例</strong>
+          <span><i class="legend-school"></i>學校</span>
+          <span><i class="legend-road"></i>街道</span>
+          <span><i class="legend-park"></i>公園與菜園</span>
+          <span><i class="legend-character"></i>校園人物</span>
+        </div>
+
+        <p class="data-note">菜單以校方指定日期實際公布內容為準；沒有查到資料不代表沒有供餐。</p>
+      </aside>
+    </main>
+
+    <dialog class="meal-dialog" id="mealDialog" aria-labelledby="mealDialogTitle">
+      <button class="dialog-close" id="dialogClose" type="button" aria-label="關閉菜單視窗">×</button>
+      <p class="dialog-kicker" id="mealDialogKicker"></p>
+      <h2 id="mealDialogTitle"></h2>
+      <div id="mealDialogBody"></div>
+    </dialog>
+
+    <p class="sr-only" id="townAnnouncement" aria-live="polite"></p>
+    <noscript><p class="noscript-note">2D 營養午餐小鎮需要 JavaScript 才能操作。</p></noscript>
+    <script type="module" src="./app.js?v=20261102-29-districts"></script>
+  </body>
+</html>

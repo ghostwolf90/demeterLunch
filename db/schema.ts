@@ -231,3 +231,10 @@ export const maintenanceEvents = sqliteTable("maintenance_events", {
   actorId: text("actor_id").notNull(),
   createdAt: text("created_at").notNull(),
 });
+
+export const cityVisibilitySettings = sqliteTable("city_visibility_settings", {
+  city: text("city").primaryKey(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull(),
+  updatedBy: text("updated_by").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});

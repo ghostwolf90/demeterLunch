@@ -1,4 +1,5 @@
 import registry from "@/data/reference/active-elementary-schools.json";
+import cityVisibility from "@/data/reference/city-visibility.json";
 import refreshGroups from "@/data/reference/school-refresh-groups.json";
 
 export type School = {
@@ -11,6 +12,11 @@ export type School = {
 };
 
 const schools = registry.schools as School[];
+const publicCityNames = new Set(
+  cityVisibility.cities
+    .filter((city) => city.enabled === true)
+    .map((city) => city.name),
+);
 
 type RefreshGroup = {
   id: number;
@@ -54,8 +60,8 @@ export function refreshGroupLabel(groupId: number): string {
   return `第 ${group.id} 批（${group.city}，${group.expectedSchoolCount} 校）`;
 }
 
-export function publicSchoolDirectory() {
-  return schools.map((school) => ({
+export function publicSchoolDirectory(visibleCities: ReadonlySet<string> = publicCityNames) {
+  return schools.filter((school) => visibleCities.has(school.city)).map((school) => ({
     ...school,
     sourceUrl: "https://fatraceschool.k12ea.gov.tw/frontend/search.html",
     experience: [193609, 64754668].includes(school.fatraceSchoolId) ? "complete" : "official_daily",

@@ -1,0 +1,729 @@
+:root {
+  color-scheme: light;
+  --ink: #173443;
+  --paper: #fff8e7;
+  --cream: #f2e1b8;
+  --navy: #18394a;
+  --blue: #356578;
+  --green: #5d8a62;
+  --orange: #d8663b;
+  --yellow: #f0c35a;
+  --pixel-shadow: 5px 5px 0 rgba(18, 42, 54, 0.24);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, "Noto Sans TC", monospace;
+  background: #bdd7d0;
+  color: var(--ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+    #bdd7d0;
+  background-size: 24px 24px;
+}
+
+button,
+select,
+a {
+  font: inherit;
+}
+
+button,
+a,
+select,
+canvas {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.town-topbar {
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px clamp(14px, 3vw, 34px);
+  color: #fff8e7;
+  background: var(--navy);
+  border-bottom: 4px solid #0d2734;
+  box-shadow: 0 4px 0 rgba(255, 255, 255, 0.28);
+}
+
+.town-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.town-brand img {
+  border: 2px solid #fff8e7;
+  border-radius: 4px;
+  image-rendering: pixelated;
+}
+
+.town-brand span {
+  display: grid;
+  gap: 2px;
+}
+
+.town-brand strong {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.town-brand small {
+  color: #cde1dc;
+  font-size: 0.7rem;
+}
+
+.town-topbar nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+.town-topbar nav a,
+.town-topbar nav span {
+  padding: 8px 10px;
+  color: inherit;
+  text-decoration: none;
+  border: 2px solid transparent;
+}
+
+.town-topbar nav a:hover,
+.town-topbar nav a:focus-visible {
+  border-color: #fff8e7;
+  outline: 0;
+}
+
+.town-topbar nav span {
+  color: var(--navy);
+  background: var(--yellow);
+  border-color: #fff0b4;
+  box-shadow: 3px 3px 0 #0d2734;
+}
+
+.town-layout {
+  width: min(1480px, 100%);
+  margin: 0 auto;
+  padding: clamp(14px, 2.5vw, 30px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+  gap: 22px;
+}
+
+.game-card,
+.quest-panel {
+  border: 4px solid var(--navy);
+  background: var(--paper);
+  box-shadow: var(--pixel-shadow);
+}
+
+.game-card {
+  padding: clamp(10px, 1.8vw, 18px);
+}
+
+.game-hud {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 12px;
+}
+
+.pixel-kicker,
+.quest-label,
+.dialog-kicker {
+  margin: 0 0 5px;
+  color: var(--orange);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.game-hud h1,
+.quest-panel h2,
+.meal-dialog h2 {
+  margin: 0;
+  font-family: ui-rounded, "Arial Rounded MT Bold", "Noto Sans TC", sans-serif;
+  line-height: 1.08;
+}
+
+.game-hud h1 {
+  font-size: clamp(1.28rem, 2.8vw, 2.1rem);
+}
+
+.date-picker {
+  display: grid;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.date-picker select {
+  min-height: 38px;
+  padding: 6px 30px 6px 9px;
+  color: var(--ink);
+  background: #fff;
+  border: 3px solid var(--navy);
+  border-radius: 0;
+}
+
+.game-screen {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  background: #5c8f65;
+  border: 5px solid #0e2937;
+  box-shadow: inset 0 0 0 3px #e9d39e;
+}
+
+#townCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  outline: 0;
+  cursor: crosshair;
+}
+
+#townCanvas:focus-visible {
+  box-shadow: inset 0 0 0 5px var(--yellow);
+}
+
+.loading-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  color: var(--paper);
+  text-align: center;
+  background: rgba(24, 57, 74, 0.94);
+  transition: opacity 160ms steps(3, end), visibility 160ms;
+}
+
+.loading-screen.is-ready {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.loading-sprite {
+  width: 24px;
+  height: 28px;
+  background: var(--yellow);
+  border: 4px solid var(--paper);
+  box-shadow: -8px 8px 0 var(--orange), 8px 8px 0 var(--blue);
+  animation: loading-hop 600ms steps(2, end) infinite;
+}
+
+.interaction-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  max-width: calc(100% - 32px);
+  padding: 9px 13px;
+  color: #fff;
+  font-size: clamp(0.68rem, 1.5vw, 0.82rem);
+  text-align: center;
+  background: rgba(15, 39, 52, 0.94);
+  border: 3px solid #fff8e7;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.34);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.district-card {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  left: 14px;
+  width: min(330px, calc(100% - 28px));
+  display: grid;
+  gap: 3px;
+  padding: 8px 11px;
+  color: var(--navy);
+  background: rgba(255, 248, 231, 0.94);
+  border: 3px solid var(--navy);
+  box-shadow: 3px 3px 0 rgba(14, 41, 55, 0.3);
+}
+
+.district-badge {
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.district-card span {
+  overflow: hidden;
+  color: #506b75;
+  font-size: 0.65rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.district-card a {
+  width: max-content;
+  color: var(--orange);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-underline-offset: 2px;
+}
+
+.npc-dialogue {
+  position: absolute;
+  z-index: 4;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
+  padding: 14px 16px;
+  color: var(--ink);
+  background: rgba(255, 248, 231, 0.98);
+  border: 4px solid var(--navy);
+  box-shadow: 6px 6px 0 rgba(14, 41, 55, 0.42);
+}
+
+.npc-dialogue[hidden] {
+  display: none;
+}
+
+.npc-dialogue-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.npc-dialogue-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.npc-dialogue-heading strong {
+  color: var(--orange);
+  font-family: ui-rounded, "Arial Rounded MT Bold", "Noto Sans TC", sans-serif;
+  font-size: 1.05rem;
+}
+
+.npc-dialogue-heading span {
+  color: #58717b;
+  font-size: 0.68rem;
+}
+
+.npc-dialogue-heading button {
+  width: 32px;
+  height: 32px;
+  color: #fff;
+  background: var(--orange);
+  border: 3px solid var(--navy);
+}
+
+.npc-dialogue p {
+  min-height: 2.8em;
+  margin: 10px 0;
+  font-family: system-ui, "Noto Sans TC", sans-serif;
+  font-size: clamp(0.78rem, 1.7vw, 0.92rem);
+  line-height: 1.55;
+}
+
+.npc-next {
+  float: right;
+  padding: 7px 12px;
+  color: #fff;
+  background: var(--blue);
+  border: 3px solid var(--navy);
+  box-shadow: 2px 2px 0 rgba(14, 41, 55, 0.25);
+}
+
+.game-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  padding: 12px 4px 0;
+  color: #496572;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.mobile-pad {
+  display: none;
+  grid-template-columns: repeat(3, 48px);
+  grid-template-rows: repeat(2, 42px);
+  justify-content: center;
+  gap: 6px;
+  margin-top: 13px;
+}
+
+.mobile-pad button {
+  color: #fff;
+  background: var(--blue);
+  border: 3px solid var(--navy);
+  box-shadow: 3px 3px 0 rgba(24, 57, 74, 0.28);
+  touch-action: none;
+}
+
+.mobile-pad button[data-direction="up"] {
+  grid-column: 2;
+}
+
+.mobile-pad button[data-direction="left"] {
+  grid-column: 1;
+}
+
+.mobile-pad .action-button {
+  grid-column: 2;
+  color: var(--navy);
+  background: var(--yellow);
+  border-radius: 50%;
+}
+
+.quest-panel {
+  align-self: start;
+  padding: 22px;
+}
+
+.quest-panel > p:not(.quest-label, .data-note) {
+  color: #4c6671;
+  font-family: system-ui, "Noto Sans TC", sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.quest-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20px 0 14px;
+  padding: 11px 12px;
+  color: #fff;
+  background: var(--navy);
+  border: 3px solid #0c2835;
+}
+
+.quest-progress strong {
+  color: var(--yellow);
+  font-size: 1.05rem;
+}
+
+.school-list {
+  display: grid;
+  gap: 14px;
+  max-height: min(620px, calc(100vh - 310px));
+  overflow-y: auto;
+  padding-right: 5px;
+  scrollbar-color: var(--orange) #e8debf;
+}
+
+.school-region-group {
+  display: grid;
+  gap: 8px;
+}
+
+.school-region-group > h3 {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  margin: 0;
+  padding: 8px 10px;
+  color: #fff;
+  font-size: 0.78rem;
+  background: var(--navy);
+  border-left: 5px solid var(--yellow);
+}
+
+.school-district-group {
+  display: grid;
+  gap: 8px;
+  border: 2px solid #b5c2ba;
+  background: #f4ecd4;
+}
+
+.school-district-group summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 9px;
+  color: #fff;
+  font-size: 0.72rem;
+  cursor: pointer;
+  background: var(--blue);
+  list-style: none;
+}
+
+.school-district-group summary::-webkit-details-marker {
+  display: none;
+}
+
+.school-district-group summary::before {
+  content: "＋";
+  color: var(--yellow);
+}
+
+.school-district-group[open] summary::before {
+  content: "－";
+}
+
+.school-district-group .school-button {
+  width: calc(100% - 12px);
+  margin: 0 6px 6px;
+}
+
+.school-button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  color: var(--ink);
+  text-align: left;
+  background: #fffdf5;
+  border: 3px solid #9bafaa;
+  box-shadow: 2px 2px 0 #d6cba9;
+}
+
+.school-button:hover,
+.school-button:focus-visible {
+  border-color: var(--orange);
+  outline: 0;
+  transform: translate(-1px, -1px);
+}
+
+.school-button.is-visited {
+  border-color: var(--green);
+  background: #e7f1df;
+}
+
+.school-number {
+  color: var(--paper);
+  line-height: 28px;
+  text-align: center;
+  background: var(--orange);
+}
+
+.school-status {
+  color: #607780;
+  font-size: 0.65rem;
+}
+
+.map-legend {
+  margin-top: 20px;
+  padding-top: 15px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  border-top: 3px dashed #c7b88d;
+  font-size: 0.72rem;
+}
+
+.map-legend strong {
+  grid-column: 1 / -1;
+}
+
+.map-legend span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.map-legend i {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+  border: 2px solid var(--navy);
+}
+
+.legend-school { background: #e7d18b; }
+.legend-road { background: #748184; }
+.legend-park { background: #7fac68; }
+.legend-character { background: #d8663b; }
+
+.data-note {
+  margin: 18px 0 0;
+  padding: 10px;
+  color: #536a74;
+  font-family: system-ui, "Noto Sans TC", sans-serif;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  background: #f0ead7;
+  border-left: 4px solid var(--yellow);
+}
+
+.meal-dialog {
+  width: min(560px, calc(100% - 28px));
+  max-height: min(720px, calc(100vh - 30px));
+  overflow: auto;
+  padding: 24px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 5px solid var(--navy);
+  border-radius: 0;
+  box-shadow: 10px 10px 0 rgba(14, 41, 55, 0.44);
+}
+
+.meal-dialog::backdrop {
+  background: rgba(11, 31, 42, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.dialog-close {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  float: right;
+  width: 38px;
+  height: 38px;
+  color: #fff;
+  background: var(--orange);
+  border: 3px solid var(--navy);
+}
+
+.meal-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.meal-summary span {
+  padding: 9px;
+  background: #eee5cc;
+  border: 2px solid #c6b889;
+  font-size: 0.76rem;
+}
+
+.dish-list {
+  display: grid;
+  gap: 9px;
+  padding: 0;
+  list-style: none;
+}
+
+.dish-list li {
+  padding: 10px 12px;
+  background: #fffdf5;
+  border: 3px solid #9eb5ab;
+  box-shadow: 3px 3px 0 #ddd1ad;
+}
+
+.dish-list small {
+  display: block;
+  margin-top: 4px;
+  color: #6c7d83;
+}
+
+.source-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #fff;
+  padding: 9px 11px;
+  background: var(--blue);
+  border: 3px solid var(--navy);
+  text-decoration: none;
+}
+
+.empty-meal {
+  padding: 18px;
+  line-height: 1.7;
+  background: #efe7d5;
+  border: 3px dashed #b4a579;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.noscript-note {
+  margin: 20px;
+  padding: 20px;
+  background: var(--paper);
+  border: 4px solid var(--navy);
+}
+
+@keyframes loading-hop {
+  50% { transform: translateY(-6px); }
+}
+
+@media (max-width: 980px) {
+  .town-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .quest-panel {
+    width: 100%;
+  }
+}
+
+@media (max-width: 680px), (pointer: coarse) {
+  .town-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .town-topbar nav {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .town-layout {
+    padding: 10px;
+  }
+
+  .game-hud {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .date-picker select {
+    width: 100%;
+  }
+
+  .mobile-pad {
+    display: grid;
+  }
+
+  .game-controls {
+    display: none;
+  }
+
+  .npc-dialogue {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    padding: 10px 12px;
+  }
+
+  .school-list {
+    max-height: 520px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
