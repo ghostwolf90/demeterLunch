@@ -4537,10 +4537,11 @@ refs.passportFoodChoices.addEventListener("change", () => {
 
 function setupMobileNavigation() {
   const links = [...document.querySelectorAll('.mobile-nav a[href^="#"]')];
+  const lunchViewLinks = [...document.querySelectorAll('.lunch-view-nav a[href^="#"]')];
   const sectionTargets = new Map([
     ["today", "today"],
+    ["week", "today"],
     ["todayGrid", "today"],
-    ["week", "week"],
     ["traceability", "traceability"],
     ["passport", "passport"],
     ["standard", "traceability"],
@@ -4555,6 +4556,14 @@ function setupMobileNavigation() {
   let updateFrame = 0;
 
   const setActive = setMobileNavigationTarget;
+  const setLunchViewActive = (target) => {
+    for (const link of lunchViewLinks) {
+      const active = link.hash === `#${target}`;
+      link.classList.toggle("active", active);
+      if (active) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    }
+  };
   const update = () => {
     updateFrame = 0;
     if (state.settingsTabActive) {
@@ -4563,13 +4572,17 @@ function setupMobileNavigation() {
     }
     const marker = Math.min(window.innerHeight * .34, 250);
     let target = "today";
+    let lunchViewTarget = "today";
     for (const section of sections) {
       if (section.hidden || !section.getClientRects().length) continue;
       if (section.getBoundingClientRect().top <= marker) {
         target = sectionTargets.get(section.id);
+        if (section.id === "week") lunchViewTarget = "week";
+        else if (section.id === "today" || section.id === "todayGrid") lunchViewTarget = "today";
       }
     }
     setActive(target);
+    setLunchViewActive(lunchViewTarget);
   };
   const queueUpdate = () => {
     if (!updateFrame) updateFrame = window.requestAnimationFrame(update);
@@ -4584,6 +4597,9 @@ function setupMobileNavigation() {
       }
       setActive(link.hash.slice(1));
     });
+  }
+  for (const link of lunchViewLinks) {
+    link.addEventListener("click", () => setLunchViewActive(link.hash.slice(1)));
   }
   window.addEventListener("scroll", queueUpdate, { passive: true });
   window.addEventListener("resize", queueUpdate);

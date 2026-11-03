@@ -109,6 +109,7 @@ h1, h2, h3, p { margin-top: 0; }
 h1 { margin-bottom: 22px; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(54px, 7.1vw, 104px); line-height: .98; letter-spacing: -.065em; }
 h1 em { color: var(--orange); font-style: normal; }
 .intro-service-heading { margin: 0 0 11px; font-family: inherit; font-size: var(--text-xs); line-height: 1.35; letter-spacing: .19em; }
+.lunch-view-nav { display: none; }
 .intro-display { margin: 0 0 22px; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(54px, 7.1vw, 104px); font-weight: 700; line-height: .98; letter-spacing: -.065em; }
 .intro-display em { color: var(--orange); font-style: normal; }
 .intro-note { max-width: 520px; margin: 0; color: var(--ink-soft); font-size: 16px; line-height: 1.8; }
@@ -957,6 +958,10 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   body.records-page { padding-bottom: 0; }
   .topbar { grid-template-columns: 1fr auto; }
   .topbar nav { display: none; }
+  .lunch-view-nav { width: fit-content; margin: 0 0 16px; padding: 4px; display: grid; grid-auto-flow: column; gap: 3px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,253,248,.72); }
+  .lunch-view-nav a { min-height: 40px; padding: 9px 16px; display: grid; place-items: center; border-radius: 999px; color: var(--ink-soft); font-size: 13px; font-weight: 800; }
+  .lunch-view-nav a.active { color: var(--white); background: var(--ink); box-shadow: 0 5px 15px rgba(21,52,71,.18); }
+  .lunch-view-nav a:focus-visible { outline: 3px solid rgba(238,117,78,.32); outline-offset: 2px; }
   .school-picker { grid-template-columns: minmax(150px, .8fr) minmax(170px, 1fr); }
   .school-picker .school-field:nth-child(3) { grid-column: 1 / -1; }
   .default-school-button { grid-column: 1 / -1; }
@@ -1250,7 +1255,7 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
 
 @media (prefers-reduced-transparency: reduce) {
   .topbar, .mobile-nav { background: var(--paper); backdrop-filter: none; }
-  .card, .school-picker select, .default-school-button, .meal-type-switch { background: var(--white); }
+  .card, .school-picker select, .default-school-button, .meal-type-switch, .lunch-view-nav { background: var(--white); }
   .dish-detail-dialog::backdrop, .account-dialog::backdrop, .source-dialog::backdrop { backdrop-filter: none; }
 }
 

@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
+const homepage = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
 function fixture({ mobile = true } = {}) {
   function element(extra = {}) {
     const classes = new Set();
@@ -15,13 +16,15 @@ function fixture({ mobile = true } = {}) {
       scrollTo({ top }) { this.scrollTop = top; }, show() { this.open = true; this.nonmodalShows = (this.nonmodalShows || 0) + 1; }, close() { this.open = false; }, ...extra,
     };
   }
-  const links = ['today', 'week', 'traceability', 'passport'].map(id => element({ hash: `#${id}` }));
+  const links = ['today', 'traceability', 'passport'].map(id => element({ hash: `#${id}` }));
+  const lunchViewLinks = ['today', 'week'].map(id => element({ hash: `#${id}` }));
   const settingsButton = element();
   const shell = element();
   const background = [element(), element({ inert: true }), element()];
   const body = element();
   const refs = { settingsDesktopGrade: element(), settingsDesktopStandard: element(), refreshSiteVersion: element(), accountButton: element(), mobileSettingsButton: settingsButton, settingsDialog: element({ querySelector: () => shell }), settingsTitle: element(), settingsStatus: element(), closeSettingsDialog: element(), accountDialog: element(), settingsPageDialog: element(), familyPlanDialog: element() };
-  const sections = Object.fromEntries(['today', 'week', 'traceability', 'passport'].map((id, index) => [id, { id, hidden: false, getClientRects: () => [1], getBoundingClientRect: () => ({ top: [-400, -100, 500, 1000][index] }) }]));
+  const sectionTops = { today: -400, week: -100, todayGrid: 500, traceability: 1000, passport: 1500 };
+  const sections = Object.fromEntries(Object.entries(sectionTops).map(([id, top]) => [id, { id, top, hidden: false, getClientRects: () => [1], getBoundingClientRect() { return { top: this.top }; } }]));
   const state = { releaseCheckRequestId: 0, settingsTabActive: false, settingsTabScrollTop: 0, settingsPreviousTab: 'today', settingsBackground: [], settingsIgnoredCloseEvents: 0, dialogMotion: { settings: { openFrame: 0 } } };
   let modalShows = 0;
   const frames = [];
@@ -33,6 +36,7 @@ function fixture({ mobile = true } = {}) {
       querySelectorAll(selector) {
         if (selector === '.mobile-nav a[href^="#"], #mobileSettingsButton') return [...links, settingsButton];
         if (selector === '.mobile-nav a[href^="#"]') return links;
+        if (selector === '.lunch-view-nav a[href^="#"]') return lunchViewLinks;
         if (selector === 'body > .topbar, body > main, body > footer') return background;
         throw new Error(`Unexpected selector: ${selector}`);
       },
@@ -51,8 +55,28 @@ function fixture({ mobile = true } = {}) {
   const navStart = source.indexOf('function setupMobileNavigation()');
   vm.runInContext(source.slice(navStart, source.indexOf('for (const link of document.querySelectorAll("a.today-link"))', navStart)), ctx);
   ctx.setupMobileNavigation();
-  return { ctx, refs, state, links, shell, background, body, frames, windowHandlers, get modalShows() { return modalShows; }, setMobile(value) { mobile = value; } };
+  return { ctx, refs, state, links, lunchViewLinks, sections, shell, background, body, frames, windowHandlers, get modalShows() { return modalShows; }, setMobile(value) { mobile = value; } };
 }
+
+test('mobile navigation presents lunch as the primary destination and moves date scope inside it', () => {
+  const markup = homepage.match(/<nav class="mobile-nav"[\s\S]*?<\/nav>/)?.[0] || '';
+  assert.match(markup, /aria-label="營養午餐"[\s\S]*?<span>午餐<\/span>/);
+  assert.match(markup, /href="#traceability"[\s\S]*?<span>食材<\/span>/);
+  assert.match(markup, /href="\/lunch-town\/"[\s\S]*?<span>小鎮<\/span>/);
+  assert.doesNotMatch(markup, /href="#week"/);
+  assert.match(homepage, /<nav class="lunch-view-nav" aria-label="營養午餐檢視">[\s\S]*?href="#today"[\s\S]*?href="#week"/);
+});
+
+test('scrolling through the weekly selector keeps Lunch as the active bottom tab', () => {
+  const f = fixture();
+  assert.equal(f.links[0].attributes.get('aria-current'), 'page');
+  assert.equal(f.lunchViewLinks[1].attributes.get('aria-current'), 'page');
+  f.sections.todayGrid.top = -50;
+  f.windowHandlers.scroll();
+  f.frames.shift()();
+  assert.equal(f.links[0].attributes.get('aria-current'), 'page');
+  assert.equal(f.lunchViewLinks[0].attributes.get('aria-current'), 'page');
+});
 
 test('mobile settings is a nonmodal page; the real tab bar stays accessible and only Settings is current', () => {
   const f = fixture();
@@ -74,12 +98,12 @@ test('another tab closes settings immediately and restores background state with
   const f = fixture();
   f.ctx.openSettingsDialog(f.refs.mobileSettingsButton);
   f.shell.scrollTop = 415;
-  f.links[3].handlers.click();
+  f.links[2].handlers.click();
   assert.equal(f.refs.settingsDialog.open, false);
-  assert.equal(f.links[3].focused, true);
+  assert.equal(f.links[2].focused, true);
   assert.equal(f.state.settingsTabActive, false);
   assert.equal(f.state.skipSettingsFocusRestore, true);
-  assert.equal(f.links[3].attributes.get('aria-current'), 'page');
+  assert.equal(f.links[2].attributes.get('aria-current'), 'page');
   assert.equal(f.refs.mobileSettingsButton.attributes.has('aria-current'), false);
   assert.deepEqual(f.background.map(element => element.inert), [false, true, false]);
   assert.equal(f.body.classList.contains('settings-tab-active'), false);
