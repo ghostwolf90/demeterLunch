@@ -6,11 +6,19 @@
     <meta name="theme-color" content="#18394a" />
     <meta name="description" content="走進原創復古像素風格的臺中 29 區營養午餐小鎮，探索各區地方特色、和鎮上角色對話並查看各校指定日期午餐。" />
     <title>營養午餐小鎮｜好好吃飯</title>
-    <script src="/locales/en.js?v=20261102-lunch-town-launch-copy"></script>
-    <script src="/i18n.js?v=20261102-lunch-town-launch-copy"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EDXYFV1B3L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EDXYFV1B3L');
+    </script>
+    <script src="/locales/en.js?v=20261103-civic-neighborhood-night"></script>
+    <script src="/i18n.js?v=20261103-civic-neighborhood-night"></script>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20261103-civic-housing" />
   </head>
   <body>
     <header class="town-topbar">
@@ -21,84 +29,176 @@
       <nav aria-label="營養午餐小鎮導覽">
         <a href="/">午餐查詢</a>
         <span aria-current="page">午餐小鎮</span>
+        <a class="town-account-action" id="townAccountAction" href="/?account=1">免費註冊・保存成就</a>
       </nav>
     </header>
 
     <main class="town-layout" id="townApp" aria-busy="true">
-      <section class="game-card" aria-labelledby="townTitle">
+      <section class="game-card" id="gameCard" aria-labelledby="townTitle">
         <div class="game-hud">
           <div>
             <p class="pixel-kicker">TAICHUNG 29 DISTRICTS · LUNCH QUEST</p>
             <h1 id="townTitle">臺中 29 區營養午餐小鎮</h1>
           </div>
-          <label class="date-picker" for="mealDate">
-            <span>供餐日期</span>
-            <select id="mealDate"></select>
-          </label>
+          <div class="hud-settings">
+            <div class="date-picker" aria-label="供餐日期">
+              <span class="date-picker-heading">
+                <span>供餐日期</span>
+                <strong id="mealDateDisplay" aria-live="polite">正在讀取日期…</strong>
+              </span>
+              <small class="date-picker-note">依臺中當日自動更新</small>
+            </div>
+            <details class="town-options">
+              <summary>角色、時間與音樂</summary>
+              <div class="town-options-content">
+                <div class="player-style-picker" role="group" aria-label="玩家角色外型">
+                  <span>玩家角色</span>
+                  <div>
+                    <button type="button" data-player-style="female" aria-pressed="true">女角色</button>
+                    <button type="button" data-player-style="male" aria-pressed="false">男角色</button>
+                  </div>
+                </div>
+                <div class="environment-status" id="environmentStatus" role="status" aria-live="polite">
+                  <span aria-hidden="true">☀</span>
+                  <strong>臺中現實時間</strong>
+                  <small>同步中…</small>
+                </div>
+                <button class="music-toggle" id="musicToggle" type="button" aria-pressed="false" aria-label="開啟小鎮背景音樂">♫ 音樂：關</button>
+              </div>
+            </details>
+          </div>
         </div>
 
         <div class="game-screen" id="gameScreen">
-          <canvas id="townCanvas" width="960" height="640" tabindex="0" role="application" aria-label="可操作的 2D 營養午餐小鎮地圖"></canvas>
+          <canvas id="townCanvas" width="960" height="640" tabindex="0" role="application" aria-label="可操作的 2D 營養午餐小鎮地圖，黎明、白天、黃昏與夜晚會依臺中現實時間切換，偶爾有陣雨"></canvas>
           <div class="loading-screen" id="loadingScreen" role="status" aria-live="polite">
             <span class="loading-sprite" aria-hidden="true"></span>
-            <strong>正在建立午餐小鎮</strong>
-            <span>載入臺中 29 區學校、地方特色與小鎮角色中…</span>
+            <strong id="loadingTitle">正在載入小鎮</strong>
+            <span id="loadingStep">準備臺中 29 區的街道與學校…</span>
+            <div class="loading-progress" id="loadingProgress" role="progressbar" aria-label="小鎮載入進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4">
+              <span id="loadingProgressBar" style="width: 4%"></span>
+            </div>
+            <small id="loadingPercent">4%</small>
           </div>
           <section class="district-card" aria-live="polite">
             <strong class="district-badge" id="districtBadge">臺中小鎮</strong>
             <span id="districtFeature">臺中特色街區｜海線・城區・山線・屯區</span>
             <a id="districtSource" href="#" target="_blank" rel="noreferrer" hidden>官方特色來源</a>
           </section>
+          <div class="speech-layer" id="speechLayer" aria-hidden="true">
+            <div class="comic-bubble" id="comicBubble" hidden>
+              <strong id="comicSpeaker"></strong>
+              <span id="comicText"></span>
+            </div>
+          </div>
+          <div class="mobile-screen-actions" id="mobileScreenActions">
+            <button class="fullscreen-toggle" id="fullscreenToggle" type="button" aria-pressed="false" aria-label="進入全螢幕模式">
+              <span aria-hidden="true">⛶</span><span>全螢幕</span>
+            </button>
+            <button class="mobile-explore-button" id="mobileExploreButton" type="button" aria-controls="questPanel" aria-expanded="false">
+              成就手冊
+            </button>
+          </div>
           <div class="interaction-prompt" id="interactionPrompt" hidden></div>
           <section class="npc-dialogue" id="npcDialogue" role="dialog" aria-modal="false" aria-labelledby="npcName" hidden>
             <div class="npc-dialogue-heading">
               <div>
                 <strong id="npcName"></strong>
                 <span id="npcRole"></span>
+                <a id="npcSource" href="#" target="_blank" rel="noreferrer" hidden>公開身分來源</a>
               </div>
               <button id="npcClose" type="button" aria-label="結束人物對話">×</button>
             </div>
             <p id="npcText"></p>
             <button class="npc-next" id="npcNext" type="button">再聊一句</button>
           </section>
+          <section class="town-event-panel" id="townEventPanel" role="region" aria-live="polite" aria-labelledby="townEventTitle" hidden>
+            <p class="town-event-kicker" id="townEventKicker">街區突發事件</p>
+            <h3 id="townEventTitle"></h3>
+            <p id="townEventText"></p>
+            <div class="town-event-choices" id="townEventChoices"></div>
+            <a class="town-event-source" id="townEventSource" href="#" target="_blank" rel="noreferrer" hidden>查看官方處理指引</a>
+            <button class="town-event-continue" id="townEventContinue" type="button" hidden>繼續探索</button>
+          </section>
+          <div class="achievement-toast" id="achievementToast" role="status" aria-live="polite" hidden>
+            <span aria-hidden="true">★</span>
+            <div><small>成就解鎖</small><strong id="achievementToastTitle"></strong></div>
+          </div>
+          <p class="mobile-control-hint">點道路移動・點人物、學校、建築或 YouBike 站互動</p>
+          <div class="mobile-pad" id="mobilePad" aria-label="觸控方向鍵">
+            <div class="mobile-direction-pad">
+              <button type="button" data-direction="up" aria-label="向上移動">▲</button>
+              <button type="button" data-direction="left" aria-label="向左移動">◀</button>
+              <button type="button" data-direction="down" aria-label="向下移動">▼</button>
+              <button type="button" data-direction="right" aria-label="向右移動">▶</button>
+            </div>
+            <button class="action-button" type="button" data-action="interact" aria-label="與附近目標互動">A</button>
+          </div>
         </div>
 
         <div class="game-controls" aria-label="遊戲操作方式">
           <span>方向鍵／WASD：移動</span>
-          <span>Enter／空白鍵：對話或查看午餐</span>
-          <span>也可以直接點選人物或學校</span>
-        </div>
-
-        <div class="mobile-pad" id="mobilePad" aria-label="觸控方向鍵">
-          <button type="button" data-direction="up" aria-label="向上移動">▲</button>
-          <button type="button" data-direction="left" aria-label="向左移動">◀</button>
-          <button class="action-button" type="button" data-action="interact" aria-label="查看附近學校午餐">A</button>
-          <button type="button" data-direction="right" aria-label="向右移動">▶</button>
-          <button type="button" data-direction="down" aria-label="向下移動">▼</button>
+          <span>Enter／空白鍵：對話、進入建築、查看午餐或租還 YouBike</span>
+          <span>也可以直接點選人物、學校、街區建築或 YouBike 站</span>
         </div>
       </section>
 
-      <aside class="quest-panel" aria-label="午餐小鎮探索資訊">
-        <p class="quest-label">TODAY'S QUEST</p>
-        <h2>走訪臺中 29 區學校</h2>
-        <p>從海線、城區、山線與屯區出發，探索每一區的地方特色、和人物聊聊，再到校門查看指定日期實際公布的午餐。探索街區依行政區相對方位編排；北方在上、東方在右，位置與比例請以官方地圖為準。</p>
+      <aside class="quest-panel achievement-panel" id="questPanel" aria-label="臺中小鎮成就手冊">
+        <div class="quest-panel-mobile-header">
+          <span aria-hidden="true"></span>
+          <strong>小鎮成就手冊</strong>
+          <button id="questPanelClose" type="button" aria-label="關閉成就手冊">×</button>
+        </div>
+        <p class="quest-label">TAICHUNG ACHIEVEMENTS</p>
+        <h2>臺中小鎮成就手冊</h2>
+        <p>每天回來走走、認識居民、查看學校午餐、造訪地標並正確處理街區事件。臺中成就是第一冊，未來可以接著收藏其他縣市。</p>
 
-        <div class="quest-progress" aria-live="polite">
-          <span>探索進度</span>
-          <strong id="visitProgress">0 / 243</strong>
+        <section class="achievement-account-card is-loading" id="achievementAccountCard" aria-live="polite">
+          <div>
+            <small id="achievementAccountEyebrow">正在確認帳號…</small>
+            <strong id="achievementAccountTitle">讀取你的成就手冊</strong>
+            <p id="achievementAccountText">帳號進度會安全保存在好好吃飯家庭帳號。</p>
+          </div>
+          <a id="achievementAccountLink" href="/?account=1">免費註冊・保存成就</a>
+        </section>
+
+        <div class="achievement-summary" aria-live="polite">
+          <div><span>已解鎖</span><strong id="achievementProgress">0 / 19</strong></div>
+          <div class="achievement-meter" role="progressbar" aria-label="臺中小鎮成就解鎖進度" aria-valuemin="0" aria-valuemax="19" aria-valuenow="0">
+            <span id="achievementProgressBar" style="width: 0%"></span>
+          </div>
         </div>
 
-        <div class="school-list" id="schoolList" aria-label="臺中 29 區學校清單"></div>
-
-        <div class="map-legend">
-          <strong>地圖圖例</strong>
-          <span><i class="legend-school"></i>學校</span>
-          <span><i class="legend-road"></i>街道</span>
-          <span><i class="legend-park"></i>公園與菜園</span>
-          <span><i class="legend-character"></i>校園人物</span>
+        <div class="achievement-city-tabs" aria-label="城市成就分類">
+          <button type="button" aria-pressed="true">臺中市</button>
+          <button type="button" disabled>其他縣市・陸續開放</button>
         </div>
+        <p class="achievement-status" id="achievementStatus" role="status">正在讀取成就…</p>
+        <div class="achievement-list" id="achievementList" aria-label="臺中市成就清單"></div>
 
-        <p class="data-note">菜單以校方指定日期實際公布內容為準；沒有查到資料不代表沒有供餐。</p>
+        <section class="daily-story-card achievement-daily" id="dailyStoryCard" aria-labelledby="dailyStoryTitle">
+          <p class="daily-story-date" id="dailyStoryDate">今日街區故事</p>
+          <h3 id="dailyStoryTitle">今天也留下一段小鎮記憶</h3>
+          <p id="dailyStoryText">正在聽聽居民怎麼說…</p>
+          <div class="daily-story-choices" id="dailyStoryChoices" aria-label="今日故事選擇"></div>
+          <p class="daily-story-result" id="dailyStoryResult" role="status" hidden></p>
+        </section>
+
+        <details class="achievement-school-finder">
+          <summary>找學校與查看午餐 <span id="visitProgress">本次 0 / 243</span></summary>
+          <div class="achievement-school-finder-body">
+            <label class="school-search" for="schoolSearch">
+              <span>找學校</span>
+              <input id="schoolSearch" type="search" inputmode="search" autocomplete="off" placeholder="輸入學校或行政區…" />
+            </label>
+            <p class="school-search-status" id="schoolSearchStatus" role="status"></p>
+            <div class="school-list" id="schoolList" aria-label="臺中 29 區學校清單"></div>
+          </div>
+        </details>
+
+        <p class="data-note">登入後的成就事件與解鎖時間綁定家庭帳號並跨裝置保存；未登入時可預覽成就，但不會假裝已永久保存進度。</p>
+        <p class="data-note">菜單仍以校方指定日期實際公布內容為準；沒有查到資料不代表沒有供餐。公職與候選人對話為遊戲情境，不代表本人引言、背書或政見。</p>
+        <p class="data-note">探索街區依行政區相對方位編排；北方在上、東方在右，位置與比例請以官方地圖為準。黎明、白天、黃昏與夜晚同步臺中時間；雨勢與氣候採低頻氣氛排程，不代表即時氣象。</p>
       </aside>
     </main>
 
@@ -111,6 +211,7 @@
 
     <p class="sr-only" id="townAnnouncement" aria-live="polite"></p>
     <noscript><p class="noscript-note">2D 營養午餐小鎮需要 JavaScript 才能操作。</p></noscript>
-    <script type="module" src="./app.js?v=20261102-29-districts"></script>
+    <script src="/product-analytics.js?v=20261103-civic-housing" defer></script>
+    <script type="module" src="./app.js?v=20261103-civic-neighborhood-night"></script>
   </body>
 </html>

@@ -72,6 +72,30 @@ test('English covers dynamic notices without changing embedded personal or offic
   assert.equal(api.t('素食，3 道官方公開菜色'), 'Vegetarian, 3 officially listed dishes');
 });
 
+test('English localizes Lunch Town dialogue and City Hall after-hours routines', () => {
+  const { api } = load();
+  assert.equal(api.t('小晴'), 'Sunny');
+  assert.equal(api.t('大安區・學生'), 'Daan District · Student');
+  assert.equal(api.t('按 Enter 與 小晴（學生）對話'), 'Press Enter to talk to Sunny (Student)');
+  assert.equal(api.t('小晴（學生）開始對話。'), 'Conversation started with Sunny (Student).');
+  assert.equal(
+    api.t('海風吹來的時候，我們會聊聊海岸生態，也記得不把沙灘上的東西帶回家。'),
+    'When the sea breeze blows, we talk about coastal ecology and remember not to take things home from the beach.',
+  );
+  assert.equal(
+    api.t('我每天先看看午餐有什麼，再決定最想先認識哪一道菜。'),
+    "I check what's for lunch first, then decide which dish I want to get to know first.",
+  );
+  assert.equal(
+    api.t('已回到市政晴庭公寓，今晚不再返回市府辦公區'),
+    'Back at Civic Sunny Court Apartments for the night, with no return to the civic offices.',
+  );
+  assert.equal(
+    api.t('下班後到福星小站買晚餐、日用品或逛逛，再回家休息'),
+    'Stopping by Lucky Star Stop after work for dinner, daily essentials, or a little shopping before heading home.',
+  );
+});
+
 test('language changes restore Chinese, preserve raw source text and form values, and handle later renders', () => {
   const env = load({ dom: true });
   const heading = element('設定');

@@ -31,6 +31,22 @@
 - 發布前，先開啟最新的 Site 原始碼，並以其作為部署基礎，因為其中的自動化程序可能包含較新的消息或監控狀態。疊加預定的程式碼變更、執行所有檢查、重建 `dist/`，並保留不相關的遠端資料。
 - 公司信箱 `bit_lai@mail.chungyo.net` 無法寄信到外部網域；郵件測試時只能將它作為收件端，不得作為寄件端。客服信件應由已設定的 `support@haohaofood.cc` 寄出。
 
+## 午餐小鎮
+
+- 午餐小鎮是 `web/lunch-town/` 下的獨立零相依套件 Canvas 頁面。角色共用台詞位於 `web/lunch-town/app.js` 的 `ROLE_DIALOGUES`，29 區地方台詞與特色資料位於 `web/lunch-town/taichung-district-themes.json`；不得以未審核或其他行政區資料取代。
+- 午餐小鎮支援繁體中文與 English。新增或修改地方台詞、角色台詞、角色名稱、角色身分或行政區標籤時，必須同步在 `web/locales/en.js` 提供英文；英文模式除官方校名、菜名、食材、來源內容或確實不宜翻譯的專有資料外，應盡量完整使用英文，不得留下半中半英的對話框。
+- 動態對話提示、角色名稱／身分組合及開始對話訊息使用 `web/locales/en.js` 的句型與 `web/i18n.js` 的 `labelSlots`。插入角色名稱、身分或行政區的欄位應列為可翻譯標籤；使用者內容、官方來源資料與家庭資料不得因此被翻譯。
+- 更新午餐小鎮語系檔後，必須同步更新 `web/lunch-town/index.html` 中 `/locales/en.js` 與 `/i18n.js` 的快取版本參數，避免既有瀏覽器沿用舊翻譯。
+- `tests/test_lunch_town.py` 必須驗證所有角色台詞、地方台詞、角色名稱、角色身分及行政區都有不含中文的英文對照；`tests-worker/i18n.test.mjs` 必須涵蓋動態提示與組合標籤。變更後執行 `node --check web/lunch-town/app.js`、`node --check web/i18n.js`、`node --check web/locales/en.js`、完整 Python 測試、Worker 測試及 `python3 scripts/build_static_site.py`。
+- 臺灣大道市政中心南側道路以南應維持為住宅生活街區，包含公寓、連棟住家、便利商店、巷道與夜間照明，不得退回大片無功能空地。市長、市府承辦人與市府主管在 18:00 後必須離開市府辦公區並回家或安排晚間採買；23:00–07:00 深夜時段必須回到住家，不得繼續在市府內循環活動。
+
+## Node 與 Worker 測試
+
+- 專案需要 Node.js 22.13.0 以上（以 `package.json` 的 `engines.node` 為準）。執行 `npm run test:worker`、TypeScript 或正式建置前，先執行 `node --version`，不得只因系統上存在 `node` 就假設版本符合要求。
+- 若預設 Node 是 20.20.2，Worker 全套測試常會出現 `No such built-in module: node:sqlite` 或 `Unknown file extension ".ts"`。這表示執行環境版本不符，不應直接判定為本次程式變更造成的測試失敗；針對性測試或 Python 測試通過也不能取代合規 Node 下的 Worker 全套測試。
+- 發生上述錯誤時，先尋找工作區或本機已存在的 Node 22.13 以上版本並確認其版本，再用該版本重跑原始指令；不得未經使用者同意就下載、安裝或變更系統 Node。本機目前可用的合規執行方式為 `PATH=/usr/local/Cellar/node/25.9.0_2/bin:$PATH npm run test:worker`，使用前仍應確認該路徑與版本存在。
+- 若找不到合規 Node，應明確回報環境限制及已通過的測試範圍，不得宣稱 Worker 全套通過；發布前仍須在 Node 22.13 以上環境完成 Worker 測試。
+
 ## Browser Automation Restrictions
 
 - Do not launch or control local GUI browsers.

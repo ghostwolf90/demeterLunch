@@ -238,3 +238,28 @@ export const cityVisibilitySettings = sqliteTable("city_visibility_settings", {
   updatedBy: text("updated_by").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
+
+export const townAchievementEvents = sqliteTable("town_achievement_events", {
+  authUserId: text("auth_user_id")
+    .notNull()
+    .references(() => parentAccounts.authUserId, { onDelete: "cascade" }),
+  eventKey: text("event_key").notNull(),
+  city: text("city").notNull(),
+  eventType: text("event_type").notNull(),
+  subjectId: text("subject_id").notNull(),
+  occurredAt: text("occurred_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.authUserId, table.eventKey] }),
+  index("town_achievement_events_progress_idx").on(table.authUserId, table.city, table.eventType),
+]);
+
+export const townAchievementUnlocks = sqliteTable("town_achievement_unlocks", {
+  authUserId: text("auth_user_id")
+    .notNull()
+    .references(() => parentAccounts.authUserId, { onDelete: "cascade" }),
+  achievementId: text("achievement_id").notNull(),
+  unlockedAt: text("unlocked_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.authUserId, table.achievementId] }),
+  index("town_achievement_unlocks_owner_idx").on(table.authUserId, table.unlockedAt),
+]);

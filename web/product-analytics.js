@@ -3,13 +3,24 @@
   "use strict";
   const viewed = new Set();
   const pending = new Map();
-  const allowed = new Set(["school_selected", "lunch_viewed", "dinner_idea_viewed", "sign_up", "menu_shared"]);
+  const allowed = new Set([
+    "school_selected", "lunch_viewed", "dinner_idea_viewed", "sign_up", "menu_shared",
+    "lunch_town_viewed", "lunch_town_district_entered", "lunch_town_school_viewed",
+    "lunch_town_npc_talked", "lunch_town_venue_entered", "lunch_town_music_toggled",
+    "lunch_town_player_style_changed", "lunch_town_date_changed", "lunch_town_story_choice",
+    "lunch_town_achievement_unlocked",
+  ]);
   let signupRequest = null;
 
   function event(name, context = {}) {
     if (!allowed.has(name) || typeof root.gtag !== "function") return false;
     const params = {};
-    for (const key of ["school_id", "menu_date", "meal_type", "data_source", "selection_source", "method"]) {
+    for (const key of [
+      "school_id", "menu_date", "meal_type", "data_source", "selection_source", "method",
+      "district", "npc_role", "mobility_mode", "venue_type", "enabled", "player_style", "data_status",
+      "story_type", "choice_id",
+      "achievement_id", "city",
+    ]) {
       if (typeof context[key] === "string") params[key] = context[key];
     }
     try { root.gtag("event", name, params); return true; }
