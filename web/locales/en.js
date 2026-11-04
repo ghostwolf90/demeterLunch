@@ -593,6 +593,7 @@ window.LunchEnglish = {
   "孩子午餐，晚餐靈感": "School lunch, dinner inspiration",
   "今日菜單": "Today's menu",
   "本週菜單": "This week's menu",
+  "校園菜單": "School menu",
   "食材來源": "Ingredient sources",
   "飲食紀錄": "Food journal",
   "營養基準": "Nutrition standards",

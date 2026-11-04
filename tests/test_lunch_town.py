@@ -827,8 +827,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('venue.id === "civic-south-night-convenience"', app)
         self.assertIn('if (!CIVIC_AFTER_HOURS_ROLES.has(npc.role)) maybeStartEveningShoppingTrip', app)
         self.assertIn("const civicAfterHours = transitionCivicAfterHoursRoutine(npc, index)", app)
-        self.assertIn('/locales/en.js?v=20261103-civic-neighborhood-night', html)
-        self.assertIn('/i18n.js?v=20261103-civic-neighborhood-night', html)
+        self.assertIn('/locales/en.js?v=20261104-desktop-campus-menu', html)
+        self.assertIn('/i18n.js?v=20261104-desktop-campus-menu', html)
 
     def test_npcs_take_evening_trips_to_department_stores_and_lalaport(self) -> None:
         app = self.read("web/lunch-town/app.js")
