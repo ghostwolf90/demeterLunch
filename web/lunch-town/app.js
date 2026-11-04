@@ -16,21 +16,52 @@ const WEST_COAST_LAND_GAP = 40;
 const EAST_MOUNTAIN_WIDTH = 500;
 const COASTAL_TETRAPOD_COUNT = 48;
 const DISTRICT_ZONE_ORIGIN_X = WEST_COAST_WIDTH + WEST_COAST_LAND_GAP;
-const DISTRICT_ZONE_ORIGIN_Y = 28;
+const NEIGHBOR_COUNTY_HEIGHT = 440;
+const BORDER_RIVER_WIDTH = 112;
+const BORDER_LAND_BUFFER = 38;
+const PLAYER_TERRAIN_PADDING = 10;
+const BOUNDARY_BRIDGE_PASSAGE_HALF_WIDTH = 20;
+const DISTRICT_ZONE_ORIGIN_Y = NEIGHBOR_COUNTY_HEIGHT + BORDER_RIVER_WIDTH + BORDER_LAND_BUFFER;
 const DISTRICT_GRID_COLUMNS = 8;
 const DISTRICT_GRID_ROWS = 6;
 const DISTRICT_GRID_WIDTH = DISTRICT_GRID_COLUMNS * DISTRICT_ZONE_WIDTH
   + (DISTRICT_GRID_COLUMNS - 1) * DISTRICT_ZONE_GAP_X;
+const DISTRICT_GRID_HEIGHT = DISTRICT_GRID_ROWS * DISTRICT_ZONE_HEIGHT
+  + (DISTRICT_GRID_ROWS - 1) * DISTRICT_ZONE_GAP_Y;
 const EAST_MOUNTAIN_START_X = DISTRICT_ZONE_ORIGIN_X + DISTRICT_GRID_WIDTH;
 const WORLD_WIDTH = EAST_MOUNTAIN_START_X + EAST_MOUNTAIN_WIDTH;
-const WORLD_HEIGHT = DISTRICT_ZONE_ORIGIN_Y * 2
-  + DISTRICT_GRID_ROWS * DISTRICT_ZONE_HEIGHT
-  + (DISTRICT_GRID_ROWS - 1) * DISTRICT_ZONE_GAP_Y;
+const TAICHUNG_SOUTH_EDGE_Y = DISTRICT_ZONE_ORIGIN_Y + DISTRICT_GRID_HEIGHT;
+const NORTH_BORDER_RIVER_Y = NEIGHBOR_COUNTY_HEIGHT + BORDER_RIVER_WIDTH / 2;
+const SOUTH_BORDER_RIVER_Y = TAICHUNG_SOUTH_EDGE_Y + BORDER_LAND_BUFFER + BORDER_RIVER_WIDTH / 2;
+const SOUTH_COUNTY_START_Y = SOUTH_BORDER_RIVER_Y + BORDER_RIVER_WIDTH / 2 + BORDER_LAND_BUFFER;
+const WORLD_HEIGHT = SOUTH_COUNTY_START_Y + NEIGHBOR_COUNTY_HEIGHT;
 const COASTAL_ROAD_START_X = DISTRICT_ZONE_ORIGIN_X - 22;
 const EASTERN_ROAD_END_X = EAST_MOUNTAIN_START_X - 18;
 const COASTAL_HARBOR_Y = DISTRICT_ZONE_ORIGIN_Y
   + 2 * (DISTRICT_ZONE_HEIGHT + DISTRICT_ZONE_GAP_Y)
   + 92;
+const NORTH_BOUNDARY_BRIDGE_X = DISTRICT_ZONE_ORIGIN_X
+  + 3 * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X)
+  - DISTRICT_ZONE_GAP_X / 2;
+const SOUTH_BOUNDARY_BRIDGE_X = DISTRICT_ZONE_ORIGIN_X
+  + 5 * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X)
+  - DISTRICT_ZONE_GAP_X / 2;
+const NEIGHBOR_COUNTIES = Object.freeze([
+  {
+    id: "miaoli", name: "苗栗縣", side: "north", color: "#82a86f",
+    x: COASTAL_ROAD_START_X, y: 24, w: EASTERN_ROAD_END_X - COASTAL_ROAD_START_X,
+    h: NEIGHBOR_COUNTY_HEIGHT - 48, bridgeX: NORTH_BOUNDARY_BRIDGE_X, riverY: NORTH_BORDER_RIVER_Y,
+  },
+  {
+    id: "changhua", name: "彰化縣", side: "south", color: "#a7aa70",
+    x: COASTAL_ROAD_START_X, y: SOUTH_COUNTY_START_Y + 24, w: EASTERN_ROAD_END_X - COASTAL_ROAD_START_X,
+    h: NEIGHBOR_COUNTY_HEIGHT - 48, bridgeX: SOUTH_BOUNDARY_BRIDGE_X, riverY: SOUTH_BORDER_RIVER_Y,
+  },
+]);
+const BOUNDARY_BRIDGES = Object.freeze([
+  { id: "miaoli-iron-bridge", countyId: "miaoli", x: NORTH_BOUNDARY_BRIDGE_X, riverY: NORTH_BORDER_RIVER_Y, material: "iron" },
+  { id: "changhua-concrete-bridge", countyId: "changhua", x: SOUTH_BOUNDARY_BRIDGE_X, riverY: SOUTH_BORDER_RIVER_Y, material: "concrete" },
+]);
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const PLAYER_STYLE_STORAGE_KEY = "lunchTownPlayerStyle";
 const TAICHUNG_TIME_ZONE = "Asia/Taipei";
@@ -2361,7 +2392,63 @@ function createNpcSchedule(identity, districtIndex) {
     schedule.push(destination);
   });
   const routine = schedule.length ? schedule : [streetStop(identity.district, districtIndex, identity.role)];
-  return addResidentialStops(identity, routine, districtIndex);
+  const neighboringCountyExcursion = createNeighborCountyExcursion(identity, districtIndex, seed, mode);
+  return addResidentialStops(identity, [...routine, ...neighboringCountyExcursion], districtIndex);
+}
+
+function neighborCountyForNpc(identity, districtIndex, seed, mode) {
+  const northGateDistricts = new Set(["大安區", "大甲區", "后里區"]);
+  const southGateDistricts = new Set(["烏日區", "南區", "大里區", "霧峰區"]);
+  const visitKey = hashText(`${identity.name}-${identity.district}-${districtIndex}-neighbor-county`);
+  if (northGateDistricts.has(identity.district) && visitKey % 3 === 0) return neighborCountyById("miaoli");
+  if (southGateDistricts.has(identity.district) && visitKey % 3 === 0) return neighborCountyById("changhua");
+  if (mode === "citywide" && (visitKey + seed) % 11 === 0) {
+    return NEIGHBOR_COUNTIES[(visitKey + districtIndex) % NEIGHBOR_COUNTIES.length];
+  }
+  return null;
+}
+
+function neighborCountyStop(county, identity, index) {
+  const direction = county.side === "north" ? -1 : 1;
+  const roadEndY = county.y + county.h / 2 + direction * 28;
+  return {
+    x: county.bridgeX + (county.side === "north" ? 210 : -210),
+    y: roadEndY,
+    district: county.name,
+    label: county.id === "miaoli" ? "苗栗縣地圖工區" : "彰化縣地圖工區",
+    reason: "到鄰近縣市施工區散步，看看地圖未來會往哪裡延伸",
+    activity: "waiting",
+    dwellSeconds: 8 + (hashText(`${identity.name}-${index}`) % 6),
+  };
+}
+
+function createNeighborCountyExcursion(identity, districtIndex, seed, mode) {
+  const county = neighborCountyForNpc(identity, districtIndex, seed, mode);
+  if (!county) return [];
+  const bridge = BOUNDARY_BRIDGES.find((item) => item.countyId === county.id);
+  if (!bridge) return [];
+  const direction = county.side === "north" ? -1 : 1;
+  const taichungApproach = bridge.riverY - direction * (BORDER_RIVER_WIDTH / 2 + 24);
+  const countyApproach = bridge.riverY + direction * (BORDER_RIVER_WIDTH / 2 + 24);
+  const crossingLabel = bridge.material === "iron" ? "縣界鐵橋" : "縣界水泥橋";
+  const waypoint = (y, district = "") => ({
+    x: bridge.x,
+    y,
+    district,
+    label: crossingLabel,
+    reason: "沿縣界橋前往鄰近縣市散步",
+    dwellSeconds: 0,
+    waypoint: true,
+  });
+  return [
+    waypoint(taichungApproach),
+    waypoint(bridge.riverY),
+    waypoint(countyApproach, county.name),
+    neighborCountyStop(county, identity, districtIndex),
+    waypoint(countyApproach, county.name),
+    waypoint(bridge.riverY),
+    waypoint(taichungApproach),
+  ];
 }
 
 function addResidentialStops(identity, schedule, districtIndex, startsAtWork = false) {
@@ -2979,17 +3066,22 @@ function updatePlayer(delta) {
       dy = targetDy / distance;
     }
   }
-  state.player.isMoving = Boolean(dx || dy);
-  if (state.player.isMoving) {
+  const requestedMovement = Boolean(dx || dy);
+  state.player.isMoving = requestedMovement;
+  if (requestedMovement) {
     const length = Math.hypot(dx, dy) || 1;
     dx /= length;
     dy /= length;
     const speed = state.player.ridingBike ? PLAYER_BIKE_SPEED : PLAYER_WALK_SPEED;
-    tryMovePlayer(dx * speed * delta, 0);
-    tryMovePlayer(0, dy * speed * delta);
-    if (Math.abs(dx) > Math.abs(dy)) state.player.direction = dx > 0 ? "right" : "left";
-    else state.player.direction = dy > 0 ? "down" : "up";
-    state.player.step += delta * (state.player.ridingBike ? 18 : 10);
+    const movedX = tryMovePlayer(dx * speed * delta, 0);
+    const movedY = tryMovePlayer(0, dy * speed * delta);
+    state.player.isMoving = movedX || movedY;
+    if (state.moveTarget && !state.player.isMoving) state.moveTarget = null;
+    if (state.player.isMoving) {
+      if (Math.abs(dx) > Math.abs(dy)) state.player.direction = dx > 0 ? "right" : "left";
+      else state.player.direction = dy > 0 ? "down" : "up";
+      state.player.step += delta * (state.player.ridingBike ? 18 : 10);
+    }
   }
   if (state.pendingBikeStationId) {
     const station = state.bikeStations.find((item) => item.id === state.pendingBikeStationId);
@@ -3009,8 +3101,25 @@ function tryMovePlayer(dx, dy) {
   const next = { x: state.player.x + dx, y: state.player.y + dy };
   next.x = Math.max(12, Math.min(WORLD_WIDTH - 12, next.x));
   next.y = Math.max(12, Math.min(WORLD_HEIGHT - 12, next.y));
+  if ((next.x === state.player.x && next.y === state.player.y) || isBlockedTownTerrain(next)) return false;
   state.player.x = next.x;
   state.player.y = next.y;
+  return true;
+}
+
+function pointIsOnBoundaryBridge(point, bridge) {
+  return Math.abs(point.x - bridge.x) <= BOUNDARY_BRIDGE_PASSAGE_HALF_WIDTH
+    && Math.abs(point.y - bridge.riverY) <= BORDER_RIVER_WIDTH / 2 + 30;
+}
+
+function isBlockedTownTerrain(point) {
+  if (point.x - PLAYER_TERRAIN_PADDING <= coastlineXAt(point.y)) return true;
+  if (point.x + PLAYER_TERRAIN_PADDING >= EAST_MOUNTAIN_START_X) return true;
+  return BOUNDARY_BRIDGES.some((bridge) => (
+    !pointIsOnBoundaryBridge(point, bridge)
+    && Math.abs(point.y - boundaryRiverYAt(point.x, bridge))
+      <= BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
+  ));
 }
 
 function updateCamera(snap = false, delta = 0) {
@@ -3026,10 +3135,19 @@ function updateCamera(snap = false, delta = 0) {
       state.analyticsVisitedDistricts.add(district);
       trackTownEvent("lunch_town_district_entered", { district });
     }
-    if (state.ready && district) void recordAchievementEvent("district_visit", district);
+    if (state.ready && state.districtThemes.has(district)) void recordAchievementEvent("district_visit", district);
     const theme = state.districtThemes.get(district);
-    refs.districtBadge.textContent = theme ? `${theme.group}・${district}` : "臺中小鎮街道";
-    refs.districtFeature.textContent = theme ? `${theme.featureLabel}｜${theme.tagline}` : state.mapNote;
+    const neighborCounty = NEIGHBOR_COUNTIES.find((county) => county.name === district);
+    refs.districtBadge.textContent = theme
+      ? `${theme.group}・${district}`
+      : neighborCounty
+        ? townText(neighborCounty.name)
+        : "臺中小鎮街道";
+    refs.districtFeature.textContent = theme
+      ? `${theme.featureLabel}｜${theme.tagline}`
+      : neighborCounty
+        ? townText("午餐資料建設中｜可散步探索，尚未開放學校與菜單")
+        : state.mapNote;
     refs.districtSource.hidden = !theme?.sourceUrl;
     if (theme?.sourceUrl) {
       refs.districtSource.href = theme.sourceUrl;
@@ -3041,6 +3159,7 @@ function updateCamera(snap = false, delta = 0) {
 function districtAtPoint(point) {
   return DISTRICT_DISPLAY_ORDER.find((district) => pointInRect(point, DISTRICT_ZONES[district]))
     || state.venues.find((venue) => venue.hubKind && pointInRect(point, venue))?.district
+    || neighborCountyAtPoint(point)?.name
     || "";
 }
 
@@ -3369,8 +3488,14 @@ function updatePets(delta) {
   });
 }
 
+function dogOwnerFor(pet) {
+  return state.npcs.find((npc) => npc.name === pet.ownerName)
+    || state.npcs.find((npc) => npc.lookIndex === pet.ownerLookIndex)
+    || null;
+}
+
 function updateLeashedDog(pet, delta, index) {
-  const owner = state.npcs.find((npc) => npc.lookIndex === pet.ownerLookIndex);
+  const owner = dogOwnerFor(pet);
   if (!owner) {
     pet.hidden = true;
     return;
@@ -4191,10 +4316,14 @@ function drawTown(now, environment = townEnvironmentAt()) {
   context.save();
   context.translate(-Math.round(state.camera.x), -Math.round(state.camera.y));
   drawGround();
+  drawNeighborCountyGrounds();
   drawWesternCoast(now);
   drawEasternMountainRange(now);
+  drawBoundaryRivers(now);
   drawMapEdges(now);
   drawRoads(now);
+  drawBoundaryBridges();
+  drawNeighborCountyDetails(now);
   drawDistrictLabels();
   drawTownSquare();
   drawTownVenues(now);
@@ -4213,6 +4342,7 @@ function drawTown(now, environment = townEnvironmentAt()) {
     const subject = actor.person || actor.pet || actor.bird;
     return isVisibleRect({ x: subject.x - 30, y: subject.y - 45, w: 60, h: 70 }, 40);
   }).sort((first, second) => first.y - second.y);
+  drawDogLeashes();
   actors.forEach((actor) => {
     if (actor.kind === "person") drawPerson(actor.person, now);
     else if (actor.kind === "pet") drawPet(actor.pet, now);
@@ -4249,17 +4379,520 @@ function drawGround() {
   }
 }
 
-function drawWaterEdges(now) {
++function townText(value) {
+  return window.LunchI18n?.t(value) || String(value ?? "");
+}
+
+function neighborCountyById(id) {
+  return NEIGHBOR_COUNTIES.find((county) => county.id === id) || null;
+}
+
+function neighborCountyAtPoint(point) {
+  return NEIGHBOR_COUNTIES.find((county) => pointInRect(point, county)) || null;
+}
+
+function drawNeighborCountyGrounds() {
+  NEIGHBOR_COUNTIES.filter((county) => isVisibleRect(county, 40)).forEach((county, countyIndex) => {
+    context.fillStyle = county.color;
+    context.fillRect(county.x, county.y, county.w, county.h);
+    context.fillStyle = countyIndex ? "rgba(232, 205, 112, 0.22)" : "rgba(205, 227, 166, 0.2)";
+    for (let stripeX = county.x + 28; stripeX < county.x + county.w; stripeX += 92) {
+      context.fillRect(stripeX, county.y + 18, 26, county.h - 36);
+    }
+  });
+}
+
+function boundaryRiverYAt(x, bridge) {
+  return bridge.riverY
+    + Math.sin((x - bridge.x) / 218) * 18
+    + Math.sin((x - bridge.x) / 73) * 5;
+}
+
+function boundaryRiverPath(bridge) {
+  const path = new Path2D();
+  const startX = Math.max(0, coastlineXAt(bridge.riverY) - 36);
+  const endX = Math.min(WORLD_WIDTH, EAST_MOUNTAIN_START_X + 172);
+  for (let x = startX; x <= endX; x += 42) {
+    const y = boundaryRiverYAt(x, bridge);
+    if (x === startX) path.moveTo(x, y);
+    else path.lineTo(x, y);
+  }
+  path.lineTo(endX, boundaryRiverYAt(endX, bridge));
+  return path;
+}
+
+function drawBoundaryRivers(now) {
+  const waveOffset = reducedMotion ? 0 : Math.floor(now / 220) % 20;
+  BOUNDARY_BRIDGES.forEach((bridge) => {
+    if (!isVisibleRect({ x: 0, y: bridge.riverY - 90, w: WORLD_WIDTH, h: 180 }, 20)) return;
+    const path = boundaryRiverPath(bridge);
+    context.save();
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = "#c8b98b";
+    context.lineWidth = BORDER_RIVER_WIDTH + 22;
+    context.stroke(path);
+    context.strokeStyle = "#4e91a8";
+    context.lineWidth = BORDER_RIVER_WIDTH;
+    context.stroke(path);
+    context.strokeStyle = "rgba(151, 211, 218, 0.76)";
+    context.lineWidth = 5;
+    context.setLineDash([34, 28]);
+    context.lineDashOffset = -waveOffset;
+    context.stroke(path);
+    context.setLineDash([]);
+    context.restore();
+  });
+}
+
+function drawNeighborCountyRoads() {
+  BOUNDARY_BRIDGES.forEach((bridge) => {
+    const county = neighborCountyById(bridge.countyId);
+    if (!county) return;
+    const riverEdgeY = bridge.riverY + (county.side === "north" ? -1 : 1) * (BORDER_RIVER_WIDTH / 2 + 24);
+    const countyCenterY = county.y + county.h / 2;
+    const path = new Path2D();
+    path.moveTo(bridge.x, riverEdgeY);
+    path.lineTo(bridge.x, countyCenterY);
+    path.quadraticCurveTo(
+      bridge.x + (county.side === "north" ? 150 : -150),
+      countyCenterY,
+      bridge.x + (county.side === "north" ? 214 : -214),
+      countyCenterY + (county.side === "north" ? -28 : 28),
+    );
+    strokeRoadPath(path);
+  });
+}
+
+function drawBoundaryBridges() {
+  BOUNDARY_BRIDGES.forEach((bridge) => {
+    const bridgeLength = BORDER_RIVER_WIDTH + 56;
+    if (!isVisibleRect({ x: bridge.x - 50, y: bridge.riverY - bridgeLength / 2, w: 100, h: bridgeLength }, 24)) return;
+    context.save();
+    context.translate(Math.round(bridge.x), Math.round(bridge.riverY));
+    context.fillStyle = "rgba(23, 50, 58, 0.28)";
+    context.fillRect(-34, -bridgeLength / 2 + 6, 68, bridgeLength);
+    if (bridge.material === "iron") drawIronBoundaryBridge(bridgeLength);
+    else drawConcreteBoundaryBridge(bridgeLength);
+    context.restore();
+  });
+}
+
+function drawIronBoundaryBridge(length) {
+  context.fillStyle = "#4d5960";
+  context.fillRect(-25, -length / 2, 50, length);
+  context.fillStyle = "#7d8584";
+  context.fillRect(-18, -length / 2, 36, length);
+  context.fillStyle = COLORS.roadLine;
+  for (let y = -length / 2 + 12; y < length / 2; y += 24) context.fillRect(-2, y, 4, 12);
+  context.strokeStyle = "#9f4d3f";
+  context.lineWidth = 6;
+  for (const side of [-1, 1]) {
+    const railX = side * 30;
+    context.beginPath();
+    context.moveTo(railX, -length / 2);
+    for (let y = -length / 2; y <= length / 2; y += 26) {
+      context.lineTo(railX + side * (Math.floor((y + length / 2) / 26) % 2 ? 10 : 0), y);
+    }
+    context.stroke();
+  }
+  context.fillStyle = "#d7b45b";
+  context.fillRect(-36, -length / 2 - 5, 72, 8);
+  context.fillRect(-36, length / 2 - 3, 72, 8);
+}
+
+function drawConcreteBoundaryBridge(length) {
+  context.fillStyle = "#b9b7aa";
+  context.fillRect(-31, -length / 2, 62, length);
+  context.fillStyle = "#6f7979";
+  context.fillRect(-22, -length / 2, 44, length);
+  context.fillStyle = "#e7d27a";
+  for (let y = -length / 2 + 10; y < length / 2; y += 28) context.fillRect(-2, y, 4, 14);
+  context.fillStyle = "#d7d2bd";
+  context.fillRect(-34, -length / 2, 7, length);
+  context.fillRect(27, -length / 2, 7, length);
+  context.fillStyle = "#8b8a80";
+  for (let y = -length / 2 + 30; y < length / 2; y += 54) context.fillRect(-42, y, 84, 8);
+}
+
+function drawNeighborCountyDetails(now) {
+  NEIGHBOR_COUNTIES.filter((county) => isVisibleRect(county, 60)).forEach((county, index) => {
+    const labelX = county.x + county.w / 2 - 150;
+    const labelY = county.side === "north" ? county.y + 62 : county.y + county.h - 132;
+    context.fillStyle = "rgba(255, 248, 231, 0.94)";
+    context.fillRect(labelX, labelY, 300, 70);
+    context.fillStyle = county.side === "north" ? "#436d4d" : "#79662e";
+    context.fillRect(labelX, labelY, 7, 70);
+    context.fillStyle = COLORS.ink;
+    context.font = "bold 17px ui-monospace, monospace";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(townText(county.name), labelX + 154, labelY + 24, 270);
+    context.fillStyle = "#516873";
+    context.font = "10px ui-monospace, monospace";
+    context.fillText(townText("可散步探索・尚未開放學校與菜單"), labelX + 154, labelY + 49, 270);
+    drawConstructionSign(
+      county.bridgeX + (county.side === "north" ? 126 : -282),
+      county.side === "north" ? county.y + county.h - 122 : county.y + 48,
+      now,
+      index,
+    );
+  });
+}
+
+function drawConstructionSign(x, y, now, index) {
+  const light = reducedMotion ? 1 : (Math.floor(now / 520) + index) % 2;
+  context.fillStyle = "rgba(30, 54, 58, 0.22)";
+  context.fillRect(x + 5, y + 8, 166, 82);
+  context.fillStyle = "#6d5138";
+  context.fillRect(x + 18, y + 62, 8, 34);
+  context.fillRect(x + 140, y + 62, 8, 34);
+  context.fillStyle = "#f0c34e";
+  context.fillRect(x, y + 10, 166, 62);
+  for (let stripe = 0; stripe < 166; stripe += 24) {
+    context.fillStyle = stripe % 48 ? "#30393c" : "#f0c34e";
+    context.fillRect(x + stripe, y + 10, Math.min(14, 166 - stripe), 8);
+    context.fillRect(x + stripe, y + 64, Math.min(14, 166 - stripe), 8);
+  }
+  context.fillStyle = COLORS.ink;
+  context.font = "bold 11px ui-monospace, monospace";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(townText("午餐資料建設中"), x + 83, y + 42, 142);
+  context.fillStyle = light ? "#ef5d43" : "#9f593e";
+  context.fillRect(x + 12, y, 13, 10);
+  context.fillRect(x + 141, y, 13, 10);
+}
+
+
+function coastlineXAt(y) {
+  return WEST_COAST_WIDTH - 34
+    + Math.sin(y / 238) * 22
+    + Math.sin(y / 71) * 7;
+}
+
+function traceCoastline(offset = 0, startY = 0, endY = WORLD_HEIGHT) {
+  context.beginPath();
+  for (let y = startY; y <= endY; y += 28) {
+    const x = coastlineXAt(y) + offset;
+    if (y === startY) context.moveTo(x, y);
+    else context.lineTo(x, y);
+  }
+  if ((endY - startY) % 28 !== 0) context.lineTo(coastlineXAt(endY) + offset, endY);
+}
+
+function fillCoastalBand(startY, endY, innerOffset, outerOffset, color) {
+  context.beginPath();
+  for (let y = startY; y <= endY; y += 24) {
+    const x = coastlineXAt(y) + innerOffset;
+    if (y === startY) context.moveTo(x, y);
+    else context.lineTo(x, y);
+  }
+  context.lineTo(coastlineXAt(endY) + outerOffset, endY);
+  for (let y = endY; y >= startY; y -= 24) {
+    context.lineTo(coastlineXAt(y) + outerOffset, y);
+  }
+  context.closePath();
+  context.fillStyle = color;
+  context.fill();
+}
+
+function drawWesternCoast(now) {
+  context.save();
+  context.fillStyle = "#4f93aa";
+  context.beginPath();
+  context.moveTo(0, 0);
+  context.lineTo(coastlineXAt(0), 0);
+  for (let y = 28; y <= WORLD_HEIGHT; y += 28) context.lineTo(coastlineXAt(y), y);
+  context.lineTo(0, WORLD_HEIGHT);
+  context.closePath();
+  context.fill();
+
+  context.fillStyle = "#3f839f";
+  context.fillRect(0, 0, 88, WORLD_HEIGHT);
+  const waveOffset = reducedMotion ? 0 : Math.floor(now / 150) % 22;
+  const visibleStartY = Math.max(20, Math.floor((state.camera.y - 40) / 48) * 48);
+  const visibleEndY = Math.min(WORLD_HEIGHT, state.camera.y + HEIGHT + 40);
+  context.fillStyle = "rgba(184, 229, 229, 0.68)";
+  for (let y = visibleStartY; y < visibleEndY; y += 48) {
+    const coastX = coastlineXAt(y);
+    for (let x = 24 + (y / 48 % 2) * 18 - waveOffset; x < coastX - 22; x += 72) {
+      context.fillRect(Math.round(x), y, 30, 3);
+      context.fillRect(Math.round(x + 8), y + 5, 15, 2);
+    }
+  }
+
+  fillCoastalBand(54, NEIGHBOR_COUNTY_HEIGHT - 30, 0, 56, "#e4cc91");
+  fillCoastalBand(DISTRICT_ZONE_ORIGIN_Y + 1480, TAICHUNG_SOUTH_EDGE_Y - 54, 0, 48, "#ddc184");
+  fillCoastalBand(SOUTH_COUNTY_START_Y + 54, WORLD_HEIGHT - 54, 0, 48, "#e2c98d");
+  fillCoastalBand(DISTRICT_ZONE_ORIGIN_Y + 600, DISTRICT_ZONE_ORIGIN_Y + 762, 4, 30, "#91b78a");
+
+  context.strokeStyle = "rgba(237, 247, 231, 0.88)";
+  context.lineWidth = 6;
+  context.setLineDash([18, 13]);
+  context.lineDashOffset = -waveOffset;
+  traceCoastline(1);
+  context.stroke();
+  context.setLineDash([]);
+
+  context.strokeStyle = "#cab98d";
+  context.lineWidth = 13;
+  traceCoastline(62);
+  context.stroke();
+  context.strokeStyle = "#7f8d7b";
+  context.lineWidth = 4;
+  traceCoastline(62);
+  context.stroke();
+
+  for (let index = 0; index < COASTAL_TETRAPOD_COUNT; index += 1) {
+    const y = 38 + index * (WORLD_HEIGHT - 76) / (COASTAL_TETRAPOD_COUNT - 1);
+    if (Math.abs(y - COASTAL_HARBOR_Y) < 174) continue;
+    const beach = isCoastalBeachY(y);
+    if (beach && index % 3 !== 0) continue;
+    drawTetrapod(coastlineXAt(y) - 10 - index % 2 * 7, y, index * 0.83, beach ? 0.72 : 0.9);
+  }
+
+  drawFishingHarbor(now);
+  context.restore();
+}
+
+function isCoastalBeachY(y) {
+  return (y > 54 && y < NEIGHBOR_COUNTY_HEIGHT - 30)
+    || (y > DISTRICT_ZONE_ORIGIN_Y + 1480 && y < TAICHUNG_SOUTH_EDGE_Y - 54)
+    || (y > SOUTH_COUNTY_START_Y + 54 && y < WORLD_HEIGHT - 54);
+}
+
+function drawTetrapod(x, y, rotation = 0, scale = 1) {
+  context.save();
+  context.translate(Math.round(x), Math.round(y));
+  context.rotate(rotation);
+  context.scale(scale, scale);
+  context.fillStyle = "rgba(39, 67, 73, 0.22)";
+  context.fillRect(-9, 4, 19, 5);
+  context.fillStyle = "#aaa99e";
+  context.fillRect(-8, -3, 16, 7);
+  context.fillRect(-3, -10, 6, 20);
+  context.fillRect(-11, -1, 6, 5);
+  context.fillRect(5, -1, 6, 5);
+  context.fillStyle = "#ceccbc";
+  context.fillRect(-5, -6, 5, 7);
+  context.fillRect(-7, -2, 7, 3);
+  context.restore();
+}
+
+function drawFishingHarbor(now) {
+  const y = COASTAL_HARBOR_Y;
+  const coastX = coastlineXAt(y);
+  const pulse = reducedMotion ? 0 : Math.floor(now / 320) % 5;
+
+  context.fillStyle = "#3d7f99";
+  context.fillRect(62, y - 126, Math.max(0, coastX - 44), 252);
+  context.fillStyle = "rgba(137, 203, 211, 0.62)";
+  for (let lane = -92; lane <= 94; lane += 46) {
+    context.fillRect(88 + pulse, y + lane, Math.max(28, coastX - 142), 3);
+  }
+
+  drawHarborArm(coastX + 30, y - 132, 74, y - 132, 48, y - 56);
+  drawHarborArm(coastX + 24, y + 132, 86, y + 132, 58, y + 58);
+  context.fillStyle = "#a9aa9f";
+  context.fillRect(132, y - 80, 118, 14);
+  context.fillRect(176, y + 32, 96, 14);
+  context.fillStyle = "#d5cfb5";
+  context.fillRect(136, y - 77, 108, 7);
+  context.fillRect(180, y + 35, 86, 7);
+
+  drawFishingBoat(106, y - 34, "#f2d46c", false, pulse);
+  drawFishingBoat(164, y + 78, "#df6c4f", true, -pulse);
+  drawFishingBoat(226, y - 10, "#f5efe0", false, pulse);
+
+  const marketX = Math.round(coastX + 18);
+  context.fillStyle = "rgba(25, 54, 61, 0.2)";
+  context.fillRect(marketX + 5, y - 12, 68, 56);
+  context.fillStyle = "#d9d6c3";
+  context.fillRect(marketX, y - 18, 68, 54);
+  context.fillStyle = "#397b88";
+  context.fillRect(marketX - 4, y - 24, 76, 9);
+  context.fillStyle = "#edf4e8";
+  context.fillRect(marketX + 8, y - 6, 18, 14);
+  context.fillRect(marketX + 36, y - 6, 22, 14);
+  context.fillStyle = "#bb5945";
+  context.fillRect(marketX + 28, y + 17, 12, 19);
+
+  context.fillStyle = "#ece5cf";
+  context.fillRect(48, y - 74, 7, 30);
+  context.fillStyle = "#d45442";
+  context.fillRect(45, y - 84, 13, 11);
+  context.fillStyle = "#f2d15f";
+  context.fillRect(46, y - 88, 11, 4);
+
+  for (let block = 0; block < 7; block += 1) {
+    drawTetrapod(62 + block * 19, y - 139 + block % 2 * 4, block * 0.7, 0.75);
+    drawTetrapod(72 + block * 20, y + 140 - block % 2 * 4, block * 0.61, 0.75);
+  }
+}
+
+function drawHarborArm(startX, startY, cornerX, cornerY, endX, endY) {
+  const path = new Path2D();
+  path.moveTo(startX, startY);
+  path.lineTo(cornerX, cornerY);
+  path.lineTo(endX, endY);
+  context.lineCap = "square";
+  context.lineJoin = "miter";
+  context.strokeStyle = "#747d79";
+  context.lineWidth = 22;
+  context.stroke(path);
+  context.strokeStyle = "#c4c2b4";
+  context.lineWidth = 13;
+  context.stroke(path);
+}
+
+function drawFishingBoat(x, y, hull, flipped = false, bob = 0) {
+  context.save();
+  context.translate(Math.round(x), Math.round(y + bob));
+  context.scale(flipped ? -1 : 1, 1);
+  context.fillStyle = "rgba(24, 58, 67, 0.28)";
+  context.fillRect(-18, 9, 42, 4);
+  context.fillStyle = hull;
+  context.beginPath();
+  context.moveTo(-21, 2);
+  context.lineTo(23, 2);
+  context.lineTo(14, 12);
+  context.lineTo(-14, 12);
+  context.closePath();
+  context.fill();
+  context.fillStyle = "#f4f0df";
+  context.fillRect(-4, -8, 18, 10);
+  context.fillStyle = "#376f82";
+  context.fillRect(1, -5, 8, 5);
+  context.fillStyle = "#563f34";
+  context.fillRect(-8, -17, 3, 19);
+  context.fillStyle = "#e1ad48";
+  context.fillRect(-5, -16, 14, 3);
+  context.restore();
+}
+
+function drawEasternMountainRange(now) {
+  context.save();
+  context.fillStyle = "#416f4e";
+  context.fillRect(EAST_MOUNTAIN_START_X, 0, EAST_MOUNTAIN_WIDTH, WORLD_HEIGHT);
+
+  context.fillStyle = "#5d8958";
+  context.beginPath();
+  context.moveTo(EAST_MOUNTAIN_START_X + 4, 0);
+  for (let y = 0; y <= WORLD_HEIGHT; y += 72) {
+    const x = EAST_MOUNTAIN_START_X + 34 + Math.sin(y / 177) * 24 + Math.sin(y / 59) * 8;
+    context.lineTo(x, y);
+  }
+  context.lineTo(EAST_MOUNTAIN_START_X + 184, WORLD_HEIGHT);
+  context.lineTo(EAST_MOUNTAIN_START_X + 184, 0);
+  context.closePath();
+  context.fill();
+
+  context.strokeStyle = "#315b43";
+  context.lineWidth = 9;
+  for (let ridge = 0; ridge < 3; ridge += 1) {
+    context.beginPath();
+    for (let y = -30; y <= WORLD_HEIGHT + 30; y += 54) {
+      const x = EAST_MOUNTAIN_START_X + 108 + ridge * 112
+        + Math.sin(y / (118 + ridge * 27) + ridge) * (24 + ridge * 7);
+      if (y === -30) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    }
+    context.stroke();
+  }
+
+  const visibleStartY = Math.max(-90, Math.floor((state.camera.y - 120) / 190) * 190);
+  const visibleEndY = Math.min(WORLD_HEIGHT + 120, state.camera.y + HEIGHT + 140);
+  for (let y = visibleStartY; y < visibleEndY; y += 190) {
+    const row = Math.floor(y / 190);
+    drawMountainPeak(EAST_MOUNTAIN_START_X + 120, y + 96, 126, row * 0.41, now);
+    drawMountainPeak(EAST_MOUNTAIN_START_X + 274, y + 28, 154, row * 0.67 + 1.2, now);
+    drawMountainPeak(EAST_MOUNTAIN_START_X + 420, y + 118, 118, row * 0.53 + 2.1, now);
+  }
+
+  context.fillStyle = "#2f6045";
+  for (let y = 36; y < WORLD_HEIGHT; y += 64) {
+    const footX = EAST_MOUNTAIN_START_X + 32 + Math.sin(y / 177) * 24;
+    drawTinyConifer(footX + 18 + y % 3 * 7, y, 0.9);
+    drawTinyConifer(EAST_MOUNTAIN_START_X + 82 + y % 5 * 5, y + 27, 0.72);
+  }
+  context.restore();
+}
+
+function drawMountainPeak(x, y, size, phase, now) {
+  const breathe = reducedMotion ? 0 : Math.round(Math.sin(now / 1300 + phase) * 2);
+  context.save();
+  context.translate(Math.round(x), Math.round(y + breathe));
+  context.fillStyle = "rgba(24, 51, 39, 0.22)";
+  context.beginPath();
+  context.moveTo(-size * 0.54, size * 0.4 + 9);
+  context.lineTo(4, -size * 0.48 + 9);
+  context.lineTo(size * 0.58, size * 0.4 + 9);
+  context.closePath();
+  context.fill();
+  context.fillStyle = "#365f43";
+  context.beginPath();
+  context.moveTo(-size * 0.56, size * 0.4);
+  context.lineTo(0, -size * 0.5);
+  context.lineTo(size * 0.58, size * 0.4);
+  context.closePath();
+  context.fill();
+  context.fillStyle = "#6f9661";
+  context.beginPath();
+  context.moveTo(-size * 0.56, size * 0.4);
+  context.lineTo(0, -size * 0.5);
+  context.lineTo(-size * 0.02, size * 0.4);
+  context.closePath();
+  context.fill();
+  context.fillStyle = "#9b9b82";
+  context.beginPath();
+  context.moveTo(-size * 0.12, -size * 0.3);
+  context.lineTo(0, -size * 0.5);
+  context.lineTo(size * 0.14, -size * 0.28);
+  context.lineTo(size * 0.04, -size * 0.2);
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
+function drawTinyConifer(x, y, scale = 1) {
+  context.save();
+  context.translate(Math.round(x), Math.round(y));
+  context.scale(scale, scale);
+  context.fillStyle = "#6b5038";
+  context.fillRect(-2, 6, 4, 9);
+  context.fillStyle = "#28543c";
+  context.beginPath();
+  context.moveTo(0, -14);
+  context.lineTo(-10, 8);
+  context.lineTo(10, 8);
+  context.closePath();
+  context.fill();
+  context.fillStyle = "#477a50";
+  context.beginPath();
+  context.moveTo(0, -8);
+  context.lineTo(-7, 4);
+  context.lineTo(1, 4);
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
+function drawMapEdges(now) {
   context.fillStyle = COLORS.water;
   context.fillRect(0, 0, 12, WORLD_HEIGHT);
-  context.fillRect(WORLD_WIDTH - 12, 0, 12, WORLD_HEIGHT);
-  context.fillRect(0, 0, WORLD_WIDTH, 12);
-  context.fillRect(0, WORLD_HEIGHT - 12, WORLD_WIDTH, 12);
+  context.fillRect(0, 0, WEST_COAST_WIDTH, 12);
+  context.fillRect(0, WORLD_HEIGHT - 12, WEST_COAST_WIDTH, 12);
+  context.fillStyle = "#284d39";
+  context.fillRect(WORLD_WIDTH - 14, 0, 14, WORLD_HEIGHT);
   context.fillStyle = COLORS.waterLight;
   const offset = reducedMotion ? 0 : Math.floor(now / 260) % 12;
   for (let y = -12 + offset; y < WORLD_HEIGHT; y += 24) {
     context.fillRect(2, y, 6, 3);
-    context.fillRect(WORLD_WIDTH - 8, y + 8, 6, 3);
+  }
+  context.fillStyle = "#5c8b5b";
+  for (let y = 8; y < WORLD_HEIGHT; y += 26) {
+    context.fillRect(WORLD_WIDTH - 11, y, 7, 5);
   }
 }
 
@@ -4267,30 +4900,31 @@ function drawRoads(now) {
   for (let column = 1; column < DISTRICT_GRID_COLUMNS; column += 1) {
     const x = DISTRICT_ZONE_ORIGIN_X + column * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X) - DISTRICT_ZONE_GAP_X / 2;
     const path = new Path2D();
-    path.moveTo(x, 0);
+    path.moveTo(x, DISTRICT_ZONE_ORIGIN_Y);
     if ([3, 6].includes(column)) {
-      for (let y = 0; y < WORLD_HEIGHT; y += 230) {
-        const endY = Math.min(WORLD_HEIGHT, y + 230);
-        const bend = ((column + Math.floor(y / 230)) % 2 ? 1 : -1) * (column === 3 ? 15 : 9);
+      for (let y = DISTRICT_ZONE_ORIGIN_Y; y < TAICHUNG_SOUTH_EDGE_Y; y += 230) {
+        const endY = Math.min(TAICHUNG_SOUTH_EDGE_Y, y + 230);
+        const bend = ((column + Math.floor((y - DISTRICT_ZONE_ORIGIN_Y) / 230)) % 2 ? 1 : -1) * (column === 3 ? 15 : 9);
         path.quadraticCurveTo(x + bend, y + (endY - y) / 2, x, endY);
       }
     } else {
-      path.lineTo(x, WORLD_HEIGHT);
+      path.lineTo(x, TAICHUNG_SOUTH_EDGE_Y);
     }
     strokeRoadPath(path);
   }
+  drawNeighborCountyRoads();
   for (let row = 1; row < DISTRICT_GRID_ROWS; row += 1) {
     const y = DISTRICT_ZONE_ORIGIN_Y + row * (DISTRICT_ZONE_HEIGHT + DISTRICT_ZONE_GAP_Y) - DISTRICT_ZONE_GAP_Y / 2;
     const path = new Path2D();
-    path.moveTo(0, y);
+    path.moveTo(COASTAL_ROAD_START_X, y);
     if ([2, 5].includes(row)) {
-      for (let x = 0; x < WORLD_WIDTH; x += 260) {
-        const endX = Math.min(WORLD_WIDTH, x + 260);
+      for (let x = COASTAL_ROAD_START_X; x < EASTERN_ROAD_END_X; x += 260) {
+        const endX = Math.min(EASTERN_ROAD_END_X, x + 260);
         const bend = ((row + Math.floor(x / 260)) % 2 ? 1 : -1) * (row === 2 ? 11 : 7);
         path.quadraticCurveTo(x + (endX - x) / 2, y + bend, endX, y);
       }
     } else {
-      path.lineTo(WORLD_WIDTH, y);
+      path.lineTo(EASTERN_ROAD_END_X, y);
     }
     strokeRoadPath(path);
   }
@@ -6410,7 +7044,6 @@ function drawCharacterAccessory(person, direction, armSwing, player) {
 }
 
 function drawPet(pet, now) {
-  if (pet.kind === "dog") drawDogLeash(pet);
   const wag = reducedMotion ? 0 : Math.floor(now / 260 + pet.phase) % 2 * 3;
   const facingLeft = pet.direction === "left";
   context.save();
@@ -6436,17 +7069,29 @@ function drawPet(pet, now) {
   context.restore();
 }
 
+function drawDogLeashes() {
+  state.pets
+    .filter((pet) => pet.kind === "dog" && !pet.hidden)
+    .forEach((pet) => drawDogLeash(pet));
+}
+
 function drawDogLeash(pet) {
-  const owner = state.npcs.find((npc) => npc.lookIndex === pet.ownerLookIndex);
-  if (!owner || owner.insideVenueId || owner.isCollapsed) return;
-  const handX = owner.x + (owner.direction === "left" ? -6 : owner.direction === "right" ? 6 : 4);
-  const handY = owner.y - 17;
+  const owner = dogOwnerFor(pet);
+  if (!owner || owner.insideVenueId || owner.isCollapsed || pet.hidden) return;
+  const leashDistance = Math.hypot(pet.x - owner.x, pet.y - owner.y);
+  if (leashDistance > 64) return;
+  const leashSide = pet.x < owner.x ? -1 : 1;
+  const bodyScale = owner.ageGroup === "child" ? 0.8 : owner.ageGroup === "teen" ? 0.9 : owner.ageGroup === "senior" ? 0.96 : 1;
+  const handX = owner.x + leashSide * 9 * bodyScale;
+  const handY = owner.y + 2 * bodyScale;
+  const collarX = pet.x + (pet.direction === "left" ? -2 : 2);
+  const collarY = pet.y - 5;
   context.save();
   context.strokeStyle = "#76513a";
   context.lineWidth = 2;
   context.beginPath();
   context.moveTo(Math.round(handX), Math.round(handY));
-  context.lineTo(Math.round(pet.x), Math.round(pet.y - 4));
+  context.lineTo(Math.round(collarX), Math.round(collarY));
   context.stroke();
   context.restore();
 }

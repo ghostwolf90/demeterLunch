@@ -109,6 +109,54 @@ class LunchTownTests(unittest.TestCase):
         self.assertNotIn("context.strokeRect(layout.x + 1.5", app)
         self.assertIn('if (layout.facility === "library")', app)
 
+    def test_town_geography_places_the_sea_west_and_mountains_east(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        self.assertIn("const WEST_COAST_WIDTH = 320", app)
+        self.assertIn("const EAST_MOUNTAIN_WIDTH = 500", app)
+        self.assertIn("const COASTAL_TETRAPOD_COUNT = 48", app)
+        self.assertIn("const DISTRICT_ZONE_ORIGIN_X = WEST_COAST_WIDTH + WEST_COAST_LAND_GAP", app)
+        self.assertIn("const EAST_MOUNTAIN_START_X = DISTRICT_ZONE_ORIGIN_X + DISTRICT_GRID_WIDTH", app)
+        self.assertIn("const WORLD_WIDTH = EAST_MOUNTAIN_START_X + EAST_MOUNTAIN_WIDTH", app)
+        self.assertIn("function drawWesternCoast(now)", app)
+        self.assertIn("function drawFishingHarbor(now)", app)
+        self.assertIn("function drawFishingBoat(", app)
+        self.assertIn("function drawTetrapod(", app)
+        self.assertIn("function drawEasternMountainRange(now)", app)
+        self.assertIn("function drawMountainPeak(", app)
+        self.assertIn("drawWesternCoast(now);\n  drawEasternMountainRange(now);", app)
+        self.assertIn("path.moveTo(COASTAL_ROAD_START_X, y)", app)
+        self.assertIn("path.lineTo(EASTERN_ROAD_END_X, y)", app)
+        self.assertNotIn("path.moveTo(0, y)", app)
+        self.assertNotIn("path.lineTo(WORLD_WIDTH, y)", app)
+
+    def test_town_extends_north_to_miaoli_and_south_to_changhua_across_rivers(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        html = self.read("web/lunch-town/index.html")
+        english = self.read("web/locales/en.js")
+        themes = json.loads(self.read("web/lunch-town/taichung-district-themes.json"))
+        for marker in (
+            'name: "苗栗縣"', 'name: "彰化縣"', "const BORDER_RIVER_WIDTH = 112",
+            "function drawBoundaryRivers", "function drawBoundaryBridges",
+            "function drawIronBoundaryBridge", "function drawConcreteBoundaryBridge",
+            "function drawConstructionSign", "function createNeighborCountyExcursion",
+            "function neighborCountyForNpc", "neighborCountyAtPoint(point)?.name",
+        ):
+            self.assertIn(marker, app)
+        self.assertIn('material: "iron"', app)
+        self.assertIn('material: "concrete"', app)
+        self.assertIn('townText("午餐資料建設中")', app)
+        self.assertIn('path.moveTo(x, DISTRICT_ZONE_ORIGIN_Y)', app)
+        self.assertIn('path.lineTo(x, TAICHUNG_SOUTH_EDGE_Y)', app)
+        self.assertNotIn("path.moveTo(x, 0)", app)
+        self.assertNotIn("path.lineTo(x, WORLD_HEIGHT)", app)
+        self.assertNotIn("苗栗縣", json.dumps(themes, ensure_ascii=False))
+        self.assertNotIn("彰化縣", json.dumps(themes, ensure_ascii=False))
+        self.assertIn('"苗栗縣": "Miaoli County"', english)
+        self.assertIn('"彰化縣": "Changhua County"', english)
+        self.assertIn("app.js?v=20261104-leash-anchor", html)
+        self.assertIn("/locales/en.js?v=20261104-neighbor-cities", html)
+        self.assertIn("/i18n.js?v=20261104-neighbor-cities", html)
+
     def test_town_map_labels_every_school_with_a_readable_primary_school_name(self) -> None:
         app = self.read("web/lunch-town/app.js")
         html = self.read("web/lunch-town/index.html")
@@ -119,15 +167,27 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("splitSchoolMapLabel", app)
         self.assertNotIn("String(school.name).slice(0, 6)", app)
         self.assertIn("styles.css?v=20261103-civic-housing", html)
-        self.assertIn("app.js?v=20261103-civic-neighborhood-night", html)
+        self.assertIn("app.js?v=20261104-leash-anchor", html)
 
-    def test_player_can_walk_through_school_signs_and_all_buildings(self) -> None:
+    def test_player_can_walk_through_buildings_but_not_sea_mountains_or_rivers(self) -> None:
         app = self.read("web/lunch-town/app.js")
         move_player = app.split("function tryMovePlayer(dx, dy) {", 1)[1].split("\n}\n", 1)[0]
         self.assertIn("state.player.x = next.x", move_player)
         self.assertIn("state.player.y = next.y", move_player)
-        self.assertNotIn("collision", move_player.lower())
-        self.assertNotIn("return", move_player)
+        self.assertIn("isBlockedTownTerrain(next)", move_player)
+        self.assertIn("next.x === state.player.x && next.y === state.player.y", move_player)
+        self.assertIn("return false", move_player)
+        self.assertIn("return true", move_player)
+        self.assertIn("function pointIsOnBoundaryBridge", app)
+        self.assertIn("function isBlockedTownTerrain", app)
+        self.assertIn("point.x - PLAYER_TERRAIN_PADDING <= coastlineXAt(point.y)", app)
+        self.assertIn("point.x + PLAYER_TERRAIN_PADDING >= EAST_MOUNTAIN_START_X", app)
+        self.assertIn("Math.abs(point.y - boundaryRiverYAt(point.x, bridge))", app)
+        self.assertIn("!pointIsOnBoundaryBridge(point, bridge)", app)
+        self.assertIn("const movedX = tryMovePlayer", app)
+        self.assertIn("const movedY = tryMovePlayer", app)
+        self.assertIn("if (state.moveTarget && !state.player.isMoving) state.moveTarget = null", app)
+        self.assertNotIn("state.collisions", app)
 
     def test_town_syncs_time_weather_lighting_and_organic_streets(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -176,8 +236,9 @@ class LunchTownTests(unittest.TestCase):
         app = self.read("web/lunch-town/app.js")
         self.assertIn("if ([3, 6].includes(column))", app)
         self.assertIn("if ([2, 5].includes(row))", app)
-        self.assertIn("path.lineTo(x, WORLD_HEIGHT)", app)
-        self.assertIn("path.lineTo(WORLD_WIDTH, y)", app)
+        self.assertIn("path.lineTo(x, TAICHUNG_SOUTH_EDGE_Y)", app)
+        self.assertIn("drawNeighborCountyRoads()", app)
+        self.assertIn("path.lineTo(EASTERN_ROAD_END_X, y)", app)
         self.assertIn("path.quadraticCurveTo", app)
         self.assertIn("function drawRoundabout", app)
 
@@ -721,14 +782,20 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("ownerLookIndex: owner?.lookIndex", app)
         self.assertIn("owner.hasLeashedDog = true", app)
         self.assertIn("owner.bikePreference = false", app)
+        self.assertIn("function dogOwnerFor", app)
+        self.assertIn("npc.name === pet.ownerName", app)
         self.assertIn("function updateLeashedDog", app)
         self.assertIn('if (pet.kind === "dog")', app)
+        self.assertIn("function drawDogLeashes", app)
+        self.assertIn("drawDogLeashes();\n  actors.forEach", app)
         self.assertIn("function drawDogLeash", app)
-        self.assertIn("context.lineTo(Math.round(pet.x), Math.round(pet.y - 4))", app)
+        self.assertIn("if (leashDistance > 64) return", app)
+        self.assertIn("const leashSide = pet.x < owner.x ? -1 : 1", app)
+        self.assertIn("context.lineTo(Math.round(collarX), Math.round(collarY))", app)
         self.assertIn("npc.hasLeashedDog", app)
         self.assertIn("牽著狗散步", app)
         self.assertIn("!pet.hidden", app)
-        self.assertIn("app.js?v=20261103-civic-neighborhood-night", self.read("web/lunch-town/index.html"))
+        self.assertIn("app.js?v=20261104-leash-anchor", self.read("web/lunch-town/index.html"))
 
     def test_town_has_visible_youbike_stations_and_rental_trips(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -827,8 +894,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('venue.id === "civic-south-night-convenience"', app)
         self.assertIn('if (!CIVIC_AFTER_HOURS_ROLES.has(npc.role)) maybeStartEveningShoppingTrip', app)
         self.assertIn("const civicAfterHours = transitionCivicAfterHoursRoutine(npc, index)", app)
-        self.assertIn('/locales/en.js?v=20261104-desktop-campus-menu', html)
-        self.assertIn('/i18n.js?v=20261104-desktop-campus-menu', html)
+        self.assertIn('/locales/en.js?v=20261104-neighbor-cities', html)
+        self.assertIn('/i18n.js?v=20261104-neighbor-cities', html)
 
     def test_npcs_take_evening_trips_to_department_stores_and_lalaport(self) -> None:
         app = self.read("web/lunch-town/app.js")

@@ -94,6 +94,15 @@ test('English localizes Lunch Town dialogue and City Hall after-hours routines',
     api.t('下班後到福星小站買晚餐、日用品或逛逛，再回家休息'),
     'Stopping by Lucky Star Stop after work for dinner, daily essentials, or a little shopping before heading home.',
   );
+  assert.equal(api.t('苗栗縣'), 'Miaoli County');
+  assert.equal(api.t('彰化縣'), 'Changhua County');
+  assert.equal(api.t('午餐資料建設中'), 'Lunch data under construction');
+  assert.equal(api.t('苗栗縣地圖工區'), 'Miaoli County map work zone');
+  assert.equal(api.t('彰化縣地圖工區'), 'Changhua County map work zone');
+  assert.equal(
+    api.t('到鄰近縣市施工區散步，看看地圖未來會往哪裡延伸'),
+    'Taking a walk through a neighboring county work zone to see where the map may grow next',
+  );
 });
 
 test('language changes restore Chinese, preserve raw source text and form values, and handle later renders', () => {
