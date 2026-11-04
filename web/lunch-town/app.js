@@ -11,16 +11,26 @@ const DISTRICT_ZONE_WIDTH = 560;
 const DISTRICT_ZONE_HEIGHT = 360;
 const DISTRICT_ZONE_GAP_X = 34;
 const DISTRICT_ZONE_GAP_Y = 34;
-const DISTRICT_ZONE_ORIGIN_X = 28;
+const WEST_COAST_WIDTH = 320;
+const WEST_COAST_LAND_GAP = 40;
+const EAST_MOUNTAIN_WIDTH = 500;
+const COASTAL_TETRAPOD_COUNT = 48;
+const DISTRICT_ZONE_ORIGIN_X = WEST_COAST_WIDTH + WEST_COAST_LAND_GAP;
 const DISTRICT_ZONE_ORIGIN_Y = 28;
 const DISTRICT_GRID_COLUMNS = 8;
 const DISTRICT_GRID_ROWS = 6;
-const WORLD_WIDTH = DISTRICT_ZONE_ORIGIN_X * 2
-  + DISTRICT_GRID_COLUMNS * DISTRICT_ZONE_WIDTH
+const DISTRICT_GRID_WIDTH = DISTRICT_GRID_COLUMNS * DISTRICT_ZONE_WIDTH
   + (DISTRICT_GRID_COLUMNS - 1) * DISTRICT_ZONE_GAP_X;
+const EAST_MOUNTAIN_START_X = DISTRICT_ZONE_ORIGIN_X + DISTRICT_GRID_WIDTH;
+const WORLD_WIDTH = EAST_MOUNTAIN_START_X + EAST_MOUNTAIN_WIDTH;
 const WORLD_HEIGHT = DISTRICT_ZONE_ORIGIN_Y * 2
   + DISTRICT_GRID_ROWS * DISTRICT_ZONE_HEIGHT
   + (DISTRICT_GRID_ROWS - 1) * DISTRICT_ZONE_GAP_Y;
+const COASTAL_ROAD_START_X = DISTRICT_ZONE_ORIGIN_X - 22;
+const EASTERN_ROAD_END_X = EAST_MOUNTAIN_START_X - 18;
+const COASTAL_HARBOR_Y = DISTRICT_ZONE_ORIGIN_Y
+  + 2 * (DISTRICT_ZONE_HEIGHT + DISTRICT_ZONE_GAP_Y)
+  + 92;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const PLAYER_STYLE_STORAGE_KEY = "lunchTownPlayerStyle";
 const TAICHUNG_TIME_ZONE = "Asia/Taipei";
@@ -4181,7 +4191,9 @@ function drawTown(now, environment = townEnvironmentAt()) {
   context.save();
   context.translate(-Math.round(state.camera.x), -Math.round(state.camera.y));
   drawGround();
-  drawWaterEdges(now);
+  drawWesternCoast(now);
+  drawEasternMountainRange(now);
+  drawMapEdges(now);
   drawRoads(now);
   drawDistrictLabels();
   drawTownSquare();
