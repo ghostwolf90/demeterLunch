@@ -65,5 +65,17 @@ class ReleaseVersionTests(unittest.TestCase):
         self.assertIn('/app.js?v=' + 'a' * 16, rendered)
         self.assertNotIn('v=old', rendered)
 
+    def test_release_assets_build_database_once_and_write_worker_public_assets(self):
+        root = Path(__file__).resolve().parents[1]
+        package = json.loads((root / 'package.json').read_text(encoding='utf-8'))
+        prepare = package['scripts']['prepare:assets']
+
+        self.assertEqual(
+            prepare,
+            'python3 scripts/build_static_site.py --output public',
+        )
+        self.assertNotIn('build_database.py', prepare)
+        self.assertIn('npm run prepare:assets', package['scripts']['build'])
+
 
 if __name__ == '__main__': unittest.main()

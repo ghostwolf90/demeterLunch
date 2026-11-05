@@ -21,7 +21,7 @@ const tools = [
   {
     name: "refresh_school_group",
     description:
-      "依既定的縣市批次（臺中在前、臺南在後），從教育部校園食材登錄平臺抓取指定日期的同日午餐，完成結構驗證後把 reviewed JSON 寫入 R2，並更新 D1 索引。每次只處理少量學校；若 remaining 大於 0，請用相同參數繼續呼叫。",
+      "依由北到南的六縣市批次（臺北、桃園、苗栗、臺中、彰化、臺南），從教育部校園食材登錄平臺抓取指定日期的同日午餐，完成結構驗證後把 reviewed JSON 寫入 R2，並更新 D1 索引。每次只處理少量學校；若 remaining 大於 0，請用相同參數繼續呼叫。",
     inputSchema: {
       type: "object",
       properties: {

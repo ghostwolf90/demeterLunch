@@ -130,7 +130,6 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     commands = [
-        [sys.executable, "scripts/build_database.py"],
         [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
         ["node", "--check", "web/app.js"],
         [sys.executable, "scripts/build_static_site.py"],

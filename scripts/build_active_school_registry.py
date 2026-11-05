@@ -8,10 +8,24 @@ from datetime import datetime, timezone
 import json
 import math
 from pathlib import Path
+import sys
 from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-CITY_ORDER = ("臺中市", "臺南市")
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.build_city_service_catalog import (  # noqa: E402
+    TAIWAN_CITY_ORDER,
+    TAIWAN_DISTRICT_ORDER,
+    build_catalog_payload,
+    district_order_index,
+)
+
+COLLECTION_CITIES = frozenset(
+    {"臺北市", "桃園市", "苗栗縣", "臺中市", "彰化縣", "臺南市"}
+)
+CITY_ORDER = tuple(city for city in TAIWAN_CITY_ORDER if city in COLLECTION_CITIES)
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -22,6 +36,8 @@ def read_json(path: Path) -> dict[str, Any]:
 
 
 def write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
+    if path.is_file() and read_json(path) == payload:
+        return
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(
@@ -29,6 +45,23 @@ def write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
         encoding="utf-8",
     )
     temporary.replace(path)
+
+
+def preserve_generated_at_if_unchanged(
+    path: Path, payload: dict[str, Any]
+) -> dict[str, Any]:
+    if not path.is_file():
+        return payload
+    existing = read_json(path)
+    existing_comparable = {
+        key: value for key, value in existing.items() if key != "generatedAt"
+    }
+    payload_comparable = {
+        key: value for key, value in payload.items() if key != "generatedAt"
+    }
+    if existing_comparable != payload_comparable:
+        return payload
+    return {**payload, "generatedAt": existing.get("generatedAt", payload["generatedAt"])}
 
 
 def merge_registries(payloads: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -58,6 +91,18 @@ def merge_registries(payloads: list[dict[str, Any]]) -> list[dict[str, Any]]:
             seen_ids.add(school_id)
             seen_names.add(name_key)
             schools.append(dict(row))
+        unknown_districts = {
+            str(school["district"])
+            for school in schools
+            if str(school["district"]) not in TAIWAN_DISTRICT_ORDER[city]
+        }
+        if unknown_districts:
+            raise ValueError(
+                f"{city}包含地理順序未登錄行政區：{'、'.join(sorted(unknown_districts))}"
+            )
+        schools.sort(
+            key=lambda school: district_order_index(city, str(school["district"]))
+        )
         by_city[city] = schools
     missing_cities = [city for city in CITY_ORDER if city not in by_city]
     if missing_cities:
@@ -70,13 +115,18 @@ def partition_city_districts(
 ) -> list[dict[str, Any]]:
     if target_group_size <= 0:
         raise ValueError("target_group_size 必須大於零")
-    districts: list[str] = []
     counts: Counter[str] = Counter()
+    cities = {str(school["city"]) for school in schools}
+    if len(cities) > 1:
+        raise ValueError("同一刷新分組只能包含一個縣市")
     for school in schools:
         district = str(school["district"])
-        if district not in counts:
-            districts.append(district)
         counts[district] += 1
+    city = next(iter(cities), "")
+    districts = sorted(
+        counts,
+        key=lambda district: district_order_index(city, district),
+    )
     if not districts:
         return []
     group_count = max(1, math.ceil(len(schools) / target_group_size))
@@ -108,30 +158,38 @@ def build_refresh_groups(
     target_group_size: int = 80,
 ) -> list[dict[str, Any]]:
     groups: list[dict[str, Any]] = []
-    taichung_schools = [school for school in schools if school["city"] == "臺中市"]
-    for source in taichung_plan.get("groups", []):
-        districts = list(source.get("districts", []))
-        selected = [school for school in taichung_schools if school["district"] in districts]
-        expected = int(source.get("expectedSchoolCount") or 0)
-        if len(selected) != expected:
-            raise ValueError(
-                f"臺中第 {source.get('id')} 批預期 {expected} 校，實際 {len(selected)} 校"
-            )
-        groups.append({
-            "id": len(groups) + 1,
-            "city": "臺中市",
-            "expectedSchoolCount": expected,
-            "districts": districts,
-        })
-    tainan_schools = [school for school in schools if school["city"] == "臺南市"]
-    for source in partition_city_districts(
-        tainan_schools, target_group_size=target_group_size
-    ):
-        groups.append({
-            "id": len(groups) + 1,
-            "city": "臺南市",
-            **source,
-        })
+    for city in CITY_ORDER:
+        city_schools = [school for school in schools if school["city"] == city]
+        if city == "臺中市":
+            for source in taichung_plan.get("groups", []):
+                districts = sorted(
+                    list(source.get("districts", [])),
+                    key=lambda district: district_order_index(city, district),
+                )
+                selected = [
+                    school for school in city_schools
+                    if school["district"] in districts
+                ]
+                expected = int(source.get("expectedSchoolCount") or 0)
+                if len(selected) != expected:
+                    raise ValueError(
+                        f"臺中第 {source.get('id')} 批預期 {expected} 校，實際 {len(selected)} 校"
+                    )
+                groups.append({
+                    "id": len(groups) + 1,
+                    "city": city,
+                    "expectedSchoolCount": expected,
+                    "districts": districts,
+                })
+            continue
+        for source in partition_city_districts(
+            city_schools, target_group_size=target_group_size
+        ):
+            groups.append({
+                "id": len(groups) + 1,
+                "city": city,
+                **source,
+            })
     selected_ids: list[int] = []
     for group in groups:
         selected_ids.extend(
@@ -159,6 +217,26 @@ def main(argv: list[str] | None = None) -> int:
         default=PROJECT_ROOT / "data/reference/tainan-active-elementary-schools.json",
     )
     parser.add_argument(
+        "--miaoli",
+        type=Path,
+        default=PROJECT_ROOT / "data/reference/miaoli-active-elementary-schools.json",
+    )
+    parser.add_argument(
+        "--changhua",
+        type=Path,
+        default=PROJECT_ROOT / "data/reference/changhua-active-elementary-schools.json",
+    )
+    parser.add_argument(
+        "--taipei",
+        type=Path,
+        default=PROJECT_ROOT / "data/reference/taipei-active-elementary-schools.json",
+    )
+    parser.add_argument(
+        "--taoyuan",
+        type=Path,
+        default=PROJECT_ROOT / "data/reference/taoyuan-active-elementary-schools.json",
+    )
+    parser.add_argument(
         "--taichung-groups",
         type=Path,
         default=PROJECT_ROOT / "data/reference/taichung-school-refresh-groups.json",
@@ -173,9 +251,28 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=PROJECT_ROOT / "data/reference/school-refresh-groups.json",
     )
+    parser.add_argument(
+        "--national-directory",
+        type=Path,
+        default=PROJECT_ROOT / "data/reference/national-school-directory.json",
+    )
+    parser.add_argument(
+        "--city-catalog-output",
+        type=Path,
+        default=PROJECT_ROOT / "data/reference/city-service-catalog.json",
+    )
     parser.add_argument("--target-group-size", type=int, default=80)
     args = parser.parse_args(argv)
-    payloads = [read_json(args.taichung), read_json(args.tainan)]
+    city_paths_by_name = {
+        "臺中市": args.taichung,
+        "臺南市": args.tainan,
+        "苗栗縣": args.miaoli,
+        "彰化縣": args.changhua,
+        "臺北市": args.taipei,
+        "桃園市": args.taoyuan,
+    }
+    city_paths = [city_paths_by_name[city] for city in CITY_ORDER]
+    payloads = [read_json(path) for path in city_paths]
     schools = merge_registries(payloads)
     groups = build_refresh_groups(
         schools,
@@ -187,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
         "schemaVersion": 1,
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "cityOrder": list(CITY_ORDER),
-        "sources": [str(args.taichung.name), str(args.tainan.name)],
+        "sources": [str(path.name) for path in city_paths],
         "summary": {
             "cityCount": len(by_city),
             "schoolCount": len(schools),
@@ -195,6 +292,7 @@ def main(argv: list[str] | None = None) -> int:
         },
         "schools": schools,
     }
+    registry = preserve_generated_at_if_unchanged(args.output, registry)
     plan = {
         "schemaVersion": 2,
         "cityOrder": list(CITY_ORDER),
@@ -203,7 +301,13 @@ def main(argv: list[str] | None = None) -> int:
     }
     write_json_atomic(args.output, registry)
     write_json_atomic(args.groups_output, plan)
-    print(json.dumps({"summary": registry["summary"], "groups": groups}, ensure_ascii=False))
+    city_catalog = build_catalog_payload(read_json(args.national_directory), registry)
+    write_json_atomic(args.city_catalog_output, city_catalog)
+    print(json.dumps({
+        "summary": registry["summary"],
+        "groups": groups,
+        "cityCatalog": city_catalog["cities"],
+    }, ensure_ascii=False))
     return 0
 
 

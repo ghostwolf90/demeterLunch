@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""多縣市相容入口；固定依名冊順序先臺中、再臺南。"""
+"""多縣市相容入口；固定依合併名冊的縣市順序執行。"""
 from __future__ import annotations
 
 import sys
@@ -17,7 +17,7 @@ def main(argv: list[str] | None = None) -> int:
     if "--help" in arguments or "-h" in arguments:
         print("""用法：python3 scripts/update_all_school_meals.py [參數]
 
-依啟用名冊順序先處理臺中市，再處理臺南市；預設只更新本機。
+依啟用名冊由北到南處理臺北、桃園、苗栗、臺中、彰化及臺南；預設只更新本機。
   --publish                 每區成功資料先發布；省略時不發布
   --no-publish              只更新本機
   --date YYYY-MM-DD         供餐日期，預設臺北時區今天
@@ -30,7 +30,8 @@ def main(argv: list[str] | None = None) -> int:
   --verify-and-build        相容參數，預設即重建本機資料
   --timeout 秒數            預設 20
   --interval 秒數           預設 1.2
-  --retries 次數            預設 2""")
+  --retries 次數            預設 2
+  --workers 數量            預設 2，上限 4；全域仍維持請求間隔""")
         return 0
     if "--resume" in arguments and "--refresh-all" in arguments:
         print("--resume 與 --refresh-all 不能同時使用。", file=sys.stderr)

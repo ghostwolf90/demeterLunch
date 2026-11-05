@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from datetime import date, datetime
 import fcntl
@@ -11,6 +12,7 @@ import json
 from pathlib import Path
 import sys
 import subprocess
+import threading
 import time
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -25,7 +27,7 @@ from src.fatrace_daily import (  # noqa: E402
     DAILY_USER_AGENT, TAIPEI, STABLE_STATUSES, DailyMealStorage,
     FatraceDailyClient, load_school_registry, write_json_atomic,
 )
-from src.http_client import HttpClient  # noqa: E402
+from src.http_client import HttpClient, RequestRateLimiter  # noqa: E402
 from src.school_meal_data import (  # noqa: E402
     promote_candidate, save_reviewed_record,
 )
@@ -87,7 +89,6 @@ def print_summary(label: str, totals: dict, elapsed: float) -> None:
 def rebuild_local(root: Path) -> bool:
     print("\n更新本機 SQLite 與網站快照……", flush=True)
     for command in (
-        [sys.executable, "scripts/build_database.py"],
         ["node", "--check", "web/app.js"],
         [sys.executable, "scripts/build_static_site.py"],
     ):
@@ -150,10 +151,35 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
                 or not isinstance(progress.get("schools"), dict)):
             raise ValueError("進度檔格式或日期／食材模式不符；保留檔案，請人工確認。")
         rows = progress["schools"]
-        client = client or FatraceDailyClient(HttpClient(
-            timeout=args.timeout, min_interval=args.interval, retries=args.retries,
-            user_agent=DAILY_USER_AGENT,
-        ), include_ingredients=not args.skip_ingredients)
+        workers = int(getattr(args, "workers", 1))
+        if not 1 <= workers <= 4:
+            raise ValueError("工作數必須介於 1 至 4")
+        rate_limiter = RequestRateLimiter(args.interval) if client is None else None
+        worker_state = threading.local()
+
+        def worker_client():
+            if client is not None:
+                return client
+            value = getattr(worker_state, "client", None)
+            if value is None:
+                value = FatraceDailyClient(HttpClient(
+                    timeout=args.timeout,
+                    min_interval=args.interval,
+                    retries=args.retries,
+                    user_agent=DAILY_USER_AGENT,
+                    rate_limiter=rate_limiter,
+                ), include_ingredients=not args.skip_ingredients)
+                worker_state.client = value
+            return value
+
+        def fetch_school(school):
+            fetch_started = time.monotonic()
+            active_client = worker_client()
+            raw, candidate = active_client.probe(school, args.date)
+            if candidate.get("status") == "available":
+                raw, candidate = active_client.collect(school, args.date)
+            return raw, candidate, time.monotonic() - fetch_started
+
         storage = DailyMealStorage(raw_root)
         def needs_fetch(school):
             row = rows.get(str(school.fatrace_school_id), {})
@@ -167,8 +193,8 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
             except (OSError, ValueError):
                 return True
 
-        # Keep the requested city order (Taichung before Tainan), while visiting
-        # pending districts first inside each city.
+        # Keep the requested/registry city order, while visiting pending
+        # districts first inside each city.
         if not args.refresh_all:
             ordered_scopes = []
             for city in city_order:
@@ -182,11 +208,24 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
             scopes = ordered_scopes
         started = time.monotonic()
         build_ok = True
+        performance = {
+            "workers": workers,
+            "requestIntervalSeconds": args.interval,
+            "fetchSeconds": 0.0,
+            "publishSeconds": 0.0,
+            "buildSeconds": 0.0,
+            "publishBatches": 0,
+            "publishedSchools": 0,
+        }
 
         def checkpoint():
             progress["updatedAt"] = now()
             write_json_atomic(progress_path, progress)
 
+        executor = (
+            ThreadPoolExecutor(max_workers=workers, thread_name_prefix="meal-fetch")
+            if client is None and workers > 1 else None
+        )
         try:
             for city, district in scopes:
                 district_started = time.monotonic()
@@ -194,65 +233,115 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
                     school for school in schools
                     if school.city == city and school.district == district
                 ]
-                selected.sort(key=lambda school: not needs_fetch(school))
-                pending = sum(needs_fetch(school) for school in selected)
+                pending_by_id = {
+                    school.fatrace_school_id: needs_fetch(school)
+                    for school in selected
+                }
+                selected.sort(
+                    key=lambda school: not pending_by_id[school.fatrace_school_id]
+                )
+                pending_schools = [
+                    school for school in selected
+                    if pending_by_id[school.fatrace_school_id]
+                ]
+                reused_schools = [
+                    school for school in selected
+                    if not pending_by_id[school.fatrace_school_id]
+                ]
+                pending = len(pending_schools)
                 print(f"\n開始處理 {city} {district}，共 {len(selected)} 校（{args.date}）。", flush=True)
-                print(f"  待抓取 {pending} 校；沿用成功資料 {len(selected) - pending} 校。", flush=True)
+                print(
+                    f"  待抓取 {pending} 校；沿用成功資料 {len(selected) - pending} 校；"
+                    f"同時處理上限 {workers} 校。",
+                    flush=True,
+                )
                 ready = []
-                for school in selected:
+
+                def prepare_row(school):
                     key = str(school.fatrace_school_id)
                     row = rows.setdefault(key, {})
                     row.update(school=school.name, city=city, district=district)
+                    return row
+
+                def accept_candidate(school, raw, candidate, *, reused, fetch_seconds=0.0):
+                    row = prepare_row(school)
                     candidate_path = storage.target_path(school, args.date) / "candidate.json"
-                    try:
-                        candidate = None
-                        reused = False
-                        if not args.refresh_all and row.get("status") in STABLE_STATUSES:
-                            try:
-                                stored = read_json(candidate_path)
-                                if stored.get("contentHash") == row.get("contentHash"):
-                                    candidate = stored
-                                    reused = True
-                            except (OSError, ValueError):
-                                pass
-                        if candidate is None:
-                            row["attempts"] = row.get("attempts", 0) + 1
-                            row["status"] = "not_checked"
-                            checkpoint()
-                            raw, candidate = client.probe(school, args.date)
-                            if candidate.get("status") == "available":
-                                raw, candidate = client.collect(school, args.date)
-                            # Verify identity/date before any raw or reviewed replacement.
-                            if (candidate.get("mealDate") != args.date.isoformat()
-                                    or candidate.get("school") != school.as_dict()):
-                                raise ValueError("候選資料的日期或學校與要求不符")
-                            if candidate.get("status") in STABLE_STATUSES:
-                                promote_candidate(candidate, reviewed_at=now(),
-                                                  reviewed_by="Demeter 逐區結構驗證與來源核對")
-                            elif candidate.get("status") != "not_published":
-                                raise ValueError("官方回應狀態無效")
-                            storage.save(school, args.date, raw, candidate)
-                            candidate = read_json(candidate_path)
+                    if not reused:
+                        # Verify identity/date before any raw or reviewed replacement.
                         if (candidate.get("mealDate") != args.date.isoformat()
                                 or candidate.get("school") != school.as_dict()):
-                            raise ValueError("已存資料的日期或學校不符")
-                        row.update(status=candidate["status"], error=None)
-                        if not reused:
-                            row["checkedAt"] = now()
-                        if candidate["status"] in STABLE_STATUSES:
-                            reviewed = promote_candidate(candidate, reviewed_at=now(),
-                                reviewed_by="Demeter 逐區結構驗證與來源核對")
-                            save_reviewed_record(root / "data/parsed", reviewed)
-                            row["contentHash"] = reviewed["contentHash"]
-                            if row.get("publishedHash") != reviewed["contentHash"]:
-                                ready.append(school)
-                        print(f"  {school.name}：" + ("沿用已成功資料，未重新抓取" if reused else {
-                            "available": "菜單驗證完成", "no_meal": "官方明確不供餐",
-                            "not_published": "官方尚未公布，下次補查",
-                        }[row["status"]]), flush=True)
+                            raise ValueError("候選資料的日期或學校與要求不符")
+                        if candidate.get("status") in STABLE_STATUSES:
+                            promote_candidate(candidate, reviewed_at=now(),
+                                              reviewed_by="Demeter 逐區結構驗證與來源核對")
+                        elif candidate.get("status") != "not_published":
+                            raise ValueError("官方回應狀態無效")
+                        storage.save(school, args.date, raw, candidate)
+                        candidate = read_json(candidate_path)
+                    if (candidate.get("mealDate") != args.date.isoformat()
+                            or candidate.get("school") != school.as_dict()):
+                        raise ValueError("已存資料的日期或學校不符")
+                    row.update(status=candidate["status"], error=None)
+                    if not reused:
+                        row.update(
+                            checkedAt=now(),
+                            fetchDurationSeconds=round(fetch_seconds, 3),
+                        )
+                    if candidate["status"] in STABLE_STATUSES:
+                        reviewed = promote_candidate(candidate, reviewed_at=now(),
+                            reviewed_by="Demeter 逐區結構驗證與來源核對")
+                        save_reviewed_record(root / "data/parsed", reviewed)
+                        row["contentHash"] = reviewed["contentHash"]
+                        if row.get("publishedHash") != reviewed["contentHash"]:
+                            ready.append(school)
+                    print(f"  {school.name}：" + ("沿用已成功資料，未重新抓取" if reused else {
+                        "available": "菜單驗證完成", "no_meal": "官方明確不供餐",
+                        "not_published": "官方尚未公布，下次補查",
+                    }[row["status"]]), flush=True)
+
+                for school in pending_schools:
+                    row = prepare_row(school)
+                    row["attempts"] = row.get("attempts", 0) + 1
+                    row["status"] = "not_checked"
+                if pending_schools:
+                    checkpoint()
+
+                fetch_phase_started = time.monotonic()
+                if executor is not None:
+                    futures = {
+                        executor.submit(fetch_school, school): school
+                        for school in pending_schools
+                    }
+                    completed = ((futures[future], future) for future in as_completed(futures))
+                else:
+                    completed = ((school, None) for school in pending_schools)
+
+                for school, future in completed:
+                    row = prepare_row(school)
+                    try:
+                        result = future.result() if future is not None else fetch_school(school)
+                        accept_candidate(school, *result[:2], reused=False,
+                                         fetch_seconds=result[2])
                     except Exception as exc:
                         row.update(status="failed", checkedAt=now(), error=str(exc))
                         print(f"  {school.name}：抓取／驗證失敗：{exc}", flush=True)
+                    checkpoint()
+                performance["fetchSeconds"] += time.monotonic() - fetch_phase_started
+
+                for school in reused_schools:
+                    row = prepare_row(school)
+                    try:
+                        candidate_path = storage.target_path(school, args.date) / "candidate.json"
+                        accept_candidate(
+                            school,
+                            None,
+                            read_json(candidate_path),
+                            reused=True,
+                        )
+                    except Exception as exc:
+                        row.update(status="failed", checkedAt=now(), error=str(exc))
+                        print(f"  {school.name}：已存資料驗證失敗：{exc}", flush=True)
+                if reused_schools:
                     checkpoint()
                 if ready and not args.no_publish:
                     results = [{"school": school.name, "fatraceSchoolId": school.fatrace_school_id,
@@ -263,35 +352,77 @@ def run(args, *, root: Path = PROJECT_ROOT, client=None, publisher=publish_bundl
                                   "available": sum(r["recordStatus"] == "available" for r in results),
                                   "noMeal": sum(r["recordStatus"] == "no_meal" for r in results),
                                   "notPublished": 0, "failed": 0}}
+                    publish_started = None
+                    publish_seconds = 0.0
                     try:
                         bundle = build_publish_bundle(root, args.date, report=report)
+                        publish_started = time.monotonic()
                         response = publisher(bundle, DEFAULT_SITE_URL, token)
+                        publish_seconds = time.monotonic() - publish_started
                         if response.get("status") != "published":
                             raise ManualPublishError("發布回應未確認成功")
                         for school in ready:
                             row = rows[str(school.fatrace_school_id)]
-                            row.update(publishedHash=row["contentHash"], publishedAt=now(), publishError=None)
-                        print(f"  {city} {district}：本次發布成功 {len(ready)} 校。", flush=True)
+                            row.update(
+                                publishedHash=row["contentHash"],
+                                publishedAt=now(),
+                                publishError=None,
+                                publishDurationSeconds=round(publish_seconds, 3),
+                            )
+                        performance["publishedSchools"] += len(ready)
+                        print(
+                            f"  {city} {district}：本次發布成功 {len(ready)} 校，"
+                            f"上傳耗時 {publish_seconds:.1f} 秒。",
+                            flush=True,
+                        )
                     except Exception as exc:
+                        if publish_started is not None:
+                            publish_seconds = time.monotonic() - publish_started
                         for school in ready:
-                            rows[str(school.fatrace_school_id)]["publishError"] = str(exc)
+                            rows[str(school.fatrace_school_id)].update(
+                                publishError=str(exc),
+                                publishDurationSeconds=round(publish_seconds, 3),
+                            )
                         print(f"  {city} {district}：發布失敗，下次直接補傳：{exc}", flush=True)
+                    finally:
+                        if publish_started is not None:
+                            performance["publishSeconds"] += publish_seconds
+                            performance["publishBatches"] += 1
                     checkpoint()
                 totals = summary([rows[str(s.fatrace_school_id)] for s in selected],
                                  publishing=not args.no_publish)
                 print_summary(f"{city} {district}處理總結", totals, time.monotonic() - district_started)
             if any(rows[str(s.fatrace_school_id)].get("status") in STABLE_STATUSES for s in schools):
+                build_started = time.monotonic()
                 build_ok = rebuild(root)
+                performance["buildSeconds"] = time.monotonic() - build_started
         except KeyboardInterrupt:
             checkpoint()
             print("\n已中斷並保存進度；相同日期與模式重跑即可接續。", flush=True)
             return 130
         finally:
+            if executor is not None:
+                executor.shutdown(wait=True, cancel_futures=True)
             totals = summary([rows.get(str(s.fatrace_school_id), {}) for s in schools],
                              publishing=not args.no_publish)
             progress["lastRunSummary"] = totals
+            performance["totalSeconds"] = time.monotonic() - started
+            if rate_limiter is not None:
+                performance["sourceRequests"] = rate_limiter.request_count
+            progress["lastRunPerformance"] = {
+                key: round(value, 3) if isinstance(value, float) else value
+                for key, value in performance.items()
+            }
             checkpoint()
             print_summary("本次全程總結", totals, time.monotonic() - started)
+            print(
+                "【效能分段】\n"
+                f"  官方資料抓取：{performance['fetchSeconds']:.1f} 秒\n"
+                f"  Site 發布 API：{performance['publishSeconds']:.1f} 秒\n"
+                f"  本機資料與網站建置：{performance['buildSeconds']:.1f} 秒\n"
+                f"  官方 API 請求：{performance.get('sourceRequests', 0)} 次\n",
+                flush=True,
+            )
             for school in schools:
                 row = rows.get(str(school.fatrace_school_id), {})
                 if row.get("status") in {"failed", "not_published", "not_checked", None} or (
@@ -316,9 +447,14 @@ def main(argv=None) -> int:
     parser.add_argument("--timeout", type=float, default=20.0)
     parser.add_argument("--interval", type=float, default=1.2)
     parser.add_argument("--retries", type=int, default=2)
+    parser.add_argument(
+        "--workers", type=int, default=2,
+        help="同時處理學校數，預設 2；所有工作共用全域請求間隔",
+    )
     args = parser.parse_args(argv)
-    if args.timeout <= 0 or args.interval < 0 or args.retries < 0:
-        parser.error("逾時必須大於零，請求間隔及重試次數不得小於零")
+    if (args.timeout <= 0 or args.interval < 0 or args.retries < 0
+            or not 1 <= args.workers <= 4):
+        parser.error("逾時必須大於零，請求間隔及重試次數不得小於零，工作數必須介於 1 至 4")
     try:
         return run(args)
     except (OSError, ValueError, ManualPublishError) as exc:

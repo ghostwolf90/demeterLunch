@@ -38,14 +38,14 @@ test("Telegram messages cover start, problem, finish, and daily summary", () => 
   assert.match(
     formatDailySummary({
       mealDate: "2026-10-12",
-      checked: 243,
-      expected: 243,
+      checked: 1058,
+      expected: 1058,
       available: 220,
       noMeal: 3,
       notPublished: 20,
       failed: 0,
     }),
-    /今日臺中市、臺南市國小午餐總結[\s\S]*243\/243[\s\S]*流程已完成/,
+    /今日臺北市、桃園市、苗栗縣、臺中市、彰化縣、臺南市國小午餐總結[\s\S]*1058\/1058[\s\S]*流程已完成/,
   );
 });
 

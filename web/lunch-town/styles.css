@@ -109,21 +109,35 @@ body.town-immersive {
   font-size: 0.78rem;
 }
 
-.town-topbar nav a,
-.town-topbar nav span {
+.town-topbar nav > a,
+.town-topbar nav > button,
+.town-topbar nav > span {
   padding: 8px 10px;
   color: inherit;
   text-decoration: none;
+  background: transparent;
   border: 2px solid transparent;
+  cursor: pointer;
 }
 
-.town-topbar nav a:hover,
-.town-topbar nav a:focus-visible {
+.town-topbar nav > a:hover,
+.town-topbar nav > button:hover,
+.town-topbar nav > a:focus-visible {
   border-color: #fff8e7;
   outline: 0;
 }
 
-.town-topbar nav span {
+.town-topbar nav > button:focus-visible {
+  border-color: #fff8e7;
+  outline: 0;
+}
+
+.town-topbar nav > button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.town-topbar nav > span {
   color: var(--navy);
   background: var(--yellow);
   border-color: #fff0b4;
@@ -131,8 +145,11 @@ body.town-immersive {
 }
 
 .town-topbar nav .town-account-action {
+  max-width: 260px;
   color: var(--navy);
   font-weight: 900;
+  line-height: 1.25;
+  text-align: center;
   background: #fff8e7;
   border-color: var(--yellow);
   box-shadow: 3px 3px 0 #0d2734;
@@ -282,27 +299,112 @@ body.town-immersive {
 .player-style-picker {
   display: grid;
   gap: 4px;
+  width: min(360px, 100%);
   font-size: 0.72rem;
   font-weight: 800;
 }
 
-.player-style-picker > div {
-  display: flex;
+.player-avatar-groups {
+  display: grid;
+  gap: 5px;
+}
+
+.player-avatar-groups > section {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 5px;
+  align-items: center;
+}
+
+.player-avatar-groups > section > small {
+  color: var(--navy);
+  font-size: 0.66rem;
+  line-height: 1.2;
+}
+
+.player-avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .player-style-picker button {
-  min-height: 38px;
-  padding: 6px 9px;
+  --avatar-skin: #efbd91;
+  --avatar-hair: #263039;
+  --avatar-outfit: #d9673f;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 0 5px;
+  align-items: center;
+  min-height: 46px;
+  padding: 4px 5px;
   color: var(--ink);
   -webkit-text-fill-color: var(--ink);
+  text-align: left;
   opacity: 1;
   background: #fff;
   border: 3px solid var(--navy);
 }
 
-.player-style-picker button + button {
+.player-avatar-grid button + button {
   border-left: 0;
 }
+
+.player-style-picker button strong,
+.player-style-picker button small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-style-picker button strong {
+  align-self: end;
+  font-size: 0.72rem;
+}
+
+.player-style-picker button small {
+  align-self: start;
+  font-size: 0.56rem;
+  font-weight: 700;
+}
+
+.player-avatar-preview {
+  position: relative;
+  grid-row: 1 / 3;
+  width: 22px;
+  height: 27px;
+  background: linear-gradient(to bottom, transparent 0 12px, var(--avatar-outfit) 12px 26px, transparent 26px);
+  border-bottom: 3px solid var(--avatar-outfit);
+}
+
+.player-avatar-preview::before {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  width: 12px;
+  height: 12px;
+  content: "";
+  background: var(--avatar-skin);
+  border: 3px solid var(--avatar-hair);
+  box-shadow: -3px 8px 0 -1px var(--avatar-outfit), 3px 8px 0 -1px var(--avatar-outfit);
+}
+
+.player-avatar-preview::after {
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  width: 14px;
+  height: 5px;
+  content: "";
+  background: var(--avatar-hair);
+}
+
+[data-player-avatar="haiyin"] { --avatar-skin: #e9b89d; --avatar-hair: #24282e; --avatar-outfit: #292d35; }
+[data-player-avatar="mubai"] { --avatar-skin: #f0c6aa; --avatar-hair: #dfc998; --avatar-outfit: #f4efdf; }
+[data-player-avatar="qingxia"] { --avatar-skin: #e9b58e; --avatar-hair: #c79649; --avatar-outfit: #6aaac1; }
+[data-player-avatar="xiangye"] { --avatar-skin: #efbd91; --avatar-hair: #263039; --avatar-outfit: #d9673f; }
+[data-player-avatar="qingchuan"] { --avatar-skin: #d99a73; --avatar-hair: #503a31; --avatar-outfit: #58705c; }
+[data-player-avatar="yueyang"] { --avatar-skin: #c98766; --avatar-hair: #242a2e; --avatar-outfit: #5a8494; }
 
 .player-style-picker button[aria-pressed="true"] {
   color: #fff;
@@ -499,14 +601,14 @@ body.town-immersive {
   position: absolute;
   left: 50%;
   bottom: 16px;
-  max-width: calc(100% - 32px);
-  padding: 9px 13px;
+  max-width: min(420px, calc(100% - 96px));
+  padding: 6px 10px;
   color: #fff;
-  font-size: clamp(0.68rem, 1.5vw, 0.82rem);
+  font-size: clamp(0.65rem, 1.25vw, 0.76rem);
   text-align: center;
-  background: rgba(15, 39, 52, 0.94);
-  border: 3px solid #fff8e7;
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.34);
+  background: rgba(15, 39, 52, 0.86);
+  border: 2px solid rgba(255, 248, 231, 0.9);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.26);
   transform: translateX(-50%);
   pointer-events: none;
 }
@@ -545,6 +647,44 @@ body.town-immersive {
   font-size: 0.62rem;
   font-weight: 800;
   text-underline-offset: 2px;
+}
+
+.map-preview-banner {
+  position: absolute;
+  z-index: 6;
+  top: 14px;
+  right: 14px;
+  width: min(330px, calc(100% - 28px));
+  display: grid;
+  gap: 3px;
+  padding: 8px 11px;
+  color: #fff8e7;
+  background: rgba(23, 52, 67, 0.94);
+  border: 3px solid var(--yellow);
+  box-shadow: 3px 3px 0 rgba(14, 41, 55, 0.34);
+  pointer-events: none;
+}
+
+.map-preview-banner strong {
+  color: var(--yellow);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.map-preview-banner span {
+  font-size: 0.64rem;
+  line-height: 1.45;
+}
+
+.map-preview-banner.is-error {
+  background: rgba(112, 47, 38, 0.95);
+  border-color: #ffd8c5;
+}
+
+@media (max-width: 760px) {
+  .map-preview-banner {
+    top: 92px;
+  }
 }
 
 .speech-layer {
@@ -872,8 +1012,44 @@ body.town-immersive {
 }
 
 .quest-panel {
+  position: sticky;
+  top: 14px;
   align-self: start;
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--blue) #e6d9b8;
+  scrollbar-width: thin;
   padding: 22px;
+}
+
+.quest-panel::-webkit-scrollbar {
+  width: 11px;
+}
+
+.quest-panel::-webkit-scrollbar-track {
+  background: #e6d9b8;
+  border-left: 2px solid var(--navy);
+}
+
+.quest-panel::-webkit-scrollbar-thumb {
+  background: var(--blue);
+  border: 2px solid var(--paper);
+}
+
+.quest-panel:focus-visible {
+  outline: 4px solid var(--yellow);
+  outline-offset: 3px;
+}
+
+.achievement-scroll-note {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  color: #365765;
+  font: 800 0.68rem/1.5 system-ui, "Noto Sans TC", sans-serif;
+  background: #efe5ca;
+  border-left: 4px solid var(--yellow);
 }
 
 .achievement-account-card {
@@ -915,7 +1091,7 @@ body.town-immersive {
   font: 0.75rem/1.55 system-ui, "Noto Sans TC", sans-serif;
 }
 
-.achievement-account-card > a {
+.achievement-account-card > button {
   min-height: 42px;
   display: flex;
   align-items: center;
@@ -931,9 +1107,253 @@ body.town-immersive {
   box-shadow: 3px 3px 0 #0d2734;
 }
 
-.achievement-account-card.is-authenticated > a {
+.achievement-account-card.is-authenticated > button {
   color: #fff;
   background: #356578;
+}
+
+.daily-quest-board {
+  margin: 18px 0 22px;
+  padding: 14px;
+  background: #fff9e9;
+  border: 4px solid var(--navy);
+  box-shadow: 5px 5px 0 rgba(23, 52, 67, 0.18);
+}
+
+.daily-quest-heading,
+.daily-quest-summary,
+.daily-quest-card > header,
+.daily-quest-requirement,
+.achievement-section-heading {
+  display: flex;
+  align-items: center;
+}
+
+.daily-quest-heading,
+.daily-quest-summary,
+.daily-quest-card > header {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.daily-quest-heading small,
+.daily-quest-heading h3,
+.coin-wallet small,
+.coin-wallet strong,
+.achievement-section-heading h3,
+.achievement-section-heading p {
+  display: block;
+  margin: 0;
+}
+
+.daily-quest-heading > div:first-child > small {
+  color: #58717b;
+  font: 900 0.66rem/1.4 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.daily-quest-heading h3,
+.achievement-section-heading h3 {
+  color: var(--navy);
+  font: 900 1.05rem/1.35 ui-rounded, "Arial Rounded MT Bold", "Noto Sans TC", sans-serif;
+}
+
+.coin-wallet {
+  min-width: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 9px;
+  color: var(--navy);
+  background: var(--yellow);
+  border: 3px solid #a87928;
+  box-shadow: 3px 3px 0 rgba(23, 52, 67, 0.2);
+}
+
+.coin-wallet > span {
+  width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  color: #fff1a6;
+  background: #d99b2b;
+  border: 2px solid #8b5c18;
+  border-radius: 50%;
+  font-size: 0;
+}
+
+.coin-wallet small {
+  font-size: 0.58rem;
+  font-weight: 900;
+}
+
+.coin-wallet strong {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.daily-quest-summary {
+  margin: 12px 0 8px;
+  padding: 8px 10px;
+  color: #fff;
+  background: var(--blue);
+  border: 3px solid var(--navy);
+  font: 800 0.69rem/1.4 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.daily-quest-summary strong {
+  color: var(--yellow);
+  font-size: 0.88rem;
+}
+
+.daily-quest-status,
+.daily-quest-note {
+  margin: 8px 0;
+  color: #49636e;
+  font: 0.7rem/1.55 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.daily-quest-list {
+  display: grid;
+  gap: 9px;
+}
+
+.daily-quest-card {
+  padding: 11px;
+  background: #f4ead0;
+  border: 3px solid #a58e62;
+}
+
+.daily-quest-card.is-complete {
+  background: #dfead1;
+  border-color: #638251;
+}
+
+.daily-quest-card-icon {
+  width: 31px;
+  height: 31px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--orange);
+  border: 2px solid var(--navy);
+  font-weight: 900;
+}
+
+.daily-quest-card-title {
+  min-width: 0;
+  flex: 1;
+}
+
+.daily-quest-card-title small,
+.daily-quest-card-title strong {
+  display: block;
+}
+
+.daily-quest-card-title small {
+  color: #5a7078;
+  font: 800 0.6rem/1.4 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.daily-quest-card-title strong {
+  color: var(--navy);
+  font: 900 0.82rem/1.35 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.daily-quest-reward {
+  color: #815719;
+  font-size: 0.7rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.daily-quest-card > p {
+  margin: 8px 0;
+  color: #405963;
+  font: 0.7rem/1.5 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.daily-quest-requirements {
+  display: grid;
+  gap: 5px;
+}
+
+.daily-quest-requirement {
+  justify-content: space-between;
+  gap: 8px;
+  font: 800 0.65rem/1.4 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.daily-quest-requirement span:first-child::before {
+  content: "□";
+  margin-right: 5px;
+  color: var(--orange);
+}
+
+.daily-quest-requirement.is-complete span:first-child::before {
+  content: "■";
+  color: #4e754d;
+}
+
+.daily-quest-reroll {
+  width: 100%;
+  min-height: 34px;
+  margin-top: 9px;
+  color: var(--navy);
+  background: #fffdf5;
+  border: 2px solid var(--navy);
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.daily-quest-reroll:disabled {
+  opacity: 0.48;
+}
+
+.achievement-section-heading {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 3px;
+  margin: 24px 0 10px;
+  padding-top: 16px;
+  border-top: 4px double #b8aa83;
+}
+
+.achievement-section-heading .quest-label {
+  margin: 0;
+}
+
+.achievement-section-heading p:last-child {
+  color: #49636e;
+  font: 0.7rem/1.5 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.daily-dish-pick {
+  min-height: 30px;
+  margin-left: auto;
+  padding: 5px 8px;
+  color: var(--navy);
+  background: var(--yellow);
+  border: 2px solid var(--navy);
+  font-size: 0.67rem;
+  font-weight: 900;
+}
+
+.dish-list .daily-dish-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dish-list .daily-dish-row > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.daily-dish-pick[aria-pressed="true"] {
+  color: #fff;
+  background: #4f7651;
 }
 
 .achievement-summary {
@@ -1007,19 +1427,94 @@ body.town-immersive {
   font: 0.72rem/1.5 system-ui, "Noto Sans TC", sans-serif;
 }
 
+.achievement-disclosure-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.achievement-disclosure-actions button {
+  min-height: 40px;
+  padding: 7px 9px;
+  color: var(--navy);
+  font-size: 0.68rem;
+  font-weight: 900;
+  background: #fffdf5;
+  border: 3px solid var(--navy);
+  cursor: pointer;
+}
+
+.achievement-disclosure-actions button:disabled {
+  cursor: wait;
+  opacity: 0.48;
+}
+
+.achievement-disclosure-actions button:focus-visible,
+.achievement-category-heading:focus-visible {
+  outline: 4px solid var(--yellow);
+  outline-offset: 2px;
+}
+
 .achievement-list {
   display: grid;
   gap: 9px;
 }
 
+.achievement-category {
+  min-width: 0;
+}
+
 .achievement-category-heading {
-  margin: 9px 0 0;
+  min-height: 44px;
+  margin: 0;
   padding: 7px 9px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
   color: #fff;
   font-size: 0.7rem;
+  font-weight: 900;
   letter-spacing: 0.06em;
+  list-style: none;
+  cursor: pointer;
   background: var(--navy);
   border-left: 5px solid var(--yellow);
+}
+
+.achievement-category-heading::-webkit-details-marker {
+  display: none;
+}
+
+.achievement-category-heading::before {
+  content: "+";
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  color: var(--navy);
+  background: var(--yellow);
+  border: 2px solid #fff5ce;
+}
+
+.achievement-category[open] > .achievement-category-heading::before {
+  content: "−";
+}
+
+.achievement-category-heading small {
+  padding: 4px 6px;
+  color: var(--navy);
+  font-size: 0.65rem;
+  letter-spacing: 0;
+  background: var(--paper);
+  border: 2px solid #fff5ce;
+}
+
+.achievement-category-items {
+  display: grid;
+  gap: 9px;
+  padding-top: 9px;
 }
 
 .achievement-card {
@@ -1465,6 +1960,447 @@ body.town-immersive {
   line-height: 1.75;
 }
 
+.town-auth-open {
+  overflow: hidden;
+}
+
+.town-auth-dialog {
+  width: min(590px, calc(100% - 28px));
+  max-height: min(760px, calc(100dvh - 30px));
+  padding: 0;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--paper);
+  border: 5px solid var(--navy);
+  border-radius: 0;
+  box-shadow: 10px 10px 0 rgba(14, 41, 55, 0.5);
+}
+
+.town-auth-dialog::backdrop {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    rgba(8, 31, 43, 0.82);
+  background-size: 18px 18px;
+  backdrop-filter: blur(3px);
+}
+
+.town-auth-shell {
+  position: relative;
+  max-height: calc(100dvh - 40px);
+  padding: clamp(22px, 4vw, 34px);
+  overflow-y: auto;
+  scrollbar-color: var(--blue) var(--cream);
+}
+
+.town-auth-close {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+  float: right;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 900;
+  background: var(--orange);
+  border: 3px solid var(--navy);
+  box-shadow: 3px 3px 0 rgba(14, 41, 55, 0.28);
+  cursor: pointer;
+}
+
+.town-auth-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-right: 48px;
+}
+
+.town-auth-badge {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--navy);
+  font-size: 1.5rem;
+  background: var(--yellow);
+  border: 4px solid var(--navy);
+  box-shadow: 4px 4px 0 #c99935;
+}
+
+.town-auth-heading h2,
+.town-auth-success h2 {
+  margin: 0;
+  color: var(--navy);
+  font-family: ui-rounded, "Arial Rounded MT Bold", "Noto Sans TC", sans-serif;
+  font-size: clamp(1.55rem, 5vw, 2.25rem);
+  line-height: 1.15;
+}
+
+.town-auth-heading .pixel-kicker,
+.town-auth-success .pixel-kicker {
+  margin-bottom: 5px;
+}
+
+.town-auth-lead {
+  margin: 22px 0 7px;
+  color: var(--navy);
+  font-family: system-ui, "Noto Sans TC", sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.town-auth-benefit,
+.town-auth-note,
+.town-auth-legal,
+.town-auth-details,
+.town-auth-code-step > p,
+.town-auth-success > p {
+  color: #496671;
+  font-family: system-ui, "Noto Sans TC", sans-serif;
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+.town-auth-benefit {
+  margin: 0 0 20px;
+}
+
+.town-auth-form,
+.town-auth-eligibility {
+  display: grid;
+  gap: 13px;
+}
+
+.town-auth-form label:not(.town-auth-consent) {
+  display: grid;
+  gap: 7px;
+  color: var(--navy);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.town-auth-form input:not([type="checkbox"]) {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  color: var(--ink);
+  font: 700 0.95rem/1.3 system-ui, "Noto Sans TC", sans-serif;
+  background: #fffdf5;
+  border: 3px solid #7f9ca6;
+  border-radius: 0;
+  box-shadow: inset 3px 3px 0 rgba(23, 52, 67, 0.08);
+}
+
+.town-auth-form input:focus-visible,
+.town-auth-dialog button:focus-visible,
+.town-auth-dialog a:focus-visible,
+.town-auth-details summary:focus-visible {
+  outline: 4px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.town-auth-form small {
+  color: #607883;
+  font: 0.72rem/1.55 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.town-auth-consent {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  color: #385764;
+  font: 0.76rem/1.6 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.town-auth-consent input {
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--green);
+}
+
+.town-auth-primary,
+.town-auth-line,
+.town-auth-text {
+  min-height: 46px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.town-auth-primary {
+  color: #fff;
+  font-weight: 900;
+  background: var(--navy);
+  border: 3px solid #0d2734;
+  box-shadow: 4px 4px 0 #a78334;
+}
+
+.town-auth-primary:hover,
+.town-auth-primary:focus-visible {
+  color: var(--navy);
+  background: var(--yellow);
+}
+
+.town-auth-primary:disabled,
+.town-auth-line:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.town-auth-text {
+  justify-self: start;
+  padding-inline: 0;
+  color: var(--blue);
+  font-size: 0.76rem;
+  font-weight: 900;
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  box-shadow: none;
+}
+
+.town-auth-status {
+  min-height: 1.5em;
+  margin: 0;
+  color: #496671;
+  font: 800 0.76rem/1.55 system-ui, "Noto Sans TC", sans-serif;
+}
+
+.town-auth-status.is-error {
+  color: #a43624;
+}
+
+.town-auth-status.is-success {
+  color: #396f48;
+}
+
+.town-auth-social {
+  margin-top: 18px;
+}
+
+.town-auth-divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  color: #69808a;
+  font-size: 0.7rem;
+}
+
+.town-auth-divider::before,
+.town-auth-divider::after {
+  height: 2px;
+  content: "";
+  background: #b7c6c4;
+}
+
+.town-auth-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--navy);
+  font-weight: 900;
+  background: #fffdf5;
+  border: 3px solid var(--green);
+  box-shadow: 4px 4px 0 rgba(42, 89, 58, 0.24);
+}
+
+.town-auth-line img {
+  width: 36px;
+  height: 36px;
+}
+
+.town-auth-code-step {
+  padding: 18px;
+  background: #f5e8c7;
+  border: 3px dashed #a88d4c;
+}
+
+.town-auth-code-step > p {
+  margin: 0 0 14px;
+}
+
+.town-auth-legal {
+  margin: 20px 0 0;
+}
+
+.town-auth-legal a,
+.town-auth-details a {
+  color: var(--blue);
+  font-weight: 900;
+  text-underline-offset: 3px;
+}
+
+.town-auth-details {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #efe5cc;
+  border: 3px solid #c0ae7c;
+}
+
+.town-auth-details summary {
+  color: var(--navy);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.town-auth-details p {
+  margin: 10px 0 0;
+}
+
+.town-auth-success {
+  min-height: 330px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 12px;
+}
+
+.town-auth-success .town-auth-badge {
+  margin-bottom: 8px;
+}
+
+.town-auth-success > p {
+  margin: 0;
+}
+
+/* The shared family-account flow stays in town, but wears the town's pixel UI. */
+.account-dialog {
+  width: min(640px, calc(100% - 28px));
+  max-height: min(820px, calc(100dvh - 28px));
+  color: var(--ink);
+  background: var(--paper);
+  border: 5px solid var(--navy);
+  border-radius: 0;
+  box-shadow: 10px 10px 0 rgba(14, 41, 55, 0.5);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, "Noto Sans TC", monospace;
+}
+
+.account-dialog::backdrop {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    rgba(8, 31, 43, 0.82);
+  background-size: 18px 18px;
+  backdrop-filter: blur(3px);
+}
+
+.account-dialog-shell {
+  max-height: calc(100dvh - 38px);
+  scrollbar-color: var(--blue) var(--cream);
+}
+
+.account-dialog .modal-close-button {
+  color: #fff;
+  background: var(--orange);
+  border: 3px solid var(--navy);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 rgba(14, 41, 55, 0.28);
+}
+
+.account-dialog .account-dialog-mark,
+.account-dialog .profile-avatar-preview,
+.account-dialog .account-child-avatar {
+  border-radius: 0;
+  image-rendering: pixelated;
+}
+
+.account-dialog .account-dialog-mark {
+  color: var(--navy);
+  background: var(--yellow);
+  border: 3px solid var(--navy);
+  box-shadow: 4px 4px 0 #c99935;
+  transform: none;
+}
+
+.account-dialog h2,
+.account-dialog .account-child-editor-heading h4 {
+  color: var(--navy);
+  font-family: ui-rounded, "Arial Rounded MT Bold", "Noto Sans TC", sans-serif;
+}
+
+.account-dialog .account-auth-form input:not([type="checkbox"]),
+.account-dialog .profile-settings-grid input,
+.account-dialog .child-form input:not([type="checkbox"]),
+.account-dialog .child-form select {
+  min-height: 48px;
+  color: var(--ink);
+  background: #fffdf5;
+  border: 3px solid #7f9ca6;
+  border-radius: 0;
+  box-shadow: inset 3px 3px 0 rgba(23, 52, 67, 0.08);
+}
+
+.account-dialog .account-consent,
+.account-dialog .account-registration-notice,
+.account-dialog .account-privacy,
+.account-dialog .profile-settings-form,
+.account-dialog .account-family-panel,
+.account-dialog .account-child-row,
+.account-dialog .account-child-editor .child-form,
+.account-dialog .account-plan-panel,
+.account-dialog .account-support {
+  border-radius: 0;
+}
+
+.account-dialog .account-sign-in,
+.account-dialog .profile-save-button,
+.account-dialog .account-section-heading > button,
+.account-dialog .account-child-row button,
+.account-dialog .child-form-actions button,
+.account-dialog .profile-photo-actions label,
+.account-dialog .profile-photo-actions button,
+.account-dialog .account-text-button {
+  border-radius: 0;
+  font-weight: 900;
+}
+
+.account-dialog .account-sign-in:not(.line-sign-in),
+.account-dialog .profile-save-button,
+.account-dialog .child-form-actions button:not(.secondary) {
+  background: var(--navy);
+  border: 3px solid #0d2734;
+  box-shadow: 4px 4px 0 #a78334;
+}
+
+.account-dialog .line-icon-button {
+  border: 3px solid var(--navy);
+  box-shadow: 4px 4px 0 rgba(14, 41, 55, 0.26);
+  overflow: hidden;
+}
+
+.account-dialog .line-icon-button img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.account-dialog .line-account-settings {
+  margin-block: 18px;
+}
+
+.account-dialog .is-child-settings-view > #sharedLineAccountSettings,
+.account-dialog .is-onboarding > #sharedLineAccountSettings {
+  display: none;
+}
+
+.account-dialog button:focus-visible,
+.account-dialog a:focus-visible,
+.account-dialog input:focus-visible,
+.account-dialog select:focus-visible,
+.account-dialog summary:focus-visible {
+  outline: 4px solid var(--yellow);
+  outline-offset: 2px;
+}
+
 .meal-dialog {
   width: min(560px, calc(100% - 28px));
   max-height: min(720px, calc(100vh - 30px));
@@ -1640,14 +2576,38 @@ body.town-immersive {
   }
 
   .town-topbar nav .town-account-action {
-    max-width: 148px;
+    max-width: 166px;
     padding: 7px 8px;
-    font-size: 0.66rem;
+    font-size: 0.62rem;
     line-height: 1.25;
     text-align: center;
   }
 
-  .town-topbar nav span,
+  .account-dialog {
+    inset: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: 94dvh;
+    margin: 0;
+    border-width: 5px 0 0;
+    transform: translateY(36px);
+  }
+
+  .account-dialog.is-visible {
+    transform: translateY(0);
+  }
+
+  .account-dialog-shell {
+    max-height: 94dvh;
+    padding: 26px 18px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .account-dialog input:not([type="checkbox"]),
+  .account-dialog select {
+    font-size: 16px;
+  }
+
+  .town-topbar nav > span,
   .town-brand small {
     display: none;
   }
@@ -1655,6 +2615,20 @@ body.town-immersive {
   .town-brand img {
     width: 34px;
     height: 34px;
+  }
+
+  .town-auth-dialog {
+    width: calc(100% - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .town-auth-shell {
+    max-height: calc(100dvh - 26px);
+    padding: 18px 16px 22px;
+  }
+
+  .town-auth-form input:not([type="checkbox"]) {
+    font-size: 16px;
   }
 
   .town-layout {
@@ -1741,8 +2715,11 @@ body.town-immersive {
   }
 
   .player-style-picker button {
-    flex: 1;
-    min-height: 44px;
+    min-height: 48px;
+  }
+
+  .player-avatar-groups > section {
+    grid-template-columns: 58px minmax(0, 1fr);
   }
 
   .music-toggle,
@@ -1869,12 +2846,14 @@ body.town-immersive {
   .quest-panel {
     position: fixed;
     z-index: 30;
+    top: auto;
     right: max(6px, env(safe-area-inset-right));
     bottom: max(6px, env(safe-area-inset-bottom));
     left: max(6px, env(safe-area-inset-left));
     width: auto;
     max-height: min(84dvh, 720px);
     overflow-y: auto;
+    scrollbar-gutter: auto;
     padding: 12px 16px calc(18px + env(safe-area-inset-bottom));
     background: rgba(255, 248, 231, 0.96);
     box-shadow: 0 -12px 36px rgba(14, 41, 55, 0.28);

@@ -33,3 +33,9 @@ python3 scripts/fetch_national_school_directory.py --year 115
 每次請求間隔一秒、逾時 30 秒、最多重試一次，維持 TLS 憑證驗證。全部來源下載且驗證成功後才原子替換整理名冊；相同內容不改寫名冊。原始檔以內容雜湊命名保存。
 
 教育部代碼是字串，可能包含前導零或英文字母；不得轉成整數，也不得當作校園食材平臺 School ID。日後啟用前須另外核對兩套識別碼與同日菜單可用性，再明確加入既有服務名冊。不可只依同名學校自動配對或批量開啟提醒。
+
+校園食材登錄平臺的全臺國小單位與 `fatraceSchoolId` 備用對照保存在 `national-fatrace-elementary-schools.json`。該檔會保留已核對、待人工確認及找不到教育部代碼的單位，但狀態固定為 `inactive_reference_only`；只有六縣市的 `active-elementary-schools.json` 是午餐抓取來源。更新指令為：
+
+```sh
+python3 scripts/fetch_national_fatrace_school_directory.py
+```

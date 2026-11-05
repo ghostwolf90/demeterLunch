@@ -247,7 +247,10 @@ def build_static_site(
         str(school["fatraceSchoolId"]): school
         for school in official_school_meals["schools"]
     }
-    for school_id, records in official_school_meals.get("records", {}).items():
+    school_records = official_school_meals.get("records", {})
+    if not school_records:
+        raise ValueError("靜態建置沒有產生任何學校餐點快照")
+    for school_id, records in school_records.items():
         (school_meals_output / f"{school_id}.json").write_text(
             json.dumps(
                 {

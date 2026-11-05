@@ -1,6 +1,6 @@
 import cityVisibility from "@/data/reference/city-visibility.json";
+import cityServiceCatalog from "@/data/reference/city-service-catalog.json";
 import { accountDatabase } from "@/lib/account-auth";
-import { allSchools } from "@/lib/schools";
 
 type StoredCityVisibility = {
   city: string;
@@ -12,6 +12,9 @@ export type CityVisibilitySetting = {
   name: string;
   enabled: boolean;
   schoolCount: number;
+  mealUnitCount: number;
+  collectionEnabled: boolean;
+  canEnable: boolean;
   source: "default" | "database";
   updatedAt: string | null;
 };
@@ -21,14 +24,13 @@ const defaultVisibility = new Map(
 );
 
 export function cityVisibilityCatalog(): CityVisibilitySetting[] {
-  const counts = new Map<string, number>();
-  for (const school of allSchools()) {
-    counts.set(school.city, (counts.get(school.city) ?? 0) + 1);
-  }
-  return [...counts].map(([name, schoolCount]) => ({
-    name,
-    schoolCount,
-    enabled: defaultVisibility.get(name) === true,
+  return cityServiceCatalog.cities.map((city) => ({
+    name: city.name,
+    schoolCount: city.schoolCount,
+    mealUnitCount: city.mealUnitCount,
+    collectionEnabled: city.collectionEnabled === true,
+    canEnable: city.collectionEnabled === true,
+    enabled: city.collectionEnabled === true && defaultVisibility.get(city.name) === true,
     source: "default",
     updatedAt: null,
   }));
@@ -50,7 +52,7 @@ export async function loadCityVisibilitySettings(): Promise<CityVisibilitySettin
     return override
       ? {
           ...city,
-          enabled: Number(override.enabled) === 1,
+          enabled: city.canEnable && Number(override.enabled) === 1,
           source: "database" as const,
           updatedAt: override.updated_at,
         }
@@ -74,6 +76,10 @@ export function parseCityVisibilityInput(value: unknown) {
     throw new Error("學校名冊沒有這個縣市。");
   }
   if (typeof input.enabled !== "boolean") throw new Error("縣市開關必須是布林值。");
+  const setting = cityVisibilityCatalog().find((item) => item.name === city);
+  if (input.enabled && !setting?.canEnable) {
+    throw new Error("這個縣市尚未完成午餐資料來源核對，不能開啟。");
+  }
   return { city, enabled: input.enabled };
 }
 
@@ -82,6 +88,10 @@ export async function saveCityVisibilitySetting(
   enabled: boolean,
   actorId: string,
 ) {
+  const setting = cityVisibilityCatalog().find((item) => item.name === city);
+  if (!setting || (enabled && !setting.canEnable)) {
+    throw new Error("這個縣市尚未完成午餐資料來源核對，不能開啟。");
+  }
   const updatedAt = new Date().toISOString();
   await accountDatabase()
     .prepare(

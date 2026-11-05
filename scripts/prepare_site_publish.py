@@ -92,7 +92,6 @@ def _run(command: list[str], checkout: Path) -> None:
 def verify_and_build(site_checkout: Path) -> None:
     package_runner = os.environ.get("DEMETER_PACKAGE_RUNNER", "npm")
     commands = [
-        [sys.executable, "scripts/build_database.py"],
         [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
         ["node", "--check", "web/app.js"],
         [package_runner, "run", "test:worker"],

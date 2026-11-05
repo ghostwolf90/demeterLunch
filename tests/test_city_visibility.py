@@ -77,6 +77,32 @@ class CityVisibilityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "布林值"):
             set_city_visibility("甲市", 1, self.config_path, self.registry_path)
 
+    def test_reference_only_city_cannot_be_enabled(self) -> None:
+        self.registry_path.write_text(
+            json.dumps(
+                {
+                    "cities": [
+                        {
+                            "name": "甲市",
+                            "schoolCount": 2,
+                            "mealUnitCount": 2,
+                            "collectionEnabled": True,
+                        },
+                        {
+                            "name": "乙縣",
+                            "schoolCount": 1,
+                            "mealUnitCount": 0,
+                            "collectionEnabled": False,
+                        },
+                    ]
+                },
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ValueError, "尚未完成"):
+            set_city_visibility("乙縣", True, self.config_path, self.registry_path)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -29,7 +29,8 @@ def main(argv: list[str] | None = None) -> int:
   --verify-and-build        相容參數，預設即重建本機資料
   --timeout 秒數            預設 20
   --interval 秒數           預設 1.2
-  --retries 次數            預設 2""")
+  --retries 次數            預設 2
+  --workers 數量            預設 2，上限 4；全域仍維持請求間隔""")
         return 0
     if "--resume" in arguments and "--refresh-all" in arguments:
         print("--resume 與 --refresh-all 不能同時使用。", file=sys.stderr)

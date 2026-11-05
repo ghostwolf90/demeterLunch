@@ -9,12 +9,16 @@ const plan = JSON.parse(
   await readFile(new URL("../data/reference/school-refresh-groups.json", import.meta.url)),
 );
 
-test("refresh groups contain every school exactly once and keep Taichung first", () => {
+test("refresh groups contain every school exactly once and keep configured city order", () => {
   const seen = new Set();
-  let reachedTainan = false;
+  const expectedCityOrder = ["臺北市", "桃園市", "苗栗縣", "臺中市", "彰化縣", "臺南市"];
+  assert.deepEqual(plan.cityOrder, expectedCityOrder);
+  let previousCityIndex = -1;
   for (const group of plan.groups) {
-    if (group.city === "臺南市") reachedTainan = true;
-    if (reachedTainan) assert.equal(group.city, "臺南市");
+    const cityIndex = expectedCityOrder.indexOf(group.city);
+    assert.notEqual(cityIndex, -1);
+    assert.ok(cityIndex >= previousCityIndex);
+    previousCityIndex = cityIndex;
     const districts = new Set(group.districts);
     const schools = registry.schools.filter(
       (school) => school.city === group.city && districts.has(school.district),

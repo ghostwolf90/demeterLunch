@@ -1,6 +1,6 @@
 import { accountDatabase, getAccountUser, isAdultBirthDate, privateJson, digestSessionToken, sessionTokenFromRequest } from "@/lib/account-auth";
 import { lineConfiguration } from "@/lib/line-auth";
-import { lineAuthorizationUrl, oauthCookie, oauthDigest, randomOAuthValue, LINE_OAUTH_TTL } from "@/lib/line-oauth";
+import { lineAuthorizationUrl, oauthCookie, oauthDigest, randomOAuthValue, LINE_OAUTH_TOWN_RETURN_PATH, LINE_OAUTH_TTL } from "@/lib/line-oauth";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,7 @@ export async function POST(request: Request) {
   const user = await getAccountUser(request);
   if (body.mode !== "login" && body.mode !== "link") return privateJson({ error: "請重新選擇登入方式。" }, { status: 400 });
   const linking = body.mode === "link";
+  const returnTo = body.returnTo === LINE_OAUTH_TOWN_RETURN_PATH ? LINE_OAUTH_TOWN_RETURN_PATH : "/";
   if (linking && !user) return privateJson({ error: "請先登入原本的家庭帳號，再綁定 LINE。" }, { status: 401 });
   if (!linking && user) return privateJson({ error: "目前已登入，請從家庭設定綁定 LINE。" }, { status: 409 });
   if (!linking && (!isAdultBirthDate(body.birthDate) || body.caregiverConfirmed !== true)) {
@@ -36,6 +37,6 @@ export async function POST(request: Request) {
         linking ? await digestSessionToken(sessionTokenFromRequest(request)!) : null,
         now.toISOString(), new Date(now.getTime() + LINE_OAUTH_TTL * 1000).toISOString()),
   ]);
-  return privateJson({ url: lineAuthorizationUrl(config.channelId, config.redirectUri, state, nonce, await oauthDigest(verifier)) },
-    { headers: { "set-cookie": oauthCookie(request, browser) } });
+  return privateJson({ url: lineAuthorizationUrl(config.channelId, config.redirectUri, state, nonce, await oauthDigest(verifier), body.stayInWeb === true) },
+    { headers: { "set-cookie": oauthCookie(request, browser, false, returnTo) } });
 }

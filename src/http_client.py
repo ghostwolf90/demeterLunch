@@ -3,9 +3,11 @@ from __future__ import annotations
 import logging
 import os
 import ssl
+import threading
 import time
 from dataclasses import dataclass
 from email.message import Message
+from typing import Callable
 from urllib.error import HTTPError, URLError
 from urllib.request import HTTPSHandler, Request, build_opener
 
@@ -45,6 +47,38 @@ class HttpResponse:
             return self.data.decode("utf-8", errors="replace")
 
 
+class RequestRateLimiter:
+    """Keep request starts spaced apart, including across worker threads."""
+
+    def __init__(
+        self,
+        min_interval: float,
+        *,
+        clock: Callable[[], float] = time.monotonic,
+        sleeper: Callable[[float], None] = time.sleep,
+    ) -> None:
+        self.min_interval = max(0.0, min_interval)
+        self._clock = clock
+        self._sleeper = sleeper
+        self._next_request_at = 0.0
+        self._request_count = 0
+        self._lock = threading.Lock()
+
+    def wait(self) -> None:
+        with self._lock:
+            now = self._clock()
+            while now < self._next_request_at:
+                self._sleeper(self._next_request_at - now)
+                now = self._clock()
+            self._next_request_at = now + self.min_interval
+            self._request_count += 1
+
+    @property
+    def request_count(self) -> int:
+        with self._lock:
+            return self._request_count
+
+
 class HttpClient:
     def __init__(
         self,
@@ -53,12 +87,13 @@ class HttpClient:
         min_interval: float = 1.0,
         retries: int = 2,
         user_agent: str = DEFAULT_USER_AGENT,
+        rate_limiter: RequestRateLimiter | None = None,
     ) -> None:
         self.timeout = timeout
         self.min_interval = max(0.0, min_interval)
         self.retries = max(0, retries)
         self.user_agent = user_agent
-        self._last_request_at: float | None = None
+        self.rate_limiter = rate_limiter or RequestRateLimiter(self.min_interval)
         self._opener = build_opener(HTTPSHandler(context=_verified_ssl_context()))
 
     def get(
@@ -71,14 +106,13 @@ class HttpClient:
     ) -> HttpResponse:
         last_error: Exception | None = None
         for attempt in range(self.retries + 1):
-            self._wait_for_rate_limit()
+            self.rate_limiter.wait()
             headers = {"User-Agent": self.user_agent, "Accept": accept}
             headers.update(extra_headers or {})
             request = Request(url, headers=headers, method="GET")
             try:
                 LOGGER.debug("GET %s", url)
                 with self._opener.open(request, timeout=self.timeout) as response:
-                    self._last_request_at = time.monotonic()
                     data = response.read(max_bytes + 1)
                     if len(data) > max_bytes:
                         raise ResponseTooLarge(
@@ -91,7 +125,6 @@ class HttpClient:
                         headers=response.headers,
                     )
             except HTTPError as exc:
-                self._last_request_at = time.monotonic()
                 last_error = exc
                 if exc.code != 429 and not 500 <= exc.code < 600:
                     raise RequestError(f"HTTP {exc.code} for {url}") from exc
@@ -101,7 +134,6 @@ class HttpClient:
                 LOGGER.warning("HTTP %s for %s; retrying in %.1fs", exc.code, url, delay)
                 time.sleep(delay)
             except (URLError, TimeoutError, OSError) as exc:
-                self._last_request_at = time.monotonic()
                 last_error = exc
                 if attempt >= self.retries:
                     break
@@ -110,14 +142,6 @@ class HttpClient:
                 time.sleep(delay)
 
         raise RequestError(f"Request failed after retries: {url}: {last_error}")
-
-    def _wait_for_rate_limit(self) -> None:
-        if self._last_request_at is None:
-            return
-        elapsed = time.monotonic() - self._last_request_at
-        remaining = self.min_interval - elapsed
-        if remaining > 0:
-            time.sleep(remaining)
 
 
 def _retry_delay(retry_after: str | None, attempt: int) -> float:

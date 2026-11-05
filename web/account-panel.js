@@ -49,6 +49,16 @@ if (accountPanelTriggers.length) {
             </label>
             <button class="account-sign-in" id="sharedRequestAuthCode" type="submit">寄送登入驗證碼</button>
             <p class="account-login-note">不需要設定密碼，透過 Email 驗證即可登入。</p>
+            <div class="account-social-login" id="sharedLineLoginOptions" hidden>
+              <p class="account-login-divider"><span>或使用其他方式登入</span></p>
+              <div class="account-login-providers" role="group" aria-label="其他登入方式">
+                <div class="account-login-provider">
+                  <button class="line-icon-button" id="sharedLineSignIn" type="button" aria-label="使用 LINE 登入或免費註冊" title="使用 LINE 登入或免費註冊"><img src="/assets/line-login-icon.png" width="64" height="64" alt="" /></button>
+                  <span class="account-provider-label">LINE 登入</span>
+                </div>
+              </div>
+              <p class="account-login-note account-provider-help">已用 Email 建立帳號、尚未綁定 LINE？請先用 Email 登入，再到家庭設定綁定。已綁定者可直接用 LINE 登入。</p>
+            </div>
             <p class="account-legal-note">繼續使用即表示你同意<a href="/terms">服務條款</a>，並已閱讀<a href="/privacy">隱私權政策</a>；公開午餐查詢不需要註冊。</p>
             <p class="account-registration-notice">驗證碼 10 分鐘內有效；完整生日不會保存。</p>
             <p class="form-status" id="sharedAuthRequestStatus" role="status" aria-live="polite"></p>
@@ -71,6 +81,11 @@ if (accountPanelTriggers.length) {
           <div class="account-profile-hero">
             <div class="profile-avatar-preview is-parent" id="sharedParentAvatarPreview" aria-hidden="true">家</div>
             <div><p class="kicker">家庭帳號</p><h2>個人設定</h2><p id="sharedAccountIdentity">—</p></div>
+          </div>
+          <div class="line-account-settings" id="sharedLineAccountSettings" hidden>
+            <button class="account-sign-in line-sign-in" id="sharedLinkLineAccount" type="button">綁定 LINE 登入</button>
+            <p class="account-login-note" id="sharedLineLinkNote">綁定後可用 LINE 登入同一個家庭帳號，孩子資料與一口護照會保留。</p>
+            <p class="form-status" id="sharedLineLinkStatus" role="status" aria-live="polite"></p>
           </div>
           <form class="profile-settings-form" id="sharedParentProfileForm">
             <div class="profile-photo-actions account-photo-actions">
@@ -168,12 +183,14 @@ if (accountPanelTriggers.length) {
     "sharedAccountDialog", "sharedCloseAccountDialog", "sharedAccountSignedOutView",
     "sharedAccountSignedInView", "sharedEmailAuthForm", "sharedAuthEmail",
     "sharedAuthBirthDate", "sharedAuthCaregiverConfirmed", "sharedRequestAuthCode",
-    "sharedAuthRequestStatus", "sharedEmailCodeStep", "sharedEmailCodeForm",
+    "sharedAuthRequestStatus", "sharedLineLoginOptions", "sharedLineSignIn",
+    "sharedEmailCodeStep", "sharedEmailCodeForm",
     "sharedAuthCode", "sharedVerifyAuthCode", "sharedAuthVerifyStatus",
     "sharedAuthMaskedEmail", "sharedChangeAuthEmail", "sharedParentAvatarPreview",
     "sharedAccountIdentity", "sharedParentProfileForm", "sharedParentAvatarInput",
     "sharedRemoveParentAvatar", "sharedParentName", "sharedParentNickname",
     "sharedSaveParentProfile", "sharedParentProfileStatus", "sharedAccountAddChild",
+    "sharedLineAccountSettings", "sharedLinkLineAccount", "sharedLineLinkNote", "sharedLineLinkStatus",
     "sharedAccountChildList", "sharedAccountFamilyStatus", "sharedAccountChildEditor",
     "sharedChildSetupTitle", "sharedChildSetupDescription", "sharedChildForm",
     "sharedChildAvatarPreview", "sharedChildAvatarInput", "sharedRemoveChildAvatar",
@@ -287,14 +304,15 @@ if (accountPanelTriggers.length) {
       const status = trigger.querySelector("[data-account-status]");
       const avatar = trigger.querySelector("[data-account-avatar]");
       if (authenticated) {
-        if (label) label.textContent = displayName;
-        if (label) LunchI18n.keep(label);
+        const authenticatedLabel = trigger.dataset.authenticatedLabel || displayName;
+        if (label) label.textContent = authenticatedLabel;
+        if (label && !trigger.dataset.authenticatedLabel) LunchI18n.keep(label);
         if (status) {
           status.textContent = "";
           status.hidden = true;
         }
         if (avatar) renderProfileAvatar(avatar, state.account.user);
-        trigger.setAttribute("aria-label", `帳號：${displayName}，已登入`);
+        trigger.setAttribute("aria-label", `家庭帳號：${displayName}，已登入`);
         trigger.title = `開啟${displayName}的帳號設定`;
       } else {
         const signedOutLabel = label?.dataset.signedOutLabel || "帳號";
@@ -324,10 +342,6 @@ if (accountPanelTriggers.length) {
     return state.schools.find((school) => Number(school.fatraceSchoolId) === Number(schoolId)) || null;
   }
 
-  function districtNamePriority(district) {
-    return Array.from(String(district || "")).length === 2 ? 0 : 1;
-  }
-
   function renderChildSchools(preferredSchoolId) {
     refs.sharedChildSchool.replaceChildren();
     const placeholder = node("option", "", state.schools.length ? "請選擇孩子就讀的國小" : "正在讀取學校名冊…");
@@ -339,18 +353,7 @@ if (accountPanelTriggers.length) {
       if (!groups.has(label)) groups.set(label, []);
       groups.get(label).push(school);
     }
-    const cityOrder = new Map();
-    for (const [, schools] of groups) {
-      const city = schools[0]?.city;
-      if (!cityOrder.has(city)) cityOrder.set(city, cityOrder.size);
-    }
-    const orderedGroups = [...groups.entries()].sort(([, firstSchools], [, secondSchools]) => {
-      const first = firstSchools[0];
-      const second = secondSchools[0];
-      return (cityOrder.get(first?.city) ?? 0) - (cityOrder.get(second?.city) ?? 0)
-        || districtNamePriority(first?.district) - districtNamePriority(second?.district);
-    });
-    for (const [label, schools] of orderedGroups) {
+    for (const [label, schools] of groups) {
       const group = document.createElement("optgroup");
       group.label = label;
       for (const school of schools) {
@@ -472,6 +475,7 @@ if (accountPanelTriggers.length) {
     refs.sharedAccountSignedOutView.hidden = authenticated;
     refs.sharedAccountSignedInView.hidden = !authenticated;
     refs.sharedAccountSignedInView.classList.toggle("is-onboarding", onboardingActive);
+    refs.sharedLineLoginOptions.hidden = authenticated || !state.account.lineLoginEnabled;
     if (!authenticated) {
       renderEmailAuthStep();
       return;
@@ -485,6 +489,12 @@ if (accountPanelTriggers.length) {
     }
     renderProfileAvatar(refs.sharedParentAvatarPreview, state.account.user, state.parentAvatarPreviewUrl);
     refs.sharedRemoveParentAvatar.hidden = !state.account.user?.avatarUrl;
+    refs.sharedLineAccountSettings.hidden = !state.account.lineLoginEnabled && !state.account.lineLinked;
+    refs.sharedLinkLineAccount.disabled = Boolean(state.account.lineLinked) || !state.account.lineLoginEnabled;
+    refs.sharedLinkLineAccount.textContent = state.account.lineLinked ? "已綁定 LINE 登入" : "綁定 LINE 登入";
+    refs.sharedLineLinkNote.textContent = state.account.lineLinked
+      ? "你可以使用 LINE 登入這個家庭帳號。"
+      : "綁定後可用 LINE 登入同一個家庭帳號，孩子資料與一口護照會保留。";
     renderChildren();
     renderPlan();
     const showEditor = onboardingActive || state.creatingChild || state.editingChild;
@@ -540,6 +550,7 @@ if (accountPanelTriggers.length) {
       state.onboardingActive = false;
     }
     renderAccount();
+    window.dispatchEvent(new CustomEvent("accountpanelchange", { detail: { account: state.account } }));
     if (state.onboardingActive && refs.sharedAccountDialog.open) void markOnboardingStarted();
   }
 
@@ -560,6 +571,84 @@ if (accountPanelTriggers.length) {
     const awaitingCode = Boolean(state.authChallengeId);
     refs.sharedEmailAuthForm.hidden = awaitingCode;
     refs.sharedEmailCodeStep.hidden = !awaitingCode;
+  }
+
+  function lineAuthResultMessage(status, linking = false) {
+    if (linking && status !== "success" && status !== "linked") return {
+      cancelled: "已取消 LINE 綁定，你仍可使用原本的登入方式。",
+      expired: "LINE 綁定驗證已過期或帳號狀態改變，請重新開始綁定。",
+      conflict: "這個 LINE 或家庭帳號已綁定其他帳號，無法完成此次綁定。",
+      failed: "LINE 綁定暫時無法完成，請稍後再試。",
+      closed: "已關閉 LINE 綁定視窗，尚未完成綁定，可以重新開始。",
+    }[status] || null;
+    return {
+      success: "已使用 LINE 登入。",
+      linked: "LINE 已綁定，孩子資料與一口護照會保留。",
+      cancelled: "你已取消 LINE 授權，可以重新登入或使用 Email。",
+      expired: "登入已過期或帳號狀態改變，請重新開始。",
+      conflict: "這個 LINE 或家庭帳號已綁定其他帳號，請使用原本的登入方式。",
+      failed: "LINE 登入暫時無法完成，請重新開始或使用 Email。",
+      closed: "已關閉 LINE 登入視窗，尚未完成驗證，可以重新開始。",
+    }[status] || null;
+  }
+
+  function lineAuthReturnPath() {
+    return window.location.pathname.startsWith("/lunch-town") ? "/lunch-town/" : "/";
+  }
+
+  async function startLineAuth(mode) {
+    const linking = mode === "link";
+    const button = linking ? refs.sharedLinkLineAccount : refs.sharedLineSignIn;
+    const status = linking ? refs.sharedLineLinkStatus : refs.sharedAuthRequestStatus;
+    if (!linking && (!refs.sharedAuthBirthDate.reportValidity() || !refs.sharedAuthCaregiverConfirmed.reportValidity())) return;
+    button.disabled = true;
+    setFormStatus(status, "正在前往 LINE…");
+    const request = {
+      mode,
+      returnTo: lineAuthReturnPath(),
+      birthDate: linking ? undefined : refs.sharedAuthBirthDate.value,
+      caregiverConfirmed: linking ? undefined : refs.sharedAuthCaregiverConfirmed.checked,
+    };
+    try {
+      if (window.LineAuthReturn?.isStandalone()) {
+        const result = await window.LineAuthReturn.start({ ...request, stayInWeb: true });
+        await loadAccount();
+        const succeeded = linking
+          ? state.account.authenticated && state.account.lineLinked
+          : state.account.authenticated;
+        if ((result.status === "success" || result.status === "linked" || result.status === "closed") && succeeded) {
+          if (!linking) await window.ProductAnalytics?.lineSignup();
+          resetEmailAuthForm();
+          setFormStatus(status, linking
+            ? "LINE 已綁定，孩子資料與一口護照會保留。"
+            : "已使用 LINE 登入。", "success");
+          if (state.onboardingActive) {
+            void markOnboardingStarted();
+            focusChildEditor();
+          }
+          return;
+        }
+        throw new Error(
+          result.status === "success" || result.status === "linked"
+            ? "目前無法確認 LINE 登入結果，請重新整理後再試。"
+            : lineAuthResultMessage(result.status, linking) || "目前無法確認 LINE 登入結果，請重新整理後再試。",
+        );
+      }
+      const response = await fetch("/api/auth/line/start", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(request),
+      });
+      const payload = await responsePayload(response);
+      if (!response.ok) throw new Error(payload.error || "目前無法使用 LINE 登入。");
+      const destination = new URL(payload.url);
+      if (destination.origin !== "https://access.line.me") throw new Error("登入網址有誤，請稍後再試。");
+      window.location.assign(destination.href);
+    } catch (error) {
+      setFormStatus(status, error instanceof Error ? error.message : "目前無法使用 LINE 登入。", "error");
+      button.disabled = linking && Boolean(state.account.lineLinked);
+    }
   }
 
   async function requestEmailAuthCode() {
@@ -846,6 +935,8 @@ if (accountPanelTriggers.length) {
     event.preventDefault();
     await verifyEmailAuthCode();
   });
+  refs.sharedLineSignIn.addEventListener("click", () => void startLineAuth("login"));
+  refs.sharedLinkLineAccount.addEventListener("click", () => void startLineAuth("link"));
   refs.sharedAuthCode.addEventListener("input", () => {
     refs.sharedAuthCode.value = refs.sharedAuthCode.value.replace(/\D/g, "").slice(0, 6);
   });
@@ -1001,9 +1092,20 @@ if (accountPanelTriggers.length) {
   Promise.allSettled([loadSchools(), loadAccount()]).then(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.get("account") === "1") {
+      const lineResult = url.searchParams.get("line");
+      if (lineResult === "success" && !window.opener) void window.ProductAnalytics?.lineSignup();
       url.searchParams.delete("account");
+      url.searchParams.delete("line");
       window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+      if (window.opener && lineResult) return;
       openDialog(accountPanelTriggers[0]);
+      const linking = state.account.authenticated && lineResult !== "success";
+      const message = lineAuthResultMessage(lineResult, linking);
+      if (message) setFormStatus(
+        linking ? refs.sharedLineLinkStatus : refs.sharedAuthRequestStatus,
+        message,
+        lineResult === "success" || lineResult === "linked" ? "success" : "error",
+      );
     }
     if (state.onboardingActive) {
       if (!refs.sharedAccountDialog.open) openDialog(accountPanelTriggers[0]);

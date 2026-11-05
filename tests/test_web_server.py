@@ -214,7 +214,7 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('credentials: "same-origin"', account_js)
         self.assertIn('profile?.displayName || profile?.nickname || profile?.name', account_js)
         self.assertIn('image.src = source', account_js)
-        self.assertIn('if (label) label.textContent = displayName', account_js)
+        self.assertIn('if (label) label.textContent = authenticatedLabel', account_js)
         self.assertIn('status.hidden = true', account_js)
         self.assertIn('dialog.showModal()', account_js)
         self.assertIn('if (event.target === refs.sharedAccountDialog) closeDialog()', account_js)
@@ -557,7 +557,10 @@ class SiteLayoutTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
 
         self.assertIn("好好吃飯｜國小營養午餐查詢、每日菜單與晚餐搭配", index_html)
-        self.assertIn("好好吃飯提供臺中市、臺南市國小每日營養午餐查詢", index_html)
+        self.assertIn(
+            "好好吃飯提供臺北市、桃園市、苗栗縣、臺中市、彰化縣、臺南市國小每日營養午餐查詢",
+            index_html,
+        )
         self.assertIn("過敏原注意事項", index_html)
         self.assertNotIn("過敏安全保證", index_html)
         self.assertNotIn("查詢臺中市國小每日及每週營養午餐菜單", index_html)

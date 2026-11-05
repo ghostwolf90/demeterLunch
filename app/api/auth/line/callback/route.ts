@@ -1,7 +1,7 @@
 import { clearRegistrationEventCookie, registrationEventCookie } from "@/lib/registration-event";
 import { accountDatabase, createSession, digestSessionToken, getAccountUser, sessionCookie, sessionTokenFromRequest } from "@/lib/account-auth";
 import { lineConfiguration } from "@/lib/line-auth";
-import { oauthBrowserToken, oauthCookie, oauthDigest, verifiedLineSubject } from "@/lib/line-oauth";
+import { oauthBrowserToken, oauthCookie, oauthDigest, oauthReturnPath, verifiedLineSubject } from "@/lib/line-oauth";
 
 type Challenge = {
   nonce: string; code_verifier: string; auth_user_id: string | null;
@@ -10,9 +10,10 @@ type Challenge = {
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const returnTo = oauthReturnPath(request);
   const finish = (status: string, session?: string, registration?: string) => {
     const headers = new Headers({
-      location: `/?account=1&line=${status}`, "cache-control": "private, no-store",
+      location: `${returnTo}?account=1&line=${status}`, "cache-control": "private, no-store",
       "referrer-policy": "no-referrer",
     });
     headers.append("set-cookie", oauthCookie(request, "", true));
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
       if (!user || user.id !== challenge.auth_user_id || !sessionToken
         || await digestSessionToken(sessionToken) !== challenge.session_digest) return finish("expired");
     } else if (user) return finish("expired");
-    if (url.searchParams.has("error")) return finish("cancelled");
+    if (url.searchParams.has("error")) return finish(url.searchParams.get("error") === "access_denied" ? "cancelled" : "failed");
     const code = url.searchParams.get("code");
     if (!code || code.length > 2048) return finish("failed");
     const subject = await verifiedLineSubject({ code, verifier: challenge.code_verifier,

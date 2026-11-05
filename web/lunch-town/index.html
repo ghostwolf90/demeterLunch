@@ -4,8 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#18394a" />
-    <meta name="description" content="走進原創復古像素風格的臺中 29 區營養午餐小鎮，探索各區地方特色、和鎮上角色對話並查看各校指定日期午餐。" />
+    <meta name="description" content="走進原創復古像素風格的臺中、苗栗與彰化午餐小鎮，依行政區相對方位探索國小、地方建築、山海與農田景觀。" />
     <title>營養午餐小鎮｜好好吃飯</title>
+    <script>
+      (() => {
+        const token = new URLSearchParams(window.location.hash.slice(1)).get("map-preview") || "";
+        if (/^[A-Za-z0-9_-]{43}$/.test(token)) window.__lunchTownMapPreviewToken = token;
+        if (window.location.hash) window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+      })();
+    </script>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-EDXYFV1B3L"></script>
     <script>
@@ -14,11 +21,12 @@
       gtag('js', new Date());
       gtag('config', 'G-EDXYFV1B3L');
     </script>
-    <script src="/locales/en.js?v=20261104-neighbor-cities"></script>
-    <script src="/i18n.js?v=20261104-neighbor-cities"></script>
+    <script src="/locales/en.js?v=20261105-player-civic-map-preview"></script>
+    <script src="/i18n.js?v=20261105-player-civic-map-preview"></script>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="stylesheet" href="./styles.css?v=20261103-civic-housing" />
+    <link rel="stylesheet" href="/styles.css?v=20261104-town-auth" />
+    <link rel="stylesheet" href="./styles.css?v=20261105-player-civic-map-preview" />
   </head>
   <body>
     <header class="town-topbar">
@@ -29,7 +37,9 @@
       <nav aria-label="營養午餐小鎮導覽">
         <a href="/">午餐查詢</a>
         <span aria-current="page">午餐小鎮</span>
-        <a class="town-account-action" id="townAccountAction" href="/?account=1">免費註冊・保存成就</a>
+        <button class="town-account-action" id="townAccountAction" data-account-panel-trigger data-authenticated-label="家庭帳號" type="button" aria-haspopup="dialog" aria-label="登入或建立免費家庭帳號" aria-busy="true" disabled>
+          <span data-account-label data-signed-out-label="登入／免費註冊・保存任務與金幣">登入／免費註冊・保存任務與金幣</span>
+        </button>
       </nav>
     </header>
 
@@ -37,8 +47,8 @@
       <section class="game-card" id="gameCard" aria-labelledby="townTitle">
         <div class="game-hud">
           <div>
-            <p class="pixel-kicker">TAICHUNG 29 DISTRICTS · LUNCH QUEST</p>
-            <h1 id="townTitle">臺中 29 區營養午餐小鎮</h1>
+            <p class="pixel-kicker">TAICHUNG · MIAOLI · CHANGHUA · LUNCH QUEST</p>
+            <h1 id="townTitle">臺中・苗栗・彰化午餐小鎮</h1>
           </div>
           <div class="hud-settings">
             <div class="date-picker" aria-label="供餐日期">
@@ -52,10 +62,36 @@
               <summary>角色、時間與音樂</summary>
               <div class="town-options-content">
                 <div class="player-style-picker" role="group" aria-label="玩家角色外型">
-                  <span>玩家角色</span>
-                  <div>
-                    <button type="button" data-player-style="female" aria-pressed="true">女角色</button>
-                    <button type="button" data-player-style="male" aria-pressed="false">男角色</button>
+                  <span>角色造型</span>
+                  <div class="player-avatar-groups">
+                    <section aria-labelledby="femaleAvatarHeading">
+                      <small id="femaleAvatarHeading">女性角色</small>
+                      <div class="player-avatar-grid">
+                        <button type="button" data-player-avatar="haiyin" aria-pressed="false" aria-label="海音造型，短黑髮、皮衣與咖啡">
+                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>海音</strong><small>皮衣・咖啡</small>
+                        </button>
+                        <button type="button" data-player-avatar="mubai" aria-pressed="false" aria-label="沐白造型，金色短髮與白洋裝">
+                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>沐白</strong><small>白洋裝・花藝</small>
+                        </button>
+                        <button type="button" data-player-avatar="qingxia" aria-pressed="true" aria-label="晴夏造型，金色高馬尾與運動裝">
+                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>晴夏</strong><small>馬尾・運動</small>
+                        </button>
+                      </div>
+                    </section>
+                    <section aria-labelledby="maleAvatarHeading">
+                      <small id="maleAvatarHeading">男性角色</small>
+                      <div class="player-avatar-grid">
+                        <button type="button" data-player-avatar="xiangye" aria-pressed="false" aria-label="向野造型，黑色短髮、戶外外套與斜背包">
+                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>向野</strong><small>外套・探索</small>
+                        </button>
+                        <button type="button" data-player-avatar="qingchuan" aria-pressed="false" aria-label="青川造型，棕色短髮、米白上衣與筆記本">
+                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>青川</strong><small>針織・筆記</small>
+                        </button>
+                        <button type="button" data-player-avatar="yueyang" aria-pressed="false" aria-label="岳陽造型，俐落黑髮、藍灰運動裝與水壺">
+                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>岳陽</strong><small>運動・水壺</small>
+                        </button>
+                      </div>
+                    </section>
                   </div>
                 </div>
                 <div class="environment-status" id="environmentStatus" role="status" aria-live="polite">
@@ -74,7 +110,7 @@
           <div class="loading-screen" id="loadingScreen" role="status" aria-live="polite">
             <span class="loading-sprite" aria-hidden="true"></span>
             <strong id="loadingTitle">正在載入小鎮</strong>
-            <span id="loadingStep">準備臺中 29 區的街道與學校…</span>
+            <span id="loadingStep">準備臺中、苗栗與彰化的街道、景觀與學校…</span>
             <div class="loading-progress" id="loadingProgress" role="progressbar" aria-label="小鎮載入進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4">
               <span id="loadingProgressBar" style="width: 4%"></span>
             </div>
@@ -84,6 +120,10 @@
             <strong class="district-badge" id="districtBadge">臺中小鎮</strong>
             <span id="districtFeature">臺中特色街區｜海線・城區・山線・屯區</span>
             <a id="districtSource" href="#" target="_blank" rel="noreferrer" hidden>官方特色來源</a>
+          </section>
+          <section class="map-preview-banner" id="mapPreviewBanner" role="status" aria-live="polite" hidden>
+            <strong>草稿測試模式</strong>
+            <span id="mapPreviewStatus">不會變更正式地圖，也不會記錄任務、成就或分析事件。</span>
           </section>
           <div class="speech-layer" id="speechLayer" aria-hidden="true">
             <div class="comic-bubble" id="comicBubble" hidden>
@@ -96,7 +136,7 @@
               <span aria-hidden="true">⛶</span><span>全螢幕</span>
             </button>
             <button class="mobile-explore-button" id="mobileExploreButton" type="button" aria-controls="questPanel" aria-expanded="false">
-              成就手冊
+              任務・成就
             </button>
           </div>
           <div class="interaction-prompt" id="interactionPrompt" hidden></div>
@@ -122,7 +162,7 @@
           </section>
           <div class="achievement-toast" id="achievementToast" role="status" aria-live="polite" hidden>
             <span aria-hidden="true">★</span>
-            <div><small>成就解鎖</small><strong id="achievementToastTitle"></strong></div>
+            <div><small id="achievementToastKicker">成就解鎖</small><strong id="achievementToastTitle"></strong></div>
           </div>
           <p class="mobile-control-hint">點道路移動・點人物、學校、建築或 YouBike 站互動</p>
           <div class="mobile-pad" id="mobilePad" aria-label="觸控方向鍵">
@@ -143,24 +183,51 @@
         </div>
       </section>
 
-      <aside class="quest-panel achievement-panel" id="questPanel" aria-label="臺中小鎮成就手冊">
+      <aside class="quest-panel achievement-panel" id="questPanel" tabindex="0" aria-label="臺中小鎮每日任務與成就手冊" aria-describedby="achievementScrollNote">
         <div class="quest-panel-mobile-header">
           <span aria-hidden="true"></span>
-          <strong>小鎮成就手冊</strong>
-          <button id="questPanelClose" type="button" aria-label="關閉成就手冊">×</button>
+          <strong>每日任務・成就</strong>
+          <button id="questPanelClose" type="button" aria-label="關閉每日任務與成就手冊">×</button>
         </div>
-        <p class="quest-label">TAICHUNG ACHIEVEMENTS</p>
-        <h2>臺中小鎮成就手冊</h2>
-        <p>每天回來走走、認識居民、查看學校午餐、造訪地標並正確處理街區事件。臺中成就是第一冊，未來可以接著收藏其他縣市。</p>
+        <p class="quest-label">DAILY QUESTS · TAICHUNG ACHIEVEMENTS</p>
+        <h2>每日任務與小鎮成就</h2>
+        <p>每天解鎖三個不與成就重複的小任務：小鎮生活、午餐探索與城市散步各一題。完成會自動獲得金幣，未來可用來添購家具與服裝。</p>
+        <p class="achievement-scroll-note" id="achievementScrollNote">面板可獨立上下捲動；每日任務在臺灣時間午夜更新，成就分類可展開或收起。</p>
 
         <section class="achievement-account-card is-loading" id="achievementAccountCard" aria-live="polite">
           <div>
             <small id="achievementAccountEyebrow">正在確認帳號…</small>
-            <strong id="achievementAccountTitle">讀取你的成就手冊</strong>
-            <p id="achievementAccountText">帳號進度會安全保存在好好吃飯家庭帳號。</p>
+            <strong id="achievementAccountTitle">讀取你的任務與成就</strong>
+            <p id="achievementAccountText">任務、金幣與成就會安全保存在好好吃飯家庭帳號。</p>
           </div>
-          <a id="achievementAccountLink" href="/?account=1">免費註冊・保存成就</a>
+          <button id="achievementAccountLink" data-account-panel-trigger type="button" aria-haspopup="dialog">登入／免費註冊・保存進度</button>
         </section>
+
+        <section class="daily-quest-board" aria-labelledby="dailyQuestHeading">
+          <header class="daily-quest-heading">
+            <div>
+              <small id="dailyQuestDate">今日任務</small>
+              <h3 id="dailyQuestHeading">三個每日任務</h3>
+            </div>
+            <div class="coin-wallet" aria-label="目前金幣餘額">
+              <span aria-hidden="true">●</span>
+              <div><small>金幣</small><strong id="dailyCoinBalance">0</strong></div>
+            </div>
+          </header>
+          <div class="daily-quest-summary" aria-live="polite">
+            <strong id="dailyQuestProgress">0 / 3</strong>
+            <span>三題全完成再獲得 15 金幣</span>
+          </div>
+          <p class="daily-quest-status" id="dailyQuestStatus" role="status">正在讀取每日任務…</p>
+          <div class="daily-quest-list" id="dailyQuestList" aria-label="今日三個每日任務"></div>
+          <p class="daily-quest-note">每天可免費更換一題尚未完成的任務；購買家具或服裝不會被列為賺取金幣的條件。</p>
+        </section>
+
+        <div class="achievement-section-heading">
+          <p class="quest-label">TAICHUNG ACHIEVEMENTS</p>
+          <h3>長期成就</h3>
+          <p>成就是一次性的長期收藏，不會拿每日任務重新包裝。臺中成就是第一冊，未來可以接著收藏其他縣市。</p>
+        </div>
 
         <div class="achievement-summary" aria-live="polite">
           <div><span>已解鎖</span><strong id="achievementProgress">0 / 19</strong></div>
@@ -174,6 +241,10 @@
           <button type="button" disabled>其他縣市・陸續開放</button>
         </div>
         <p class="achievement-status" id="achievementStatus" role="status">正在讀取成就…</p>
+        <div class="achievement-disclosure-actions" role="group" aria-label="展開或收起成就分類">
+          <button id="achievementExpandAll" type="button" disabled>全部展開</button>
+          <button id="achievementCollapseAll" type="button" disabled>全部收起</button>
+        </div>
         <div class="achievement-list" id="achievementList" aria-label="臺中市成就清單"></div>
 
         <section class="daily-story-card achievement-daily" id="dailyStoryCard" aria-labelledby="dailyStoryTitle">
@@ -196,8 +267,9 @@
           </div>
         </details>
 
-        <p class="data-note">登入後的成就事件與解鎖時間綁定家庭帳號並跨裝置保存；未登入時可預覽成就，但不會假裝已永久保存進度。</p>
+        <p class="data-note">登入後的每日任務事件、金幣帳本、成就事件與解鎖時間都綁定家庭帳號並跨裝置保存；未登入時只供預覽，不會假裝已永久保存進度。</p>
         <p class="data-note">菜單仍以校方指定日期實際公布內容為準；沒有查到資料不代表沒有供餐。公職與候選人對話為遊戲情境，不代表本人引言、背書或政見。</p>
+        <p class="data-note">苗栗與彰化的國小已依審核名冊放入地圖，目前僅供探索校名與地方景觀；午餐資料仍在建設中，不會以其他縣市或其他日期的資料替代。</p>
         <p class="data-note">探索街區依行政區相對方位編排；北方在上、東方在右，位置與比例請以官方地圖為準。黎明、白天、黃昏與夜晚同步臺中時間；雨勢與氣候採低頻氣氛排程，不代表即時氣象。</p>
       </aside>
     </main>
@@ -211,7 +283,9 @@
 
     <p class="sr-only" id="townAnnouncement" aria-live="polite"></p>
     <noscript><p class="noscript-note">2D 營養午餐小鎮需要 JavaScript 才能操作。</p></noscript>
-    <script src="/product-analytics.js?v=20261103-civic-housing" defer></script>
-    <script type="module" src="./app.js?v=20261104-leash-anchor"></script>
+    <script src="/product-analytics.js?v=20261104-town-auth" defer></script>
+    <script src="/line-auth-return.js?v=20261104-town-auth" defer></script>
+    <script src="/account-panel.js?v=20261104-town-auth" defer></script>
+    <script type="module" src="./app.js?v=20261105-player-civic-map-preview"></script>
   </body>
 </html>

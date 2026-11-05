@@ -30,7 +30,7 @@ def load_school_meal_catalog(
             FROM schools s
             LEFT JOIN official_meal_days d ON d.school_id = s.id
             GROUP BY s.id
-            ORDER BY s.city, s.display_order, s.id
+            ORDER BY s.display_order, s.id
             """
         ).fetchall()
         days = connection.execute(

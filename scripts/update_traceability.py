@@ -342,7 +342,6 @@ def main() -> int:
 
     if args.verify_and_build and result["traceabilityChanged"]:
         commands = (
-            [sys.executable, "scripts/build_database.py"],
             [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
             ["node", "--check", "web/app.js"],
             [sys.executable, "scripts/build_static_site.py"],

@@ -8,7 +8,9 @@ import io
 import json
 from pathlib import Path
 import tempfile
+import threading
 import unittest
+from unittest.mock import patch
 
 from scripts.update_school_meals_by_district import run, run_lock
 from src.fatrace_daily import candidate_fingerprint
@@ -202,6 +204,55 @@ class DistrictUpdateTests(unittest.TestCase):
             with run_lock(root / 'data/monitor/district-updates/.lock'):
                 with self.assertRaisesRegex(ValueError, '已有逐區更新'):
                     self.execute(root, args, FakeClient(), None)
+
+    def test_default_collector_can_overlap_two_schools(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            args = self.setup_run(
+                root,
+                no_publish=True,
+                workers=2,
+                interval=0,
+            )
+            lock = threading.Lock()
+            both_started = threading.Event()
+            active = 0
+            maximum = 0
+
+            class ConcurrentClient(FakeClient):
+                def probe(self, school, meal_date):
+                    nonlocal active, maximum
+                    with lock:
+                        active += 1
+                        maximum = max(maximum, active)
+                        if active >= 2:
+                            both_started.set()
+                    try:
+                        both_started.wait(timeout=1)
+                        return super().probe(school, meal_date)
+                    finally:
+                        with lock:
+                            active -= 1
+
+            output = io.StringIO()
+            with patch(
+                'scripts.update_school_meals_by_district.FatraceDailyClient',
+                side_effect=lambda *_args, **_kwargs: ConcurrentClient(),
+            ), redirect_stdout(output):
+                status = run(
+                    args,
+                    root=root,
+                    publisher=None,
+                    token='test',
+                    rebuild=lambda _: True,
+                )
+
+            self.assertEqual(status, 0)
+            self.assertEqual(maximum, 2)
+            progress = json.loads((
+                root / 'data/monitor/district-updates/2026-10-27/with-ingredients.json'
+            ).read_text())
+            self.assertEqual(progress['lastRunPerformance']['workers'], 2)
 
     def test_duplicate_district_names_stay_city_scoped_and_taichung_runs_first(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -239,6 +239,30 @@ export const cityVisibilitySettings = sqliteTable("city_visibility_settings", {
   updatedAt: text("updated_at").notNull(),
 });
 
+export const townMapRevisions = sqliteTable("town_map_revisions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  action: text("action").notNull(),
+  manifestJson: text("manifest_json").notNull(),
+  summaryJson: text("summary_json").notNull(),
+  actorId: text("actor_id").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  index("town_map_revisions_action_idx").on(table.action, table.id),
+]);
+
+export const townMapPreviews = sqliteTable("town_map_previews", {
+  tokenHash: text("token_hash").primaryKey(),
+  manifestJson: text("manifest_json").notNull(),
+  focusCity: text("focus_city").notNull(),
+  focusDistrict: text("focus_district").notNull(),
+  focusPlacementId: text("focus_placement_id"),
+  actorId: text("actor_id").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  index("town_map_previews_expires_at_idx").on(table.expiresAt),
+]);
+
 export const townAchievementEvents = sqliteTable("town_achievement_events", {
   authUserId: text("auth_user_id")
     .notNull()
@@ -262,4 +286,44 @@ export const townAchievementUnlocks = sqliteTable("town_achievement_unlocks", {
 }, (table) => [
   primaryKey({ columns: [table.authUserId, table.achievementId] }),
   index("town_achievement_unlocks_owner_idx").on(table.authUserId, table.unlockedAt),
+]);
+
+export const townDailyQuestEvents = sqliteTable("town_daily_quest_events", {
+  authUserId: text("auth_user_id")
+    .notNull()
+    .references(() => parentAccounts.authUserId, { onDelete: "cascade" }),
+  eventKey: text("event_key").notNull(),
+  taskDate: text("task_date").notNull(),
+  eventType: text("event_type").notNull(),
+  subjectId: text("subject_id").notNull(),
+  value: integer("value").notNull().default(1),
+  occurredAt: text("occurred_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.authUserId, table.eventKey] }),
+  index("town_daily_quest_events_progress_idx").on(table.authUserId, table.taskDate, table.eventType),
+]);
+
+export const townDailyQuestOverrides = sqliteTable("town_daily_quest_overrides", {
+  authUserId: text("auth_user_id")
+    .notNull()
+    .references(() => parentAccounts.authUserId, { onDelete: "cascade" }),
+  taskDate: text("task_date").notNull(),
+  category: text("category").notNull(),
+  taskId: text("task_id").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.authUserId, table.taskDate] }),
+]);
+
+export const townCoinLedger = sqliteTable("town_coin_ledger", {
+  authUserId: text("auth_user_id")
+    .notNull()
+    .references(() => parentAccounts.authUserId, { onDelete: "cascade" }),
+  ledgerKey: text("ledger_key").notNull(),
+  amount: integer("amount").notNull(),
+  reason: text("reason").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.authUserId, table.ledgerKey] }),
+  index("town_coin_ledger_owner_idx").on(table.authUserId, table.createdAt),
 ]);

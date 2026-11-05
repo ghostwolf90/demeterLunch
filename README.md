@@ -2,7 +2,7 @@
 
 本文件說明每日學校午餐的下載、驗證、逐區發布與失敗續跑。公開網站：[好好吃飯](https://haohaofood.cc)。
 
-目前預設依序處理臺中市、臺南市，共 438 所已驗證學校（臺中 243 校、臺南 195 校）。來源為教育部校園食材登錄平臺的同日公開供餐紀錄。
+目前預設由北到南依序處理臺北市、桃園市、苗栗縣、臺中市、彰化縣、臺南市，共 1,058 所已驗證學校（臺北 147 校、桃園 188 校、苗栗 114 校、臺中 243 校、彰化 171 校、臺南 195 校）。來源為教育部校園食材登錄平臺的同日公開供餐紀錄。全臺縣市與行政區的共用地理順序保存在 `data/reference/taiwan-geographic-order.json`；臺灣本島依官方界線幾何中心由北到南、同緯度由西到東，離島置於本島後並同樣由北到南。
 
 ## 1. 日常使用：選一個入口即可
 
@@ -18,7 +18,7 @@ python3 scripts/update_all_school_meals.py --publish
 
 未指定日期時，使用**臺北時區當天**。兩個入口共用同一套逐區流程、進度檔與執行鎖。
 
-> **不要用 `scripts/update_all_taichung_schools.py` 更新兩個縣市。** 這是保留舊操作方式的臺中入口；未指定 `--city` 時，程式會自動限制為 `臺中市`，**不會包含臺南市**。要同時更新臺中與臺南，請使用上面的 `update_school_meals_by_district.py`，或執行 `update_all_school_meals.py --publish`。
+> **不要用 `scripts/update_all_taichung_schools.py` 更新六縣市。** 這是保留舊操作方式的臺中入口；未指定 `--city` 時，程式會自動限制為 `臺中市`，**不會包含臺北、桃園、苗栗、彰化或臺南**。要更新完整名冊，請使用上面的 `update_school_meals_by_district.py`，或執行 `update_all_school_meals.py --publish`。
 
 | 使用方式 | 下載與驗證 | 每區完成後發布 | 結束後重建本機資料 |
 | --- | --- | --- | --- |
@@ -36,6 +36,8 @@ python3 scripts/update_all_school_meals.py --publish
 - macOS 或 Linux；目前執行鎖使用 `fcntl`，不支援直接在 Windows Python 執行。
 - 保持網路連線，長時間收集時避免電腦休眠。
 - 發布需要已設定的本機憑證 `.secrets/site_publish_token`。
+
+預設會同時處理 2 所學校，但所有工作共用同一個全域節流器，官方 API 請求起始時間仍至少間隔 1.2 秒。若官方網站當日不穩定，可以用 `--workers 1` 降為單線；請勿縮短 `--interval` 來換取速度。
 
 確認執行環境：
 
@@ -67,7 +69,7 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27
 python3 scripts/update_all_school_meals.py --date 2026-10-27 --publish
 ```
 
-以上兩種寫法都會依序處理臺中市與臺南市。舊指令 `update_all_taichung_schools.py` 預設只處理臺中市，不能作為兩個縣市的等效寫法。
+以上兩種寫法都會由北到南依序處理臺北市、桃園市、苗栗縣、臺中市、彰化縣與臺南市。舊指令 `update_all_taichung_schools.py` 預設只處理臺中市，不能作為完整六縣市的等效寫法。
 
 ### 中斷、抓取失敗或發布失敗後接續
 
@@ -89,7 +91,7 @@ python3 scripts/update_school_meals_by_district.py \
   --district 北區
 ```
 
-`--city` 與 `--district` 都可重複使用。合併名冊有跨縣市同名行政區，因此指定 `--district` 時必須同時指定一個 `--city`。未指定城市時固定先臺中、再臺南；區域進度仍保存在相同日期的共用進度檔。
+`--city` 與 `--district` 都可重複使用。合併名冊有跨縣市同名行政區，因此指定 `--district` 時必須同時指定一個 `--city`。未指定城市時由北到南依序處理臺北、桃園、苗栗、臺中、彰化、臺南；區域進度仍保存在相同日期的共用進度檔。
 
 ### 只下載與驗證，暫不發布
 
@@ -133,7 +135,7 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingr
 5. **保存發布結果**：只有收到伺服器成功確認，才記錄該校已發布的內容雜湊；否則保留待發布狀態。
 6. **輸出每區中文總結**，繼續下一區。
 7. **更新本機資料**：全程處理結束後，若有有效資料，自動重建 SQLite、執行 `node --check web/app.js`，再重建 `dist/`。
-8. **輸出全程中文總結**及待處理學校清單。
+8. **輸出全程中文總結**、待處理學校清單，以及官方資料抓取、Site 發布 API、本機建置的分段耗時。
 
 這裡的「驗證」是每筆發布資料的來源與結構驗證，不是每區重跑整套開發測試。
 
@@ -185,14 +187,14 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingr
 
 ```text
 【本次全程總結】
-  學校總數：438 校
-  有菜單：438 校
+  學校總數：1058 校
+  有菜單：1058 校
   官方不供餐：0 校
   尚未公布：0 校
   抓取／驗證失敗：0 校
   尚未檢查：0 校
 
-  已發布：438 校
+  已發布：1058 校
   有效資料待發布：0 校
 
   耗時：78.4 秒
@@ -224,7 +226,7 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingr
 | 參數 | 預設／用途 |
 | --- | --- |
 | `--date YYYY-MM-DD` | 臺北時區當天。 |
-| `--city 縣市` | 不指定時依名冊順序先臺中、再臺南；可重複指定。 |
+| `--city 縣市` | 不指定時依名冊順序處理臺北、桃園、苗栗、臺中、彰化、臺南；可重複指定。 |
 | `--district 行政區` | 不指定時處理名冊全部行政區，可重複指定。 |
 | `--registry 路徑` | `data/reference/active-elementary-schools.json`。 |
 | `--no-publish` | 只處理本機，不上傳。 |
@@ -233,6 +235,7 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingr
 | `--timeout 秒數` | `20`；必須大於零。 |
 | `--interval 秒數` | `1.2`；不得小於零，保留來源請求間隔。 |
 | `--retries 次數` | `2`；不得小於零，限制暫時性錯誤的重試。 |
+| `--workers 數量` | `2`；介於 1 至 4，所有工作共用全域請求間隔。 |
 | `--help` | 顯示該入口的說明。 |
 
 ### 只有相容入口接受
@@ -252,7 +255,17 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingr
 ```text
 data/reference/taichung-active-elementary-schools.json  臺中啟用名冊
 data/reference/tainan-active-elementary-schools.json    臺南啟用名冊
-data/reference/active-elementary-schools.json           合併啟用名冊（臺中在前、臺南在後）
+data/reference/miaoli-active-elementary-schools.json    苗栗啟用名冊
+data/reference/changhua-active-elementary-schools.json  彰化啟用名冊
+data/reference/taipei-active-elementary-schools.json    臺北啟用名冊
+data/reference/taoyuan-active-elementary-schools.json   桃園啟用名冊
+data/reference/*-school-registry-report.json            城市名冊逐校核對報告
+data/reference/fatrace-school-registry-raw/              名冊官方原始回應封存
+data/reference/national-school-directory.json           教育部 115 學年度全臺學校名錄
+data/reference/national-fatrace-elementary-schools.json 全臺國小 Fatrace ID 對照（僅備用，不抓取）
+data/reference/city-service-catalog.json                 22 縣市服務狀態與國小數
+data/reference/city-visibility.json                      公開縣市預設開關
+data/reference/active-elementary-schools.json           六縣市合併啟用名冊
 data/reference/school-refresh-groups.json               多縣市刷新批次
 
 data/raw/fatrace-daily/YYYY-MM-DD/<學校代碼>/
@@ -297,11 +310,20 @@ dist/                                                 本機可部署快照
 
 ### 每校的日期來源網址是什麼？
 
-臺中與臺南共用同一個來源格式：`https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=<School ID>&period=<YYYY-MM-DD>`。抓取器會保存這個公開查詢頁網址，並使用該頁背後的官方公開端點取得結構化菜單。
+六縣市共用同一個來源格式：`https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=<School ID>&period=<YYYY-MM-DD>`。抓取器會保存這個公開查詢頁網址，並使用該頁背後的官方公開端點取得結構化菜單。
 
 ### 可以再加入其他縣市嗎？
 
-可以，但不能只替換 `--registry`。必須先建立經核對的城市名冊，再同步調整合併名冊、刷新批次、網站後端驗證與前端縣市選單；未驗證的 School ID 不得直接加入。
+可以，但不能只替換 `--registry`。必須先建立經核對的城市名冊，再同步調整合併名冊、刷新批次、網站後端驗證與前端縣市選單；未驗證的 School ID 不得直接加入。臺北、桃園、苗栗與彰化名冊可用 `python3 scripts/fetch_city_school_registries.py` 重新下載，也可用 `--city` 只更新指定縣市；腳本會完整取得清單、核對教育部 115 學年度代碼與校名，全部完成後才原子更新有效名冊。完成後執行 `python3 scripts/build_active_school_registry.py` 重建六縣市合併名冊與刷新批次。
+
+全臺 22 縣市的國小與 Fatrace School ID 備用對照可用下列指令更新：
+
+```sh
+python3 scripts/fetch_national_fatrace_school_directory.py
+python3 scripts/build_city_service_catalog.py
+```
+
+第一個指令會封存中央平臺的縣市、行政區與國小清單，逐筆以教育部代碼與校名核對；結果只寫入 `national-fatrace-elementary-schools.json`，絕不加入抓取或公開選單。第二個指令會以教育部全臺名錄及六縣市啟用名冊重建後台使用的 22 縣市服務目錄。公開縣市開關只控制前台顯示，不會改變抓取範圍；未進入 `active-elementary-schools.json` 的縣市不能在後台開啟。
 
 ## 9. 結束碼與開發檢查
 
@@ -320,4 +342,4 @@ dist/                                                 本機可部署快照
 python3 -m unittest discover -s tests -v
 ```
 
-日常腳本發布的是午餐資料，透過既有網站的資料 API 寫入 D1 與 R2，不會重新部署整個網站程式，也不遞增網站版本。若要正式發布網站程式變更，需另依專案規則使用 `npm run build` 產生正式版本，不能把本機 `dist/` 重建當成已完成網站程式部署。
+日常腳本發布的是午餐資料，透過既有網站的資料 API 寫入 D1 與 R2，不會重新部署整個網站程式，也不遞增網站版本。若要正式發布網站程式變更，需另依專案規則使用 `npm run build` 產生正式版本，不能把本機 `dist/` 重建當成已完成網站程式部署。正式建置已包含一次 SQLite 與靜態資產重建，不需要事先再單獨執行 `build_database.py` 或把 `dist/` 複製到 `public/`。相同來源的發布重試應沿用原版本與已驗證的部署封包；只有來源變動時才重新建置。

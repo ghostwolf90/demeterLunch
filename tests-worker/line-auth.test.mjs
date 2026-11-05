@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
 import { DatabaseSync } from "node:sqlite";
-import { lineAuthorizationUrl, oauthCookie, oauthDigest, randomOAuthValue, verifiedLineSubject } from "../lib/line-oauth.ts";
+import { lineAuthorizationUrl, oauthBrowserToken, oauthCookie, oauthDigest, oauthReturnPath, randomOAuthValue, verifiedLineSubject } from "../lib/line-oauth.ts";
 
 const subject = `U${"a".repeat(32)}`;
 const origin = "https://haohaofood.cc";
@@ -75,8 +75,10 @@ function harness() {
   function post(path, body, cookie = "", requestOrigin = origin) {
     return new Request(`${origin}${path}`, { method: "POST", headers: { origin: requestOrigin, cookie, "content-type": "application/json" }, body: JSON.stringify(body) });
   }
-  async function begin(cookie = "", mode = "login") {
-    const response = await load("app/api/auth/line/start/route").POST(post("/api/auth/line/start", { mode, birthDate: "1980-01-01", caregiverConfirmed: true }, cookie));
+  async function begin(cookie = "", mode = "login", returnTo) {
+    const response = await load("app/api/auth/line/start/route").POST(post("/api/auth/line/start", {
+      mode, birthDate: "1980-01-01", caregiverConfirmed: true, ...(returnTo ? { returnTo } : {}),
+    }, cookie));
     assert.equal(response.status, 200);
     const authorization = new URL((await response.json()).url);
     const browserCookie = response.headers.get("set-cookie").split(";")[0];
@@ -95,6 +97,10 @@ test("LINE authorization uses state, nonce, PKCE and minimum openid scope", asyn
   assert.equal(url.searchParams.get("scope"), "openid");
   assert.equal(url.searchParams.get("code_challenge_method"), "S256");
   assert.match(oauthCookie(new Request(origin), verifier), /HttpOnly; SameSite=Lax; Max-Age=600; Secure/);
+  const townCookie = oauthCookie(new Request(origin), verifier, false, "/lunch-town/").split(";")[0];
+  const townRequest = new Request(origin, { headers: { cookie: townCookie } });
+  assert.equal(oauthBrowserToken(townRequest), verifier);
+  assert.equal(oauthReturnPath(townRequest), "/lunch-town/");
 });
 
 test("LINE token exchange rejects unverified, wrong-audience, wrong-nonce and expired claims", async () => {
@@ -114,6 +120,14 @@ test("LINE startup requires same origin, eligibility and configured callback", a
   assert.equal((await start(h.post("/api/auth/line/start", {}, "", "https://attacker.test"))).status, 403);
   h.env.LINE_REDIRECT_URI = "https://attacker.test/api/auth/line/callback";
   assert.equal((await start(h.post("/api/auth/line/start", { mode: "login" }))).status, 503);
+});
+
+test("LINE returns only to the approved initiating surface", async () => {
+  const h = harness();
+  const town = await h.begin("", "login", "/lunch-town/");
+  assert.equal((await h.callback(town)).headers.get("location"), "/lunch-town/?account=1&line=success");
+  const untrusted = await h.begin("", "login", "https://attacker.test/steal");
+  assert.equal((await h.callback(untrusted)).headers.get("location"), "/?account=1&line=success");
 });
 
 test("LINE creates email-less session, preserves profile on returning login, and prevents replay", async () => {
@@ -138,6 +152,8 @@ test("LINE callback rejects wrong browser, expired or cancelled attempts before 
   assert.match((await h.callback({ ...attempt, cookie: "" })).headers.get("location"), /line=expired/);
   assert.equal(h.calls(), 0);
   assert.match((await h.callback(attempt, "error=access_denied")).headers.get("location"), /line=cancelled/);
+  const providerFailure = await h.begin();
+  assert.match((await h.callback(providerFailure, "error=server_error")).headers.get("location"), /line=failed/);
   const expired = await h.begin();
   h.sqlite.prepare("UPDATE oauth_challenges SET expires_at='2000-01-01'").run();
   assert.match((await h.callback(expired)).headers.get("location"), /line=expired/);
@@ -227,6 +243,21 @@ test("LINE choice needs no email; returning restores the email entry and disable
   assert.equal(refs.authEmail.disabled, false);
   assert.equal(refs.authEligibilityGate.hidden, true);
   assert.equal(refs.authBirthDate.disabled, true);
+});
+
+
+test("Home Screen can keep LINE authorization on the web while Safari keeps auto login", async () => {
+  const h = harness();
+  const start = h.load("app/api/auth/line/start/route").POST;
+  const body = { mode: "login", birthDate: "1980-01-01", caregiverConfirmed: true };
+  const ordinary = await start(h.post("/api/auth/line/start", body));
+  const safari = new URL((await ordinary.json()).url);
+  assert.equal(safari.searchParams.has("disable_auto_login"), false);
+  const response = await start(h.post("/api/auth/line/start", { ...body, stayInWeb: true }));
+  const home = new URL((await response.json()).url);
+  assert.equal(home.searchParams.get("disable_auto_login"), "true");
+  assert.equal(home.searchParams.get("code_challenge_method"), "S256");
+  assert.equal(home.searchParams.get("scope"), "openid");
 });
 
 test("LINE registration receipt is server-signed, session-bound, consumed by cookie clearing and absent on returning login", async () => {

@@ -48,7 +48,7 @@ class UpdateSchoolMealsTests(unittest.TestCase):
         self.assertIn("scripts/fetch_school_meals.py", fetch)
         self.assertNotIn("--district", fetch)
         self.assertNotIn("--school", fetch)
-        self.assertEqual(len(run.call_args_list), 6)
+        self.assertEqual(len(run.call_args_list), 5)
 
     def test_named_school_does_not_keep_implicit_west_district_filter(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

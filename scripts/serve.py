@@ -142,7 +142,7 @@ def make_handler(
                         "schools": visible_schools(
                             catalog["schools"],
                             project_root / "data" / "reference" / "city-visibility.json",
-                            project_root / "data" / "reference" / "active-elementary-schools.json",
+                            project_root / "data" / "reference" / "city-service-catalog.json",
                         ),
                     }
                 )
@@ -184,7 +184,7 @@ def make_handler(
                         dashboard["schoolDirectory"] = visible_schools(
                             dashboard["schoolDirectory"],
                             project_root / "data" / "reference" / "city-visibility.json",
-                            project_root / "data" / "reference" / "active-elementary-schools.json",
+                            project_root / "data" / "reference" / "city-service-catalog.json",
                         )
                 except (OSError, TypeError, ValueError) as exc:
                     LOGGER.exception("Unable to load dashboard")

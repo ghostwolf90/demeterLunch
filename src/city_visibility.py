@@ -12,7 +12,7 @@ from typing import Iterable
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "data" / "reference" / "city-visibility.json"
 DEFAULT_REGISTRY_PATH = (
-    PROJECT_ROOT / "data" / "reference" / "active-elementary-schools.json"
+    PROJECT_ROOT / "data" / "reference" / "city-service-catalog.json"
 )
 _WRITE_LOCK = threading.Lock()
 
@@ -21,23 +21,7 @@ def load_city_visibility(
     config_path: Path = DEFAULT_CONFIG_PATH,
     registry_path: Path = DEFAULT_REGISTRY_PATH,
 ) -> list[dict[str, object]]:
-    registry = _load_object(registry_path, "學校名冊")
-    schools = registry.get("schools")
-    if not isinstance(schools, list):
-        raise ValueError("學校名冊缺少 schools 陣列")
-
-    ordered_cities: list[str] = []
-    counts: Counter[str] = Counter()
-    for school in schools:
-        if not isinstance(school, dict):
-            raise ValueError("學校名冊包含無效的學校資料")
-        city = school.get("city")
-        if not isinstance(city, str) or not city.strip():
-            raise ValueError("學校名冊包含缺少縣市的學校")
-        city = city.strip()
-        if city not in counts:
-            ordered_cities.append(city)
-        counts[city] += 1
+    ordered_cities, counts, _ = _load_catalog(registry_path)
 
     config = _load_object(config_path, "縣市顯示設定")
     if config.get("schemaVersion") != 1:
@@ -109,6 +93,9 @@ def set_city_visibility(
         settings = load_city_visibility(config_path, registry_path)
         if city not in {str(item["name"]) for item in settings}:
             raise ValueError(f"學校名冊沒有這個縣市：{city}")
+        _, _, can_enable = _load_catalog(registry_path)
+        if enabled and not can_enable[city]:
+            raise ValueError(f"{city}尚未完成午餐資料來源核對，不能開啟")
         payload = {
             "schemaVersion": 1,
             "cities": [
@@ -121,6 +108,55 @@ def set_city_visibility(
         }
         _atomic_write_json(config_path, payload)
         return load_city_visibility(config_path, registry_path)
+
+
+def _load_catalog(
+    path: Path,
+) -> tuple[list[str], Counter[str], dict[str, bool]]:
+    catalog = _load_object(path, "縣市服務目錄")
+    entries = catalog.get("cities")
+    if isinstance(entries, list):
+        ordered: list[str] = []
+        counts: Counter[str] = Counter()
+        can_enable: dict[str, bool] = {}
+        for entry in entries:
+            if not isinstance(entry, dict):
+                raise ValueError("縣市服務目錄包含無效項目")
+            name = entry.get("name")
+            school_count = entry.get("schoolCount")
+            collection_enabled = entry.get("collectionEnabled")
+            if not isinstance(name, str) or not name.strip():
+                raise ValueError("縣市服務目錄包含空白名稱")
+            name = name.strip()
+            if name in counts:
+                raise ValueError(f"縣市服務目錄重複：{name}")
+            if not isinstance(school_count, int) or school_count < 0:
+                raise ValueError(f"{name} 的 schoolCount 無效")
+            if not isinstance(collection_enabled, bool):
+                raise ValueError(f"{name} 的 collectionEnabled 必須是布林值")
+            ordered.append(name)
+            counts[name] = school_count
+            can_enable[name] = collection_enabled
+        if not ordered:
+            raise ValueError("縣市服務目錄沒有縣市")
+        return ordered, counts, can_enable
+
+    schools = catalog.get("schools")
+    if not isinstance(schools, list):
+        raise ValueError("學校名冊缺少 schools 陣列")
+    ordered = []
+    counts = Counter()
+    for school in schools:
+        if not isinstance(school, dict):
+            raise ValueError("學校名冊包含無效的學校資料")
+        city = school.get("city")
+        if not isinstance(city, str) or not city.strip():
+            raise ValueError("學校名冊包含缺少縣市的學校")
+        city = city.strip()
+        if city not in counts:
+            ordered.append(city)
+        counts[city] += 1
+    return ordered, counts, {city: True for city in ordered}
 
 
 def _load_object(path: Path, label: str) -> dict[str, object]:

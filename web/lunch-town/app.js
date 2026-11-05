@@ -16,12 +16,21 @@ const WEST_COAST_LAND_GAP = 40;
 const EAST_MOUNTAIN_WIDTH = 500;
 const COASTAL_TETRAPOD_COUNT = 48;
 const DISTRICT_ZONE_ORIGIN_X = WEST_COAST_WIDTH + WEST_COAST_LAND_GAP;
-const NEIGHBOR_COUNTY_HEIGHT = 440;
+const NORTH_COUNTY_HEIGHT = 1440;
+const SOUTH_COUNTY_HEIGHT = 1680;
+const NEIGHBOR_COUNTY_DISTRICT_COLUMNS = 6;
+const NEIGHBOR_COUNTY_MARGIN_X = 54;
+const NEIGHBOR_COUNTY_HEADER_HEIGHT = 74;
+const NEIGHBOR_COUNTY_FOOTER_HEIGHT = 42;
+const NEIGHBOR_COUNTY_ZONE_GAP = 40;
 const BORDER_RIVER_WIDTH = 112;
 const BORDER_LAND_BUFFER = 38;
 const PLAYER_TERRAIN_PADDING = 10;
 const BOUNDARY_BRIDGE_PASSAGE_HALF_WIDTH = 20;
-const DISTRICT_ZONE_ORIGIN_Y = NEIGHBOR_COUNTY_HEIGHT + BORDER_RIVER_WIDTH + BORDER_LAND_BUFFER;
+const RIVER_FLOW_LANE_OFFSETS = Object.freeze([-34, -14, 14, 34]);
+const RIVER_FLOW_CHEVRON_SPACING = 132;
+const MAX_NIGHT_DARKNESS = 0.4;
+const DISTRICT_ZONE_ORIGIN_Y = NORTH_COUNTY_HEIGHT + BORDER_RIVER_WIDTH + BORDER_LAND_BUFFER;
 const DISTRICT_GRID_COLUMNS = 8;
 const DISTRICT_GRID_ROWS = 6;
 const DISTRICT_GRID_WIDTH = DISTRICT_GRID_COLUMNS * DISTRICT_ZONE_WIDTH
@@ -31,10 +40,10 @@ const DISTRICT_GRID_HEIGHT = DISTRICT_GRID_ROWS * DISTRICT_ZONE_HEIGHT
 const EAST_MOUNTAIN_START_X = DISTRICT_ZONE_ORIGIN_X + DISTRICT_GRID_WIDTH;
 const WORLD_WIDTH = EAST_MOUNTAIN_START_X + EAST_MOUNTAIN_WIDTH;
 const TAICHUNG_SOUTH_EDGE_Y = DISTRICT_ZONE_ORIGIN_Y + DISTRICT_GRID_HEIGHT;
-const NORTH_BORDER_RIVER_Y = NEIGHBOR_COUNTY_HEIGHT + BORDER_RIVER_WIDTH / 2;
+const NORTH_BORDER_RIVER_Y = NORTH_COUNTY_HEIGHT + BORDER_RIVER_WIDTH / 2;
 const SOUTH_BORDER_RIVER_Y = TAICHUNG_SOUTH_EDGE_Y + BORDER_LAND_BUFFER + BORDER_RIVER_WIDTH / 2;
 const SOUTH_COUNTY_START_Y = SOUTH_BORDER_RIVER_Y + BORDER_RIVER_WIDTH / 2 + BORDER_LAND_BUFFER;
-const WORLD_HEIGHT = SOUTH_COUNTY_START_Y + NEIGHBOR_COUNTY_HEIGHT;
+const WORLD_HEIGHT = SOUTH_COUNTY_START_Y + SOUTH_COUNTY_HEIGHT;
 const COASTAL_ROAD_START_X = DISTRICT_ZONE_ORIGIN_X - 22;
 const EASTERN_ROAD_END_X = EAST_MOUNTAIN_START_X - 18;
 const COASTAL_HARBOR_Y = DISTRICT_ZONE_ORIGIN_Y
@@ -50,20 +59,55 @@ const NEIGHBOR_COUNTIES = Object.freeze([
   {
     id: "miaoli", name: "苗栗縣", side: "north", color: "#82a86f",
     x: COASTAL_ROAD_START_X, y: 24, w: EASTERN_ROAD_END_X - COASTAL_ROAD_START_X,
-    h: NEIGHBOR_COUNTY_HEIGHT - 48, bridgeX: NORTH_BOUNDARY_BRIDGE_X, riverY: NORTH_BORDER_RIVER_Y,
+    h: NORTH_COUNTY_HEIGHT - 48, bridgeX: NORTH_BOUNDARY_BRIDGE_X, riverY: NORTH_BORDER_RIVER_Y,
   },
   {
     id: "changhua", name: "彰化縣", side: "south", color: "#a7aa70",
     x: COASTAL_ROAD_START_X, y: SOUTH_COUNTY_START_Y + 24, w: EASTERN_ROAD_END_X - COASTAL_ROAD_START_X,
-    h: NEIGHBOR_COUNTY_HEIGHT - 48, bridgeX: SOUTH_BOUNDARY_BRIDGE_X, riverY: SOUTH_BORDER_RIVER_Y,
+    h: SOUTH_COUNTY_HEIGHT - 48, bridgeX: SOUTH_BOUNDARY_BRIDGE_X, riverY: SOUTH_BORDER_RIVER_Y,
   },
+]);
+const NEIGHBOR_COUNTY_CITIES = new Set(NEIGHBOR_COUNTIES.map((county) => county.name));
+const NEIGHBOR_COUNTY_CIVIC_INFO = Object.freeze({
+  miaoli: {
+    seatDistrict: "苗栗市",
+    campusGrid: [2, 3],
+    hallName: "苗栗縣政府",
+    councilName: "苗栗縣議會",
+    magistrateName: "鍾東錦",
+    governmentSourceUrl: "https://www.miaoli.gov.tw/",
+    magistrateSourceUrl: "https://www.miaoli.gov.tw/cp.aspx?n=265",
+  },
+  changhua: {
+    seatDistrict: "彰化市",
+    campusGrid: [4, 0],
+    hallName: "彰化縣政府",
+    councilName: "彰化縣議會",
+    magistrateName: "王惠美",
+    governmentSourceUrl: "https://www.chcg.gov.tw/",
+    magistrateSourceUrl: "https://www.chcg.gov.tw/ch2/intro-magistrate.aspx",
+  },
+});
+const NEIGHBOR_COUNTY_NPC_TARGETS = Object.freeze({ miaoli: 28, changhua: 34 });
+const MIN_ACTIVE_TOWN_NPCS = 6;
+const MAX_ACTIVE_TOWN_NPCS = 10;
+const BACKGROUND_NPC_UPDATE_SECONDS = 2;
+const NEIGHBOR_CIVIC_ROLES = new Set([
+  "county-magistrate", "county-civil-servant", "county-supervisor", "county-councilor", "township-officer",
 ]);
 const BOUNDARY_BRIDGES = Object.freeze([
   { id: "miaoli-iron-bridge", countyId: "miaoli", x: NORTH_BOUNDARY_BRIDGE_X, riverY: NORTH_BORDER_RIVER_Y, material: "iron" },
   { id: "changhua-concrete-bridge", countyId: "changhua", x: SOUTH_BOUNDARY_BRIDGE_X, riverY: SOUTH_BORDER_RIVER_Y, material: "concrete" },
 ]);
+const RIVERBANK_PATH_OFFSET = BORDER_RIVER_WIDTH / 2 + 34;
+const RIVERBANK_LEISURE_ROLES = new Set([
+  "parent", "community-resident", "office-worker", "senior", "teacher", "cook",
+  "nurse", "high-school-student", "university-student", "college-volunteer",
+]);
+let riverbankLeisureSiteCache = null;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const PLAYER_STYLE_STORAGE_KEY = "lunchTownPlayerStyle";
+const PLAYER_AVATAR_STORAGE_KEY = "lunchTownPlayerAvatar";
+const LEGACY_PLAYER_STYLE_STORAGE_KEY = "lunchTownPlayerStyle";
 const TAICHUNG_TIME_ZONE = "Asia/Taipei";
 const ENVIRONMENT_REFRESH_MS = 15_000;
 const RAIN_BLOCK_MINUTES = 180;
@@ -93,6 +137,8 @@ const refs = {
   loadingProgress: document.querySelector("#loadingProgress"),
   loadingProgressBar: document.querySelector("#loadingProgressBar"),
   loadingPercent: document.querySelector("#loadingPercent"),
+  mapPreviewBanner: document.querySelector("#mapPreviewBanner"),
+  mapPreviewStatus: document.querySelector("#mapPreviewStatus"),
   prompt: document.querySelector("#interactionPrompt"),
   schoolList: document.querySelector("#schoolList"),
   schoolSearch: document.querySelector("#schoolSearch"),
@@ -109,9 +155,17 @@ const refs = {
   achievementProgressBar: document.querySelector("#achievementProgressBar"),
   achievementMeter: document.querySelector(".achievement-meter"),
   achievementStatus: document.querySelector("#achievementStatus"),
+  achievementExpandAll: document.querySelector("#achievementExpandAll"),
+  achievementCollapseAll: document.querySelector("#achievementCollapseAll"),
   achievementList: document.querySelector("#achievementList"),
   achievementToast: document.querySelector("#achievementToast"),
+  achievementToastKicker: document.querySelector("#achievementToastKicker"),
   achievementToastTitle: document.querySelector("#achievementToastTitle"),
+  dailyQuestDate: document.querySelector("#dailyQuestDate"),
+  dailyCoinBalance: document.querySelector("#dailyCoinBalance"),
+  dailyQuestProgress: document.querySelector("#dailyQuestProgress"),
+  dailyQuestStatus: document.querySelector("#dailyQuestStatus"),
+  dailyQuestList: document.querySelector("#dailyQuestList"),
   mobilePad: document.querySelector("#mobilePad"),
   mobileExploreButton: document.querySelector("#mobileExploreButton"),
   fullscreenToggle: document.querySelector("#fullscreenToggle"),
@@ -151,7 +205,7 @@ const refs = {
   dailyStoryChoices: document.querySelector("#dailyStoryChoices"),
   dailyStoryResult: document.querySelector("#dailyStoryResult"),
   announcement: document.querySelector("#townAnnouncement"),
-  playerStyleButtons: [...document.querySelectorAll("[data-player-style]")],
+  playerAvatarButtons: [...document.querySelectorAll("[data-player-avatar]")],
 };
 
 const COLORS = {
@@ -231,6 +285,9 @@ const BIKE_ELIGIBLE_ROLES = new Set([
   "community-resident", "university-student", "office-worker", "principal",
   "vendor", "sanitation-worker", "delivery-worker", "college-volunteer",
   "mayor", "borough-chief", "city-councilor", "candidate", "explorer",
+  "county-magistrate", "county-civil-servant", "county-supervisor", "county-councilor",
+  "township-officer", "local-guide", "railway-worker", "hospitality-worker",
+  "agricultural-technician", "garden-shop-worker", "produce-market-worker",
 ]);
 const RESIDENTIAL_VENUE_TYPES = new Set(["player-home", "townhouse", "apartment"]);
 const CIVIC_AFTER_HOURS_ROLES = new Set(["mayor", "civil-servant", "city-supervisor"]);
@@ -248,8 +305,14 @@ const PLAYER_HOME_STAGE = Object.freeze({
 const OUTDOOR_ACTIVITIES = new Set([
   "waiting", "queuing", "resting", "greeting", "watching-birds", "feeding-birds",
   "exercising", "sweeping", "stocking", "school-pickup", "delivery", "listening", "cycling",
+  "fishing", "barbecuing", "farming", "harvesting", "patrolling", "guiding", "maintaining",
+  "inspecting-paddy", "releasing-water", "mending-ridge", "sorting-produce", "tending-grapes",
+  "tending-flowers", "checking-irrigation", "tending-oysters", "repairing-rail", "serving-market",
 ]);
 const ROLE_DESTINATION_PREFERENCES = {
+  "coffee-lover": ["snack-shop", "landmark", "convenience-store", "park"],
+  "floral-designer": ["park", "museum", "landmark", "grocery-store"],
+  "fitness-coach": ["stadium", "park", "convenience-store"],
   student: ["school", "park", "stadium", "museum", "convenience-store", "snack-shop", "landmark"],
   teacher: ["school", "museum", "landmark", "convenience-store", "grocery-store"],
   nutritionist: ["school", "hospital", "grocery-store", "snack-shop"],
@@ -272,9 +335,36 @@ const ROLE_DESTINATION_PREFERENCES = {
   "borough-chief": ["park", "school", "police-station", "convenience-store"],
   "city-councilor": ["landmark", "school", "snack-shop", "park"],
   candidate: ["snack-shop", "park", "landmark", "convenience-store", "grocery-store"],
+  "county-magistrate": ["county-government", "school", "landmark", "park"],
+  "county-civil-servant": ["county-government", "township-office", "school", "park"],
+  "county-supervisor": ["county-government", "township-office", "school"],
+  "county-councilor": ["county-council", "school", "landmark", "park"],
+  "township-officer": ["township-office", "school", "park"],
+  farmer: ["farm", "township-office", "school", "grocery-store"],
+  "fruit-farmer": ["farm", "township-office", "school"],
+  "flower-grower": ["farm", "park", "township-office"],
+  woodcarver: ["workshop", "landmark", "school"],
+  "local-guide": ["landmark", "school", "park"],
+  "forest-ranger": ["visitor-center", "landmark", "park"],
+  "railway-worker": ["railway", "landmark", "township-office"],
+  "hospitality-worker": ["landmark", "restaurant", "township-office"],
+  fisher: ["harbor", "township-office", "school"],
+  "oyster-farmer": ["harbor", "farm", "township-office"],
+  "irrigation-worker": ["farm", "township-office", "park"],
+  "rice-farmer": ["farm", "township-office", "grocery-store"],
+  "vegetable-farmer": ["farm", "grocery-store", "township-office"],
+  "grape-grower": ["farm", "grocery-store", "township-office"],
+  "agricultural-technician": ["agriculture-office", "farm", "township-office"],
+  "railway-maintainer": ["railway", "township-office", "landmark"],
+  "sugar-rail-worker": ["railway", "landmark", "township-office"],
+  "garden-shop-worker": ["farm", "park", "township-office"],
+  "produce-market-worker": ["grocery-store", "farm", "township-office"],
 };
 
 const ROLE_OUTFIT_STYLES = {
+  "coffee-lover": ["leather-jacket"],
+  "floral-designer": ["ivory-dress"],
+  "fitness-coach": ["athletic-set"],
   student: ["school-uniform", "school-cardigan", "sporty"],
   teacher: ["cardigan", "blazer"],
   nutritionist: ["lab-coat"],
@@ -304,6 +394,30 @@ const ROLE_OUTFIT_STYLES = {
   "sanitation-worker": ["safety-vest"],
   "delivery-worker": ["casual-layered"],
   explorer: ["adventurer"],
+  "county-magistrate": ["civic-suit"],
+  "county-civil-servant": ["blazer", "cardigan"],
+  "county-supervisor": ["civic-suit", "blazer"],
+  "county-councilor": ["civic-suit"],
+  "township-officer": ["blazer", "cardigan"],
+  farmer: ["overalls"],
+  "fruit-farmer": ["overalls"],
+  "flower-grower": ["overalls"],
+  woodcarver: ["shop-apron"],
+  "local-guide": ["casual-layered", "cardigan"],
+  "forest-ranger": ["adventurer", "safety-vest"],
+  "railway-worker": ["safety-vest"],
+  "hospitality-worker": ["blazer", "cardigan"],
+  fisher: ["overalls", "safety-vest"],
+  "oyster-farmer": ["overalls"],
+  "irrigation-worker": ["safety-vest", "overalls"],
+  "rice-farmer": ["overalls"],
+  "vegetable-farmer": ["overalls"],
+  "grape-grower": ["overalls"],
+  "agricultural-technician": ["safety-vest", "cardigan"],
+  "railway-maintainer": ["safety-vest"],
+  "sugar-rail-worker": ["safety-vest", "overalls"],
+  "garden-shop-worker": ["shop-apron", "overalls"],
+  "produce-market-worker": ["shop-apron", "overalls"],
 };
 
 const CHARACTER_PROFILES = [
@@ -359,6 +473,10 @@ const CHARACTER_PROFILES = [
   { role: "sanitation-worker", gender: "male", skin: "#c88768", hair: "#292729", hairStyle: "cap", outfit: "#d98a38", outfitDark: "#385451", accent: "#f2d558", expression: "calm", accessory: "broom" },
   { role: "delivery-worker", gender: "female", skin: "#edb38b", hair: "#3a2930", hairStyle: "ponytail", outfit: "#4e8090", outfitDark: "#30515e", accent: "#edc35b", expression: "focused", accessory: "package", bodyStyle: "feminine" },
   { role: "delivery-worker", gender: "male", skin: "#c98566", hair: "#292728", hairStyle: "crop", outfit: "#547a91", outfitDark: "#334d60", accent: "#edc35b", expression: "cheerful", accessory: "package" },
+  // Three original adult residents inspired by the supplied fashion references.
+  { role: "coffee-lover", gender: "female", ageGroup: "adult", preservePalette: true, skin: "#e9b89d", hair: "#24282e", hairStyle: "bob", hairAccent: "#49515b", eyeColor: "#63767b", outfitStyle: "leather-jacket", outfit: "#292d35", outfitDark: "#171d25", accent: "#c7d2d8", shoeColor: "#242b33", expression: "confident", accessory: "coffee-cup", bodyStyle: "feminine", makeup: true },
+  { role: "floral-designer", gender: "female", ageGroup: "adult", preservePalette: true, skin: "#f0c6aa", hair: "#dfc998", hairStyle: "bob", hairAccent: "#f7e5bd", hairClip: "#66b9c9", eyeColor: "#4b7e9c", outfitStyle: "ivory-dress", outfit: "#f4efdf", outfitDark: "#d8d0bd", accent: "#66b9c9", shoeColor: "#a98a70", expression: "gentle", accessory: "butterfly-pin", bodyStyle: "feminine" },
+  { role: "fitness-coach", gender: "female", ageGroup: "adult", preservePalette: true, skin: "#e9b58e", hair: "#c79649", hairStyle: "long-high-ponytail", hairAccent: "#ebc575", outfitStyle: "athletic-set", outfit: "#f0ece0", outfitDark: "#252b33", accent: "#6aaac1", shoeColor: "#ecefe9", expression: "cheerful", accessory: "water-bottle", bodyStyle: "feminine" },
 ];
 
 const CHILD_NAMES = [
@@ -448,6 +566,13 @@ const DIVERSE_TOWN_NPCS = [
   { district: "和平區", name: "清泉阿公", role: "senior", gender: "male" },
 ];
 
+// Keep these residents at the end of the spawn list so existing looks/routes stay stable.
+const FEATURED_RESIDENT_NPCS = [
+  { district: "梧棲區", name: "海音", role: "coffee-lover", gender: "female", featuredResident: true },
+  { district: "西區", name: "沐白", role: "floral-designer", gender: "female", featuredResident: true },
+  { district: "北屯區", name: "晴夏", role: "fitness-coach", gender: "female", featuredResident: true },
+];
+
 const CIVIC_TOWN_NPCS = [
   { district: "西屯區", name: "盧秀燕", role: "mayor", gender: "female", homeVenueId: "civic-center", sourceUrl: "https://www.taichung.gov.tw/8868/9942/9986/9989/1173576" },
   { district: "西區", name: "林哲雄", role: "borough-chief", gender: "male", sourceUrl: "https://www.west.taichung.gov.tw/media/205632/672610524328.pdf" },
@@ -464,8 +589,77 @@ const CIVIC_TOWN_NPCS = [
   },
 ];
 
+const NEIGHBOR_BASE_ROLE_BY_DISTRICT = Object.freeze({
+  "竹南鎮": ["fisher", "male", "vendor"],
+  "頭份市": ["office-worker", "female", "office-worker"],
+  "三灣鄉": ["fruit-farmer", "female", "gardener"],
+  "南庄鄉": ["local-guide", "female", "community-resident"],
+  "後龍鎮": ["fisher", "female", "vendor"],
+  "造橋鄉": ["farmer", "male", "gardener"],
+  "頭屋鄉": ["farmer", "female", "gardener"],
+  "獅潭鄉": ["forest-ranger", "male", "crossing-guard"],
+  "西湖鄉": ["farmer", "female", "gardener"],
+  "苗栗市": ["county-civil-servant", "female", "civil-servant"],
+  "公館鄉": ["farmer", "male", "gardener"],
+  "泰安鄉": ["forest-ranger", "female", "crossing-guard"],
+  "通霄鎮": ["fisher", "male", "vendor"],
+  "銅鑼鄉": ["local-guide", "male", "community-resident"],
+  "大湖鄉": ["fruit-farmer", "female", "gardener"],
+  "苑裡鎮": ["farmer", "male", "gardener"],
+  "三義鄉": ["woodcarver", "female", "vendor"],
+  "卓蘭鎮": ["fruit-farmer", "male", "gardener"],
+  "伸港鄉": ["fisher", "female", "vendor"],
+  "線西鄉": ["fisher", "male", "vendor"],
+  "和美鎮": ["rice-farmer", "female", "gardener"],
+  "彰化市": ["railway-maintainer", "male", "delivery-worker"],
+  "芬園鄉": ["rice-farmer", "male", "gardener"],
+  "鹿港鎮": ["local-guide", "female", "community-resident"],
+  "福興鄉": ["rice-farmer", "female", "gardener"],
+  "秀水鄉": ["rice-farmer", "male", "gardener"],
+  "花壇鄉": ["vegetable-farmer", "female", "gardener"],
+  "埔鹽鄉": ["rice-farmer", "male", "gardener"],
+  "大村鄉": ["grape-grower", "female", "gardener"],
+  "員林市": ["agricultural-technician", "male", "civil-servant"],
+  "芳苑鄉": ["oyster-farmer", "female", "vendor"],
+  "二林鎮": ["vegetable-farmer", "male", "gardener"],
+  "溪湖鎮": ["sugar-rail-worker", "female", "delivery-worker"],
+  "埔心鄉": ["rice-farmer", "female", "gardener"],
+  "永靖鄉": ["flower-grower", "male", "gardener"],
+  "社頭鄉": ["rice-farmer", "female", "gardener"],
+  "大城鄉": ["vegetable-farmer", "male", "gardener"],
+  "竹塘鄉": ["vegetable-farmer", "female", "gardener"],
+  "埤頭鄉": ["rice-farmer", "male", "gardener"],
+  "北斗鎮": ["produce-market-worker", "female", "vendor"],
+  "田尾鄉": ["garden-shop-worker", "female", "gardener"],
+  "田中鎮": ["rice-farmer", "male", "gardener"],
+  "溪州鄉": ["irrigation-worker", "female", "sanitation-worker"],
+  "二水鄉": ["irrigation-worker", "male", "sanitation-worker"],
+});
+
+const NEIGHBOR_EXTRA_NPCS = Object.freeze([
+  { countyId: "miaoli", district: "苗栗市", name: "鍾東錦", role: "county-magistrate", gender: "male", profileBaseRole: "mayor", workVenueId: "miaoli-county-government", sourceUrl: "https://www.miaoli.gov.tw/cp.aspx?n=265" },
+  { countyId: "miaoli", district: "苗栗市", role: "county-civil-servant", gender: "male", profileBaseRole: "civil-servant", workVenueId: "miaoli-county-government" },
+  { countyId: "miaoli", district: "苗栗市", role: "county-civil-servant", gender: "female", profileBaseRole: "civil-servant", workVenueId: "miaoli-county-government" },
+  { countyId: "miaoli", district: "苗栗市", role: "county-supervisor", gender: "female", profileBaseRole: "city-supervisor", workVenueId: "miaoli-county-government" },
+  { countyId: "miaoli", district: "苗栗市", role: "county-councilor", gender: "male", profileBaseRole: "city-councilor", workVenueId: "miaoli-county-council" },
+  { countyId: "miaoli", district: "苗栗市", role: "police-officer", gender: "female", profileBaseRole: "police-officer", workVenueId: "miaoli-public-safety" },
+  { countyId: "miaoli", district: "苗栗市", role: "firefighter", gender: "male", profileBaseRole: "firefighter", workVenueId: "miaoli-fire-service" },
+  { countyId: "miaoli", district: "苗栗市", role: "teacher", gender: "female", profileBaseRole: "teacher" },
+  { countyId: "miaoli", district: "三義鄉", role: "railway-worker", gender: "male", profileBaseRole: "delivery-worker" },
+  { countyId: "miaoli", district: "泰安鄉", role: "hospitality-worker", gender: "female", profileBaseRole: "office-worker" },
+  { countyId: "changhua", district: "彰化市", name: "王惠美", role: "county-magistrate", gender: "female", profileBaseRole: "mayor", workVenueId: "changhua-county-government", sourceUrl: "https://www.chcg.gov.tw/ch2/intro-magistrate.aspx" },
+  { countyId: "changhua", district: "彰化市", role: "county-civil-servant", gender: "female", profileBaseRole: "civil-servant", workVenueId: "changhua-county-government" },
+  { countyId: "changhua", district: "彰化市", role: "county-civil-servant", gender: "male", profileBaseRole: "civil-servant", workVenueId: "changhua-county-government" },
+  { countyId: "changhua", district: "彰化市", role: "county-supervisor", gender: "male", profileBaseRole: "city-supervisor", workVenueId: "changhua-county-government" },
+  { countyId: "changhua", district: "彰化市", role: "county-councilor", gender: "female", profileBaseRole: "city-councilor", workVenueId: "changhua-county-council" },
+  { countyId: "changhua", district: "彰化市", role: "police-officer", gender: "male", profileBaseRole: "police-officer", workVenueId: "changhua-public-safety" },
+  { countyId: "changhua", district: "彰化市", role: "firefighter", gender: "female", profileBaseRole: "firefighter", workVenueId: "changhua-fire-service" },
+  { countyId: "changhua", district: "彰化市", role: "teacher", gender: "male", profileBaseRole: "teacher" },
+]);
+
 const VENUE_TYPES = [
   "landmark", "convenience-store", "snack-shop", "police-station", "fire-station", "hospital",
+  "county-government", "county-council", "township-office", "agriculture-office",
   ...COMMUNITY_VENUE_TYPES, "player-home", "townhouse", "apartment",
 ];
 const VENUE_LABELS = {
@@ -485,6 +679,10 @@ const VENUE_LABELS = {
   "player-home": "我的家",
   townhouse: "透天住宅",
   apartment: "公寓住宅",
+  "county-government": "縣政府",
+  "agriculture-office": "農業處",
+  "county-council": "縣議會",
+  "township-office": "鄉鎮市公所",
 };
 
 const LANDMARK_HUB_DEFINITIONS = [
@@ -532,6 +730,9 @@ const LANDMARK_HUB_DEFINITIONS = [
 ];
 
 const ROLE_LABELS = {
+  "coffee-lover": "咖啡愛好者",
+  "floral-designer": "花藝設計師",
+  "fitness-coach": "運動教練",
   student: "國小學生",
   teacher: "老師",
   nutritionist: "營養師",
@@ -560,9 +761,51 @@ const ROLE_LABELS = {
   doctor: "醫師",
   "sanitation-worker": "街區清潔人員",
   "delivery-worker": "送貨人員",
+  "county-magistrate": "縣長",
+  "county-civil-servant": "縣府承辦人",
+  "county-supervisor": "縣府主管",
+  "county-councilor": "縣議員",
+  "township-officer": "鄉鎮市公所人員",
+  farmer: "農夫",
+  "fruit-farmer": "果農",
+  "flower-grower": "花農與苗木栽培員",
+  woodcarver: "木雕師",
+  "local-guide": "地方文化導覽員",
+  "forest-ranger": "山林巡護員",
+  "railway-worker": "鐵道工作人員",
+  "hospitality-worker": "溫泉旅宿人員",
+  fisher: "漁港工作者",
+  "oyster-farmer": "蚵農",
+  "irrigation-worker": "水圳巡查員",
+  "rice-farmer": "稻農",
+  "vegetable-farmer": "蔬菜農",
+  "grape-grower": "葡萄果農",
+  "agricultural-technician": "農業技術員",
+  "railway-maintainer": "鐵道維修員",
+  "sugar-rail-worker": "糖廠小火車人員",
+  "garden-shop-worker": "園藝店員",
+  "produce-market-worker": "果菜市場人員",
 };
 
 const ROLE_DIALOGUES = {
+  "coffee-lover": [
+    "我是海音。喜歡穿著皮衣，在海風裡找一家可以慢慢坐的店。",
+    "咖啡是散步的小樂趣，正餐還是要好好吃，水也別忘了喝。",
+    "今天想先逛梧棲街區，再看看晚餐能不能多搭一樣蔬菜。",
+    "如果你也不趕時間，就一起慢慢看海邊的光吧。",
+  ],
+  "floral-designer": [
+    "我是沐白，正在找花藝配色的靈感。這枚藍色髮夾是我最喜歡的小點綴。",
+    "白色洋裝配上小小蝴蝶別針，去街角散步也像替日常留一點儀式感。",
+    "餐桌上放一朵花，慢慢吃一頓飯，平常的一天也可以很舒服。",
+    "我喜歡看當季蔬果的顏色，找靈感，也想想今晚煮什麼。",
+  ],
+  "fitness-coach": [
+    "我是晴夏。把馬尾綁好、帶上水壺，今天也用舒服的步調動一動吧。",
+    "運動不是為了抵銷吃過的食物；好好吃飯、休息和活動都值得照顧。",
+    "我喜歡在北屯的公園散步和伸展，累了就停下來休息。",
+    "出門活動記得補充水分。今天走一小段，也是一個很好的開始。",
+  ],
   student: [
     "我每天先看看午餐有什麼，再決定最想先認識哪一道菜。",
     "遇到不熟悉的食物，我會先聞一聞、看一看，再試試一小口。",
@@ -702,7 +945,135 @@ const ROLE_DIALOGUES = {
     "我正在跨區走訪並向居民問候，也會蒐集家長對校園午餐的意見。",
     "今天會走訪市場、小吃店與公共空間；你可以比較每位候選人的公開資料再自行判斷。",
   ],
+  "county-magistrate": [
+    "縣政行程會走進校園、農村和街區，現場問題要留下可追蹤的處理紀錄。",
+    "學校午餐、農業與公共服務需要不同單位協作，不能只靠一句口號。",
+  ],
+  "county-civil-servant": [
+    "我先核對居民提供的地點與資料，再交由權責單位處理。",
+    "縣府公開資料要標明日期與來源，還沒確認的內容不能自行補上。",
+  ],
+  "county-supervisor": [
+    "我正在確認跨處室工作的期限與負責人，完成後還要追蹤實際結果。",
+    "農業、教育與交通問題常會連在一起，需要把現場情況整理清楚。",
+  ],
+  "county-councilor": [
+    "議會監督要看預算、執行紀錄與居民實際遇到的問題。",
+    "我會把街區蒐集到的意見帶回議會研究，也會查核縣府公開資料。",
+  ],
+  "township-officer": [
+    "公所最常處理居民身邊的事情，我會先確認地點再協助轉介。",
+    "今天要巡查學校周邊和農路，回公所後再整理處理進度。",
+  ],
+  farmer: [
+    "農田每天都要看水分、土壤和天氣，不能只照固定時間工作。",
+    "我介紹的是地方農業日常，不代表今天學校午餐一定使用這裡的食材。",
+  ],
+  "fruit-farmer": [
+    "果園會依季節修枝、疏果與採收，每一段時間的工作都不一樣。",
+    "產地故事可以幫助認識食物，但學校當日食材仍要看正式供餐紀錄。",
+  ],
+  "flower-grower": [
+    "花田和苗圃要依品種調整日照與澆水，整理完還要準備出貨。",
+    "田尾的園藝不只有鮮花，也有苗木、盆栽與庭園植物。",
+  ],
+  woodcarver: [
+    "木材紋理不同，下刀方向與力道也要跟著調整。",
+    "工作室會先把工具收好再開放參觀，雕刻區不能隨意碰觸。",
+  ],
+  "local-guide": [
+    "導覽會分清楚史料、地方記憶與今天看到的現況。",
+    "走老街或文化園區時，也要把居民的日常通道留出來。",
+  ],
+  "forest-ranger": [
+    "山區先看天候與步道公告，不進入封閉路段，也不離開安全步道。",
+    "巡護除了看步道，也會留意水土、植物和野生動物的變化。",
+  ],
+  "railway-worker": [
+    "軌道與月台周邊有作業範圍，參觀時要留在開放動線內。",
+    "老車站和車庫保存了交通記憶，維修紀錄也要一項項確認。",
+  ],
+  "hospitality-worker": [
+    "山區旅宿會留意熱水、步道資訊與晚間安全，讓旅客安心休息。",
+    "溫泉區也有居民生活，遊客要遵守開放範圍並保持安靜。",
+  ],
+  fisher: [
+    "漁港工作會看潮汐、風勢和作業區域，岸邊通道不能被堵住。",
+    "我介紹的是地方漁業生活，不會把港口漁獲說成今天學校使用的食材。",
+  ],
+  "oyster-farmer": [
+    "潮間帶工作要配合潮汐，牛車和蚵田都有固定安全動線。",
+    "遊客留在開放步道，我們依作業規範進入蚵田照顧養殖設施。",
+  ],
+  "irrigation-worker": [
+    "我沿水圳檢查水流、閘門和田間分水，確保通道沒有阻塞。",
+    "水圳不是遊戲水池，巡查人員會走工作路線，玩家要留在步道上。",
+  ],
+  "rice-farmer": [
+    "水田要巡水位、看秧苗，也要把田埂缺口一段段補好。",
+    "今天巡田、放水與整田埂都有固定順序，作物來源仍以正式供餐紀錄為準。",
+  ],
+  "vegetable-farmer": [
+    "菜園會依作物分畦管理，採收後還要分類、裝箱與留下生產紀錄。",
+    "二林、竹塘與大城的田區各有節奏，農路和作業通道要保持暢通。",
+  ],
+  "grape-grower": [
+    "葡萄棚要巡查枝蔓、果串與遮雨設施，採收後再送到集貨場分級。",
+    "大村與溪湖一帶的葡萄產業很有特色，但不代表今天學校一定使用這批水果。",
+  ],
+  "agricultural-technician": [
+    "我往返農田、農會與農業處，協助記錄產銷、病蟲害與田間問題。",
+    "農業輔導要先看現場與可核實資料，不能把推測寫成產地事實。",
+  ],
+  "railway-maintainer": [
+    "扇形車庫與轉車台有維修作業範圍，參觀請留在開放動線。",
+    "我會逐項檢查軌道、機車與轉車台，完成後再填寫維修紀錄。",
+  ],
+  "sugar-rail-worker": [
+    "溪湖糖廠的小火車、倉庫和軌道都有固定檢查行程。",
+    "小火車作業區不能穿越；遊客從開放步道看，工作人員走維修路線。",
+  ],
+  "garden-shop-worker": [
+    "田尾的盆栽、苗木和花卉要分區澆水，傍晚還要整理花市與店面。",
+    "公路花園的自行車道與園藝店相連，騎車時也要禮讓散步的人。",
+  ],
+  "produce-market-worker": [
+    "果菜進場後要分級、裝箱與核對來源，市場通道不能堆滿貨物。",
+    "北斗的市場是農產品集散的一站，今天校園食材仍要看學校正式紀錄。",
+  ],
 };
+
+const ROLE_LOCAL_SPECIALTIES = Object.freeze({
+  "rice-farmer": "水田巡查、放水與田埂整理",
+  "vegetable-farmer": "菜園管理、蔬果分級與裝箱",
+  "grape-grower": "葡萄棚管理、採收與集貨",
+  "flower-grower": "花田、苗木與出貨整理",
+  "agricultural-technician": "農業產銷、田間輔導與市場管理",
+  "irrigation-worker": "水圳、抽水站與田間分水巡查",
+  "oyster-farmer": "潮間帶蚵棚與海牛車作業",
+  fisher: "漁港、沿海聚落與作業通道",
+  "railway-maintainer": "扇形車庫、機車與轉車台維修",
+  "sugar-rail-worker": "糖廠小火車、倉庫與軌道維護",
+  "local-guide": "老街、傳統街屋與工藝導覽",
+  "garden-shop-worker": "花卉市場、溫室與盆栽照護",
+  "produce-market-worker": "果菜分級、裝箱與市場通道管理",
+});
+
+const ROLE_WORK_ACTIVITIES = Object.freeze({
+  "rice-farmer": ["inspecting-paddy", "releasing-water", "mending-ridge"],
+  "vegetable-farmer": ["farming", "harvesting", "sorting-produce"],
+  "grape-grower": ["tending-grapes", "harvesting", "sorting-produce"],
+  "flower-grower": ["tending-flowers", "harvesting", "sorting-produce"],
+  "agricultural-technician": ["patrolling", "checking-irrigation", "serving-market"],
+  "irrigation-worker": ["checking-irrigation", "maintaining", "patrolling"],
+  "oyster-farmer": ["tending-oysters", "maintaining", "harvesting"],
+  fisher: ["maintaining", "patrolling", "sorting-produce"],
+  "railway-maintainer": ["repairing-rail", "maintaining", "patrolling"],
+  "sugar-rail-worker": ["repairing-rail", "maintaining", "patrolling"],
+  "local-guide": ["guiding", "greeting", "patrolling"],
+  "garden-shop-worker": ["tending-flowers", "stocking", "serving-market"],
+  "produce-market-worker": ["sorting-produce", "stocking", "serving-market"],
+});
 
 const DAILY_STORY_TEMPLATES = [
   {
@@ -765,35 +1136,55 @@ const WEEKEND_MARKET_ROLES = new Set([
 ]);
 const RAIN_DUTY_ROLES = new Set(["police-officer", "firefighter", "doctor", "crossing-guard"]);
 
-const PLAYER_PROFILES = {
-  female: {
+const PLAYER_AVATAR_LABELS = Object.freeze({
+  haiyin: "海音",
+  mubai: "沐白",
+  qingxia: "晴夏",
+  xiangye: "向野",
+  qingchuan: "青川",
+  yueyang: "岳陽",
+});
+
+const PLAYER_AVATARS = Object.freeze({
+  haiyin: {
+    ...CHARACTER_PROFILES.find((profile) => profile.role === "coffee-lover"),
     role: "explorer",
-    skin: "#efbd91",
-    hair: "#3b2830",
-    hairStyle: "high-ponytail",
-    outfit: "#d9555f",
-    outfitDark: "#6f3b58",
-    accent: "#f0c454",
-    expression: "determined",
-    accessory: "satchel",
-    bodyStyle: "feminine",
   },
-  male: {
+  mubai: {
+    ...CHARACTER_PROFILES.find((profile) => profile.role === "floral-designer"),
     role: "explorer",
-    skin: "#efbd91",
-    hair: "#263039",
-    hairStyle: "side-part",
-    outfit: "#e85e3f",
-    outfitDark: "#2d4d68",
-    accent: "#f0c454",
-    expression: "determined",
-    accessory: "satchel",
   },
-};
+  qingxia: {
+    ...CHARACTER_PROFILES.find((profile) => profile.role === "fitness-coach"),
+    role: "explorer",
+  },
+  xiangye: {
+    role: "explorer", skin: "#efbd91", hair: "#263039", hairStyle: "side-part",
+    outfitStyle: "adventurer", outfit: "#d9673f", outfitDark: "#304f67", accent: "#f0c454",
+    expression: "determined", accessory: "satchel",
+  },
+  qingchuan: {
+    role: "explorer", skin: "#d99a73", hair: "#503a31", hairStyle: "short-wave",
+    outfitStyle: "cardigan", outfit: "#e7ddc7", outfitDark: "#58705c", accent: "#c58a4f",
+    expression: "thoughtful", accessory: "book",
+  },
+  yueyang: {
+    role: "explorer", skin: "#c98766", hair: "#242a2e", hairStyle: "crop",
+    outfitStyle: "athletic-set", outfit: "#5a8494", outfitDark: "#293e58", accent: "#e9bd58",
+    expression: "cheerful", accessory: "water-bottle",
+  },
+});
 
 const state = {
   schools: [],
+  neighborSchools: [],
   districtThemes: new Map(),
+  neighborCountyThemes: new Map(),
+  neighborDistrictThemes: new Map(),
+  neighborWorkZones: [],
+  townMapManifest: { schemaVersion: 1, placements: [], npcs: [] },
+  townMapPreview: { active: false, focus: null, expiresAt: null, error: "" },
+  activeNpcIds: new Set(),
   districtGroups: [],
   mapNote: "",
   date: "",
@@ -802,6 +1193,9 @@ const state = {
   moveTarget: null,
   pendingBikeStationId: "",
   lastTime: performance.now(),
+  lastFrameAt: performance.now(),
+  frameRequestId: 0,
+  frameErrorReported: false,
   lastPromptTarget: null,
   player: {
     x: WIDTH / 2, y: HEIGHT / 2 + 24, size: 16, direction: "down", step: 0, isMoving: false, ridingBike: false,
@@ -841,7 +1235,7 @@ const state = {
   ready: false,
   immersiveMode: false,
   nativeFullscreen: false,
-  playerStyle: loadPlayerStylePreference(),
+  playerAvatarId: loadPlayerAvatarPreference(),
   achievements: {
     loaded: false,
     authenticated: false,
@@ -853,6 +1247,23 @@ const state = {
   achievementWriteQueue: Promise.resolve(),
   achievementEventMemory: new Set(),
   achievementToastTimer: 0,
+  dailyQuests: {
+    loaded: false,
+    authenticated: false,
+    account: null,
+    date: "",
+    coinBalance: 0,
+    tasks: [],
+    summary: { completed: 0, total: 3, bonusCoins: 15, bonusAwarded: false },
+    rerollAvailable: false,
+  },
+  dailyQuestLoadPromise: null,
+  dailyQuestWriteQueue: Promise.resolve(),
+  dailyQuestEventMemory: new Set(),
+  dailyQuestSessionId: typeof crypto?.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  dailyQuestEventSequence: 0,
+  dailyWalkPending: 0,
+  dailyBridgeSides: new Map(),
 };
 
 const townMusic = {
@@ -876,24 +1287,34 @@ async function init() {
       return account;
     });
     state.achievementLoadPromise = loadTownAchievements();
-    const [schools, themePayload] = await Promise.all([
+    state.dailyQuestLoadPromise = loadTownDailyQuests();
+    const [schools, themePayload, neighborCountyPayload, townMapManifest] = await Promise.all([
       loadSchools(),
       loadDistrictThemes(),
+      loadNeighborCountyThemes(),
+      loadTownMapManifest(),
     ]);
     setLoadingProgress(38, "學校與行政區資料已到齊，正在鋪設街道…");
     await nextPaint();
     configureDistrictThemes(themePayload);
+    configureNeighborCountyThemes(neighborCountyPayload);
+    state.townMapManifest = townMapManifest;
+    syncTownMapPreviewUi();
     updateTownEnvironment(performance.now(), true);
     state.isWeekend = isTaichungWeekend(state.environment.clock);
     const themedDistricts = new Set(DISTRICT_DISPLAY_ORDER);
     state.schools = createSchoolLayouts(schools.filter(
       (school) => school.city === SHOWCASE_CITY && themedDistricts.has(school.district),
     ));
+    const neighborSourceSchools = schools.filter((school) => NEIGHBOR_COUNTY_CITIES.has(school.city));
+    state.neighborSchools = createNeighborSchoolLayouts(neighborSourceSchools);
     if (!state.schools.length) throw new Error("找不到臺中市 29 區學校資料");
+    if (state.neighborSchools.length !== neighborSourceSchools.length) throw new Error("苗栗與彰化國小地圖名冊不完整");
     syncCurrentMealDate(state.environment);
     updateProgress();
     setLoadingProgress(58, "正在放置公園、地標、醫院與商場…");
     createTownVenues();
+    applyTownMapPlacements();
     createBikeStations();
     await nextPaint();
     await Promise.race([
@@ -901,6 +1322,7 @@ async function init() {
       new Promise((resolve) => window.setTimeout(() => resolve(null), 650)),
     ]);
     placePlayerAtHome();
+    placePlayerAtTownMapPreview();
     updateCamera(true);
     setLoadingProgress(76, "正在安排居民、職務與日常行程…");
     createTownCharacters();
@@ -921,20 +1343,20 @@ async function init() {
     trackTownEvent("lunch_town_viewed", {
       district: state.activeDistrict,
       menu_date: state.date,
-      player_style: state.playerStyle,
+      player_style: state.playerAvatarId,
     });
     void state.achievementLoadPromise.then(() => {
       void recordAchievementEvent("town_visit", state.environment?.dateKey || state.date);
       if (state.activeDistrict) void recordAchievementEvent("district_visit", state.activeDistrict);
     });
-    announce(`臺中 29 區營養午餐小鎮已建立，共有 ${state.schools.length} 間學校、${state.venues.length} 處建築、${state.bikeStations.length} 處 YouBike 站與 ${state.npcs.length} 位跨區行動角色。`);
+    announce(`午餐小鎮已建立，臺中有 ${state.schools.length} 間午餐學校，苗栗與彰化另有 ${state.neighborSchools.length} 間地圖學校，並有 ${state.venues.length} 處建築、${state.bikeStations.length} 處 YouBike 站與 ${state.npcs.length} 位跨區行動角色。`);
   } catch (error) {
     console.error(error);
     refs.loadingTitle.textContent = "午餐小鎮暫時無法建立";
     refs.loadingStep.textContent = error instanceof Error ? error.message : "讀取資料時發生錯誤";
     refs.app.setAttribute("aria-busy", "false");
   }
-  requestAnimationFrame(frame);
+  scheduleTownFrame();
 }
 
 function setLoadingProgress(percent, message) {
@@ -988,6 +1410,7 @@ function bindEvents() {
       state.keys.add(direction);
       state.moveTarget = null;
       state.pendingBikeStationId = "";
+      ensureTownFrameRunning();
     }
     if (["Enter", " "].includes(event.key) && !refs.dialog.open) {
       event.preventDefault();
@@ -1002,6 +1425,7 @@ function bindEvents() {
   window.addEventListener("blur", () => state.keys.clear());
   canvas.addEventListener("pointerdown", (event) => {
     canvas.focus({ preventScroll: true });
+    ensureTownFrameRunning();
     if (state.townEvent) {
       announce("請先在街區事件面板選擇如何回應。 ");
       return;
@@ -1040,6 +1464,11 @@ function bindEvents() {
       openSchool(school, "map_click");
       return;
     }
+    const neighborSchool = state.neighborSchools.find((candidate) => pointInExpandedRect(point, candidate.layout, hitPadding));
+    if (neighborSchool) {
+      openNeighborSchool(neighborSchool, "map_click");
+      return;
+    }
     const venue = venueAtPoint(point, hitPadding);
     if (venue) {
       openVenue(venue, "map_click");
@@ -1048,6 +1477,16 @@ function bindEvents() {
     state.moveTarget = point;
   });
   refs.dialogClose.addEventListener("click", () => refs.dialog.close());
+  refs.dialogBody.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-daily-dish]");
+    if (!button) return;
+    refs.dialogBody.querySelectorAll("button[data-daily-dish]").forEach((candidate) => {
+      candidate.setAttribute("aria-pressed", String(candidate === button));
+      candidate.textContent = candidate === button ? "已選這一道" : "今天想吃";
+    });
+    void recordDailyQuestEvent("dish_pick", button.dataset.dailyDish, 1);
+    announce(townText(`已選擇${button.dataset.dishName || "這道菜"}作為今天感興趣的菜色。`));
+  });
   refs.dialog.addEventListener("click", (event) => {
     if (event.target === refs.dialog) refs.dialog.close();
   });
@@ -1065,6 +1504,7 @@ function bindEvents() {
       state.keys.add(direction);
       state.moveTarget = null;
       state.pendingBikeStationId = "";
+      ensureTownFrameRunning();
     };
     const stop = (event) => {
       event.preventDefault();
@@ -1092,6 +1532,12 @@ function bindEvents() {
   document.addEventListener("fullscreenchange", handleFullscreenChange);
   document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
   refs.questPanelClose.addEventListener("click", () => setQuestPanelOpen(false, true));
+  refs.achievementExpandAll.addEventListener("click", () => setAchievementCategoriesExpanded(true));
+  refs.achievementCollapseAll.addEventListener("click", () => setAchievementCategoriesExpanded(false));
+  refs.dailyQuestList.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-daily-reroll]");
+    if (button) void rerollDailyQuest(button.dataset.dailyReroll);
+  });
   refs.schoolSearch.addEventListener("input", () => {
     state.schoolQuery = refs.schoolSearch.value.trim();
     renderSchoolList();
@@ -1099,11 +1545,13 @@ function bindEvents() {
   refs.schoolFinder.addEventListener("toggle", () => {
     if (refs.schoolFinder.open && !state.schoolListRendered) renderSchoolList();
   });
-  refs.accountAction.addEventListener("click", (event) => {
-    if (refs.accountAction.dataset.destination !== "achievements") return;
-    event.preventDefault();
-    if (mobileLayoutQuery.matches) setQuestPanelOpen(true);
-    else refs.questPanel.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+  window.addEventListener("accountpanelchange", (event) => {
+    syncTownAccountUI(event.detail?.account);
+    state.dailyQuestEventMemory.clear();
+    state.dailyBridgeSides.clear();
+    state.dailyWalkPending = 0;
+    state.achievementLoadPromise = loadTownAchievements();
+    state.dailyQuestLoadPromise = loadTownDailyQuests();
   });
   mobileLayoutQuery.addEventListener("change", () => {
     configureCanvasViewport();
@@ -1117,8 +1565,8 @@ function bindEvents() {
     }, { rootMargin: "120px" });
     canvasObserver.observe(canvas);
   }
-  refs.playerStyleButtons.forEach((button) => {
-    button.addEventListener("click", () => setPlayerStyle(button.dataset.playerStyle));
+  refs.playerAvatarButtons.forEach((button) => {
+    button.addEventListener("click", () => setPlayerAvatar(button.dataset.playerAvatar));
   });
   refs.dailyStoryChoices.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-story-choice]");
@@ -1134,7 +1582,7 @@ function bindEvents() {
     }
   });
   syncTownOptionsDisclosure();
-  syncPlayerStyleButtons();
+  syncPlayerAvatarButtons();
 }
 
 function fullscreenElement() {
@@ -1230,7 +1678,8 @@ function setQuestPanelOpen(open, restoreFocus = false) {
     state.keys.clear();
     state.moveTarget = null;
     state.pendingBikeStationId = "";
-    announce("已開啟臺中小鎮成就手冊。");
+    refs.questPanel.focus({ preventScroll: true });
+    announce("已開啟每日任務與臺中小鎮成就手冊。");
   } else if (restoreFocus) {
     refs.mobileExploreButton.focus({ preventScroll: true });
   }
@@ -1327,33 +1776,34 @@ function playTownTone(frequency, start, duration, type, volume) {
   oscillator.stop(start + duration + 0.05);
 }
 
-function loadPlayerStylePreference() {
+function loadPlayerAvatarPreference() {
   try {
-    const value = localStorage.getItem(PLAYER_STYLE_STORAGE_KEY);
-    return value === "male" || value === "female" ? value : "female";
+    const value = localStorage.getItem(PLAYER_AVATAR_STORAGE_KEY);
+    if (PLAYER_AVATARS[value]) return value;
+    return localStorage.getItem(LEGACY_PLAYER_STYLE_STORAGE_KEY) === "male" ? "xiangye" : "qingxia";
   } catch {
-    return "female";
+    return "qingxia";
   }
 }
 
-function setPlayerStyle(style) {
-  if (style !== "male" && style !== "female") return;
-  const changed = state.playerStyle !== style;
-  state.playerStyle = style;
+function setPlayerAvatar(avatarId) {
+  if (!PLAYER_AVATARS[avatarId]) return;
+  const changed = state.playerAvatarId !== avatarId;
+  state.playerAvatarId = avatarId;
   try {
-    localStorage.setItem(PLAYER_STYLE_STORAGE_KEY, style);
+    localStorage.setItem(PLAYER_AVATAR_STORAGE_KEY, avatarId);
   } catch {
     // 外型偏好即使無法寫入裝置，仍可在本次遊玩中切換。
   }
-  syncPlayerStyleButtons();
-  if (changed) trackTownEvent("lunch_town_player_style_changed", { player_style: style });
-  announce(`玩家已切換為${style === "female" ? "女角色" : "男角色"}。`);
+  syncPlayerAvatarButtons();
+  if (changed) trackTownEvent("lunch_town_player_style_changed", { player_style: avatarId });
+  announce(`玩家已切換為${PLAYER_AVATAR_LABELS[avatarId]}造型。`);
   canvas.focus({ preventScroll: true });
 }
 
-function syncPlayerStyleButtons() {
-  refs.playerStyleButtons.forEach((button) => {
-    button.setAttribute("aria-pressed", String(button.dataset.playerStyle === state.playerStyle));
+function syncPlayerAvatarButtons() {
+  refs.playerAvatarButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.playerAvatar === state.playerAvatarId));
   });
 }
 
@@ -1362,7 +1812,7 @@ async function loadSchools() {
   let lastError = null;
   for (const endpoint of endpoints) {
     try {
-      const response = await fetch(endpoint, { headers: { Accept: "application/json" } });
+      const response = await fetch(endpoint, { headers: { Accept: "application/json" }, cache: "no-store" });
       if (!response.ok) throw new Error(`${endpoint} 回傳 ${response.status}`);
       const payload = await response.json();
       if (!Array.isArray(payload.schools)) throw new Error("學校名冊格式不正確");
@@ -1385,6 +1835,91 @@ async function loadDistrictThemes() {
     throw new Error("臺中 29 區特色資料格式不正確");
   }
   return payload;
+}
+
+async function loadNeighborCountyThemes() {
+  const response = await fetch("./neighbor-county-themes.json?v=20261105-player-civic", {
+    headers: { Accept: "application/json" },
+    cache: "no-cache",
+  });
+  if (!response.ok) throw new Error(`鄰近縣市特色資料回傳 ${response.status}`);
+  const payload = await response.json();
+  if (!Array.isArray(payload.counties) || payload.counties.length !== 2) {
+    throw new Error("苗栗與彰化特色資料格式不正確");
+  }
+  return payload;
+}
+
+async function loadTownMapManifest() {
+  const previewToken = takeTownMapPreviewToken();
+  if (previewToken) {
+    try {
+      const response = await fetch("/api/lunch-town/map/preview", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ token: previewToken }),
+        cache: "no-store",
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload?.error || `地圖預覽回傳 ${response.status}`);
+      const manifest = validatedTownMapManifest(payload?.manifest);
+      state.townMapPreview = {
+        active: true,
+        focus: payload?.focus || null,
+        expiresAt: payload?.expiresAt || null,
+        error: "",
+      };
+      return manifest;
+    } catch (error) {
+      state.townMapPreview.error = error instanceof Error ? error.message : "草稿預覽無法載入。";
+      console.warn("午餐小鎮草稿預覽無法載入，改用正式地圖", error);
+    }
+  }
+  return loadPublishedTownMapManifest();
+}
+
+function takeTownMapPreviewToken() {
+  const token = String(window.__lunchTownMapPreviewToken || new URLSearchParams(window.location.hash.slice(1)).get("map-preview") || "");
+  delete window.__lunchTownMapPreviewToken;
+  if (window.location.hash) window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+  return /^[A-Za-z0-9_-]{43}$/.test(token) ? token : "";
+}
+
+function validatedTownMapManifest(manifest) {
+  if (manifest?.schemaVersion !== 1 || !Array.isArray(manifest.placements) || !Array.isArray(manifest.npcs)) {
+    throw new Error("地圖設定格式不正確");
+  }
+  return manifest;
+}
+
+async function loadPublishedTownMapManifest() {
+  try {
+    const response = await fetch("/api/lunch-town/map", {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    if (!response.ok) throw new Error(`地圖設定回傳 ${response.status}`);
+    const payload = await response.json();
+    return validatedTownMapManifest(payload?.manifest);
+  } catch (error) {
+    console.warn("午餐小鎮將使用內建地圖設定", error);
+    return { schemaVersion: 1, placements: [], npcs: [] };
+  }
+}
+
+function syncTownMapPreviewUi() {
+  if (!refs.mapPreviewBanner || !refs.mapPreviewStatus) return;
+  refs.mapPreviewBanner.hidden = !state.townMapPreview.active && !state.townMapPreview.error;
+  refs.mapPreviewBanner.classList.toggle("is-error", Boolean(state.townMapPreview.error));
+  if (state.townMapPreview.active) {
+    const focus = state.townMapPreview.focus;
+    refs.mapPreviewStatus.textContent = focus
+      ? `${townText(focus.city)}・${townText(focus.district)}｜${townText("不會變更正式地圖，也不會記錄任務、成就或分析事件。")}`
+      : townText("不會變更正式地圖，也不會記錄任務、成就或分析事件。");
+  } else {
+    refs.mapPreviewStatus.textContent = `${townText("草稿預覽無法載入，現在顯示正式地圖。")} ${state.townMapPreview.error}`.trim();
+  }
 }
 
 function configureDistrictThemes(payload) {
@@ -1420,6 +1955,59 @@ function configureDistrictThemes(payload) {
   });
 }
 
+function configureNeighborCountyThemes(payload) {
+  for (const countyTheme of payload.counties) {
+    const county = neighborCountyById(countyTheme.id);
+    if (!county || county.name !== countyTheme.name) throw new Error(`${countyTheme.name || countyTheme.id}縣市資料不正確`);
+    const rows = Number(countyTheme.rows);
+    if (!Number.isInteger(rows) || rows < 1) throw new Error(`${county.name}行政區列數不正確`);
+    const expectedDistrictCount = county.id === "miaoli" ? 18 : 26;
+    if (!Array.isArray(countyTheme.districts) || countyTheme.districts.length !== expectedDistrictCount) {
+      throw new Error(`${county.name}行政區數量不正確`);
+    }
+    const occupied = new Set();
+    const { cellWidth, cellHeight } = neighborCountyGridMetrics(county, rows);
+    countyTheme.districts.forEach((districtTheme) => {
+      const [column, row] = districtTheme.grid || [];
+      if (!Number.isInteger(column) || !Number.isInteger(row)
+        || column < 0 || column >= NEIGHBOR_COUNTY_DISTRICT_COLUMNS
+        || row < 0 || row >= rows) {
+        throw new Error(`${districtTheme.name}行政區方位座標不正確`);
+      }
+      const gridKey = `${column},${row}`;
+      if (occupied.has(gridKey)) throw new Error(`${districtTheme.name}行政區方位座標重複`);
+      occupied.add(gridKey);
+      const zone = {
+        x: county.x + NEIGHBOR_COUNTY_MARGIN_X + column * cellWidth + NEIGHBOR_COUNTY_ZONE_GAP / 2,
+        y: county.y + NEIGHBOR_COUNTY_HEADER_HEIGHT + row * cellHeight + NEIGHBOR_COUNTY_ZONE_GAP / 2,
+        w: cellWidth - NEIGHBOR_COUNTY_ZONE_GAP,
+        h: cellHeight - NEIGHBOR_COUNTY_ZONE_GAP,
+        color: districtTheme.color,
+        countyId: county.id,
+        countyName: county.name,
+        terrain: districtTheme.terrain,
+      };
+      state.neighborDistrictThemes.set(districtTheme.name, { ...districtTheme, zone, county });
+    });
+    state.neighborCountyThemes.set(county.id, countyTheme);
+  }
+}
+
+function neighborCountyGridMetrics(county, rows) {
+  const left = county.x + NEIGHBOR_COUNTY_MARGIN_X;
+  const top = county.y + NEIGHBOR_COUNTY_HEADER_HEIGHT;
+  const usableWidth = county.w - NEIGHBOR_COUNTY_MARGIN_X * 2;
+  const usableHeight = county.h - NEIGHBOR_COUNTY_HEADER_HEIGHT - NEIGHBOR_COUNTY_FOOTER_HEIGHT;
+  return {
+    left,
+    top,
+    right: left + usableWidth,
+    bottom: top + usableHeight,
+    cellWidth: usableWidth / NEIGHBOR_COUNTY_DISTRICT_COLUMNS,
+    cellHeight: usableHeight / rows,
+  };
+}
+
 async function loadAccountPreference() {
   try {
     const response = await fetch("/api/account", { cache: "no-store", credentials: "same-origin" });
@@ -1433,14 +2021,147 @@ async function loadAccountPreference() {
 function syncTownAccountUI(account) {
   const authenticated = account?.authenticated === true;
   refs.accountAction.classList.toggle("is-authenticated", authenticated);
-  if (authenticated) {
-    refs.accountAction.textContent = "我的成就";
-    refs.accountAction.href = "#questPanel";
-    refs.accountAction.dataset.destination = "achievements";
-  } else {
-    refs.accountAction.textContent = "免費註冊・保存成就";
-    refs.accountAction.href = "/?account=1";
-    delete refs.accountAction.dataset.destination;
+}
+
+async function loadTownDailyQuests() {
+  refs.dailyQuestStatus.textContent = "正在讀取每日任務…";
+  try {
+    const response = await fetch("/api/account/town-daily-quests", {
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) throw new Error(`每日任務 API 回傳 ${response.status}`);
+    const payload = await response.json();
+    applyTownDailyQuestPayload(payload);
+    return payload;
+  } catch (error) {
+    console.warn("Unable to load town daily quests", error);
+    state.dailyQuests.loaded = true;
+    refs.dailyQuestStatus.textContent = "每日任務暫時無法連線，仍可繼續探索；稍後重新載入即可同步。";
+    return null;
+  }
+}
+
+function applyTownDailyQuestPayload(payload) {
+  state.dailyQuests = {
+    loaded: true,
+    authenticated: payload?.authenticated === true,
+    account: payload?.account || null,
+    date: String(payload?.date || ""),
+    coinBalance: Math.max(0, Number(payload?.coinBalance) || 0),
+    tasks: Array.isArray(payload?.tasks) ? payload.tasks : [],
+    summary: payload?.summary || { completed: 0, total: 3, bonusCoins: 15, bonusAwarded: false },
+    rerollAvailable: payload?.rerollAvailable === true,
+  };
+  syncTownAccountUI({ authenticated: state.dailyQuests.authenticated });
+  renderTownDailyQuests();
+}
+
+function renderTownDailyQuests() {
+  const quests = state.dailyQuests;
+  const authenticated = quests.authenticated;
+  const completed = Number(quests.summary.completed) || 0;
+  const total = Number(quests.summary.total) || 3;
+  refs.dailyQuestDate.textContent = quests.date ? formatDate(quests.date) : "今日任務";
+  refs.dailyCoinBalance.textContent = String(quests.coinBalance);
+  refs.dailyQuestProgress.textContent = `${completed} / ${total}`;
+  refs.dailyQuestStatus.textContent = authenticated
+    ? townText(`今日已完成 ${completed} / ${total} 題，金幣餘額 ${quests.coinBalance}。`)
+    : townText("登入後才會保存任務進度與金幣；目前可以先預覽今天的三題。");
+  refs.dailyQuestList.innerHTML = quests.tasks.map((task) => {
+    const taskComplete = task.completed === true;
+    const requirements = Array.isArray(task.requirements) ? task.requirements : [];
+    return `
+      <article class="daily-quest-card${taskComplete ? " is-complete" : ""}">
+        <header>
+          <span class="daily-quest-card-icon" aria-hidden="true">${escapeHtml(task.icon || "任")}</span>
+          <div class="daily-quest-card-title">
+            <small>${escapeHtml(townText(task.categoryLabel || "每日任務"))}</small>
+            <strong>${escapeHtml(townText(task.title || "每日任務"))}</strong>
+          </div>
+          <span class="daily-quest-reward">${taskComplete ? `✓ ${townText("已完成")}` : `+${Number(task.rewardCoins) || 0} ${townText("金幣")}`}</span>
+        </header>
+        <p>${escapeHtml(townText(task.description || ""))}</p>
+        <div class="daily-quest-requirements">
+          ${requirements.map((item) => `
+            <div class="daily-quest-requirement${Number(item.progress) >= Number(item.target) ? " is-complete" : ""}">
+              <span>${escapeHtml(townText(item.label || "任務步驟"))}</span>
+              <span>${Number(item.progress) || 0} / ${Number(item.target) || 1}</span>
+            </div>
+          `).join("")}
+        </div>
+        ${authenticated && quests.rerollAvailable && !taskComplete
+          ? `<button class="daily-quest-reroll" type="button" data-daily-reroll="${escapeAttribute(task.id)}">${escapeHtml(townText("免費更換這一題"))}</button>`
+          : ""}
+      </article>
+    `;
+  }).join("");
+}
+
+function dailyQuestInstance(prefix) {
+  state.dailyQuestEventSequence += 1;
+  return `${prefix}:${state.dailyQuestSessionId}:${state.dailyQuestEventSequence}`.replace(/[^a-zA-Z0-9:_-]/g, "-").slice(0, 120);
+}
+
+async function recordDailyQuestEvent(eventType, subjectId, value = 1, eventKey = `${eventType}:${subjectId}`) {
+  if (state.townMapPreview.active) return;
+  if (!state.dailyQuests.loaded && state.dailyQuestLoadPromise) await state.dailyQuestLoadPromise;
+  if (!state.dailyQuests.authenticated) return;
+  const safeEventKey = String(eventKey).replace(/[^a-zA-Z0-9:_-]/g, "-").slice(0, 120);
+  if (state.dailyQuestEventMemory.has(safeEventKey)) return;
+  state.dailyQuestEventMemory.add(safeEventKey);
+  state.dailyQuestWriteQueue = state.dailyQuestWriteQueue.then(async () => {
+    try {
+      const response = await fetch("/api/account/town-daily-quests", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ eventType, subjectId: String(subjectId), value, eventKey: safeEventKey }),
+      });
+      if (response.status === 401) {
+        state.dailyQuestEventMemory.delete(safeEventKey);
+        await loadTownDailyQuests();
+        return;
+      }
+      if (!response.ok) throw new Error(`每日任務 API 回傳 ${response.status}`);
+      const payload = await response.json();
+      applyTownDailyQuestPayload(payload);
+      for (const item of Array.isArray(payload.newlyRewarded) ? payload.newlyRewarded : []) {
+        showTownToast("每日任務完成", `${townText(item.title)} +${Number(item.rewardCoins) || 0} ${townText("金幣")}`);
+        trackTownEvent("lunch_town_daily_quest_completed", { task_id: item.id, category: item.category });
+      }
+      if (payload.allClearRewarded) {
+        showTownToast("今日三題全完成", `${townText("額外獲得")} ${Number(payload.summary?.bonusCoins) || 15} ${townText("金幣")}`);
+        trackTownEvent("lunch_town_daily_all_clear", { task_date: payload.date });
+      }
+    } catch (error) {
+      state.dailyQuestEventMemory.delete(safeEventKey);
+      console.warn("Unable to save town daily quest event", error);
+      refs.dailyQuestStatus.textContent = "這次任務進度尚未同步，稍後再操作一次即可重試。";
+    }
+  });
+  await state.dailyQuestWriteQueue;
+}
+
+async function rerollDailyQuest(taskId) {
+  if (!state.dailyQuests.authenticated || !state.dailyQuests.rerollAvailable) return;
+  refs.dailyQuestList.querySelectorAll("button[data-daily-reroll]").forEach((button) => { button.disabled = true; });
+  try {
+    const response = await fetch("/api/account/town-daily-quests", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ action: "reroll", taskId }),
+    });
+    if (!response.ok) throw new Error(`每日任務 API 回傳 ${response.status}`);
+    const payload = await response.json();
+    applyTownDailyQuestPayload(payload);
+    announce("已免費更換一題每日任務，今天不能再次更換。");
+  } catch (error) {
+    console.warn("Unable to reroll town daily quest", error);
+    refs.dailyQuestStatus.textContent = "目前無法更換任務，請稍後再試。";
+    renderTownDailyQuests();
   }
 }
 
@@ -1484,12 +2205,12 @@ function renderTownAchievements() {
   refs.achievementAccountCard.classList.remove("is-loading");
   refs.achievementAccountCard.classList.toggle("is-authenticated", authenticated);
   refs.achievementAccountEyebrow.textContent = authenticated ? "已綁定家庭帳號" : "未註冊時只供預覽";
-  refs.achievementAccountTitle.textContent = authenticated ? `${displayName}的小鎮成就` : "免費註冊，讓每次探索都算數";
+  refs.achievementAccountTitle.textContent = authenticated ? `${displayName}的任務與成就` : "免費註冊，讓每次探索都算數";
   refs.achievementAccountText.textContent = authenticated
-    ? "進度已安全綁定帳號，可在其他裝置接著收藏。"
-    : "登入前不會保存成就進度；免費建立家庭帳號後，回訪、地標與助人紀錄都能跨裝置保留。";
-  refs.achievementAccountLink.textContent = authenticated ? "家庭帳號設定" : "免費註冊・開始收藏";
-  refs.achievementAccountLink.href = "/?account=1";
+    ? "每日任務、金幣與成就已安全綁定帳號，可在其他裝置接著遊玩。"
+    : "登入前不會保存任務、金幣或成就；免費建立家庭帳號後即可跨裝置保留。";
+  refs.achievementAccountLink.textContent = authenticated ? "家庭帳號設定" : "登入／免費註冊・保存進度";
+  refs.achievementAccountLink.setAttribute("aria-haspopup", "dialog");
 
   const total = Math.max(1, Number(achievementState.summary.total) || achievementState.achievements.length || 19);
   const unlocked = Number(achievementState.summary.unlocked) || 0;
@@ -1501,24 +2222,47 @@ function renderTownAchievements() {
     ? `已保存 ${unlocked} 項成就；完成條件後會自動解鎖。`
     : "先看看想挑戰的目標；登入後才會開始永久累積。";
 
+  const renderedCategories = [...refs.achievementList.querySelectorAll("details[data-achievement-category]")];
+  const hadRenderedCategories = renderedCategories.length > 0;
+  const expandedCategories = new Set(
+    renderedCategories.filter((category) => category.open).map((category) => category.dataset.achievementCategory),
+  );
   const categoryOrder = ["return", "explore", "civic", "community"];
   refs.achievementList.innerHTML = categoryOrder.map((category) => {
     const items = achievementState.achievements.filter((item) => item.category === category);
     if (!items.length) return "";
+    const categoryUnlocked = items.filter((item) => item.unlocked).length;
+    const open = !hadRenderedCategories || expandedCategories.has(category);
     return `
-      <h3 class="achievement-category-heading">${escapeHtml(items[0].categoryLabel)}</h3>
-      ${items.map((item) => `
-        <article class="achievement-card${item.unlocked ? " is-unlocked" : ""}${item.reached ? " is-reached" : ""}">
-          <span class="achievement-icon" aria-hidden="true">${escapeHtml(item.icon)}</span>
-          <div class="achievement-copy">
-            <strong>${escapeHtml(item.title)}</strong>
-            <small>${escapeHtml(item.description)}</small>
-          </div>
-          <span class="achievement-count">${item.unlocked ? "已解鎖" : `${Number(item.progress) || 0} / ${item.target}`}</span>
-        </article>
-      `).join("")}
+      <details class="achievement-category" data-achievement-category="${escapeHtml(category)}"${open ? " open" : ""}>
+        <summary class="achievement-category-heading">
+          <span>${escapeHtml(items[0].categoryLabel)}</span>
+          <small>${categoryUnlocked} / ${items.length}</small>
+        </summary>
+        <div class="achievement-category-items">
+          ${items.map((item) => `
+            <article class="achievement-card${item.unlocked ? " is-unlocked" : ""}${item.reached ? " is-reached" : ""}">
+              <span class="achievement-icon" aria-hidden="true">${escapeHtml(item.icon)}</span>
+              <div class="achievement-copy">
+                <strong>${escapeHtml(item.title)}</strong>
+                <small>${escapeHtml(item.description)}</small>
+              </div>
+              <span class="achievement-count">${item.unlocked ? "已解鎖" : `${Number(item.progress) || 0} / ${item.target}`}</span>
+            </article>
+          `).join("")}
+        </div>
+      </details>
     `;
   }).join("");
+  const hasCategories = refs.achievementList.childElementCount > 0;
+  refs.achievementExpandAll.disabled = !hasCategories;
+  refs.achievementCollapseAll.disabled = !hasCategories;
+}
+
+function setAchievementCategoriesExpanded(expanded) {
+  const categories = [...refs.achievementList.querySelectorAll("details[data-achievement-category]")];
+  for (const category of categories) category.open = expanded;
+  refs.announcement.textContent = expanded ? "已展開所有成就分類。" : "已收起所有成就分類。";
 }
 
 function townAchievementInstance(prefix) {
@@ -1529,6 +2273,7 @@ function townAchievementInstance(prefix) {
 }
 
 async function recordAchievementEvent(eventType, subjectId) {
+  if (state.townMapPreview.active) return;
   if (!state.achievements.loaded && state.achievementLoadPromise) await state.achievementLoadPromise;
   if (!state.achievements.authenticated) return;
   const memoryKey = `${eventType}:${subjectId}`;
@@ -1565,13 +2310,18 @@ async function recordAchievementEvent(eventType, subjectId) {
 }
 
 function showAchievementUnlock(title) {
+  showTownToast("成就解鎖", title);
+}
+
+function showTownToast(kicker, title) {
   window.clearTimeout(state.achievementToastTimer);
-  refs.achievementToastTitle.textContent = title;
+  refs.achievementToastKicker.textContent = townText(kicker);
+  refs.achievementToastTitle.textContent = townText(title);
   refs.achievementToast.hidden = false;
   state.achievementToastTimer = window.setTimeout(() => {
     refs.achievementToast.hidden = true;
   }, 4200);
-  announce(`成就解鎖：${title}`);
+  announce(`${townText(kicker)}: ${townText(title)}`);
 }
 
 function syncDateDisplay() {
@@ -1664,6 +2414,16 @@ function refreshSchoolListIfRendered() {
   if (state.schoolListRendered) renderSchoolList();
 }
 
+function townMapPlacementsForDistrict(city, district) {
+  return (state.townMapManifest?.placements || []).filter((placement) => (
+    placement.city === city && placement.district === district
+  ));
+}
+
+function townMapEditorLaneHeight(city, district) {
+  return townMapPlacementsForDistrict(city, district).length ? 92 : 0;
+}
+
 function createSchoolLayouts(schools) {
   const results = [];
   DISTRICT_DISPLAY_ORDER.forEach((district) => {
@@ -1676,7 +2436,7 @@ function createSchoolLayouts(schools) {
     const townStripWidth = 180;
     const schoolAreaWidth = zone.w - townStripWidth;
     const cellWidth = (schoolAreaWidth - 32) / columns;
-    const cellHeight = (zone.h - 92) / rows;
+    const cellHeight = (zone.h - 92 - townMapEditorLaneHeight(SHOWCASE_CITY, district)) / rows;
     const width = Math.min(150, Math.max(54, cellWidth - 12));
     const height = Math.min(92, Math.max(42, cellHeight - 10));
     districtSchools.forEach((school, districtIndex) => {
@@ -1707,6 +2467,96 @@ function createSchoolLayouts(schools) {
   return results;
 }
 
+function createNeighborSchoolLayouts(schools) {
+  const results = [];
+  state.neighborDistrictThemes.forEach((districtTheme, district) => {
+    const zone = districtTheme.zone;
+    const districtSchools = schools
+      .filter((school) => school.city === districtTheme.county.name && school.district === district)
+      .sort((first, second) => String(first.name).localeCompare(String(second.name), "zh-Hant"));
+    const columns = Math.min(districtSchools.length, 6, Math.max(1, Math.ceil(Math.sqrt(districtSchools.length * 1.6))));
+    const rows = Math.max(1, Math.ceil(districtSchools.length / columns));
+    const landscapeWidth = neighborDistrictLandscapeWidth(districtTheme);
+    const schoolAreaWidth = zone.w - landscapeWidth;
+    const cellWidth = (schoolAreaWidth - 32) / columns;
+    const cellHeight = (zone.h - 92 - townMapEditorLaneHeight(districtTheme.county.name, district)) / rows;
+    const width = Math.min(150, Math.max(54, cellWidth - 12));
+    const height = Math.min(92, Math.max(42, cellHeight - 10));
+    districtSchools.forEach((school, districtIndex) => {
+      const column = districtIndex % columns;
+      const row = Math.floor(districtIndex / columns);
+      const x = zone.x + 16 + column * cellWidth + (cellWidth - width) / 2;
+      const y = zone.y + 78 + row * cellHeight + (cellHeight - height) / 2;
+      const styleIndex = (districtIndex + results.length + district.length) % CAMPUS_THEMES.length;
+      results.push({
+        ...school,
+        index: 1_000 + results.length,
+        districtNumber: districtIndex + 1,
+        mapScope: "neighbor-county",
+        layout: {
+          x,
+          y,
+          w: width,
+          h: height,
+          gate: row % 2 === 0 ? "south" : "north",
+          theme: CAMPUS_THEMES[styleIndex],
+          facility: CAMPUS_FACILITIES[styleIndex],
+          color: districtTheme.county.id === "miaoli" ? "#9fbd88" : "#c1bd7a",
+          district,
+          compact: true,
+          neighborCounty: true,
+        },
+      });
+    });
+  });
+  return results;
+}
+
+function isNeighborFarmTerrain(terrain = "") {
+  return /farm|plain|flower|sugar|orchard/.test(terrain);
+}
+
+function neighborDistrictLandscapeWidth(theme) {
+  const { zone, terrain } = theme;
+  if (isNeighborFarmTerrain(terrain)) return Math.max(220, zone.w * 0.4);
+  return Math.min(180, Math.max(132, zone.w * 0.24));
+}
+
+function neighborFarmlandGeometry(theme) {
+  const { zone } = theme;
+  const landscapeWidth = neighborDistrictLandscapeWidth(theme);
+  const fieldStartX = zone.x + zone.w - landscapeWidth + 12;
+  const fieldTop = zone.y + 60;
+  return {
+    fieldStartX,
+    fieldTop,
+    fieldWidth: zone.x + zone.w - fieldStartX - 12,
+    fieldHeight: zone.h - 72,
+    columns: 3,
+    rows: 3,
+    gap: 8,
+  };
+}
+
+function neighborPaddyParcels(theme) {
+  if (!isNeighborFarmTerrain(theme.terrain)) return [];
+  const geometry = neighborFarmlandGeometry(theme);
+  const parcels = [];
+  for (let row = 0; row < geometry.rows; row += 1) {
+    for (let column = 0; column < geometry.columns; column += 1) {
+      parcels.push({
+        x: geometry.fieldStartX + column * geometry.fieldWidth / geometry.columns + geometry.gap / 2,
+        y: geometry.fieldTop + row * geometry.fieldHeight / geometry.rows + geometry.gap / 2,
+        w: geometry.fieldWidth / geometry.columns - geometry.gap,
+        h: geometry.fieldHeight / geometry.rows - geometry.gap,
+        row,
+        column,
+      });
+    }
+  }
+  return parcels;
+}
+
 function schoolBuildingRect(school) {
   const { x, y, w, h, gate, compact } = school.layout;
   if (compact) {
@@ -1724,7 +2574,330 @@ function schoolBuildingRect(school) {
     : { x: x + 18, y: y + h - 68, w: 104, h: 52 };
 }
 
+function createNeighborNpcIdentities() {
+  const identities = [];
+  for (const countyTheme of state.neighborCountyThemes.values()) {
+    countyTheme.districts.forEach((districtTheme) => {
+      const [role, gender, profileBaseRole] = NEIGHBOR_BASE_ROLE_BY_DISTRICT[districtTheme.name]
+        || ["community-resident", "female", "community-resident"];
+      identities.push({
+        countyId: countyTheme.id,
+        countyName: countyTheme.name,
+        district: districtTheme.name,
+        workProfile: districtTheme.workProfile || "community",
+        role,
+        gender,
+        profileBaseRole,
+      });
+    });
+  }
+  identities.push(...NEIGHBOR_EXTRA_NPCS.map((identity) => ({
+    ...identity,
+    countyName: state.neighborCountyThemes.get(identity.countyId)?.name || "",
+  })));
+  const duplicateCounts = new Map();
+  identities.forEach((identity) => {
+    if (identity.name) return;
+    const key = `${identity.district}:${identity.role}`;
+    const count = (duplicateCounts.get(key) || 0) + 1;
+    duplicateCounts.set(key, count);
+    identity.name = `${identity.district}・${ROLE_LABELS[identity.role]}${count > 1 ? ` ${count}` : ""}`;
+  });
+  assignNeighborCivicResidences(identities);
+  return identities;
+}
+
+function assignNeighborCivicResidences(identities) {
+  const residenceUse = new Map();
+  identities.filter((identity) => NEIGHBOR_CIVIC_ROLES.has(identity.role)).forEach((identity) => {
+    const residences = ["a", "b"]
+      .map((suffix) => state.venues.find((venue) => venue.id === `${identity.countyId}-civic-apartment-${suffix}`))
+      .filter(Boolean);
+    if (!residences.length) return;
+    const residence = residences.slice().sort((first, second) => (
+      (residenceUse.get(first.id) || 0) - (residenceUse.get(second.id) || 0)
+    ))[0];
+    const unitIndex = (residenceUse.get(residence.id) || 0) + 1;
+    residenceUse.set(residence.id, unitIndex);
+    identity.residenceVenueId = residence.id;
+    identity.residenceUnitId = `${residence.id}-unit-${String(unitIndex).padStart(2, "0")}`;
+    identity.residenceLabel = `${residence.label}｜${Math.floor((unitIndex - 1) / 4) + 2}樓${((unitIndex - 1) % 4) + 1}室`;
+  });
+}
+
+function neighborHomeStop(identity, index) {
+  const residence = identity.residenceVenueId
+    ? state.venues.find((venue) => venue.id === identity.residenceVenueId)
+    : null;
+  if (residence) return {
+    ...venueScheduleStop(residence, identity.role, index),
+    label: identity.residenceLabel || residence.label,
+    reason: `回到${identity.residenceLabel || residence.label}休息、整理家務或準備晚餐`,
+    activity: "at-home",
+    dwellSeconds: 7 + index % 5,
+  };
+  const theme = state.neighborDistrictThemes.get(identity.district);
+  const zone = theme?.zone;
+  return {
+    x: zone ? zone.x + 38 + index % 3 * 20 : 40,
+    y: zone ? zone.y + zone.h - 24 : 40,
+    district: identity.district,
+    label: `${identity.district}生活街區住家`,
+    reason: `回到${identity.district}生活街區住家休息、整理家務或準備晚餐`,
+    activity: "at-home",
+    dwellSeconds: 7 + index % 5,
+    venueId: `${identity.countyId}-${identity.district}-residence`,
+    virtualResidence: true,
+  };
+}
+
+function neighborLandmarkStop(identity, index, activity = "guiding") {
+  const countyTheme = state.neighborCountyThemes.get(identity.countyId);
+  const theme = state.neighborDistrictThemes.get(identity.district);
+  const landmarks = countyTheme?.landmarks.filter((landmark) => landmark.district === identity.district) || [];
+  const landmark = landmarks[index % Math.max(1, landmarks.length)];
+  const landmarkIndex = Math.max(0, landmarks.indexOf(landmark));
+  return {
+    x: theme ? theme.zone.x + theme.zone.w - 70 - landmarkIndex * 126 : 40,
+    y: theme ? theme.zone.y + 92 : 40,
+    district: identity.district,
+    label: landmark?.name || `${identity.district}地方景觀`,
+    reason: landmark ? `在${landmark.name}依工作行程進行巡查與服務` : `在${identity.district}整理地方工作`,
+    activity,
+    dwellSeconds: 9 + index % 6,
+    outdoorVenue: true,
+  };
+}
+
+function neighborFarmWorkStop(identity, index) {
+  const theme = state.neighborDistrictThemes.get(identity.district);
+  const parcels = theme ? neighborPaddyParcels(theme) : [];
+  const parcel = parcels[index % Math.max(1, parcels.length)];
+  const zone = theme?.zone;
+  return {
+    x: parcel ? parcel.x + parcel.w / 2 : zone ? zone.x + zone.w - 62 : 40,
+    y: parcel ? parcel.y + parcel.h / 2 : zone ? zone.y + zone.h / 2 : 40,
+    district: identity.district,
+    label: `${identity.district}農業工作區`,
+    reason: `${ROLE_LABELS[identity.role]}依季節整理田區、作物與生產紀錄`,
+    activity: identity.role === "irrigation-worker" ? "maintaining" : identity.role === "fruit-farmer" ? "harvesting" : "farming",
+    dwellSeconds: 10 + index % 7,
+    outdoorVenue: true,
+  };
+}
+
+function neighborWorkZonesForIdentity(identity) {
+  const direct = state.neighborWorkZones.filter((zone) => (
+    zone.countyId === identity.countyId
+    && zone.district === identity.district
+    && (zone.roles || []).includes(identity.role)
+  ));
+  if (direct.length || identity.role !== "agricultural-technician") return direct;
+  return state.neighborWorkZones.filter((zone) => (
+    zone.countyId === identity.countyId
+    && (zone.roles || []).includes("agricultural-technician")
+  ));
+}
+
+function neighborWorkZoneStop(identity, index, preferredZone = null) {
+  const zones = neighborWorkZonesForIdentity(identity);
+  const zone = preferredZone || zones[index % Math.max(1, zones.length)];
+  if (!zone) return neighborFarmWorkStop(identity, index);
+  const activities = ROLE_WORK_ACTIVITIES[identity.role] || ["working"];
+  const activity = activities[index % activities.length];
+  return {
+    x: zone.x + zone.w / 2,
+    y: zone.y + zone.h - 8,
+    district: zone.district,
+    label: zone.name,
+    reason: `在${zone.name}進行${ROLE_LOCAL_SPECIALTIES[identity.role] || "地方工作"}`,
+    activity,
+    dwellSeconds: 11 + index % 7,
+    outdoorVenue: true,
+    workZoneId: zone.id,
+    restrictedWorkZone: zone.restricted,
+  };
+}
+
+function neighborAgricultureOfficeStop(identity, index) {
+  const office = state.venues.find((venue) => venue.id === "changhua-agriculture-office");
+  return office ? {
+    ...venueScheduleStop(office, identity.role, index),
+    reason: "在彰化縣政府農業處整理產銷、果菜與花卉市場的田間輔導紀錄",
+  } : neighborWorkZoneStop(identity, index);
+}
+
+function neighborWorkStop(identity, index) {
+  const defaultCivicWorkplaceId = identity.role === "county-councilor"
+    ? `${identity.countyId}-county-council`
+    : NEIGHBOR_CIVIC_ROLES.has(identity.role) ? `${identity.countyId}-county-government` : "";
+  const workplaceId = identity.workVenueId || defaultCivicWorkplaceId;
+  const workplace = workplaceId ? state.venues.find((venue) => venue.id === workplaceId) : null;
+  if (workplace) return venueScheduleStop(workplace, identity.role, index);
+  if (identity.role === "agricultural-technician") return neighborAgricultureOfficeStop(identity, index);
+  if (neighborWorkZonesForIdentity(identity).length) return neighborWorkZoneStop(identity, index);
+  if (["farmer", "fruit-farmer", "flower-grower", "irrigation-worker", "oyster-farmer"].includes(identity.role)) {
+    return neighborFarmWorkStop(identity, index);
+  }
+  if (["woodcarver", "local-guide", "forest-ranger", "railway-worker", "hospitality-worker", "fisher"].includes(identity.role)) {
+    const activity = identity.role === "forest-ranger" ? "patrolling"
+      : identity.role === "railway-worker" ? "maintaining" : identity.role === "local-guide" ? "guiding" : "waiting";
+    return neighborLandmarkStop(identity, index, activity);
+  }
+  if (identity.role === "teacher") {
+    const schools = state.neighborSchools.filter((school) => school.city === identity.countyName && school.district === identity.district);
+    const school = schools[index % Math.max(1, schools.length)];
+    if (school) return {
+      ...schoolGatePoint(school), district: identity.district, label: school.name,
+      reason: reasonAtSchool(identity.role), activity: "waiting", dwellSeconds: 8 + index % 5,
+    };
+  }
+  const office = state.venues.find((venue) => venue.id === `${identity.countyId}-${identity.district}-township-office`);
+  return office ? venueScheduleStop(office, identity.role, index) : neighborHomeStop(identity, index);
+}
+
+function neighborDayPeriod(environment = state.environment) {
+  const hour = Number(environment?.clock?.hour ?? 12);
+  if (hour >= 6 && hour < 11) return "morning";
+  if (hour >= 11 && hour < 16) return "midday";
+  if (hour >= 16 && hour < 23) return "evening";
+  return "late-night";
+}
+
+function neighborBridgeTripStops(identity, index) {
+  const bridge = BOUNDARY_BRIDGES.find((candidate) => candidate.countyId === identity.countyId);
+  if (!bridge) return [];
+  const taichungDistrict = identity.countyId === "miaoli" ? "后里區" : "烏日區";
+  const destination = DISTRICT_ZONES[taichungDistrict];
+  if (!destination) return [];
+  const countySide = identity.countyId === "miaoli" ? -1 : 1;
+  return [
+    {
+      x: bridge.x, y: bridge.riverY + countySide * (BORDER_RIVER_WIDTH / 2 + 28),
+      district: identity.district, label: `${identity.countyName}跨縣橋入口`,
+      reason: `依行程準備跨橋前往臺中市`, activity: "walking", dwellSeconds: 1, outdoorVenue: true,
+    },
+    {
+      x: bridge.x, y: bridge.riverY - countySide * (BORDER_RIVER_WIDTH / 2 + 28),
+      district: taichungDistrict, label: `${taichungDistrict}橋頭`,
+      reason: `跨橋到臺中市交流、辦事或休憩`, activity: "greeting", dwellSeconds: 6 + index % 4, outdoorVenue: true,
+    },
+  ];
+}
+
+function createNeighborNpcTimeSchedule(identity, index) {
+  const home = neighborHomeStop(identity, index);
+  const work = neighborWorkStop(identity, index);
+  const office = state.venues.find((venue) => venue.id === `${identity.countyId}-${identity.district}-township-office`);
+  const community = office && office.id !== identity.homeVenueId
+    ? venueScheduleStop(office, identity.role, index + 17)
+    : neighborLandmarkStop(identity, index + 1, "waiting");
+  const workZones = neighborWorkZonesForIdentity(identity);
+  const secondWork = workZones.length > 1 ? neighborWorkZoneStop(identity, index + 1, workZones[(index + 1) % workZones.length]) : work;
+  const canCross = hashText(`${identity.countyId}-${identity.district}-${identity.role}-bridge`) % 3 === 0;
+  const bridgeStops = canCross ? neighborBridgeTripStops(identity, index) : [];
+  const midday = identity.role === "agricultural-technician"
+    ? [neighborAgricultureOfficeStop(identity, index), secondWork, community]
+    : [work, secondWork, community];
+  const evening = bridgeStops.length
+    ? [community, ...bridgeStops, ...bridgeStops.slice().reverse(), { ...home, dwellSeconds: 12 + index % 5 }]
+    : [work, community, { ...home, dwellSeconds: 12 + index % 5 }];
+  return {
+    morning: [home, work],
+    midday,
+    evening,
+    "late-night": [home, { ...home, dwellSeconds: 12 * 60 * 60 }],
+    canCross,
+  };
+}
+
+function createNeighborNpcSchedule(identity, index) {
+  const schedules = createNeighborNpcTimeSchedule(identity, index);
+  return schedules[neighborDayPeriod()] || schedules.midday;
+}
+
+function createNeighborNpcCharacter(identity, index, lookIndex) {
+  const baseRole = identity.profileBaseRole || identity.role;
+  const roleProfiles = CHARACTER_PROFILES.filter((profile) => profile.role === baseRole);
+  const genderProfiles = roleProfiles.filter((profile) => profile.gender === identity.gender);
+  const profile = varyOutfitColors(genderProfiles[0] || roleProfiles[0] || CHARACTER_PROFILES[0], identity, lookIndex);
+  const timeSchedule = createNeighborNpcTimeSchedule(identity, index);
+  const currentPeriod = neighborDayPeriod();
+  const daytimeSchedule = timeSchedule[currentPeriod] || timeSchedule.midday;
+  const allRoutineStops = ["morning", "midday", "evening", "late-night"]
+    .flatMap((period) => timeSchedule[period] || []);
+  const home = neighborHomeStop(identity, index);
+  const primaryWorkStop = [...(timeSchedule.morning || []), ...(timeSchedule.midday || [])]
+    .find((stop) => (stop.workZoneId || stop.venueId) && !stop.virtualResidence);
+  const afterHours = NEIGHBOR_CIVIC_ROLES.has(identity.role) && civicAfterHoursPeriod(state.environment) !== "daytime";
+  const schedule = afterHours ? createNeighborCivicAfterHoursSchedule(identity, index) : daytimeSchedule;
+  const start = schedule[0];
+  return {
+    ...profile,
+    ...identity,
+    lookIndex,
+    schedule,
+    segment: 0,
+    progress: 0,
+    dwellRemaining: reducedMotion ? Number.POSITIVE_INFINITY : afterHours ? start.dwellSeconds : index % 3 * 0.8,
+    currentReason: start.reason,
+    speed: reducedMotion ? 0 : npcWalkingSpeed(profile.ageGroup, identity.role, lookIndex),
+    x: start.x,
+    y: start.y,
+    direction: "down",
+    step: lookIndex,
+    isMoving: false,
+    personality: NPC_PERSONALITIES[hashText(`${identity.name}-personality`) % NPC_PERSONALITIES.length],
+    mood: ["平靜", "有精神", "有點忙", "放鬆"][hashText(`${identity.name}-mood`) % 4],
+    activity: start.activity || "waiting",
+    riverbankSiteId: "",
+    relationships: new Map(),
+    coarseElapsed: 0,
+    emote: "",
+    emoteUntil: 0,
+    bikePreference: false,
+    ridingBike: false,
+    eveningExcursion: null,
+    eveningVisitedDate: "",
+    civicDaySchedule: NEIGHBOR_CIVIC_ROLES.has(identity.role) ? timeSchedule.midday : null,
+    neighborCivicAfterHoursKey: afterHours ? `${state.environment?.dateKey || "after-hours"}:${civicAfterHoursPeriod(state.environment)}` : "",
+    appearanceRule: null,
+    appearanceElapsed: 0,
+    insideVenueId: afterHours ? start.venueId : "",
+    mobilityMode: "county-local",
+    homeCounty: identity.countyName,
+    homeDistrict: identity.district,
+    workplaceId: primaryWorkStop?.workZoneId || primaryWorkStop?.venueId || "",
+    frequentPlaceIds: [...new Set(allRoutineStops.map((stop) => stop.workZoneId || stop.venueId || stop.label).filter(Boolean))],
+    localSpecialty: ROLE_LOCAL_SPECIALTIES[identity.role] || state.neighborDistrictThemes.get(identity.district)?.featureLabel || "地方生活",
+    timeSchedule,
+    neighborRoutineKey: currentPeriod,
+    canCrossCountyBridge: timeSchedule.canCross,
+    bridgeDestinations: timeSchedule.canCross ? ["臺中市"] : [],
+    specialWorkZoneIds: neighborWorkZonesForIdentity(identity).map((zone) => zone.id),
+    residenceVenueId: home.venueId,
+    residenceUnitId: identity.residenceUnitId || "",
+    residenceLabel: identity.residenceLabel || home.label,
+    dialogues: ROLE_DIALOGUES[identity.role] || ["今天的小鎮很熱鬧，慢慢走、仔細看看吧。"],
+    dialogueCursor: 0,
+  };
+}
+
+function appendNeighborCountyCharacters() {
+  const identities = createNeighborNpcIdentities();
+  const countyCounts = new Map();
+  identities.forEach((identity, index) => {
+    const countyIndex = countyCounts.get(identity.countyId) || 0;
+    countyCounts.set(identity.countyId, countyIndex + 1);
+    state.npcs.push(createNeighborNpcCharacter(identity, countyIndex, state.npcs.length));
+  });
+  Object.entries(NEIGHBOR_COUNTY_NPC_TARGETS).forEach(([countyId, expected]) => {
+    if ((countyCounts.get(countyId) || 0) !== expected) throw new Error(`${countyId} NPC 數量不完整`);
+  });
+}
+
 function createTownCharacters() {
+  const editorNpcs = state.townMapManifest?.npcs || [];
   const serviceStaff = DISTRICT_DISPLAY_ORDER.map((district, index) => {
     const serviceType = SERVICE_VENUE_TYPES[index % SERVICE_VENUE_TYPES.length];
     const role = serviceType === "police-station" ? "police-officer" : serviceType === "fire-station" ? "firefighter" : "doctor";
@@ -1744,7 +2917,18 @@ function createTownCharacters() {
       { district, name: CHILD_NAMES[index], role: "student", gender: index % 2 === 0 ? "female" : "male" },
       { district, name: adult.name, role: adult.role, gender: adult.gender },
     ];
-  }).concat(OCCASIONAL_TOWN_NPCS, DIVERSE_TOWN_NPCS, TOWN_SERVICE_NPCS, CITY_HALL_NPCS, CIVIC_TOWN_NPCS, serviceStaff);
+  }).concat(
+    OCCASIONAL_TOWN_NPCS,
+    DIVERSE_TOWN_NPCS,
+    TOWN_SERVICE_NPCS,
+    CITY_HALL_NPCS,
+    CIVIC_TOWN_NPCS,
+    serviceStaff,
+    FEATURED_RESIDENT_NPCS,
+    editorNpcs.length
+      ? editorNpcs.filter((npc) => npc.city === SHOWCASE_CITY).map(townMapNpcIdentity)
+      : [],
+  );
   assignNpcResidences(identities);
   const districtCounts = new Map();
   state.npcs = identities.map((identity, index) => {
@@ -1796,6 +2980,7 @@ function createTownCharacters() {
       personality: NPC_PERSONALITIES[hashText(`${identity.name}-personality`) % NPC_PERSONALITIES.length],
       mood: ["平靜", "有精神", "有點忙", "放鬆"][hashText(`${identity.name}-mood`) % 4],
       activity: start.activity || "waiting",
+      riverbankSiteId: start.riverbankSiteId || "",
       relationships: new Map(),
       coarseElapsed: 0,
       emote: "",
@@ -1824,6 +3009,8 @@ function createTownCharacters() {
       dialogueCursor: 0,
     };
   });
+  appendNeighborCountyCharacters();
+  if (editorNpcs.some((npc) => npc.city !== SHOWCASE_CITY)) appendTownMapNeighborCharacters();
   state.pets = DISTRICT_DISPLAY_ORDER.map((district, index) => {
     const zone = DISTRICT_ZONES[district];
     const kind = index % 2 ? "dog" : "cat";
@@ -1895,7 +3082,8 @@ function dogWalkerForDistrict(district, index) {
 
 function buildTownRelationships() {
   const studentRoles = new Set(["student", "high-school-student", "university-student"]);
-  DISTRICT_DISPLAY_ORDER.forEach((district) => {
+  const relationshipDistricts = [...DISTRICT_DISPLAY_ORDER, ...state.neighborDistrictThemes.keys()];
+  relationshipDistricts.forEach((district) => {
     const residents = state.npcs.filter((npc) => npc.district === district);
     const parents = residents.filter((npc) => npc.role === "parent");
     const children = residents.filter((npc) => npc.role === "student");
@@ -1989,6 +3177,7 @@ function createTownBirds() {
 }
 
 function varyOutfitColors(profile, identity, index) {
+  if (profile.preservePalette) return { ...profile };
   if (identity.name === "何欣純") {
     return { ...profile, outfit: "#e8aebd", outfitDark: "#925f72", accent: "#f8d8df" };
   }
@@ -2239,6 +3428,144 @@ function createCivicNeighborhoodVenues(civicCenter) {
   ];
 }
 
+function neighborCivicCampusBounds(countyTheme) {
+  const county = neighborCountyById(countyTheme.id);
+  const civic = NEIGHBOR_COUNTY_CIVIC_INFO[countyTheme.id];
+  if (!county || !civic?.campusGrid) return null;
+  const [column, row] = civic.campusGrid;
+  const metrics = neighborCountyGridMetrics(county, countyTheme.rows);
+  return {
+    x: metrics.left + column * metrics.cellWidth + NEIGHBOR_COUNTY_ZONE_GAP / 2,
+    y: metrics.top + row * metrics.cellHeight + NEIGHBOR_COUNTY_ZONE_GAP / 2,
+    w: metrics.cellWidth - NEIGHBOR_COUNTY_ZONE_GAP,
+    h: metrics.cellHeight - NEIGHBOR_COUNTY_ZONE_GAP,
+  };
+}
+
+function createNeighborCountyVenues() {
+  return [...state.neighborCountyThemes.values()].flatMap((countyTheme) => {
+    const county = neighborCountyById(countyTheme.id);
+    const civic = NEIGHBOR_COUNTY_CIVIC_INFO[countyTheme.id];
+    if (!county || !civic) return [];
+    const districtOffices = countyTheme.districts.map((districtTheme) => {
+      const configured = state.neighborDistrictThemes.get(districtTheme.name);
+      if (!configured) return null;
+      const { zone } = configured;
+      return {
+        id: `${countyTheme.id}-${districtTheme.name}-township-office`,
+        countyId: countyTheme.id,
+        district: districtTheme.name,
+        type: "township-office",
+        label: `${districtTheme.name}公所`,
+        shortLabel: "公所",
+        description: `${districtTheme.name}居民辦理地方公共服務的行政據點，公所人員也會前往學校、農路與街區巡查。`,
+        sourceUrl: civic.governmentSourceUrl,
+        x: zone.x + 158,
+        y: zone.y + 10,
+        w: 112,
+        h: 40,
+        neighborVenue: true,
+      };
+    }).filter(Boolean);
+    const seat = state.neighborDistrictThemes.get(civic.seatDistrict)?.zone;
+    const campus = neighborCivicCampusBounds(countyTheme);
+    if (!seat || !campus) return districtOffices;
+    const civicPrefix = countyTheme.name.replace(/縣$/, "");
+    const campusVenue = (venue) => ({
+      countyId: countyTheme.id,
+      district: civic.seatDistrict,
+      neighborVenue: true,
+      civicCampus: true,
+      ...venue,
+    });
+    return [
+      ...districtOffices,
+      campusVenue({
+        id: `${countyTheme.id}-county-government`, type: "county-government",
+        label: civic.hallName, shortLabel: "縣政府",
+        description: `${countyTheme.name}的縣政服務中心，包含公共服務、教育、農業、交通與其他縣政協作。`,
+        sourceUrl: civic.governmentSourceUrl,
+        x: campus.x + 18, y: campus.y + 16, w: 330, h: 96,
+      }),
+      campusVenue({
+        id: `${countyTheme.id}-county-council`, type: "county-council",
+        label: civic.councilName, shortLabel: "縣議會",
+        description: `${countyTheme.name}議會審議縣政預算、法規與施政報告，也接受居民關心的公共議題。`,
+        sourceUrl: civic.governmentSourceUrl,
+        x: campus.x + 370, y: campus.y + 20, w: 178, h: 76,
+      }),
+      campusVenue({
+        id: `${countyTheme.id}-civic-apartment-a`, type: "apartment",
+        label: `${civicPrefix}縣政生活公寓 A棟`, shortLabel: "縣政公寓 A",
+        description: "提供縣府與縣議會工作人員使用的生活住宅，每位角色都有獨立登記的住家單位。",
+        x: campus.x + 18, y: campus.y + 138, w: 142, h: 64, residentCapacity: 8,
+      }),
+      campusVenue({
+        id: `${countyTheme.id}-civic-apartment-b`, type: "apartment",
+        label: `${civicPrefix}縣政生活公寓 B棟`, shortLabel: "縣政公寓 B",
+        description: "鄰近縣府園區的住宅，縣長與縣府員工下班後會返家或先到附近採買。",
+        x: campus.x + 174, y: campus.y + 138, w: 142, h: 64, residentCapacity: 8,
+      }),
+      campusVenue({
+        id: `${countyTheme.id}-public-safety`, type: "police-station",
+        label: `${countyTheme.name}警察局`, shortLabel: "警察局",
+        description: `${countyTheme.name}公共安全與校園周邊巡邏的勤務據點。`,
+        sourceUrl: civic.governmentSourceUrl,
+        x: campus.x + 430, y: campus.y + 132, w: 78, h: 56,
+      }),
+      campusVenue({
+        id: `${countyTheme.id}-fire-service`, type: "fire-station",
+        label: `${countyTheme.name}消防局`, shortLabel: "消防局",
+        description: `${countyTheme.name}消防、救災與緊急救護的整備據點。`,
+        sourceUrl: civic.governmentSourceUrl,
+        x: campus.x + 520, y: campus.y + 132, w: 78, h: 56,
+      }),
+      campusVenue({
+        id: `${countyTheme.id}-civic-convenience`, type: "convenience-store",
+        label: `${civicPrefix}縣政生活店`, shortLabel: "縣政生活店",
+        description: "服務縣政園區與附近住戶的生活商店，提供晚餐、飲水與日用品補給。",
+        brand: ORIGINAL_CONVENIENCE_BRANDS[countyTheme.id === "miaoli" ? 0 : 1],
+        x: campus.x + 610, y: campus.y + 132, w: 104, h: 56,
+      }),
+      ...(countyTheme.id === "changhua" ? [campusVenue({
+        id: "changhua-agriculture-office", type: "agriculture-office",
+        label: "彰化縣政府農業處", shortLabel: "農業處",
+        description: "辦理稻米、農業產銷、果菜與花卉市場等業務；農業技術員會從這裡前往各地工作區。",
+        sourceUrl: "https://www.chcg.gov.tw/DTO/agriculture/01intro/intro03.aspx",
+        x: campus.x + 560, y: campus.y + 20, w: 154, h: 76,
+      })] : []),
+    ];
+  });
+}
+
+function createNeighborWorkZones() {
+  const zones = [];
+  state.neighborCountyThemes.forEach((countyTheme) => {
+    const districtCounts = new Map();
+    (countyTheme.workZones || []).forEach((spec) => {
+      const theme = state.neighborDistrictThemes.get(spec.district);
+      if (!theme) return;
+      const slot = districtCounts.get(spec.district) || 0;
+      districtCounts.set(spec.district, slot + 1);
+      const landscapeWidth = neighborDistrictLandscapeWidth(theme);
+      const width = Math.max(118, Math.min(178, landscapeWidth - 22));
+      const height = slot > 0 ? 48 : 56;
+      zones.push({
+        ...spec,
+        countyId: countyTheme.id,
+        countyName: countyTheme.name,
+        x: theme.zone.x + theme.zone.w - width - 12,
+        y: theme.zone.y + 94 + slot * 62,
+        w: width,
+        h: height,
+        districtSlot: slot,
+        restricted: spec.restricted === true,
+      });
+    });
+  });
+  return zones;
+}
+
 function configurePlayerHome(venues) {
   const starter = venues.find((venue) => venue.district === "西區" && venue.type === "townhouse")
     || venues.find((venue) => venue.district === "西區" && venue.type === "apartment");
@@ -2321,7 +3648,65 @@ function createTownVenues() {
   const residentialVenues = configurePlayerHome(createResidentialVenues());
   const civicCenter = landmarkHubs.find((venue) => venue.id === "civic-center");
   const civicNeighborhood = createCivicNeighborhoodVenues(civicCenter);
-  state.venues = [...districtVenues, ...residentialVenues, ...landmarkHubs, ...civicNeighborhood];
+  const neighborCountyVenues = createNeighborCountyVenues();
+  state.venues = [...districtVenues, ...residentialVenues, ...landmarkHubs, ...civicNeighborhood, ...neighborCountyVenues];
+  state.neighborWorkZones = createNeighborWorkZones();
+}
+
+function applyTownMapPlacements() {
+  const additions = (state.townMapManifest?.placements || []).map((placement) => {
+    const zone = districtZoneForName(placement.district);
+    if (!zone) return null;
+    return {
+      id: `town-map-${placement.id}`,
+      townMapPlacementId: placement.id,
+      editorManaged: true,
+      city: placement.city,
+      district: placement.district,
+      type: placement.type,
+      label: placement.label,
+      labelEn: placement.labelEn,
+      shortLabel: placement.label,
+      shortLabelEn: placement.labelEn,
+      description: placement.description || `${placement.label}是午餐小鎮編輯器新增的街區場所。`,
+      descriptionEn: placement.descriptionEn || `${placement.labelEn} is a neighborhood venue added with the Lunch Town editor.`,
+      landmarkStyle: placement.type === "landmark" ? "history" : undefined,
+      residentCapacity: placement.type === "apartment" ? 12 : placement.type === "townhouse" ? 6 : undefined,
+      x: zone.x + placement.x * zone.w,
+      y: zone.y + placement.y * zone.h,
+      w: placement.w * zone.w,
+      h: placement.h * zone.h,
+    };
+  }).filter(Boolean);
+  state.venues.push(...additions);
+}
+
+function townMapNpcIdentity(npc) {
+  return {
+    district: npc.district,
+    name: npc.name,
+    nameEn: npc.nameEn,
+    role: npc.role,
+    gender: npc.gender,
+    homeVenueId: `town-map-${npc.primaryVenueId}`,
+    editorManaged: true,
+    townMapNpcId: npc.id,
+  };
+}
+
+function appendTownMapNeighborCharacters() {
+  const neighborNpcs = (state.townMapManifest?.npcs || []).filter((npc) => npc.city !== SHOWCASE_CITY);
+  neighborNpcs.forEach((npc, index) => {
+    const countyId = npc.city === "苗栗縣" ? "miaoli" : npc.city === "彰化縣" ? "changhua" : "";
+    if (!countyId || !state.neighborDistrictThemes.has(npc.district)) return;
+    const identity = {
+      ...townMapNpcIdentity(npc),
+      countyId,
+      countyName: npc.city,
+      profileBaseRole: npc.role,
+    };
+    state.npcs.push(createNeighborNpcCharacter(identity, index + 80, state.npcs.length));
+  });
 }
 
 function createBikeStations() {
@@ -2392,8 +3777,39 @@ function createNpcSchedule(identity, districtIndex) {
     schedule.push(destination);
   });
   const routine = schedule.length ? schedule : [streetStop(identity.district, districtIndex, identity.role)];
+  const riverbankLeisureExcursion = createRiverbankLeisureExcursion(identity, districtIndex, seed, mode);
   const neighboringCountyExcursion = createNeighborCountyExcursion(identity, districtIndex, seed, mode);
-  return addResidentialStops(identity, [...routine, ...neighboringCountyExcursion], districtIndex);
+  return addResidentialStops(
+    identity,
+    [...routine, ...riverbankLeisureExcursion, ...neighboringCountyExcursion],
+    districtIndex,
+  );
+}
+
+function createRiverbankLeisureExcursion(identity, districtIndex, seed, mode) {
+  if (!RIVERBANK_LEISURE_ROLES.has(identity.role)) return [];
+  const visitKey = hashText(`${identity.name}-${identity.district}-${districtIndex}-riverbank`);
+  if (mode !== "citywide" && (visitKey + districtIndex) % 4 !== 0) return [];
+  if (mode === "citywide" && (visitKey + seed) % 3 !== 0) return [];
+  const sites = riverbankLeisureSites();
+  const activity = visitKey % 3 === 0 ? "barbecuing" : "fishing";
+  const matchingSites = sites.filter((site) => site.activity === activity);
+  const site = matchingSites[(visitKey + districtIndex) % matchingSites.length];
+  if (!site) return [];
+  return [{
+    x: site.stopX,
+    y: site.stopY,
+    district: site.district,
+    label: site.label,
+    reason: activity === "fishing"
+      ? "到河濱安全平台釣魚並觀察水流"
+      : "到河岸指定休憩區使用烤肉台，結束後收拾火源與垃圾",
+    activity,
+    dwellSeconds: 14 + visitKey % 9,
+    outdoorVenue: true,
+    riverbankSiteId: site.id,
+    facing: site.bankSide > 0 ? "up" : "down",
+  }];
 }
 
 function neighborCountyForNpc(identity, districtIndex, seed, mode) {
@@ -2409,14 +3825,17 @@ function neighborCountyForNpc(identity, districtIndex, seed, mode) {
 }
 
 function neighborCountyStop(county, identity, index) {
-  const direction = county.side === "north" ? -1 : 1;
-  const roadEndY = county.y + county.h / 2 + direction * 28;
+  const districtThemes = [...state.neighborDistrictThemes.values()]
+    .filter((theme) => theme.county.id === county.id);
+  const visitKey = hashText(`${identity.name}-${identity.district}-${county.id}-${index}`);
+  const districtTheme = districtThemes[visitKey % districtThemes.length];
+  const zone = districtTheme?.zone;
   return {
-    x: county.bridgeX + (county.side === "north" ? 210 : -210),
-    y: roadEndY,
-    district: county.name,
-    label: county.id === "miaoli" ? "苗栗縣地圖工區" : "彰化縣地圖工區",
-    reason: "到鄰近縣市施工區散步，看看地圖未來會往哪裡延伸",
+    x: zone ? zone.x + zone.w / 2 : county.bridgeX,
+    y: zone ? zone.y + zone.h - 18 : county.y + county.h / 2,
+    district: districtTheme?.name || county.name,
+    label: districtTheme?.name || county.name,
+    reason: districtTheme ? `到${districtTheme.name}散步，看看當地學校與景觀` : "沿縣界橋前往鄰近縣市散步",
     activity: "waiting",
     dwellSeconds: 8 + (hashText(`${identity.name}-${index}`) % 6),
   };
@@ -2582,7 +4001,78 @@ function transitionCivicAfterHoursRoutine(npc, districtIndex) {
   return true;
 }
 
+function createNeighborCivicAfterHoursSchedule(identity, districtIndex, environment = state.environment) {
+  const home = {
+    ...neighborHomeStop(identity, districtIndex),
+    dwellSeconds: 12 * 60 * 60,
+  };
+  if (civicAfterHoursPeriod(environment) === "late-night") return [home];
+  const dateKey = environment?.dateKey || "after-hours";
+  const retailVenue = state.venues.find((venue) => venue.id === `${identity.countyId}-civic-convenience`);
+  if (!retailVenue || hashText(`${dateKey}-${identity.name}-county-shopping`) % 3 !== 0) return [home];
+  return [{
+    ...venueScheduleStop(retailVenue, identity.role, districtIndex + 41),
+    reason: `下班後到${retailVenue.label}買晚餐與日用品，再回住家休息`,
+    activity: "shopping",
+    dwellSeconds: 14 + districtIndex % 7,
+  }, home];
+}
+
+function transitionNeighborCivicAfterHoursRoutine(npc, districtIndex) {
+  if (!npc.countyId || !NEIGHBOR_CIVIC_ROLES.has(npc.role)) return false;
+  const period = civicAfterHoursPeriod(state.environment);
+  if (period === "daytime") {
+    if (!npc.neighborCivicAfterHoursKey || !npc.civicDaySchedule?.length) return false;
+    npc.schedule = npc.civicDaySchedule;
+    npc.segment = 0;
+    npc.progress = 0;
+    npc.dwellRemaining = 0;
+    npc.insideVenueId = "";
+    npc.neighborCivicAfterHoursKey = "";
+    npc.currentReason = "縣府開始辦公，從住家前往辦公大樓服務居民";
+    return false;
+  }
+  const dateKey = state.environment?.dateKey || "after-hours";
+  const routineKey = `${dateKey}:${period}`;
+  if (npc.neighborCivicAfterHoursKey === routineKey) return true;
+  const origin = {
+    x: npc.x, y: npc.y, district: districtAtPoint(npc) || npc.district,
+    label: "縣府下班出發點", reason: "辦公時間已結束，離開縣政園區安排晚間生活", activity: "walking",
+    dwellSeconds: 0, outdoorVenue: true,
+  };
+  npc.schedule = [origin, ...createNeighborCivicAfterHoursSchedule(npc, districtIndex, state.environment)];
+  npc.segment = 0;
+  npc.progress = 0;
+  npc.dwellRemaining = 0;
+  npc.insideVenueId = "";
+  npc.ridingBike = false;
+  npc.neighborCivicAfterHoursKey = routineKey;
+  npc.currentReason = period === "late-night"
+    ? `縣府已下班，正在回到${npc.residenceLabel || `${npc.district}住家`}休息`
+    : "縣府已下班，正在回家或安排晚間採買";
+  return true;
+}
+
+function transitionNeighborTimeRoutine(npc) {
+  if (!npc.countyId || NEIGHBOR_CIVIC_ROLES.has(npc.role) || !npc.timeSchedule) return false;
+  const period = neighborDayPeriod();
+  if (npc.neighborRoutineKey === period || !npc.timeSchedule[period]?.length) return false;
+  npc.schedule = npc.timeSchedule[period];
+  npc.segment = 0;
+  npc.progress = 0;
+  npc.dwellRemaining = 0;
+  npc.insideVenueId = "";
+  npc.ridingBike = false;
+  npc.eveningExcursion = null;
+  npc.neighborRoutineKey = period;
+  npc.currentReason = period === "late-night"
+    ? `深夜回到${npc.homeDistrict}住家休息`
+    : `開始${period === "morning" ? "上午" : period === "midday" ? "午間" : "傍晚"}的在地行程`;
+  return true;
+}
+
 function mobilityModeFor(identity, districtIndex) {
+  if (identity.featuredResident) return "neighborhood";
   if (["candidate", "mayor", "city-councilor", "police-officer", "firefighter", "doctor"].includes(identity.role)) return "citywide";
   if (identity.role === "student") return districtIndex % 2 ? "nearby" : "neighborhood";
   return ["neighborhood", "nearby", "citywide"][(hashText(identity.name) + districtIndex) % 3];
@@ -2726,6 +4216,7 @@ function activityForDestination(role, venueType, seed = 0) {
     if (["student", "high-school-student"].includes(role)) return seed % 2 ? "greeting" : "waiting";
     return "waiting";
   }
+  if (role === "fitness-coach" && ["park", "stadium"].includes(venueType)) return "exercising";
   if (venueType === "park") {
     if (role === "senior") return seed % 2 ? "exercising" : "resting";
     if (["student", "community-resident", "parent"].includes(role)) return seed % 2 ? "feeding-birds" : "watching-birds";
@@ -2775,7 +4266,8 @@ function npcWalkingSpeed(ageGroup, role, index) {
   if (ageGroup === "senior") return 12 + index % 3;
   if (ageGroup === "child") return 15 + index % 3;
   if (ageGroup === "teen") return 16 + index % 3;
-  if (["mayor", "borough-chief", "city-councilor", "candidate", "civil-servant", "city-supervisor"].includes(role)) return 14 + index % 2;
+  if (["mayor", "borough-chief", "city-councilor", "candidate", "civil-servant", "city-supervisor",
+    "county-magistrate", "county-civil-servant", "county-supervisor", "county-councilor", "township-officer"].includes(role)) return 14 + index % 2;
   return 15 + index % 4;
 }
 
@@ -2805,6 +4297,11 @@ function reasonAtSchool(role) {
     doctor: "進行校園健康衛教行程",
     "sanitation-worker": "整理校門周邊落葉與回收物",
     "delivery-worker": "依清單送達校園物資",
+    "county-magistrate": "聽取校園午餐、教育與通學環境的現場需求",
+    "county-civil-servant": "到校確認縣府與校園協作事項",
+    "county-supervisor": "了解縣府跨處室校園服務的執行情形",
+    "county-councilor": "了解午餐預算、校園需求與執行情況",
+    "township-officer": "確認公所轄內校園周邊與公共服務問題",
   };
   return reasons[role] || "依行程到校辦理事情";
 }
@@ -2819,6 +4316,11 @@ function reasonAtVenue(role, venueType, venueName = "") {
   if (role === "delivery-worker") return `依配送清單把物資送到${label}`;
   if (role === "civil-servant") return venueType === "office-building" ? `在${label}整理案件、服務居民並回覆進度` : `依公務行程前往${label}確認資料`;
   if (role === "city-supervisor") return venueType === "office-building" ? `在${label}主持會議並追蹤跨局處工作` : `前往${label}了解公共服務執行情形`;
+  if (role === "county-magistrate") return `到${label}了解縣政服務與居民實際需求`;
+  if (role === "county-civil-servant") return `在${label}整理案件、服務居民並回覆處理進度`;
+  if (role === "county-supervisor") return `在${label}確認跨處室工作的責任與時程`;
+  if (role === "county-councilor") return `到${label}了解預算、執行紀錄與居民關心的議題`;
+  if (role === "township-officer") return `在${label}辦理地方公共服務並整理巡查紀錄`;
   if (role === "candidate") return `跨區走訪${label}，向居民問候並聽取意見`;
   if (role === "office-worker") return label === "餐廳" ? "利用午休時間用餐" : `完成下班前的${label}行程`;
   if (role === "senior") return label === "公園" ? "依日常習慣散步休息" : `採買生活所需並在${label}稍作休息`;
@@ -2874,15 +4376,15 @@ function townEnvironmentAt(date = new Date()) {
   let phase = "白天";
   let phaseProgress = 0;
   if (minuteOfDay < dawnStart || minuteOfDay >= nightStart) {
-    darkness = 0.58;
+    darkness = MAX_NIGHT_DARKNESS;
     phase = "夜晚";
   } else if (minuteOfDay < dayStart) {
     phaseProgress = (minuteOfDay - dawnStart) / (dayStart - dawnStart);
-    darkness = (1 - phaseProgress) * 0.58;
+    darkness = (1 - phaseProgress) * MAX_NIGHT_DARKNESS;
     phase = "黎明";
   } else if (minuteOfDay >= duskStart) {
     phaseProgress = (minuteOfDay - duskStart) / (nightStart - duskStart);
-    darkness = phaseProgress * 0.58;
+    darkness = phaseProgress * MAX_NIGHT_DARKNESS;
     phase = "黃昏";
   }
 
@@ -2952,7 +4454,7 @@ function isTaichungWeekend(clock) {
 function dailyStoryCopy(value, story) {
   return String(value || "")
     .replaceAll("{district}", story.district)
-    .replaceAll("{name}", story.actor?.name || "一位居民");
+    .replaceAll("{name}", story.actor ? npcDisplayName(story.actor) : townText("一位居民"));
 }
 
 function setupDailyStory() {
@@ -3029,31 +4531,58 @@ function chooseDailyStory(choiceId) {
   announce(`${story.title}：${outcome}`);
 }
 
+function scheduleTownFrame() {
+  if (!state.frameRequestId) state.frameRequestId = requestAnimationFrame(frame);
+}
+
+function ensureTownFrameRunning() {
+  const stale = performance.now() - state.lastFrameAt > 250;
+  if (stale && state.frameRequestId) cancelAnimationFrame(state.frameRequestId);
+  if (stale) state.frameRequestId = 0;
+  scheduleTownFrame();
+}
+
 function frame(now) {
-  if (document.hidden || !state.canvasVisible) {
+  state.frameRequestId = 0;
+  state.lastFrameAt = now;
+  try {
+    if (document.hidden || !state.canvasVisible) {
+      state.lastTime = now;
+      return;
+    }
+    const delta = Math.min(0.04, Math.max(0, (now - state.lastTime) / 1000));
     state.lastTime = now;
-    requestAnimationFrame(frame);
-    return;
+    updateTownEnvironment(now);
+    if (state.ready && !refs.dialog.open && !state.dialogueNpc) {
+      updatePlayer(delta);
+      updateNpcs(delta);
+      updatePets(delta);
+      updateBirds(delta);
+      updateTownMoment(now);
+      updateTownEvent(now, delta);
+      updateAmbientConversation(now);
+    }
+    if (state.ready) updateCamera(false, delta);
+    drawTown(now, state.environment);
+    renderComicBubble();
+    state.frameErrorReported = false;
+  } catch (error) {
+    console.error("Lunch Town frame recovered after an update error", error);
+    state.lastTime = now;
+    state.moveTarget = null;
+    state.pendingBikeStationId = "";
+    if (!state.frameErrorReported) {
+      state.frameErrorReported = true;
+      announce("小鎮已自動略過一次畫面更新；請再按方向鍵即可繼續移動。");
+    }
+  } finally {
+    scheduleTownFrame();
   }
-  const delta = Math.min(0.04, Math.max(0, (now - state.lastTime) / 1000));
-  state.lastTime = now;
-  updateTownEnvironment(now);
-  if (state.ready && !refs.dialog.open && !state.dialogueNpc) {
-    updatePlayer(delta);
-    updateNpcs(delta);
-    updatePets(delta);
-    updateBirds(delta);
-    updateTownMoment(now);
-    updateTownEvent(now, delta);
-    updateAmbientConversation(now);
-  }
-  if (state.ready) updateCamera(false, delta);
-  drawTown(now, state.environment);
-  renderComicBubble();
-  requestAnimationFrame(frame);
 }
 
 function updatePlayer(delta) {
+  const previousX = state.player.x;
+  const previousY = state.player.y;
   let dx = (state.keys.has("right") ? 1 : 0) - (state.keys.has("left") ? 1 : 0);
   let dy = (state.keys.has("down") ? 1 : 0) - (state.keys.has("up") ? 1 : 0);
   if (!dx && !dy && state.moveTarget) {
@@ -3083,6 +4612,9 @@ function updatePlayer(delta) {
       state.player.step += delta * (state.player.ridingBike ? 18 : 10);
     }
   }
+  if (!state.player.ridingBike) {
+    accumulateDailyWalkDistance(Math.hypot(state.player.x - previousX, state.player.y - previousY));
+  }
   if (state.pendingBikeStationId) {
     const station = state.bikeStations.find((item) => item.id === state.pendingBikeStationId);
     const accessPoint = station ? bikeStationAccessPoint(station) : null;
@@ -3095,13 +4627,89 @@ function updatePlayer(delta) {
     }
   }
   updateNearbyPrompt();
+  observeDailyQuestWorld();
+}
+
+function accumulateDailyWalkDistance(distance) {
+  if (!Number.isFinite(distance) || distance <= 0) return;
+  state.dailyWalkPending += distance;
+  while (state.dailyWalkPending >= 50) {
+    state.dailyWalkPending -= 50;
+    const eventKey = dailyQuestInstance("walk");
+    void recordDailyQuestEvent("walk_distance", "walkable", 50, eventKey);
+  }
+}
+
+function observeDailyQuestWorld() {
+  const school = nearbySchool();
+  if (school) void recordDailyQuestEvent("school_gate", String(school.fatraceSchoolId));
+
+  const nearbyRole = state.npcs
+    .filter((npc) => !npc.insideVenueId && ["cook", "nutritionist"].includes(npc.role))
+    .find((npc) => Math.hypot(state.player.x - npc.x, state.player.y - npc.y) < 54);
+  if (nearbyRole) void recordDailyQuestEvent("role_observe", nearbyRole.role);
+
+  const nearbyDog = state.pets.find((pet) => (
+    pet.kind === "dog" && !pet.hidden && Math.hypot(state.player.x - pet.x, state.player.y - pet.y) < 58
+  ));
+  if (nearbyDog) void recordDailyQuestEvent("dog_observe", "leashed-dog");
+
+  observeDailyBridgeCrossing();
+  observeDailyMapCheckpoints();
+}
+
+function observeDailyBridgeCrossing() {
+  for (const bridge of BOUNDARY_BRIDGES) {
+    if (Math.abs(state.player.x - bridge.x) > 62) continue;
+    const riverDistance = Math.abs(state.player.y - bridge.riverY);
+    if (riverDistance <= BORDER_RIVER_WIDTH / 2 + 22) continue;
+    const side = state.player.y < bridge.riverY ? "north" : "south";
+    const previousSide = state.dailyBridgeSides.get(bridge.id);
+    state.dailyBridgeSides.set(bridge.id, side);
+    if (previousSide && previousSide !== side) {
+      const checkpoint = bridge.countyId === "miaoli" ? "bridge-north" : "bridge-south";
+      void recordDailyQuestEvent("checkpoint_visit", checkpoint);
+    }
+  }
+}
+
+function observeDailyMapCheckpoints() {
+  const coastDistance = state.player.x - coastlineXAt(state.player.y);
+  if (coastDistance >= PLAYER_TERRAIN_PADDING && coastDistance <= 72) {
+    void recordDailyQuestEvent("checkpoint_visit", "coast");
+  }
+  const mountainDistance = EAST_MOUNTAIN_START_X - state.player.x;
+  if (mountainDistance >= PLAYER_TERRAIN_PADDING && mountainDistance <= 72) {
+    void recordDailyQuestEvent("checkpoint_visit", "mountain");
+  }
+  const nearRiverbank = BOUNDARY_BRIDGES.some((bridge) => {
+    const distance = Math.abs(state.player.y - boundaryRiverYAt(state.player.x, bridge));
+    return Math.abs(state.player.x - bridge.x) > 90
+      && distance >= BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
+      && distance <= BORDER_RIVER_WIDTH / 2 + 48;
+  });
+  if (nearRiverbank) void recordDailyQuestEvent("checkpoint_visit", "riverbank");
+
+  for (const county of NEIGHBOR_COUNTIES) {
+    const signX = county.bridgeX + (county.side === "north" ? 92 : -258) + 83;
+    const signY = (county.side === "north" ? county.y + county.h - 104 : county.y + 8) + 48;
+    if (Math.hypot(state.player.x - signX, state.player.y - signY) < 92) {
+      void recordDailyQuestEvent("checkpoint_visit", `${county.id}-sign`);
+    }
+  }
 }
 
 function tryMovePlayer(dx, dy) {
   const next = { x: state.player.x + dx, y: state.player.y + dy };
   next.x = Math.max(12, Math.min(WORLD_WIDTH - 12, next.x));
   next.y = Math.max(12, Math.min(WORLD_HEIGHT - 12, next.y));
-  if ((next.x === state.player.x && next.y === state.player.y) || isBlockedTownTerrain(next)) return false;
+  const nextBlocked = isBlockedTownTerrain(next);
+  const currentBlocked = isBlockedTownTerrain(state.player);
+  const currentBlockDepth = currentBlocked ? blockedTerrainEscapeDepth(state.player) : 0;
+  const nextBlockDepth = nextBlocked ? blockedTerrainEscapeDepth(next) : 0;
+  const canEscapeBlockedTerrain = currentBlocked && nextBlockDepth < currentBlockDepth;
+  if ((next.x === state.player.x && next.y === state.player.y)
+    || (nextBlocked && !canEscapeBlockedTerrain)) return false;
   state.player.x = next.x;
   state.player.y = next.y;
   return true;
@@ -3115,11 +4723,49 @@ function pointIsOnBoundaryBridge(point, bridge) {
 function isBlockedTownTerrain(point) {
   if (point.x - PLAYER_TERRAIN_PADDING <= coastlineXAt(point.y)) return true;
   if (point.x + PLAYER_TERRAIN_PADDING >= EAST_MOUNTAIN_START_X) return true;
+  if (state.neighborWorkZones.some((zone) => zone.restricted && pointInExpandedRect(point, zone, PLAYER_TERRAIN_PADDING))) return true;
+  // Administrative-area scenery shares land with schools, public facilities,
+  // attractions and farms. Keep those blocks walkable instead of treating an
+  // entire hill or field backdrop as one oversized collision rectangle.
   return BOUNDARY_BRIDGES.some((bridge) => (
     !pointIsOnBoundaryBridge(point, bridge)
     && Math.abs(point.y - boundaryRiverYAt(point.x, bridge))
       <= BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
   ));
+}
+
+function pointDepthInsideRect(point, rect) {
+  if (!pointInRect(point, rect)) return 0;
+  return Math.max(0, Math.min(
+    point.x - rect.x,
+    rect.x + rect.w - point.x,
+    point.y - rect.y,
+    rect.y + rect.h - point.y,
+  ));
+}
+
+function blockedTerrainEscapeDepth(point) {
+  const depths = [
+    Math.max(0, coastlineXAt(point.y) + PLAYER_TERRAIN_PADDING - point.x),
+    Math.max(0, point.x + PLAYER_TERRAIN_PADDING - EAST_MOUNTAIN_START_X),
+  ];
+  state.neighborWorkZones.filter((zone) => zone.restricted).forEach((zone) => {
+    depths.push(pointDepthInsideRect(point, {
+      x: zone.x - PLAYER_TERRAIN_PADDING,
+      y: zone.y - PLAYER_TERRAIN_PADDING,
+      w: zone.w + PLAYER_TERRAIN_PADDING * 2,
+      h: zone.h + PLAYER_TERRAIN_PADDING * 2,
+    }));
+  });
+  BOUNDARY_BRIDGES.forEach((bridge) => {
+    if (pointIsOnBoundaryBridge(point, bridge)) return;
+    depths.push(Math.max(
+      0,
+      BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
+        - Math.abs(point.y - boundaryRiverYAt(point.x, bridge)),
+    ));
+  });
+  return Math.max(...depths);
 }
 
 function updateCamera(snap = false, delta = 0) {
@@ -3137,21 +4783,35 @@ function updateCamera(snap = false, delta = 0) {
     }
     if (state.ready && state.districtThemes.has(district)) void recordAchievementEvent("district_visit", district);
     const theme = state.districtThemes.get(district);
-    const neighborCounty = NEIGHBOR_COUNTIES.find((county) => county.name === district);
+    const neighborDistrictTheme = state.neighborDistrictThemes.get(district);
+    const neighborCounty = neighborDistrictTheme?.county || NEIGHBOR_COUNTIES.find((county) => county.name === district);
+    const neighborCountyTheme = neighborCounty ? state.neighborCountyThemes.get(neighborCounty.id) : null;
+    const neighborDistrictSchools = neighborDistrictTheme
+      ? state.neighborSchools.filter((school) => school.city === neighborCounty.name && school.district === district)
+      : [];
+    const neighborAvailableCount = neighborDistrictSchools.filter(schoolHasCurrentMeal).length;
+    const neighborMealStatus = neighborAvailableCount
+      ? townText(`今日 ${neighborAvailableCount}/${neighborDistrictSchools.length} 校有午餐資料`)
+      : townText("午餐資料建設中");
     refs.districtBadge.textContent = theme
       ? `${theme.group}・${district}`
+      : neighborDistrictTheme
+        ? `${townText(neighborCounty.name)}・${townText(district)}`
       : neighborCounty
         ? townText(neighborCounty.name)
         : "臺中小鎮街道";
     refs.districtFeature.textContent = theme
       ? `${theme.featureLabel}｜${theme.tagline}`
+      : neighborDistrictTheme
+        ? `${townText(neighborDistrictTheme.featureLabel)}｜${neighborMealStatus}`
       : neighborCounty
-        ? townText("午餐資料建設中｜可散步探索，尚未開放學校與菜單")
+        ? townText("午餐資料建設中｜校園已放入地圖，可散步探索")
         : state.mapNote;
-    refs.districtSource.hidden = !theme?.sourceUrl;
-    if (theme?.sourceUrl) {
-      refs.districtSource.href = theme.sourceUrl;
-      refs.districtSource.setAttribute("aria-label", `查看${district}特色的官方參考來源`);
+    const sourceUrl = theme?.sourceUrl || neighborCountyTheme?.sourceUrl || "";
+    refs.districtSource.hidden = !sourceUrl;
+    if (sourceUrl) {
+      refs.districtSource.href = sourceUrl;
+      refs.districtSource.setAttribute("aria-label", townText(`查看${district}特色的官方參考來源`));
     }
   }
 }
@@ -3159,14 +4819,52 @@ function updateCamera(snap = false, delta = 0) {
 function districtAtPoint(point) {
   return DISTRICT_DISPLAY_ORDER.find((district) => pointInRect(point, DISTRICT_ZONES[district]))
     || state.venues.find((venue) => venue.hubKind && pointInRect(point, venue))?.district
+    || neighborCountyDistrictAtPoint(point)?.name
     || neighborCountyAtPoint(point)?.name
     || "";
+}
+
+function districtZoneForName(district) {
+  return DISTRICT_ZONES[district] || state.neighborDistrictThemes.get(district)?.zone || null;
+}
+
+function neighborCountyDistrictAtPoint(point) {
+  return [...state.neighborDistrictThemes.values()].find((theme) => pointInRect(point, theme.zone)) || null;
 }
 
 function shouldUseCoarseMobileUpdate(entity, entityDistrict) {
   if (!mobileLayoutQuery.matches || entityDistrict === state.activeDistrict) return false;
   const visible = isVisibleRect({ x: entity.x - 30, y: entity.y - 45, w: 60, h: 70 }, 72);
   return !visible;
+}
+
+function npcSimulationId(npc, index) {
+  return Number.isFinite(npc.lookIndex) ? npc.lookIndex : index;
+}
+
+function refreshActiveNpcSimulationSet() {
+  const ranked = state.npcs.map((npc, index) => ({
+    npc,
+    id: npcSimulationId(npc, index),
+    visible: !npc.insideVenueId && isVisibleRect({ x: npc.x - 30, y: npc.y - 45, w: 60, h: 70 }, 96),
+    distance: Math.hypot(npc.x - state.player.x, npc.y - state.player.y),
+  })).sort((first, second) => (
+    Number(second.visible) - Number(first.visible) || first.distance - second.distance
+  ));
+  const chosen = ranked.filter((entry) => entry.visible).slice(0, MAX_ACTIVE_TOWN_NPCS);
+  if (chosen.length < MIN_ACTIVE_TOWN_NPCS) {
+    const chosenIds = new Set(chosen.map((entry) => entry.id));
+    ranked.forEach((entry) => {
+      if (chosen.length < MIN_ACTIVE_TOWN_NPCS && !chosenIds.has(entry.id)) {
+        chosen.push(entry);
+        chosenIds.add(entry.id);
+      }
+    });
+  }
+  state.activeNpcIds = new Set(chosen.map((entry) => entry.id));
+  state.npcs.forEach((npc, index) => {
+    npc.backgroundSimulated = !state.activeNpcIds.has(npcSimulationId(npc, index));
+  });
 }
 
 function updateNpcAppearance(npc, delta) {
@@ -3290,12 +4988,13 @@ function finishEveningShoppingTrip(npc) {
 }
 
 function updateNpcs(delta) {
+  refreshActiveNpcSimulationSet();
   state.npcs.forEach((npc, index) => {
     let npcDelta = delta;
     const npcDistrict = districtAtPoint(npc) || npc.schedule[npc.segment % npc.schedule.length]?.district || npc.district;
-    if (shouldUseCoarseMobileUpdate(npc, npcDistrict)) {
+    if (npc.backgroundSimulated) {
       npc.coarseElapsed = (npc.coarseElapsed || 0) + delta;
-      if (npc.coarseElapsed < MOBILE_COARSE_UPDATE_SECONDS) return;
+      if (npc.coarseElapsed < BACKGROUND_NPC_UPDATE_SECONDS) return;
       npcDelta = npc.coarseElapsed;
       npc.coarseElapsed = 0;
     } else {
@@ -3317,8 +5016,12 @@ function updateNpcs(delta) {
       npc.ridingBike = false;
       return;
     }
-    const civicAfterHours = transitionCivicAfterHoursRoutine(npc, index);
-    if (!CIVIC_AFTER_HOURS_ROLES.has(npc.role)) maybeStartEveningShoppingTrip(npc, index);
+    transitionNeighborTimeRoutine(npc);
+    const civicAfterHours = transitionNeighborCivicAfterHoursRoutine(npc, index)
+      || transitionCivicAfterHoursRoutine(npc, index);
+    if (!civicAfterHours && !CIVIC_AFTER_HOURS_ROLES.has(npc.role) && !NEIGHBOR_CIVIC_ROLES.has(npc.role)) {
+      maybeStartEveningShoppingTrip(npc, index);
+    }
     if (!civicAfterHours && state.environment?.isRaining && !npc.hasUmbrella && !RAIN_DUTY_ROLES.has(npc.role) && index % 3 !== 0) {
       const shelter = rainShelterForNpc(npc, index);
       if (shelter) {
@@ -3344,11 +5047,13 @@ function updateNpcs(delta) {
         return;
       }
       npc.activity = contextualActivityForNpc(npc, stop, index);
+      npc.riverbankSiteId = stop?.riverbankSiteId || "";
       npc.insideVenueId = stop?.outdoorVenue || OUTDOOR_ACTIVITIES.has(npc.activity) ? "" : (stop?.venueId || "");
       if (stop && OUTDOOR_ACTIVITIES.has(npc.activity)) {
         npc.x = stop.x + (index % 3 - 1) * 12;
         npc.y = stop.y + (npc.activity === "queuing" ? index % 3 * 8 : 0);
       }
+      if (stop?.facing) npc.direction = stop.facing;
       npc.currentReason = activityReason(npc.activity, stop?.label || npc.district, npc.currentReason);
       if (npc.hasLeashedDog && !npc.insideVenueId) {
         npc.currentReason = `牽著狗在${stop?.label || npc.district}散步並短暫停留`;
@@ -3371,6 +5076,7 @@ function updateNpcs(delta) {
       npc.dwellRemaining = to.dwellSeconds;
       npc.currentReason = to.reason;
       npc.activity = contextualActivityForNpc(npc, to, index);
+      npc.riverbankSiteId = to.riverbankSiteId || "";
       npc.isMoving = false;
       npc.ridingBike = arrivedByBike && to.bikeAction !== "return";
       npc.insideVenueId = to?.outdoorVenue || OUTDOOR_ACTIVITIES.has(npc.activity) ? "" : (to.venueId || "");
@@ -3389,6 +5095,7 @@ function updateNpcs(delta) {
         ? `牽著狗散步，正前往${currentTo.label}`
         : `前往${currentTo.label}：${currentTo.reason}`;
     npc.activity = ridingBike ? "cycling" : "walking";
+    npc.riverbankSiteId = "";
     npc.isMoving = true;
     npc.direction = Math.abs(currentTo.x - currentFrom.x) > Math.abs(currentTo.y - currentFrom.y)
       ? (currentTo.x > currentFrom.x ? "right" : "left")
@@ -3401,6 +5108,10 @@ function contextualActivityForNpc(npc, stop, index) {
   const base = stop?.activity || "waiting";
   const hour = Number(state.environment?.clock?.hour ?? 12);
   const mealRush = (hour >= 11 && hour < 13) || (hour >= 17 && hour < 19);
+  if (stop?.riverbankSiteId) {
+    if (hour < 7 || hour >= 21 || state.environment?.isRaining) return "resting";
+    return base;
+  }
   if (npc.role === "sanitation-worker") return "sweeping";
   if (npc.role === "delivery-worker") return "delivery";
   if (stop?.venueId?.includes("school") || stop?.label?.includes("國小")) {
@@ -3440,6 +5151,18 @@ function activityReason(activity, location, fallback) {
     shopping: `在${location}逛逛商店並採買需要的東西`,
     listening: `停下腳步聽對方把話說完`,
     "at-home": `回到${location}休息、整理家務或準備晚餐`,
+    fishing: `在${location}的安全平台釣魚，釣線朝向河道但人留在護欄內`,
+    barbecuing: `在${location}使用指定烤肉台休憩，並把垃圾與火源收拾好`,
+    "inspecting-paddy": `在${location}巡田，查看水位與稻作狀況`,
+    "releasing-water": `在${location}依灌溉安排放水並確認田間分水`,
+    "mending-ridge": `在${location}整理田埂與農路邊緣`,
+    "sorting-produce": `在${location}分級、裝箱並核對農產品紀錄`,
+    "tending-grapes": `在${location}整理葡萄棚、枝蔓與果串`,
+    "tending-flowers": `在${location}澆灌花卉、苗木並整理出貨區`,
+    "checking-irrigation": `在${location}巡查水圳、閘門與抽水設施`,
+    "tending-oysters": `在${location}依潮汐照顧蚵棚，沿專用工作路線移動`,
+    "repairing-rail": `在${location}檢查軌道、機車與作業設備`,
+    "serving-market": `在${location}整理市場、接待訪客並保持通道暢通`,
   }[activity] || fallback;
 }
 
@@ -4026,7 +5749,7 @@ function startTownMoment(now) {
     };
     state.lastPromptTarget = null;
     updateNearbyPrompt();
-    announce(`${actor.name}需要一點幫忙：${definition.text}`);
+    announce(`${npcDisplayName(actor)}需要一點幫忙：${definition.text}`);
     return;
   }
   state.nextTownMomentAt = now + 8_000;
@@ -4076,7 +5799,11 @@ function updateTownEvent(now, delta) {
     event.actor.x += event.actor.runDirection * 34 * delta;
     event.actor.step += delta * 9;
     event.actor.isMoving = true;
-    const zone = DISTRICT_ZONES[event.district];
+    const zone = districtZoneForName(event.district);
+    if (!zone) {
+      dismissTownEvent(now);
+      return;
+    }
     if (event.actor.x < zone.x + 38 || event.actor.x > zone.x + zone.w - 38) event.actor.runDirection *= -1;
     event.actor.direction = event.actor.runDirection > 0 ? "right" : "left";
   }
@@ -4088,7 +5815,11 @@ function startTownEvent(now) {
   const type = state.townEventSequence % 2 === 0 ? "theft" : "medical";
   state.townEventSequence += 1;
   const district = state.activeDistrict;
-  const zone = DISTRICT_ZONES[district];
+  const zone = districtZoneForName(district);
+  if (!zone) {
+    state.nextTownEventAt = now + 8_000;
+    return;
+  }
   if (type === "theft") {
     const profile = CHARACTER_PROFILES.find((item) => item.role === "office-worker" && item.gender === "male") || CHARACTER_PROFILES[0];
     state.townEvent = {
@@ -4136,7 +5867,7 @@ function startTownEvent(now) {
       achievementSubjectId: townAchievementInstance("medical"),
       victim,
       title: "有人突然倒下",
-      text: `${victim.name}突然失去反應。請先確認現場安全、呼叫他人協助，不要自行餵食或餵水。你要怎麼做？`,
+      text: `${npcDisplayName(victim)}突然失去反應。請先確認現場安全、呼叫他人協助，不要自行餵食或餵水。你要怎麼做？`,
       sourceUrl: "https://www.nfa.gov.tw/cht/index.php?code=list&ids=68",
       choices: [
         { id: "call-119", label: "撥 119 並說明位置" },
@@ -4277,7 +6008,7 @@ function renderComicBubble() {
   }
   const left = Math.max(72, Math.min(layerRect.width - 72, canvasRect.left - layerRect.left + canvasX));
   const top = Math.max(76, Math.min(layerRect.height - 40, canvasRect.top - layerRect.top + canvasY));
-  refs.comicSpeaker.textContent = bubble.speaker.name;
+  refs.comicSpeaker.textContent = npcDisplayName(bubble.speaker);
   refs.comicText.textContent = bubble.text;
   refs.comicBubble.style.left = `${left}px`;
   refs.comicBubble.style.top = `${top}px`;
@@ -4317,27 +6048,31 @@ function drawTown(now, environment = townEnvironmentAt()) {
   context.translate(-Math.round(state.camera.x), -Math.round(state.camera.y));
   drawGround();
   drawNeighborCountyGrounds();
+  drawChanghuaRidgeConnection();
   drawWesternCoast(now);
   drawEasternMountainRange(now);
   drawBoundaryRivers(now);
+  drawRiverbankLandscapes(now);
   drawMapEdges(now);
   drawRoads(now);
   drawBoundaryBridges();
+  drawNeighborWorkZones(now, environment);
   drawNeighborCountyDetails(now);
   drawDistrictLabels();
   drawTownSquare();
   drawTownVenues(now);
   drawWeekendMarkets();
   state.schools.filter((school) => isVisibleRect(school.layout, 60)).forEach((school) => drawCampus(school, now));
+  state.neighborSchools.filter((school) => isVisibleRect(school.layout, 60)).forEach((school) => drawCampus(school, now));
   drawStreetDetails(now, environment);
   drawBikeStations();
   const actors = [
-    ...state.npcs.filter((person) => !person.insideVenueId).map((person) => ({ kind: "person", y: person.y, person })),
+    ...state.npcs.filter((person) => !person.insideVenueId && !person.backgroundSimulated).map((person) => ({ kind: "person", y: person.y, person })),
     ...state.pets.filter((pet) => !pet.hidden).map((pet) => ({ kind: "pet", y: pet.y, pet })),
     ...state.birds.map((bird) => ({ kind: "bird", y: bird.y, bird })),
     ...(state.townEvent?.actor ? [{ kind: "person", y: state.townEvent.actor.y, person: state.townEvent.actor }] : []),
     ...(state.townEvent?.responder ? [{ kind: "person", y: state.townEvent.responder.y, person: state.townEvent.responder }] : []),
-    { kind: "person", y: state.player.y, person: { ...PLAYER_PROFILES[state.playerStyle], ...state.player, player: true } },
+    { kind: "person", y: state.player.y, person: { ...PLAYER_AVATARS[state.playerAvatarId], ...state.player, player: true } },
   ].filter((actor) => {
     const subject = actor.person || actor.pet || actor.bird;
     return isVisibleRect({ x: subject.x - 30, y: subject.y - 45, w: 60, h: 70 }, 40);
@@ -4379,8 +6114,34 @@ function drawGround() {
   }
 }
 
-+function townText(value) {
+function townText(value) {
   return window.LunchI18n?.t(value) || String(value ?? "");
+}
+
+function townUsesEnglish() {
+  return document.documentElement.lang.toLowerCase().startsWith("en");
+}
+
+function npcDisplayName(npc) {
+  if (townUsesEnglish() && npc?.nameEn) return npc.nameEn;
+  return townText(npc?.name || "");
+}
+
+function venueDisplayLabel(venue, short = false) {
+  if (townUsesEnglish()) {
+    const english = short ? venue?.shortLabelEn || venue?.labelEn : venue?.labelEn;
+    if (english) return english;
+  }
+  return townText((short ? venue?.shortLabel : venue?.label) || venue?.label || "");
+}
+
+function venueDisplayDescription(venue) {
+  if (townUsesEnglish() && venue?.descriptionEn) return venue.descriptionEn;
+  return venue?.description || `${venueDisplayLabel(venue)}是街區居民會使用的場所。`;
+}
+
+function npcRoleLabel(npc) {
+  return townText(ROLE_LABELS[npc?.role] || npc?.role || "居民");
 }
 
 function neighborCountyById(id) {
@@ -4392,14 +6153,467 @@ function neighborCountyAtPoint(point) {
 }
 
 function drawNeighborCountyGrounds() {
-  NEIGHBOR_COUNTIES.filter((county) => isVisibleRect(county, 40)).forEach((county, countyIndex) => {
+  NEIGHBOR_COUNTIES.filter((county) => isVisibleRect(county, 40)).forEach((county) => {
     context.fillStyle = county.color;
     context.fillRect(county.x, county.y, county.w, county.h);
-    context.fillStyle = countyIndex ? "rgba(232, 205, 112, 0.22)" : "rgba(205, 227, 166, 0.2)";
-    for (let stripeX = county.x + 28; stripeX < county.x + county.w; stripeX += 92) {
-      context.fillRect(stripeX, county.y + 18, 26, county.h - 36);
-    }
+    drawNeighborCountyBackdrop(county);
+    [...state.neighborDistrictThemes.values()]
+      .filter((theme) => theme.county.id === county.id && isVisibleRect(theme.zone, 40))
+      .forEach((theme) => drawNeighborDistrictTerrain(theme));
   });
+}
+
+function drawNeighborCountyBackdrop(county) {
+  if (county.id === "miaoli") {
+    const mountainStartX = county.x + county.w * 0.6;
+    context.fillStyle = "rgba(52, 92, 63, 0.32)";
+    context.fillRect(mountainStartX, county.y, county.x + county.w - mountainStartX, county.h);
+    for (let y = county.y + 70; y < county.y + county.h; y += 82) {
+      for (let x = mountainStartX + 30; x < county.x + county.w; x += 78) {
+        context.fillStyle = (Math.floor((x + y) / 78) % 2) ? "rgba(42, 84, 58, 0.46)" : "rgba(64, 108, 67, 0.48)";
+        context.beginPath();
+        context.moveTo(x - 44, y + 44);
+        context.lineTo(x, y - 24);
+        context.lineTo(x + 44, y + 44);
+        context.fill();
+      }
+    }
+    return;
+  }
+
+  context.strokeStyle = "rgba(139, 126, 62, 0.2)";
+  context.lineWidth = 2;
+  for (let x = county.x + 36; x < county.x + county.w; x += 76) {
+    context.beginPath();
+    context.moveTo(x, county.y + 22);
+    context.lineTo(x, county.y + county.h - 22);
+    context.stroke();
+  }
+  for (let y = county.y + 46; y < county.y + county.h; y += 72) {
+    context.beginPath();
+    context.moveTo(county.x + 24, y);
+    context.lineTo(county.x + county.w - 24, y);
+    context.stroke();
+  }
+  context.strokeStyle = "rgba(80, 156, 174, 0.42)";
+  context.lineWidth = 8;
+  for (let canal = 0; canal < 3; canal += 1) {
+    const canalY = county.y + 260 + canal * 430;
+    context.beginPath();
+    context.moveTo(county.x + 16, canalY);
+    context.quadraticCurveTo(county.x + county.w / 2, canalY + 34, county.x + county.w - 18, canalY - 12);
+    context.stroke();
+  }
+}
+
+function drawNeighborDistrictTerrain(theme) {
+  const { zone, terrain } = theme;
+  context.fillStyle = zone.color;
+  context.fillRect(zone.x, zone.y, zone.w, zone.h);
+  context.strokeStyle = "rgba(55, 76, 58, 0.24)";
+  context.lineWidth = 1;
+  context.strokeRect(zone.x + 1, zone.y + 1, zone.w - 2, zone.h - 2);
+
+  if (isNeighborFarmTerrain(terrain)) {
+    const landscapeWidth = neighborDistrictLandscapeWidth(theme);
+    context.fillStyle = theme.county.id === "changhua"
+      ? "rgba(218, 207, 165, 0.24)"
+      : "rgba(216, 205, 164, 0.18)";
+    context.fillRect(zone.x + 7, zone.y + 54, zone.w - landscapeWidth - 14, zone.h - 62);
+    drawNeighborFarmland(theme);
+  }
+
+  if (/hill|mountain|ridge/.test(terrain)) {
+    const peakCount = terrain === "high-mountain" ? 6 : 4;
+    const ridgeStartX = zone.x + zone.w * 0.67;
+    context.fillStyle = "rgba(48, 91, 61, 0.2)";
+    context.fillRect(ridgeStartX, zone.y + 48, zone.x + zone.w - ridgeStartX, zone.h - 56);
+    for (let peak = 0; peak < peakCount; peak += 1) {
+      const peakX = zone.x + zone.w - 28 - peak * 38;
+      const peakY = zone.y + 46 + (peak % 2) * 18;
+      const height = terrain === "high-mountain" ? 58 + peak * 5 : 40 + peak * 4;
+      context.fillStyle = peak % 2 ? "rgba(48, 96, 64, 0.62)" : "rgba(66, 116, 70, 0.65)";
+      context.beginPath();
+      context.moveTo(peakX - 28, peakY + height);
+      context.lineTo(peakX, peakY);
+      context.lineTo(peakX + 28, peakY + height);
+      context.fill();
+      if (terrain === "high-mountain" && peak < 2) {
+        context.fillStyle = "rgba(245, 244, 224, 0.82)";
+        context.beginPath();
+        context.moveTo(peakX - 7, peakY + 10);
+        context.lineTo(peakX, peakY);
+        context.lineTo(peakX + 8, peakY + 11);
+        context.fill();
+      }
+    }
+  }
+
+  if (terrain.includes("coast")) {
+    context.fillStyle = "rgba(93, 161, 174, 0.35)";
+    context.fillRect(zone.x + 5, zone.y + 6, 13, zone.h - 12);
+    context.fillStyle = "rgba(236, 213, 145, 0.58)";
+    context.fillRect(zone.x + 18, zone.y + 6, 9, zone.h - 12);
+  }
+
+  if (terrain.includes("river")) {
+    context.strokeStyle = "rgba(86, 159, 178, 0.65)";
+    context.lineWidth = 8;
+    context.beginPath();
+    context.moveTo(zone.x + 12, zone.y + zone.h - 30);
+    context.quadraticCurveTo(zone.x + zone.w / 2, zone.y + zone.h - 54, zone.x + zone.w - 10, zone.y + zone.h - 26);
+    context.stroke();
+  }
+}
+
+function drawNeighborFarmland(theme) {
+  const { zone, terrain } = theme;
+  const geometry = neighborFarmlandGeometry(theme);
+  const fieldSeed = hashText(`${theme.county.id}-${theme.name}-${terrain}-fields`);
+  const fieldColors = terrain === "flower-field" || terrain === "garden-farm"
+    ? ["#bdad69", "#c89e72", "#a6b06a", "#c7ad6c"]
+    : ["#839f78", "#91a76f", "#a69f62", "#78978a"];
+
+  context.fillStyle = "#8a7852";
+  context.fillRect(
+    geometry.fieldStartX - 5,
+    geometry.fieldTop - 5,
+    geometry.fieldWidth + 10,
+    geometry.fieldHeight + 10,
+  );
+  neighborPaddyParcels(theme).forEach((parcel, parcelIndex) => {
+    const stage = Math.abs(fieldSeed + parcelIndex * 7) % fieldColors.length;
+    context.fillStyle = fieldColors[stage];
+    context.fillRect(parcel.x, parcel.y, parcel.w, parcel.h);
+    context.fillStyle = "rgba(178, 212, 204, 0.16)";
+    for (let waterY = parcel.y + 7; waterY < parcel.y + parcel.h - 4; waterY += 13) {
+      context.fillRect(parcel.x + 5, waterY, Math.max(4, parcel.w - 10), 2);
+    }
+    drawFieldCrops(parcel, terrain, fieldSeed + parcelIndex * 13);
+    context.strokeStyle = "rgba(91, 78, 48, 0.62)";
+    context.lineWidth = 2;
+    context.strokeRect(parcel.x + 1, parcel.y + 1, parcel.w - 2, parcel.h - 2);
+  });
+
+  context.strokeStyle = "rgba(67, 132, 151, 0.88)";
+  context.lineWidth = 5;
+  context.beginPath();
+  context.moveTo(geometry.fieldStartX - 8, geometry.fieldTop - 4);
+  context.lineTo(geometry.fieldStartX - 8, geometry.fieldTop + geometry.fieldHeight + 4);
+  context.stroke();
+  context.strokeStyle = "rgba(192, 226, 219, 0.62)";
+  context.lineWidth = 1;
+  context.stroke();
+}
+
+function drawFieldCrops(parcel, terrain, seed) {
+  if (/flower|garden/.test(terrain)) {
+    const colors = ["#e76868", "#efc54d", "#d284b4", "#ed9452"];
+    for (let y = parcel.y + 9; y < parcel.y + parcel.h - 4; y += 11) {
+      for (let x = parcel.x + 8; x < parcel.x + parcel.w - 4; x += 12) {
+        context.fillStyle = colors[Math.abs(seed + Math.floor(x + y)) % colors.length];
+        context.fillRect(x, y, 4, 4);
+      }
+    }
+    return;
+  }
+  if (terrain.includes("orchard")) {
+    for (let y = parcel.y + 12; y < parcel.y + parcel.h - 5; y += 16) {
+      for (let x = parcel.x + 11; x < parcel.x + parcel.w - 5; x += 17) {
+        context.fillStyle = "#70553a";
+        context.fillRect(x, y, 2, 6);
+        context.fillStyle = (seed + Math.floor(x + y)) % 2 ? "#47754f" : "#598352";
+        context.fillRect(x - 4, y - 4, 10, 7);
+      }
+    }
+    return;
+  }
+  if (terrain.includes("sugar")) {
+    context.fillStyle = "rgba(63, 111, 64, 0.86)";
+    for (let x = parcel.x + 7; x < parcel.x + parcel.w - 4; x += 8) {
+      context.fillRect(x, parcel.y + 7, 3, Math.max(5, parcel.h - 14));
+    }
+    return;
+  }
+  drawRiceSeedlings(parcel, seed);
+}
+
+function drawRiceSeedlings(parcel, seed) {
+  const offset = Math.abs(seed) % 4;
+  context.fillStyle = "rgba(43, 91, 57, 0.84)";
+  for (let y = parcel.y + 9 + offset; y < parcel.y + parcel.h - 5; y += 12) {
+    for (let x = parcel.x + 8 + offset; x < parcel.x + parcel.w - 5; x += 12) {
+      context.fillRect(x, y, 2, 6);
+      context.fillRect(x - 2, y + 2, 3, 2);
+      context.fillRect(x + 1, y + 1, 3, 2);
+    }
+  }
+}
+
+function drawChanghuaRidgeConnection() {
+  const ridgeDistricts = ["彰化市", "芬園鄉", "花壇鄉", "社頭鄉", "田中鎮", "二水鄉"]
+    .map((district) => state.neighborDistrictThemes.get(district))
+    .filter(Boolean)
+    .sort((first, second) => first.zone.y - second.zone.y);
+  if (!ridgeDistricts.length) return;
+  context.save();
+  context.strokeStyle = "rgba(49, 91, 58, 0.48)";
+  context.lineWidth = 34;
+  context.lineJoin = "round";
+  context.beginPath();
+  ridgeDistricts.forEach((theme, index) => {
+    const x = theme.zone.x + theme.zone.w - 34;
+    const y = theme.zone.y + theme.zone.h / 2;
+    if (index === 0) context.moveTo(x, y);
+    else context.lineTo(x, y);
+  });
+  context.stroke();
+  context.strokeStyle = "rgba(108, 139, 79, 0.54)";
+  context.lineWidth = 8;
+  context.stroke();
+  context.restore();
+}
+
+function drawNeighborWorkZones(now, environment) {
+  state.neighborWorkZones.filter((zone) => isVisibleRect(zone, 50)).forEach((zone) => {
+    drawNeighborWorkZone(zone, now, environment);
+  });
+}
+
+function drawNeighborWorkZone(zone, now, environment) {
+  const { x, y, w, h, type } = zone;
+  context.save();
+  context.fillStyle = "rgba(36, 54, 48, 0.2)";
+  context.fillRect(x + 3, y + 4, w, h);
+  context.fillStyle = "#a8ac72";
+  context.fillRect(x, y, w, h);
+
+  if (type === "rice-paddy") drawRiceWorkZone(zone);
+  else if (["vegetable-field", "produce-coop"].includes(type)) drawVegetableWorkZone(zone, type === "produce-coop");
+  else if (type === "grape-packing-yard") drawGrapeWorkZone(zone);
+  else if (["nursery-field", "horticulture-market", "lit-flower-route"].includes(type)) drawHorticultureWorkZone(zone, environment);
+  else if (type === "tidal-oyster-field") drawTidalOysterWorkZone(zone, now);
+  else if (["wanggong-harbor", "harbor-village"].includes(type)) drawHarborWorkZone(zone, type === "wanggong-harbor");
+  else if (type === "railway-yard") drawRailWorkZone(zone, false);
+  else if (type === "sugar-rail-yard") drawRailWorkZone(zone, true);
+  else if (type === "craft-quarter") drawCraftWorkZone(zone);
+  else if (["produce-market", "agriculture-service"].includes(type)) drawAgricultureServiceWorkZone(zone, type);
+  else if (type === "irrigation-network") drawIrrigationWorkZone(zone);
+
+  context.fillStyle = zone.restricted ? "rgba(104, 50, 40, 0.93)" : "rgba(31, 53, 57, 0.9)";
+  context.fillRect(x, y + h - 13, w, 13);
+  context.fillStyle = COLORS.paper;
+  context.font = `bold ${fitSchoolLabelFont(townText(zone.name), w - 8, 8, 6)}px ui-monospace, monospace`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(townText(zone.name), x + w / 2, y + h - 6, w - 8);
+  if (zone.restricted) {
+    context.fillStyle = "#f2ca65";
+    context.fillRect(x + w - 14, y + 3, 9, 9);
+    context.fillStyle = "#6b352d";
+    context.fillRect(x + w - 11, y + 5, 3, 5);
+  }
+  context.restore();
+}
+
+function drawRiceWorkZone({ x, y, w, h }) {
+  context.fillStyle = "#72a2a0";
+  context.fillRect(x + 4, y + 4, w - 8, h - 21);
+  context.fillStyle = "#806a43";
+  context.fillRect(x + w / 2 - 2, y + 4, 5, h - 21);
+  context.fillRect(x + 4, y + 20, w - 8, 4);
+  context.fillStyle = "#3f7750";
+  for (let cropY = y + 9; cropY < y + h - 18; cropY += 11) {
+    for (let cropX = x + 10; cropX < x + w - 8; cropX += 15) context.fillRect(cropX, cropY, 2, 6);
+  }
+  context.fillStyle = "#c9ba78";
+  context.fillRect(x + 7, y + 4, 10, 9);
+  context.fillStyle = "#466f77";
+  context.fillRect(x + 10, y + 7, 4, 8);
+}
+
+function drawVegetableWorkZone({ x, y, w, h }, withWarehouse) {
+  context.fillStyle = "#7d9d65";
+  context.fillRect(x + 4, y + 4, w - 8, h - 21);
+  context.fillStyle = "#456e47";
+  for (let row = 0; row < 4; row += 1) {
+    const rowY = y + 9 + row * 8;
+    for (let cropX = x + 9; cropX < x + w - (withWarehouse ? 48 : 7); cropX += 11) context.fillRect(cropX, rowY, 5, 4);
+  }
+  context.fillStyle = "#b77845";
+  context.fillRect(x + w - 44, y + 25, 13, 9);
+  context.fillRect(x + w - 28, y + 25, 13, 9);
+  if (withWarehouse) {
+    context.fillStyle = "#d5c99e";
+    context.fillRect(x + w - 52, y + 6, 45, 18);
+    context.fillStyle = "#8b5842";
+    context.fillRect(x + w - 55, y + 3, 51, 6);
+  }
+}
+
+function drawGrapeWorkZone({ x, y, w, h }) {
+  context.fillStyle = "#9a9564";
+  context.fillRect(x + 4, y + 4, w - 8, h - 21);
+  context.strokeStyle = "#6e563c";
+  context.lineWidth = 2;
+  for (let postX = x + 9; postX < x + w - 48; postX += 18) {
+    context.beginPath(); context.moveTo(postX, y + 7); context.lineTo(postX, y + h - 17); context.stroke();
+  }
+  context.strokeStyle = "#3e7048";
+  for (let lineY = y + 10; lineY < y + h - 18; lineY += 9) {
+    context.beginPath(); context.moveTo(x + 7, lineY); context.lineTo(x + w - 48, lineY); context.stroke();
+  }
+  context.fillStyle = "#704a79";
+  for (let grapeX = x + 15; grapeX < x + w - 50; grapeX += 25) context.fillRect(grapeX, y + 14, 5, 7);
+  context.fillStyle = "#d2c392";
+  context.fillRect(x + w - 43, y + 7, 35, 25);
+  context.fillStyle = "#9a5b45";
+  context.fillRect(x + w - 46, y + 4, 41, 6);
+  context.fillStyle = "#af7546";
+  context.fillRect(x + w - 36, y + 22, 10, 10);
+}
+
+function drawHorticultureWorkZone({ x, y, w, h, type }, environment) {
+  context.fillStyle = "#809b68";
+  context.fillRect(x + 4, y + 4, w - 8, h - 21);
+  if (type === "horticulture-market") {
+    context.fillStyle = "rgba(230, 239, 217, 0.82)";
+    context.fillRect(x + 8, y + 6, 52, 25);
+    context.strokeStyle = "#6c8873";
+    context.strokeRect(x + 8, y + 6, 52, 25);
+    context.fillStyle = "#d6c78d";
+    context.fillRect(x + w - 52, y + 8, 44, 23);
+    context.fillStyle = "#9d5c46";
+    context.fillRect(x + w - 55, y + 5, 50, 6);
+  }
+  context.strokeStyle = "#d8cda7";
+  context.lineWidth = type === "lit-flower-route" ? 6 : 2;
+  context.beginPath(); context.moveTo(x + 8, y + h - 22); context.lineTo(x + w - 8, y + 8); context.stroke();
+  const colors = ["#e7666d", "#edc04c", "#bd7cad", "#ef8d4e"];
+  for (let flower = 0; flower < 10; flower += 1) {
+    context.fillStyle = colors[flower % colors.length];
+    context.fillRect(x + 10 + flower * (w - 22) / 10, y + 11 + (flower % 3) * 7, 4, 4);
+  }
+  if (type === "lit-flower-route" && environment?.isNight) {
+    context.fillStyle = "rgba(255, 226, 120, 0.9)";
+    for (let light = 0; light < 5; light += 1) context.fillRect(x + 12 + light * 30, y + 6, 4, 10);
+  }
+}
+
+function drawTidalOysterWorkZone({ x, y, w, h }, now) {
+  context.fillStyle = "#71979b";
+  context.fillRect(x + 4, y + 4, w - 8, h - 21);
+  context.fillStyle = "#756a55";
+  for (let poleX = x + 16; poleX < x + w - 14; poleX += 19) {
+    context.fillRect(poleX, y + 8, 3, 22);
+    context.fillRect(poleX - 5, y + 16, 13, 2);
+  }
+  context.fillStyle = "#d5c294";
+  context.fillRect(x + 5, y + h - 25, w - 10, 5);
+  const cartX = x + 25 + (reducedMotion ? 0 : (Math.sin(now / 1300) + 1) * 12);
+  context.fillStyle = "#745644";
+  context.fillRect(cartX, y + 23, 18, 7);
+  context.fillRect(cartX + 2, y + 30, 4, 4);
+  context.fillRect(cartX + 13, y + 30, 4, 4);
+  context.fillStyle = "#8c7050";
+  context.fillRect(cartX - 8, y + 23, 7, 5);
+}
+
+function drawHarborWorkZone({ x, y, w, h }, detailed) {
+  context.fillStyle = "#6e9faa";
+  context.fillRect(x + 4, y + 18, w - 8, h - 35);
+  context.fillStyle = "#c9b88b";
+  context.fillRect(x + 4, y + 14, w - 8, 5);
+  context.fillStyle = "#e5e1cf";
+  context.fillRect(x + w - 28, y + 3, 9, 23);
+  context.fillStyle = "#d25b4c";
+  context.fillRect(x + w - 30, y + 2, 13, 5);
+  context.fillStyle = "#c66b45";
+  context.fillRect(x + 18, y + 23, 25, 5);
+  context.fillStyle = "#f0e7c9";
+  context.fillRect(x + 24, y + 16, 11, 7);
+  if (detailed) {
+    context.fillStyle = "#48745b";
+    for (let tree = 0; tree < 4; tree += 1) context.fillRect(x + 55 + tree * 12, y + 8 + tree % 2 * 3, 8, 10);
+  }
+}
+
+function drawRailWorkZone({ x, y, w, h }, sugar) {
+  context.fillStyle = "#747b73";
+  context.fillRect(x + 4, y + 4, w - 8, h - 21);
+  context.strokeStyle = "#454b4c";
+  context.lineWidth = 2;
+  if (sugar) {
+    context.fillStyle = "#8f5540";
+    context.fillRect(x + 12, y + 3, 9, 30);
+    context.fillStyle = "#d4c49a";
+    context.fillRect(x + 29, y + 9, 45, 22);
+    context.fillStyle = "#935943";
+    context.fillRect(x + 26, y + 6, 51, 6);
+    for (let railY = y + 28; railY <= y + 32; railY += 4) {
+      context.beginPath(); context.moveTo(x + 5, railY); context.lineTo(x + w - 5, railY); context.stroke();
+    }
+    context.fillStyle = "#bd8a43";
+    context.fillRect(x + w - 47, y + 20, 26, 9);
+  } else {
+    const cx = x + w / 2;
+    const cy = y + 22;
+    context.beginPath(); context.arc(cx, cy, 14, 0, Math.PI * 2); context.stroke();
+    for (let rail = -2; rail <= 2; rail += 1) {
+      context.beginPath(); context.moveTo(cx, cy); context.lineTo(cx + rail * 22, y + 4); context.stroke();
+    }
+    context.fillStyle = "#cfbd92";
+    context.fillRect(x + 8, y + 5, 30, 22);
+    context.fillStyle = "#9b5d46";
+    context.fillRect(x + 5, y + 2, 36, 6);
+  }
+}
+
+function drawCraftWorkZone({ x, y, w, h }) {
+  context.fillStyle = "#c7b681";
+  context.fillRect(x + 4, y + 4, w - 8, h - 21);
+  context.fillStyle = "#9b5c47";
+  context.fillRect(x + 8, y + 4, 5, 25);
+  context.fillRect(x + 31, y + 4, 5, 25);
+  context.fillRect(x + 8, y + 4, 28, 5);
+  for (let shop = 0; shop < 3; shop += 1) {
+    const shopX = x + 50 + shop * 34;
+    context.fillStyle = shop % 2 ? "#d5c28f" : "#dfcd99";
+    context.fillRect(shopX, y + 10, 30, 20);
+    context.fillStyle = shop % 2 ? "#657d83" : "#9b5944";
+    context.fillRect(shopX - 2, y + 7, 34, 5);
+  }
+  context.fillStyle = "#e1d5af";
+  context.fillRect(x + 42, y + 31, w - 49, 5);
+}
+
+function drawAgricultureServiceWorkZone({ x, y, w, h }, type) {
+  context.fillStyle = "#d3c69b";
+  context.fillRect(x + 9, y + 7, w - 18, h - 25);
+  context.fillStyle = type === "produce-market" ? "#9e6047" : "#587985";
+  context.fillRect(x + 6, y + 4, w - 12, 7);
+  context.fillStyle = "#6a8b77";
+  for (let windowX = x + 18; windowX < x + w - 12; windowX += 28) context.fillRect(windowX, y + 14, 12, 8);
+  context.fillStyle = "#b77b48";
+  context.fillRect(x + 12, y + h - 24, 12, 8);
+  context.fillRect(x + 28, y + h - 24, 12, 8);
+}
+
+function drawIrrigationWorkZone({ x, y, w, h }) {
+  context.fillStyle = "#83966c";
+  context.fillRect(x + 4, y + 4, w - 8, h - 21);
+  context.fillStyle = "#588c9a";
+  context.fillRect(x + 5, y + 20, w - 10, 10);
+  context.fillStyle = "#c4b789";
+  context.fillRect(x + 5, y + 15, w - 10, 5);
+  context.fillRect(x + 5, y + 30, w - 10, 5);
+  context.fillStyle = "#d0c39c";
+  context.fillRect(x + w - 42, y + 6, 32, 14);
+  context.fillStyle = "#596c70";
+  context.fillRect(x + w - 32, y + 10, 10, 10);
+  context.fillStyle = "#8a593f";
+  context.fillRect(x + 18, y + 14, 4, 18);
+  context.fillRect(x + 14, y + 19, 12, 3);
 }
 
 function boundaryRiverYAt(x, bridge) {
@@ -4408,10 +6622,16 @@ function boundaryRiverYAt(x, bridge) {
     + Math.sin((x - bridge.x) / 73) * 5;
 }
 
+function boundaryRiverBounds(bridge) {
+  return {
+    startX: Math.max(0, coastlineXAt(bridge.riverY) - 36),
+    endX: Math.min(WORLD_WIDTH, EAST_MOUNTAIN_START_X + 172),
+  };
+}
+
 function boundaryRiverPath(bridge) {
   const path = new Path2D();
-  const startX = Math.max(0, coastlineXAt(bridge.riverY) - 36);
-  const endX = Math.min(WORLD_WIDTH, EAST_MOUNTAIN_START_X + 172);
+  const { startX, endX } = boundaryRiverBounds(bridge);
   for (let x = startX; x <= endX; x += 42) {
     const y = boundaryRiverYAt(x, bridge);
     if (x === startX) path.moveTo(x, y);
@@ -4421,8 +6641,68 @@ function boundaryRiverPath(bridge) {
   return path;
 }
 
+function drawBoundaryRiverCurrents(now, bridge, path) {
+  const { startX, endX } = boundaryRiverBounds(bridge);
+  const flowDistance = reducedMotion ? 0 : now * 0.055;
+  context.save();
+  context.lineCap = "square";
+  RIVER_FLOW_LANE_OFFSETS.forEach((laneOffset, laneIndex) => {
+    context.save();
+    context.translate(0, laneOffset);
+    context.strokeStyle = laneIndex % 2
+      ? "rgba(188, 235, 235, 0.62)"
+      : "rgba(127, 199, 211, 0.58)";
+    context.lineWidth = laneIndex % 2 ? 3 : 2;
+    context.setLineDash(laneIndex % 2 ? [26, 22] : [14, 18]);
+    context.lineDashOffset = flowDistance * (1 + laneIndex * 0.12);
+    context.stroke(path);
+    context.restore();
+  });
+  context.setLineDash([]);
+
+  const visibleStartX = Math.max(startX + 24, state.camera.x - 80);
+  const visibleEndX = Math.min(endX - 24, state.camera.x + WIDTH + 80);
+  const flowTravel = reducedMotion ? 0 : flowDistance % RIVER_FLOW_CHEVRON_SPACING;
+  const firstChevronX = Math.floor((visibleStartX + flowTravel) / RIVER_FLOW_CHEVRON_SPACING)
+    * RIVER_FLOW_CHEVRON_SPACING;
+  let chevronIndex = Math.floor(firstChevronX / RIVER_FLOW_CHEVRON_SPACING);
+  for (
+    let anchorX = firstChevronX;
+    anchorX <= visibleEndX + RIVER_FLOW_CHEVRON_SPACING;
+    anchorX += RIVER_FLOW_CHEVRON_SPACING
+  ) {
+    const x = anchorX - flowTravel;
+    if (x < visibleStartX || x > visibleEndX) {
+      chevronIndex += 1;
+      continue;
+    }
+    const laneOffset = RIVER_FLOW_LANE_OFFSETS[Math.abs(chevronIndex) % RIVER_FLOW_LANE_OFFSETS.length];
+    const y = boundaryRiverYAt(x, bridge) + laneOffset;
+    const angle = Math.atan2(
+      boundaryRiverYAt(x + 5, bridge) - boundaryRiverYAt(x - 5, bridge),
+      10,
+    );
+    context.save();
+    context.translate(Math.round(x), Math.round(y));
+    context.rotate(angle);
+    context.strokeStyle = chevronIndex % 2
+      ? "rgba(226, 249, 244, 0.88)"
+      : "rgba(176, 228, 232, 0.82)";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(11, -5);
+    context.lineTo(2, 0);
+    context.lineTo(11, 5);
+    context.moveTo(2, 0);
+    context.lineTo(19, 0);
+    context.stroke();
+    context.restore();
+    chevronIndex += 1;
+  }
+  context.restore();
+}
+
 function drawBoundaryRivers(now) {
-  const waveOffset = reducedMotion ? 0 : Math.floor(now / 220) % 20;
   BOUNDARY_BRIDGES.forEach((bridge) => {
     if (!isVisibleRect({ x: 0, y: bridge.riverY - 90, w: WORLD_WIDTH, h: 180 }, 20)) return;
     const path = boundaryRiverPath(bridge);
@@ -4432,36 +6712,292 @@ function drawBoundaryRivers(now) {
     context.strokeStyle = "#c8b98b";
     context.lineWidth = BORDER_RIVER_WIDTH + 22;
     context.stroke(path);
-    context.strokeStyle = "#4e91a8";
+    const waterGradient = context.createLinearGradient(
+      0,
+      bridge.riverY - BORDER_RIVER_WIDTH / 2,
+      0,
+      bridge.riverY + BORDER_RIVER_WIDTH / 2,
+    );
+    waterGradient.addColorStop(0, "#397b94");
+    waterGradient.addColorStop(0.22, "#4d9bb0");
+    waterGradient.addColorStop(0.5, "#5aaabd");
+    waterGradient.addColorStop(0.78, "#478fa7");
+    waterGradient.addColorStop(1, "#356f8b");
+    context.strokeStyle = waterGradient;
     context.lineWidth = BORDER_RIVER_WIDTH;
     context.stroke(path);
-    context.strokeStyle = "rgba(151, 211, 218, 0.76)";
-    context.lineWidth = 5;
-    context.setLineDash([34, 28]);
-    context.lineDashOffset = -waveOffset;
+    context.strokeStyle = "rgba(39, 111, 132, 0.38)";
+    context.lineWidth = 18;
+    context.setLineDash([54, 20]);
+    context.lineDashOffset = reducedMotion ? 0 : now * 0.018;
     context.stroke(path);
     context.setLineDash([]);
+    drawBoundaryRiverCurrents(now, bridge, path);
     context.restore();
   });
+}
+
+function taichungRiverbankSide(bridge) {
+  return bridge.countyId === "miaoli" ? 1 : -1;
+}
+
+function riverbankYAt(x, bridge, bankSide = taichungRiverbankSide(bridge)) {
+  return boundaryRiverYAt(x, bridge) + bankSide * RIVERBANK_PATH_OFFSET;
+}
+
+function riverbankLeisureSites() {
+  if (riverbankLeisureSiteCache) return riverbankLeisureSiteCache;
+  const specifications = [
+    {
+      bridge: BOUNDARY_BRIDGES[0], district: "后里區", prefix: "北界",
+      fishingX: BOUNDARY_BRIDGES[0].x - 430, barbecueX: BOUNDARY_BRIDGES[0].x + 560,
+    },
+    {
+      bridge: BOUNDARY_BRIDGES[1], district: "烏日區", prefix: "南界",
+      fishingX: BOUNDARY_BRIDGES[1].x + 430, barbecueX: BOUNDARY_BRIDGES[1].x - 560,
+    },
+  ];
+  riverbankLeisureSiteCache = Object.freeze(specifications.flatMap((specification) => {
+    const { bridge, district, prefix } = specification;
+    const bankSide = taichungRiverbankSide(bridge);
+    const fishingY = boundaryRiverYAt(specification.fishingX, bridge)
+      + bankSide * (BORDER_RIVER_WIDTH / 2 + 16);
+    const barbecuePathY = riverbankYAt(specification.barbecueX, bridge, bankSide);
+    return [
+      Object.freeze({
+        id: `${bridge.countyId}-fishing-deck`, bridgeId: bridge.id, activity: "fishing",
+        x: specification.fishingX, y: fishingY, stopX: specification.fishingX,
+        stopY: fishingY, bankSide, district, label: `${prefix}河濱釣魚平台`,
+      }),
+      Object.freeze({
+        id: `${bridge.countyId}-barbecue-area`, bridgeId: bridge.id, activity: "barbecuing",
+        x: specification.barbecueX, y: barbecuePathY + bankSide * 16,
+        stopX: specification.barbecueX - 28, stopY: barbecuePathY + bankSide * 16,
+        bankSide, district, label: `${prefix}河岸休憩區`,
+      }),
+    ];
+  }));
+  return riverbankLeisureSiteCache;
+}
+
+function riverbankLeisureSiteById(id) {
+  return riverbankLeisureSites().find((site) => site.id === id) || null;
+}
+
+function riverbankFixturePositions() {
+  const fixtures = [];
+  BOUNDARY_BRIDGES.forEach((bridge, bridgeIndex) => {
+    if (!isVisibleRect({ x: 0, y: bridge.riverY - 130, w: WORLD_WIDTH, h: 260 }, 30)) return;
+    const { startX, endX } = boundaryRiverBounds(bridge);
+    const visibleStartX = Math.max(startX + 90, state.camera.x - 100);
+    const visibleEndX = Math.min(endX - 90, state.camera.x + WIDTH + 100);
+    const nearbySites = riverbankLeisureSites().filter((site) => site.bridgeId === bridge.id);
+    for (let x = Math.floor(visibleStartX / 260) * 260; x <= visibleEndX; x += 260) {
+      if (Math.abs(x - bridge.x) < 130 || nearbySites.some((site) => Math.abs(site.x - x) < 110)) continue;
+      const fixtureIndex = Math.floor(x / 260) + bridgeIndex;
+      fixtures.push({
+        kind: fixtureIndex % 2 ? "bench" : "lamp",
+        x,
+        y: riverbankYAt(x, bridge),
+        bankSide: taichungRiverbankSide(bridge),
+      });
+    }
+  });
+  return fixtures;
+}
+
+function drawRiverbankLandscapes(now) {
+  BOUNDARY_BRIDGES.forEach((bridge) => drawRiverbankLevee(bridge));
+  riverbankFixturePositions().forEach((fixture) => {
+    if (fixture.kind === "lamp") drawLamp(fixture.x, fixture.y + fixture.bankSide * 7);
+    else drawRiverbankBench(fixture.x, fixture.y + fixture.bankSide * 8);
+  });
+  riverbankLeisureSites().forEach((site) => {
+    if (!isVisibleRect({ x: site.x - 90, y: site.y - 80, w: 180, h: 160 }, 40)) return;
+    if (site.activity === "fishing") drawRiverbankFishingDeck(site);
+    else drawRiverbankBarbecueArea(site, now);
+  });
+}
+
+function drawRiverbankLevee(bridge) {
+  if (!isVisibleRect({ x: 0, y: bridge.riverY - 140, w: WORLD_WIDTH, h: 280 }, 20)) return;
+  const path = boundaryRiverPath(bridge);
+  const bankSide = taichungRiverbankSide(bridge);
+  context.save();
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.translate(0, bankSide * RIVERBANK_PATH_OFFSET);
+  context.strokeStyle = "#527557";
+  context.lineWidth = 48;
+  context.stroke(path);
+  context.strokeStyle = "#7f9d68";
+  context.lineWidth = 42;
+  context.stroke(path);
+  context.strokeStyle = "#a99f88";
+  context.lineWidth = 14;
+  context.stroke(path);
+  context.strokeStyle = "#e1d4ad";
+  context.lineWidth = 2;
+  context.setLineDash([20, 14]);
+  context.stroke(path);
+  context.restore();
+
+  context.save();
+  context.translate(0, bankSide * (BORDER_RIVER_WIDTH / 2 + 8));
+  context.strokeStyle = "#6d7572";
+  context.lineWidth = 11;
+  context.stroke(path);
+  context.strokeStyle = "#aeb3a8";
+  context.lineWidth = 3;
+  context.stroke(path);
+  context.restore();
+}
+
+function drawRiverbankBench(x, y) {
+  context.fillStyle = "rgba(28, 54, 48, 0.2)";
+  context.fillRect(Math.round(x - 23), Math.round(y + 8), 46, 5);
+  context.fillStyle = "#8f5e3c";
+  context.fillRect(Math.round(x - 20), Math.round(y - 3), 40, 7);
+  context.fillRect(Math.round(x - 20), Math.round(y - 12), 40, 6);
+  context.fillStyle = "#48534e";
+  context.fillRect(Math.round(x - 16), Math.round(y + 4), 4, 10);
+  context.fillRect(Math.round(x + 12), Math.round(y + 4), 4, 10);
+}
+
+function drawRiverbankFishingDeck(site) {
+  const bridge = BOUNDARY_BRIDGES.find((item) => item.id === site.bridgeId);
+  if (!bridge) return;
+  const riverEdgeY = boundaryRiverYAt(site.x, bridge)
+    + site.bankSide * (BORDER_RIVER_WIDTH / 2 + 7);
+  const pathY = riverbankYAt(site.x, bridge, site.bankSide);
+  const top = Math.min(riverEdgeY, pathY);
+  const height = Math.abs(pathY - riverEdgeY);
+  context.fillStyle = "rgba(25, 49, 52, 0.24)";
+  context.fillRect(Math.round(site.x - 36), Math.round(top + 5), 72, Math.round(height + 7));
+  context.fillStyle = "#9d7348";
+  context.fillRect(Math.round(site.x - 34), Math.round(top), 68, Math.round(height + 5));
+  context.fillStyle = "#c79a5c";
+  for (let y = top + 4; y < top + height; y += 9) {
+    context.fillRect(Math.round(site.x - 32), Math.round(y), 64, 3);
+  }
+  context.fillStyle = "#5c5143";
+  context.fillRect(Math.round(site.x - 36), Math.round(top), 5, Math.round(height + 5));
+  context.fillRect(Math.round(site.x + 31), Math.round(top), 5, Math.round(height + 5));
+  const signY = pathY + site.bankSide * 25;
+  drawRiverbankSiteSign(site.x, signY, "釣魚平台");
+}
+
+function drawRiverbankBarbecueArea(site, now) {
+  const active = state.npcs.some((npc) => (
+    !npc.insideVenueId && npc.riverbankSiteId === site.id && npc.activity === "barbecuing"
+  ));
+  context.fillStyle = "rgba(28, 53, 46, 0.2)";
+  context.fillRect(Math.round(site.x - 74), Math.round(site.y - 31), 148, 66);
+  context.fillStyle = "#c8b98d";
+  context.fillRect(Math.round(site.x - 72), Math.round(site.y - 34), 144, 62);
+  context.fillStyle = "#9b6b43";
+  context.fillRect(Math.round(site.x - 60), Math.round(site.y - 14), 50, 8);
+  context.fillRect(Math.round(site.x - 48), Math.round(site.y - 6), 5, 20);
+  context.fillRect(Math.round(site.x - 21), Math.round(site.y - 6), 5, 20);
+  context.fillStyle = "#3e4845";
+  context.fillRect(Math.round(site.x + 12), Math.round(site.y - 15), 34, 14);
+  context.fillRect(Math.round(site.x + 17), Math.round(site.y - 1), 5, 17);
+  context.fillRect(Math.round(site.x + 37), Math.round(site.y - 1), 5, 17);
+  context.fillStyle = active ? "#e46c32" : "#6a665e";
+  context.fillRect(Math.round(site.x + 18), Math.round(site.y - 19), 8, 5);
+  context.fillStyle = active ? "#f3b23d" : "#837d72";
+  context.fillRect(Math.round(site.x + 29), Math.round(site.y - 18), 9, 4);
+  if (active) {
+    const smoke = reducedMotion ? 0 : Math.floor(now / 360) % 3;
+    context.fillStyle = "rgba(226, 230, 217, 0.7)";
+    context.fillRect(Math.round(site.x + 25 + smoke * 2), Math.round(site.y - 29 - smoke * 3), 7, 6);
+    context.fillRect(Math.round(site.x + 33 - smoke), Math.round(site.y - 38 - smoke * 2), 6, 5);
+  }
+  context.fillStyle = "#49675e";
+  context.fillRect(Math.round(site.x + 55), Math.round(site.y - 6), 12, 24);
+  context.fillStyle = "#6b91a1";
+  context.fillRect(Math.round(site.x + 50), Math.round(site.y + 10), 9, 9);
+  drawRiverbankSiteSign(site.x - 10, site.y + site.bankSide * 42, "指定休憩區");
+}
+
+function drawRiverbankSiteSign(x, y, label) {
+  context.fillStyle = "#58645d";
+  context.fillRect(Math.round(x - 2), Math.round(y - 1), 4, 25);
+  context.fillStyle = "#f1e3b7";
+  context.fillRect(Math.round(x - 43), Math.round(y - 19), 86, 20);
+  context.strokeStyle = "#58645d";
+  context.lineWidth = 2;
+  context.strokeRect(Math.round(x - 43), Math.round(y - 19), 86, 20);
+  context.fillStyle = COLORS.navy;
+  context.font = "bold 10px ui-monospace, monospace";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(townText(label), Math.round(x), Math.round(y - 9), 80);
 }
 
 function drawNeighborCountyRoads() {
   BOUNDARY_BRIDGES.forEach((bridge) => {
     const county = neighborCountyById(bridge.countyId);
-    if (!county) return;
+    const countyTheme = state.neighborCountyThemes.get(bridge.countyId);
+    if (!county || !countyTheme) return;
+    const metrics = neighborCountyGridMetrics(county, countyTheme.rows);
     const riverEdgeY = bridge.riverY + (county.side === "north" ? -1 : 1) * (BORDER_RIVER_WIDTH / 2 + 24);
-    const countyCenterY = county.y + county.h / 2;
+    const entryY = county.side === "north" ? metrics.bottom : metrics.top;
+    const nearestBoundary = Math.max(1, Math.min(
+      NEIGHBOR_COUNTY_DISTRICT_COLUMNS - 1,
+      Math.round((bridge.x - metrics.left) / metrics.cellWidth),
+    ));
+    const entryX = metrics.left + nearestBoundary * metrics.cellWidth;
     const path = new Path2D();
     path.moveTo(bridge.x, riverEdgeY);
-    path.lineTo(bridge.x, countyCenterY);
-    path.quadraticCurveTo(
-      bridge.x + (county.side === "north" ? 150 : -150),
-      countyCenterY,
-      bridge.x + (county.side === "north" ? 214 : -214),
-      countyCenterY + (county.side === "north" ? -28 : 28),
-    );
+    path.lineTo(bridge.x, entryY);
+    path.lineTo(entryX, entryY);
     strokeRoadPath(path);
+
+    for (let column = 1; column < NEIGHBOR_COUNTY_DISTRICT_COLUMNS; column += 1) {
+      const x = metrics.left + column * metrics.cellWidth;
+      const route = new Path2D();
+      route.moveTo(x, metrics.top);
+      route.lineTo(x, metrics.bottom);
+      strokeRoadPath(route);
+    }
+    for (let row = 1; row < countyTheme.rows; row += 1) {
+      const y = metrics.top + row * metrics.cellHeight;
+      const route = new Path2D();
+      route.moveTo(metrics.left, y);
+      route.lineTo(metrics.right, y);
+      strokeRoadPath(route);
+    }
   });
+}
+
+function neighborCountyDistrictRoutes(countyId) {
+  const themes = [...state.neighborDistrictThemes.values()]
+    .filter((theme) => theme.county.id === countyId);
+  const routes = [];
+  const seen = new Set();
+  const connectGroups = (coordinateIndex) => {
+    const groups = new Map();
+    themes.forEach((theme) => {
+      const groupKey = theme.grid[coordinateIndex];
+      const group = groups.get(groupKey) || [];
+      group.push(theme);
+      groups.set(groupKey, group);
+    });
+    groups.forEach((group) => {
+      group.sort((first, second) => first.grid[1 - coordinateIndex] - second.grid[1 - coordinateIndex]);
+      for (let index = 1; index < group.length; index += 1) {
+        const first = group[index - 1];
+        const second = group[index];
+        const key = [first.name, second.name].sort().join("|");
+        if (!seen.has(key)) routes.push([first, second]);
+        seen.add(key);
+      }
+    });
+  };
+  connectGroups(0);
+  connectGroups(1);
+  return routes;
 }
 
 function drawBoundaryBridges() {
@@ -4517,30 +7053,261 @@ function drawConcreteBoundaryBridge(length) {
 
 function drawNeighborCountyDetails(now) {
   NEIGHBOR_COUNTIES.filter((county) => isVisibleRect(county, 60)).forEach((county, index) => {
-    const labelX = county.x + county.w / 2 - 150;
-    const labelY = county.side === "north" ? county.y + 62 : county.y + county.h - 132;
+    const countyTheme = state.neighborCountyThemes.get(county.id);
+    if (!countyTheme) return;
+    const countySchools = state.neighborSchools.filter((school) => school.city === county.name);
+    const schoolCount = countySchools.length;
+    const availableCount = countySchools.filter(schoolHasCurrentMeal).length;
+    const labelX = county.x + 24;
+    const labelY = county.y + 8;
     context.fillStyle = "rgba(255, 248, 231, 0.94)";
-    context.fillRect(labelX, labelY, 300, 70);
+    context.fillRect(labelX, labelY, 520, 64);
     context.fillStyle = county.side === "north" ? "#436d4d" : "#79662e";
-    context.fillRect(labelX, labelY, 7, 70);
+    context.fillRect(labelX, labelY, 7, 64);
     context.fillStyle = COLORS.ink;
     context.font = "bold 17px ui-monospace, monospace";
-    context.textAlign = "center";
+    context.textAlign = "left";
     context.textBaseline = "middle";
-    context.fillText(townText(county.name), labelX + 154, labelY + 24, 270);
+    context.fillText(`${townText(county.name)}・${townText(countyTheme.title)}`, labelX + 18, labelY + 16, 490);
     context.fillStyle = "#516873";
     context.font = "10px ui-monospace, monospace";
-    context.fillText(townText("可散步探索・尚未開放學校與菜單"), labelX + 154, labelY + 49, 270);
+    context.fillText(townText(countyTheme.tagline), labelX + 18, labelY + 35, 490);
+    const countyStatus = availableCount
+      ? townText(`${schoolCount} 所國小已放入地圖｜今日 ${availableCount} 校已有午餐資料`)
+      : townText(`${schoolCount} 所國小已放入地圖｜午餐資料仍在建設中`);
+    context.fillText(countyStatus, labelX + 18, labelY + 53, 490);
+
+    countyTheme.districts.forEach((districtTheme) => {
+      const configured = state.neighborDistrictThemes.get(districtTheme.name);
+      if (!configured || !isVisibleRect(configured.zone, 40)) return;
+      drawNeighborDistrictLabel(configured);
+      const landmarks = countyTheme.landmarks.filter((landmark) => landmark.district === districtTheme.name);
+      landmarks.forEach((landmark, landmarkIndex) => drawNeighborCountyLandmark(configured, landmark, landmarkIndex));
+    });
+    const signLabel = availableCount === schoolCount
+      ? "當日午餐已更新"
+      : availableCount > 0
+        ? "午餐資料持續更新"
+        : "午餐資料建設中";
     drawConstructionSign(
-      county.bridgeX + (county.side === "north" ? 126 : -282),
-      county.side === "north" ? county.y + county.h - 122 : county.y + 48,
+      county.bridgeX + (county.side === "north" ? 92 : -258),
+      county.side === "north" ? county.y + county.h - 104 : county.y + 8,
       now,
       index,
+      signLabel,
     );
   });
 }
 
-function drawConstructionSign(x, y, now, index) {
+function drawNeighborDistrictLabel(theme) {
+  const { zone } = theme;
+  const districtSchools = state.neighborSchools.filter((school) => school.district === theme.name && school.city === theme.county.name);
+  const schoolCount = districtSchools.length;
+  const availableCount = districtSchools.filter(schoolHasCurrentMeal).length;
+  context.fillStyle = "rgba(255, 248, 226, 0.9)";
+  context.fillRect(zone.x + 8, zone.y + 8, 142, 40);
+  context.fillStyle = theme.county.id === "miaoli" ? "#345f48" : "#6d5c2d";
+  context.fillRect(zone.x + 8, zone.y + 8, 5, 40);
+  context.fillStyle = COLORS.ink;
+  context.font = "bold 12px ui-monospace, monospace";
+  context.textAlign = "left";
+  context.textBaseline = "middle";
+  context.fillText(townText(theme.name), zone.x + 20, zone.y + 21, 124);
+  context.fillStyle = "#53696d";
+  context.font = "9px ui-monospace, monospace";
+  const status = availableCount
+    ? `${townText(theme.featureLabel)}・${availableCount}/${schoolCount} ${townText("午餐")}`
+    : `${townText(theme.featureLabel)}・${schoolCount} ${townText("學校")}`;
+  context.fillText(status, zone.x + 20, zone.y + 39, 124);
+}
+
+function drawNeighborCountyLandmark(theme, landmark, index) {
+  const scale = 1.32;
+  const x = theme.zone.x + theme.zone.w - 70 - index * 126;
+  const y = theme.zone.y + 34;
+  drawPixelCountyLandmark(landmark.style, x, y, scale);
+  const label = townText(landmark.name);
+  context.fillStyle = "rgba(31, 53, 57, 0.9)";
+  context.fillRect(x - 58, y + 32, 116, 18);
+  context.fillStyle = COLORS.paper;
+  context.font = `bold ${fitSchoolLabelFont(label, 108, 9, 7)}px ui-monospace, monospace`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(label, x, y + 41, 108);
+}
+
+function drawPixelCountyLandmark(style, x, y, scale = 1) {
+  context.save();
+  context.translate(Math.round(x), Math.round(y));
+  context.scale(scale, scale);
+  context.fillStyle = "rgba(24, 45, 50, 0.18)";
+  context.fillRect(-27, 20, 54, 5);
+  if (style === "hakka-roundhouse") {
+    context.fillStyle = "#b46a45";
+    context.fillRect(-25, -12, 50, 31);
+    context.fillStyle = "#e8d5a4";
+    context.fillRect(-18, -7, 36, 23);
+    context.fillStyle = "#6e4b39";
+    context.fillRect(-7, 1, 14, 18);
+    context.fillStyle = "#7294a4";
+    context.fillRect(-22, -18, 44, 7);
+  } else if (style === "rail-station") {
+    context.fillStyle = "#d8bf89";
+    context.fillRect(-24, -8, 48, 27);
+    context.fillStyle = "#78513c";
+    context.fillRect(-29, -15, 58, 8);
+    context.fillStyle = "#4e7581";
+    context.fillRect(-18, -2, 9, 9);
+    context.fillRect(9, -2, 9, 9);
+    context.fillStyle = "#4d5558";
+    context.fillRect(-31, 19, 62, 3);
+  } else if (style === "broken-bridge") {
+    context.fillStyle = "#ad7252";
+    context.fillRect(-26, -10, 9, 31);
+    context.fillRect(-4, -18, 9, 39);
+    context.fillRect(18, -7, 9, 28);
+    context.fillRect(-24, -16, 24, 8);
+  } else if (style === "strawberry-field") {
+    context.fillStyle = "#75543c";
+    context.fillRect(-27, 2, 54, 18);
+    for (let berry = 0; berry < 7; berry += 1) {
+      const berryX = -23 + berry * 8;
+      context.fillStyle = "#d94e45";
+      context.fillRect(berryX, 5 + (berry % 2) * 6, 6, 7);
+      context.fillStyle = "#4e8b52";
+      context.fillRect(berryX + 1, 2 + (berry % 2) * 6, 4, 3);
+    }
+  } else if (style === "old-street") {
+    for (let shop = 0; shop < 3; shop += 1) {
+      const shopX = -27 + shop * 18;
+      context.fillStyle = shop % 2 ? "#d5c28f" : "#e0cf9e";
+      context.fillRect(shopX, -5 + shop % 2 * 3, 17, 25);
+      context.fillStyle = shop % 2 ? "#567684" : "#a75843";
+      context.fillRect(shopX - 2, -10 + shop % 2 * 3, 21, 6);
+      context.fillStyle = "#754c35";
+      context.fillRect(shopX + 6, 7, 6, 13);
+    }
+  } else if (style === "hot-spring") {
+    context.fillStyle = "#75b7be";
+    context.fillRect(-25, 5, 50, 15);
+    context.fillStyle = "#d7cfb4";
+    context.fillRect(-27, 2, 54, 5);
+    context.strokeStyle = "rgba(255, 255, 245, 0.86)";
+    context.lineWidth = 3;
+    for (let steam = -12; steam <= 12; steam += 12) {
+      context.beginPath();
+      context.moveTo(steam, 1);
+      context.quadraticCurveTo(steam - 5, -8, steam + 2, -16);
+      context.stroke();
+    }
+  } else if (style === "buddha") {
+    context.fillStyle = "#c99d3d";
+    context.fillRect(-10, -8, 20, 27);
+    context.fillRect(-18, 5, 36, 14);
+    context.fillRect(-8, -19, 16, 13);
+    context.fillStyle = "#e3c459";
+    context.fillRect(-24, 19, 48, 4);
+  } else if (style === "fan-railhouse") {
+    context.strokeStyle = "#5c6061";
+    context.lineWidth = 3;
+    for (let rail = -2; rail <= 2; rail += 1) {
+      context.beginPath();
+      context.moveTo(0, 18);
+      context.lineTo(rail * 12, -13);
+      context.stroke();
+    }
+    context.fillStyle = "#a85e45";
+    context.fillRect(-27, -16, 54, 8);
+    context.fillStyle = "#d9c394";
+    context.fillRect(-23, -8, 46, 12);
+  } else if (style === "flower-garden") {
+    for (let flower = 0; flower < 7; flower += 1) {
+      drawTinyFlower(-24 + flower * 8, -2 + (flower % 2) * 8, ["#e96d76", "#e9bd52", "#c988b4"][flower % 3]);
+    }
+  } else if (style === "harbor") {
+    context.fillStyle = "#6fabb8";
+    context.fillRect(-27, 8, 54, 12);
+    context.fillStyle = "#f2eee0";
+    context.fillRect(10, -15, 9, 26);
+    context.fillStyle = "#d85c48";
+    context.fillRect(8, -19, 13, 6);
+    context.fillStyle = "#cc8a42";
+    context.fillRect(-22, 2, 23, 8);
+  } else if (style === "reservoir") {
+    context.fillStyle = "#5f8b62";
+    context.fillRect(-27, -9, 54, 9);
+    context.fillStyle = "#6fabb8";
+    context.fillRect(-27, 0, 54, 20);
+    context.fillStyle = "#d1c8a8";
+    context.fillRect(-30, 3, 8, 17);
+    context.fillStyle = "rgba(235, 248, 236, 0.7)";
+    context.fillRect(-10, 6, 25, 3);
+  } else if (style === "cultural-center") {
+    context.fillStyle = "#d8c89f";
+    context.fillRect(-26, -5, 52, 25);
+    context.fillStyle = "#8b5542";
+    context.fillRect(-29, -12, 58, 8);
+    context.fillStyle = "#527786";
+    context.fillRect(-18, 2, 11, 9);
+    context.fillRect(7, 2, 11, 9);
+    context.fillStyle = "#6b4c3c";
+    context.fillRect(-5, 6, 10, 14);
+  } else if (style === "visitor-center") {
+    context.fillStyle = "#e0d5b6";
+    context.fillRect(-25, -4, 50, 24);
+    context.fillStyle = "#55786d";
+    context.fillRect(-29, -11, 58, 8);
+    context.fillStyle = "#668d9a";
+    context.fillRect(-17, 2, 12, 9);
+    context.fillStyle = "#825b43";
+    context.fillRect(8, 6, 9, 14);
+    context.fillStyle = "#d9ad49";
+    context.fillRect(22, -18, 3, 19);
+    context.fillRect(25, -18, 8, 6);
+  } else if (style === "vineyard") {
+    context.fillStyle = "#796045";
+    context.fillRect(-27, 17, 54, 3);
+    for (let vine = 0; vine < 5; vine += 1) {
+      const vineX = -23 + vine * 11;
+      context.fillStyle = "#4f754e";
+      context.fillRect(vineX, -5, 4, 22);
+      context.fillRect(vineX - 3, -2, 10, 4);
+      context.fillStyle = "#70528a";
+      context.fillRect(vineX - 1, 4, 6, 7);
+    }
+  } else if (style === "wetland") {
+    context.fillStyle = "#72a6ae";
+    context.fillRect(-27, 7, 54, 13);
+    context.fillStyle = "#71905f";
+    for (let reed = -22; reed <= 22; reed += 11) {
+      context.fillRect(reed, -4 + Math.abs(reed % 3), 3, 18);
+      context.fillStyle = "#a4864c";
+      context.fillRect(reed - 1, -6 + Math.abs(reed % 3), 5, 5);
+      context.fillStyle = "#71905f";
+    }
+  } else if (style === "canal") {
+    context.fillStyle = "#c2b99e";
+    context.fillRect(-29, -2, 58, 22);
+    context.fillStyle = "#6fa5b1";
+    context.fillRect(-24, 3, 48, 12);
+    context.fillStyle = "rgba(238, 248, 238, 0.72)";
+    context.fillRect(-18, 7, 15, 3);
+    context.fillRect(7, 10, 12, 2);
+  } else if (style === "sugar-factory") {
+    context.fillStyle = "#c9bea0";
+    context.fillRect(-27, -1, 45, 21);
+    context.fillStyle = "#a65d43";
+    context.fillRect(-30, -7, 51, 7);
+    context.fillStyle = "#8d6f58";
+    context.fillRect(13, -20, 9, 40);
+    context.fillStyle = "#6b8490";
+    context.fillRect(-20, 5, 10, 8);
+    context.fillRect(-5, 5, 10, 8);
+  }
+  context.restore();
+}
+
+function drawConstructionSign(x, y, now, index, label = "午餐資料建設中") {
   const light = reducedMotion ? 1 : (Math.floor(now / 520) + index) % 2;
   context.fillStyle = "rgba(30, 54, 58, 0.22)";
   context.fillRect(x + 5, y + 8, 166, 82);
@@ -4558,12 +7325,11 @@ function drawConstructionSign(x, y, now, index) {
   context.font = "bold 11px ui-monospace, monospace";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(townText("午餐資料建設中"), x + 83, y + 42, 142);
+  context.fillText(townText(label), x + 83, y + 42, 142);
   context.fillStyle = light ? "#ef5d43" : "#9f593e";
   context.fillRect(x + 12, y, 13, 10);
   context.fillRect(x + 141, y, 13, 10);
 }
-
 
 function coastlineXAt(y) {
   return WEST_COAST_WIDTH - 34
@@ -4622,7 +7388,7 @@ function drawWesternCoast(now) {
     }
   }
 
-  fillCoastalBand(54, NEIGHBOR_COUNTY_HEIGHT - 30, 0, 56, "#e4cc91");
+  fillCoastalBand(54, NORTH_COUNTY_HEIGHT - 30, 0, 56, "#e4cc91");
   fillCoastalBand(DISTRICT_ZONE_ORIGIN_Y + 1480, TAICHUNG_SOUTH_EDGE_Y - 54, 0, 48, "#ddc184");
   fillCoastalBand(SOUTH_COUNTY_START_Y + 54, WORLD_HEIGHT - 54, 0, 48, "#e2c98d");
   fillCoastalBand(DISTRICT_ZONE_ORIGIN_Y + 600, DISTRICT_ZONE_ORIGIN_Y + 762, 4, 30, "#91b78a");
@@ -4657,7 +7423,7 @@ function drawWesternCoast(now) {
 }
 
 function isCoastalBeachY(y) {
-  return (y > 54 && y < NEIGHBOR_COUNTY_HEIGHT - 30)
+  return (y > 54 && y < NORTH_COUNTY_HEIGHT - 30)
     || (y > DISTRICT_ZONE_ORIGIN_Y + 1480 && y < TAICHUNG_SOUTH_EDGE_Y - 54)
     || (y > SOUTH_COUNTY_START_Y + 54 && y < WORLD_HEIGHT - 54);
 }
@@ -5153,6 +7919,58 @@ function drawPlayerHome(venue) {
   context.fillText("HOME", x + w - 10, y + h - 15);
 }
 
+function drawCountyGovernmentVenue(venue) {
+  const { x, y, w, h, type } = venue;
+  const isCouncil = type === "county-council";
+  const isLocalOffice = type === "township-office";
+  const isLargeCountyHall = type === "county-government" && venue.civicCampus;
+  if (venue.civicCampus) {
+    context.fillStyle = "#d8cda7";
+    context.fillRect(x - 8, y + h - 3, w + 16, 14);
+    context.fillStyle = "#8da57e";
+    for (let treeX = x + 18; treeX < x + w - 12; treeX += 58) {
+      context.fillRect(treeX, y + h + 4, 5, 8);
+      context.fillRect(treeX - 3, y + h, 11, 6);
+    }
+  }
+  context.fillStyle = isCouncil ? "#ded2b5" : isLocalOffice ? "#d9ddcf" : "#d8d9d3";
+  context.fillRect(x, y + 6, w, h - 6);
+  context.fillStyle = isCouncil ? "#8a5546" : isLocalOffice ? "#4f786c" : "#4d7182";
+  context.fillRect(x - 3, y + 3, w + 6, 8);
+  if (isLargeCountyHall) {
+    context.fillStyle = "#c7c9c3";
+    context.fillRect(x + 20, y + 14, w - 40, h - 22);
+    context.fillStyle = "#edf0e9";
+    context.fillRect(x + 34, y + 19, w - 68, 12);
+  } else {
+    context.fillStyle = "#eef2e8";
+    context.fillRect(x + 8, y + 15, w - 16, 8);
+  }
+  context.fillStyle = "#557887";
+  const windowTop = isLargeCountyHall ? y + 38 : y + 17;
+  const windowRows = isLargeCountyHall ? 3 : 1;
+  for (let row = 0; row < windowRows; row += 1) {
+    for (let windowX = x + 14; windowX < x + w - 14; windowX += 22) {
+      context.fillStyle = residentialWindowColor(row + Math.floor((windowX - x) / 22));
+      context.fillRect(windowX, windowTop + row * 15, 11, 7);
+    }
+  }
+  if (isLargeCountyHall) {
+    context.fillStyle = "#f0ede2";
+    context.fillRect(x + w / 2 - 34, y + h - 38, 68, 38);
+    context.fillStyle = "#6d7d7f";
+    for (let pillar = -24; pillar <= 24; pillar += 16) context.fillRect(x + w / 2 + pillar, y + h - 33, 5, 33);
+    context.fillStyle = "#4d7182";
+    context.fillRect(x + w / 2 - 40, y + h - 42, 80, 8);
+  }
+  context.fillStyle = "#6a5142";
+  context.fillRect(x + w / 2 - 6, y + h - (isLargeCountyHall ? 24 : 12), 12, isLargeCountyHall ? 24 : 12);
+  context.fillStyle = "#f0c75e";
+  context.fillRect(x + w - 18, y - 8, 3, 18);
+  context.fillStyle = "#dd5b49";
+  context.fillRect(x + w - 15, y - 8, 13, 7);
+}
+
 function drawVenue(venue, now, index) {
   const { x, y, w, h, type } = venue;
   if (venue.hubKind) {
@@ -5184,6 +8002,8 @@ function drawVenue(venue, now, index) {
     drawSnackShop(venue);
   } else if (["police-station", "fire-station", "hospital"].includes(type)) {
     drawServiceVenue(venue);
+  } else if (["county-government", "county-council", "township-office"].includes(type)) {
+    drawCountyGovernmentVenue(venue);
   } else if (type === "park") {
     context.fillStyle = "#8fc082";
     context.fillRect(x, y, w, h);
@@ -5602,7 +8422,7 @@ function drawVenueOccupancy(venue) {
 
 function drawVenueLabel(venue, now, index) {
   const sparkle = reducedMotion ? 0 : Math.floor(now / 700 + index) % 2;
-  const label = venue.shortLabel || venue.label;
+  const label = venueDisplayLabel(venue, true);
   context.fillStyle = "rgba(255, 248, 231, 0.96)";
   context.fillRect(venue.x + 3, venue.y - 14 - sparkle, venue.w - 6, 14);
   context.fillStyle = COLORS.ink;
@@ -6098,12 +8918,23 @@ function drawCompactCampus(school, now) {
   context.stroke();
 
   drawCompactSchoolSign(school);
+  if (layout.neighborCounty) drawNeighborSchoolDataMarker(school);
   if (state.isWeekend) drawWeekendSchoolMarker(layout);
 
   if (!reducedMotion && now && school.index % 13 === 0) {
     context.fillStyle = COLORS.yellow;
     context.fillRect(layout.x + layout.w - 8, layout.y + 6 + Math.floor(now / 500) % 2, 4, 4);
   }
+}
+
+function drawNeighborSchoolDataMarker(school) {
+  const { layout } = school;
+  const available = schoolHasCurrentMeal(school);
+  context.fillStyle = available ? "#3f8b58" : "#d7a33a";
+  context.fillRect(layout.x + 3, layout.y + 3, 7, 7);
+  context.strokeStyle = "rgba(255, 248, 231, 0.9)";
+  context.lineWidth = 1;
+  context.strokeRect(layout.x + 2.5, layout.y + 2.5, 8, 8);
 }
 
 function drawWeekendSchoolMarker(layout) {
@@ -6428,12 +9259,15 @@ function visibleLampPositions() {
   state.venues
     .filter((venue) => venue.id === "waternan-central-park" && isVisibleRect(venue, 80))
     .forEach((venue) => positions.push(...centralParkLampPositions(venue)));
+  positions.push(...riverbankFixturePositions()
+    .filter((fixture) => fixture.kind === "lamp")
+    .map((fixture) => ({ x: fixture.x, y: fixture.y + fixture.bankSide * 7 })));
   return positions;
 }
 
 function drawStreetLightGlows(environment, now) {
   if (!environment || environment.darkness <= 0.08) return;
-  const strength = Math.min(1, environment.darkness / 0.58);
+  const strength = Math.min(1, environment.darkness / MAX_NIGHT_DARKNESS);
   const pulse = reducedMotion ? 1 : 0.96 + Math.sin(now / 840) * 0.04;
   context.save();
   context.globalCompositeOperation = "screen";
@@ -6441,13 +9275,13 @@ function drawStreetLightGlows(environment, now) {
     const x = lamp.x - state.camera.x;
     const y = lamp.y - 20 - state.camera.y;
     if (x < -45 || x > WIDTH + 45 || y < -45 || y > HEIGHT + 45) return;
-    const glowWidth = Math.round(38 * pulse);
-    context.fillStyle = `rgba(255, 203, 82, ${0.06 * strength})`;
-    context.fillRect(Math.round(x - glowWidth), Math.round(y - 26), glowWidth * 2, 52);
-    context.fillStyle = `rgba(255, 215, 105, ${0.13 * strength})`;
-    context.fillRect(Math.round(x - 22), Math.round(y - 16), 44, 32);
-    context.fillStyle = `rgba(255, 233, 137, ${0.28 * strength})`;
-    context.fillRect(Math.round(x - 11), Math.round(y - 9), 22, 18);
+    const glowWidth = Math.round(27 * pulse);
+    context.fillStyle = `rgba(255, 203, 82, ${0.045 * strength})`;
+    context.fillRect(Math.round(x - glowWidth), Math.round(y - 20), glowWidth * 2, 40);
+    context.fillStyle = `rgba(255, 215, 105, ${0.1 * strength})`;
+    context.fillRect(Math.round(x - 16), Math.round(y - 12), 32, 24);
+    context.fillStyle = `rgba(255, 233, 137, ${0.22 * strength})`;
+    context.fillRect(Math.round(x - 8), Math.round(y - 7), 16, 14);
     context.fillStyle = "#ffe99b";
     context.fillRect(Math.round(x - 3), Math.round(y - 2), 6, 5);
   });
@@ -6505,7 +9339,7 @@ function drawPerson(person, now) {
   const frame = person.isMoving && !reducedMotion ? Math.floor(step) % 4 : 0;
   const gait = [0, 1, 0, -1][frame];
   const activityBeat = reducedMotion ? 0 : Math.floor(now / 280 + (person.lookIndex || 0)) % 2;
-  const socialBob = ["greeting", "listening", "exercising", "sweeping"].includes(person.activity)
+  const socialBob = ["greeting", "listening", "exercising", "sweeping", "barbecuing"].includes(person.activity)
     ? activityBeat
     : 0;
   const bob = (person.isMoving && !reducedMotion && frame % 2 ? 1 : 0) + socialBob;
@@ -6514,6 +9348,8 @@ function drawPerson(person, now) {
   if (!person.isMoving && !reducedMotion) {
     if (person.activity === "greeting") armSwing = activityBeat ? -3 : 1;
     if (["sweeping", "exercising"].includes(person.activity)) armSwing = activityBeat ? 3 : -3;
+    if (person.activity === "fishing") armSwing = activityBeat ? -1 : 1;
+    if (person.activity === "barbecuing") armSwing = activityBeat ? 3 : -2;
   }
   const bodyScale = person.ageGroup === "child" ? 0.8 : person.ageGroup === "teen" ? 0.9 : person.ageGroup === "senior" ? 0.96 : 1;
   const rideLift = person.ridingBike ? 6 : 0;
@@ -6542,7 +9378,56 @@ function drawPerson(person, now) {
     drawRainUmbrella(person);
   }
   context.restore();
+  drawNpcRiverbankActivity(person, now);
   drawPersonEmote(person, now);
+}
+
+function drawNpcRiverbankActivity(person, now) {
+  if (!person.riverbankSiteId || !["fishing", "barbecuing"].includes(person.activity)) return;
+  const site = riverbankLeisureSiteById(person.riverbankSiteId);
+  if (!site) return;
+  context.save();
+  context.lineCap = "square";
+  if (person.activity === "fishing") {
+    const bridge = BOUNDARY_BRIDGES.find((item) => item.id === site.bridgeId);
+    if (!bridge) {
+      context.restore();
+      return;
+    }
+    const wobble = reducedMotion ? 0 : Math.round(Math.sin(now / 520 + (person.lookIndex || 0)) * 2);
+    const handX = Math.round(person.x + 5);
+    const handY = Math.round(person.y - 9);
+    const rodTipX = Math.round(person.x + 19 + wobble);
+    const rodTipY = Math.round(person.y - site.bankSide * 34);
+    const bobberY = Math.round(boundaryRiverYAt(rodTipX, bridge)
+      + site.bankSide * (BORDER_RIVER_WIDTH / 2 - 5));
+    context.strokeStyle = "#5d4933";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.moveTo(handX, handY);
+    context.lineTo(rodTipX, rodTipY);
+    context.stroke();
+    context.strokeStyle = "rgba(226, 236, 220, 0.9)";
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(rodTipX, rodTipY);
+    context.lineTo(rodTipX, bobberY);
+    context.stroke();
+    context.fillStyle = "#e65b45";
+    context.fillRect(rodTipX - 2, bobberY - 2, 5, 5);
+  } else {
+    const grillX = Math.round(site.x + 21);
+    const grillY = Math.round(site.y - 10);
+    context.strokeStyle = "#745035";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(Math.round(person.x + 5), Math.round(person.y - 8));
+    context.lineTo(grillX, grillY);
+    context.stroke();
+    context.fillStyle = "#efc45b";
+    context.fillRect(grillX - 3, grillY - 2, 7, 4);
+  }
+  context.restore();
 }
 
 function drawNpcBicycle(person) {
@@ -6617,6 +9502,19 @@ function resolveOutfitStyle(person) {
 }
 
 function drawCharacterLegs(person, legSwing, outfitStyle) {
+  if (outfitStyle === "ivory-dress") {
+    context.fillStyle = person.outfitDark;
+    context.fillRect(-9, 1, 18, 9);
+    context.fillStyle = person.outfit;
+    context.fillRect(-8, 1, 16, 8);
+    context.fillStyle = person.skin;
+    context.fillRect(-5 + legSwing, 10, 4, 3);
+    context.fillRect(2 - legSwing, 10, 4, 3);
+    context.fillStyle = person.shoeColor;
+    context.fillRect(-6 + legSwing, 12, 5, 3);
+    context.fillRect(2 - legSwing, 12, 5, 3);
+    return;
+  }
   const skirtStyles = ["school-uniform", "fashionable", "formal-bow", "civic-suit"];
   const wearsSkirt = person.bodyStyle === "feminine" && skirtStyles.includes(outfitStyle);
   if (wearsSkirt) {
@@ -6633,15 +9531,35 @@ function drawCharacterLegs(person, legSwing, outfitStyle) {
     context.fillRect(-6 + legSwing, 5, 5, 8);
     context.fillRect(2 - legSwing, 5, 5, 8);
   }
+  if (outfitStyle === "leather-jacket") {
+    context.fillStyle = "#62606a";
+    context.fillRect(-6 + legSwing, 6, 5, 7);
+    context.fillRect(2 - legSwing, 6, 5, 7);
+    context.fillStyle = person.outfitDark;
+    context.fillRect(-8, 1, 16, 5);
+  }
+  if (outfitStyle === "athletic-set") {
+    context.fillStyle = COLORS.paper;
+    context.fillRect(-6 + legSwing, 9, 5, 3);
+    context.fillRect(2 - legSwing, 9, 5, 3);
+  }
   context.fillStyle = person.shoeColor || "#26333b";
   context.fillRect(-7 + legSwing, 11, 6, 4);
   context.fillRect(2 - legSwing, 11, 6, 4);
+  if (outfitStyle === "leather-jacket") {
+    context.fillStyle = COLORS.paper;
+    context.fillRect(-7 + legSwing, 14, 6, 1);
+    context.fillRect(2 - legSwing, 14, 6, 1);
+    context.fillRect(-5 + legSwing, 11, 2, 2);
+    context.fillRect(4 - legSwing, 11, 2, 2);
+  }
 }
 
 function drawCharacterArms(person, armSwing, outfitStyle) {
   const longSleeves = [
     "school-cardigan", "cardigan", "blazer", "lab-coat", "medical-coat",
     "overalls", "formal-bow", "civic-suit", "senior-knit", "police-uniform", "fire-uniform",
+    "leather-jacket", "ivory-dress",
   ].includes(outfitStyle);
   context.fillStyle = person.skin;
   context.fillRect(-11, -5 + armSwing, 4, 10);
@@ -6667,7 +9585,38 @@ function drawCharacterOutfit(person, outfitStyle) {
   context.fillStyle = person.outfitDark;
   context.fillRect(-8, 3, 16, 3);
 
-  if (["school-uniform", "school-cardigan"].includes(outfitStyle)) {
+  if (outfitStyle === "leather-jacket") {
+    context.fillStyle = "#555b61";
+    context.fillRect(-4, -7, 8, 9);
+    context.fillStyle = person.outfit;
+    context.fillRect(-8, -8, 4, 12);
+    context.fillRect(4, -8, 4, 12);
+    if (person.direction !== "up") {
+      context.fillStyle = person.accent;
+      context.fillRect(-5, -7, 2, 4);
+      context.fillRect(3, -6, 2, 4);
+      context.fillRect(4, -1, 1, 5);
+      context.fillRect(-1, -8, 3, 1);
+      context.fillRect(0, -7, 1, 2);
+      context.fillRect(-1, 3, 3, 2);
+    }
+  } else if (outfitStyle === "ivory-dress") {
+    context.fillStyle = person.outfitDark;
+    context.fillRect(-7, -7, 2, 12);
+    context.fillRect(5, -7, 2, 12);
+    context.fillRect(-5, 2, 10, 1);
+    context.fillStyle = "#fff9ec";
+    context.fillRect(-4, -6, 8, 8);
+  } else if (outfitStyle === "athletic-set") {
+    context.fillStyle = person.outfitDark;
+    context.fillRect(-8, 0, 16, 6);
+    if (person.direction !== "up") {
+      context.fillRect(-3, -8, 6, 2);
+      context.fillRect(8, -1, 3, 2);
+      context.fillStyle = person.accent;
+      context.fillRect(3, -5, 2, 2);
+    }
+  } else if (["school-uniform", "school-cardigan"].includes(outfitStyle)) {
     context.fillStyle = COLORS.paper;
     context.fillRect(-5, -7, 4, 3);
     context.fillRect(2, -7, 4, 3);
@@ -6830,6 +9779,14 @@ function drawCharacterHair(person, direction) {
     context.fillStyle = person.accent;
     context.fillRect(7, -4, 4, 2);
     context.fillStyle = person.hair;
+  } else if (person.hairStyle === "long-high-ponytail") {
+    context.fillRect(4, -28, 5, 8);
+    context.fillRect(7, -25, 5, 18);
+    context.fillRect(9, -10, 5, 8);
+    context.fillRect(8, -3, 4, 3);
+    context.fillStyle = person.outfitDark;
+    context.fillRect(5, -25, 4, 2);
+    context.fillStyle = person.hair;
   } else if (person.hairStyle === "high-ponytail") {
     context.fillRect(4, -27, 5, 8);
     context.fillRect(7, -24, 5, 12);
@@ -6858,6 +9815,11 @@ function drawCharacterHair(person, direction) {
     context.fillRect(-9, -22, 4, 6);
     context.fillRect(5, -22, 4, 6);
     if (person.hairStyle === "curl") context.fillRect(-7, -17, 3, 5);
+  }
+  if (person.hairClip && direction !== "up") {
+    context.fillStyle = person.hairClip;
+    context.fillRect(4, -23, 4, 1);
+    context.fillRect(5, -21, 3, 1);
   }
   if (person.hairAccent && direction !== "up") {
     context.fillStyle = person.hairAccent;
@@ -6934,7 +9896,32 @@ function drawCharacterFace(person, direction, now) {
 }
 
 function drawCharacterAccessory(person, direction, armSwing, player) {
-  if (person.accessory === "book") {
+  if (player
+    && ["coffee-cup", "water-bottle"].includes(person.accessory)
+    && (person.ridingBike || state.environment?.isRaining)) return;
+  if (person.accessory === "coffee-cup") {
+    context.fillStyle = "#bb8d61";
+    context.fillRect(9, -6 - armSwing, 7, 9);
+    context.fillStyle = "#e7ca9d";
+    context.fillRect(9, -5 - armSwing, 7, 2);
+    context.fillStyle = COLORS.paper;
+    context.fillRect(8, -7 - armSwing, 9, 2);
+    context.fillStyle = person.accent;
+    context.fillRect(13, -12 - armSwing, 1, 6);
+  } else if (person.accessory === "butterfly-pin" && direction !== "up") {
+    context.fillStyle = "#625a5d";
+    context.fillRect(2, -6, 2, 2);
+    context.fillRect(5, -6, 2, 2);
+    context.fillRect(3, -4, 1, 2);
+    context.fillRect(5, -4, 1, 2);
+  } else if (person.accessory === "water-bottle") {
+    context.fillStyle = person.accent;
+    context.fillRect(10, -3 - armSwing, 6, 9);
+    context.fillStyle = "#d8eef2";
+    context.fillRect(11, -1 - armSwing, 4, 4);
+    context.fillStyle = "#477891";
+    context.fillRect(11, -5 - armSwing, 4, 2);
+  } else if (person.accessory === "book") {
     context.fillStyle = person.accent;
     context.fillRect(8, -2 - armSwing, 7, 8);
     context.fillStyle = COLORS.paper;
@@ -7077,7 +10064,7 @@ function drawDogLeashes() {
 
 function drawDogLeash(pet) {
   const owner = dogOwnerFor(pet);
-  if (!owner || owner.insideVenueId || owner.isCollapsed || pet.hidden) return;
+  if (!owner || owner.insideVenueId || owner.backgroundSimulated || owner.isCollapsed || pet.hidden) return;
   const leashDistance = Math.hypot(pet.x - owner.x, pet.y - owner.y);
   if (leashDistance > 64) return;
   const leashSide = pet.x < owner.x ? -1 : 1;
@@ -7127,6 +10114,7 @@ function updateNearbyPrompt() {
   const bikeStation = nearbyBikeStation();
   const npc = nearbyNpc();
   const school = nearbySchool();
+  const neighborSchool = nearbyNeighborSchool();
   const venue = nearbyVenue();
   const target = moment
     ? `moment:${moment.id}:${moment.actor.name}`
@@ -7136,6 +10124,8 @@ function updateNearbyPrompt() {
         ? `npc:${npc.name}:${npc.currentReason}`
         : school
           ? `school:${school.fatraceSchoolId}`
+          : neighborSchool
+            ? `neighbor-school:${neighborSchool.fatraceSchoolId}`
           : venue
             ? `venue:${venue.id}`
             : "";
@@ -7148,11 +10138,17 @@ function updateNearbyPrompt() {
     : bikeStation
       ? `${actionLead} 在 ${bikeStation.label}${state.player.ridingBike ? "歸還 YouBike" : "租借 YouBike｜騎乘速度更快"}`
       : npc
-        ? `${actionLead} 與 ${npc.name}（${ROLE_LABELS[npc.role]}）對話｜${npc.currentReason}`
+        ? townText(`${actionLead} 與 ${npcDisplayName(npc)}（${ROLE_LABELS[npc.role]}）對話｜${npc.currentReason}`)
         : school
           ? `${actionLead} 查看 ${school.name} ${formatDate(state.date)} 午餐`
+          : neighborSchool
+            ? schoolHasCurrentMeal(neighborSchool)
+              ? `${actionLead} 查看 ${neighborSchool.name} ${formatDate(state.date)} 午餐`
+              : townText(`${actionLead} 查看 ${neighborSchool.name} 地圖資訊`)
           : venue
-            ? `${actionLead} 進入 ${venue.label}`
+            ? townUsesEnglish()
+              ? `${actionLead} enter ${venueDisplayLabel(venue)}`
+              : `${actionLead} 進入 ${venueDisplayLabel(venue)}`
             : "";
 }
 
@@ -7212,6 +10208,13 @@ function nearbySchool() {
   }) || null;
 }
 
+function nearbyNeighborSchool() {
+  return state.neighborSchools.find((school) => {
+    const point = schoolGatePoint(school);
+    return Math.hypot(state.player.x - point.x, state.player.y - point.y) < 58;
+  }) || null;
+}
+
 function interactWithNearbyTarget() {
   if (state.townEvent) {
     announce("請先在街區事件面板選擇如何回應。 ");
@@ -7237,6 +10240,11 @@ function interactWithNearbyTarget() {
     openSchool(school, "nearby_action");
     return;
   }
+  const neighborSchool = nearbyNeighborSchool();
+  if (neighborSchool) {
+    openNeighborSchool(neighborSchool, "nearby_action");
+    return;
+  }
   const venue = nearbyVenue();
   if (venue) openVenue(venue, "nearby_action");
   else announce("請先走近人物、學校、街區建築或 YouBike 站，也可以直接點選目標。");
@@ -7251,6 +10259,7 @@ function interactWithBikeStation(station, method = "nearby_action") {
   state.keys.clear();
   state.moveTarget = null;
   state.pendingBikeStationId = "";
+  const wasRidingBike = state.player.ridingBike;
   state.player.ridingBike = !state.player.ridingBike;
   state.lastPromptTarget = null;
   trackTownEvent(state.player.ridingBike ? "lunch_town_bike_rented" : "lunch_town_bike_returned", {
@@ -7259,6 +10268,8 @@ function interactWithBikeStation(station, method = "nearby_action") {
   });
   if (state.player.ridingBike) {
     void recordAchievementEvent("bike_rental", townAchievementInstance(`bike-${station.id}`));
+  } else if (wasRidingBike) {
+    void recordDailyQuestEvent("bike_return", station.id, 1, `bike_return:${station.id}`);
   }
   updateNearbyPrompt();
   canvas.focus({ preventScroll: true });
@@ -7279,6 +10290,7 @@ function openVenue(venue, method = "nearby_action") {
     venue_type: venue.type,
     method,
   });
+  void recordDailyQuestEvent("venue_visit", venue.type);
   if (venue.hubKind || venue.type === "landmark" || venue.type === "museum" || venue.type === "stadium") {
     void recordAchievementEvent("landmark_visit", venue.id);
   }
@@ -7288,7 +10300,7 @@ function openVenue(venue, method = "nearby_action") {
   const registeredResidents = RESIDENTIAL_VENUE_TYPES.has(venue.type)
     ? state.npcs.filter((npc) => npc.residenceVenueId === venue.id)
     : [];
-  const residentNames = registeredResidents.slice(0, 6).map((npc) => npc.name).join("、");
+  const residentNames = registeredResidents.slice(0, 6).map(npcDisplayName).join("、");
   const homeStage = venue.type === "player-home" ? venue.homeStage || PLAYER_HOME_STAGE : null;
   const homeDetails = homeStage ? `
     <div class="meal-summary"><span>目前住所</span><strong>${escapeHtml(homeStage.label)}</strong></div>
@@ -7296,19 +10308,20 @@ function openVenue(venue, method = "nearby_action") {
   ` : RESIDENTIAL_VENUE_TYPES.has(venue.type)
     ? `<p class="data-note">這棟住宅已納入居民行程；居民會從這裡出門，也會在傍晚或行程結束後回家。</p>`
     : "";
+  const displayLabel = venueDisplayLabel(venue);
   refs.dialogKicker.textContent = `${venue.district}・${VENUE_LABELS[venue.type] || "街區設施"}`;
-  refs.dialogTitle.textContent = venue.label;
+  refs.dialogTitle.textContent = displayLabel;
   refs.dialogBody.innerHTML = `
-    <p class="venue-description">${escapeHtml(venue.description || `${venue.label}是街區居民會使用的場所。`)}</p>
+    <p class="venue-description">${escapeHtml(venueDisplayDescription(venue))}</p>
     ${homeDetails}
     ${registeredResidents.length ? `<div class="meal-summary"><span>登記住戶 ${registeredResidents.length} 人</span><span>${escapeHtml(residentNames)}${registeredResidents.length > 6 ? `等 ${registeredResidents.length} 人` : ""}</span></div>` : ""}
     ${venue.specialty ? `<p class="data-note">代表小吃：${escapeHtml(venue.specialty)}。店名與場景採原創像素世界設定。</p>` : ""}
-    <div class="meal-summary"><span>目前使用中 ${occupants.length} 人</span><span>${occupants.length ? escapeHtml(occupants.map((npc) => npc.name).join("、")) : "現在較安靜"}</span></div>
-    ${occupants.length ? `<ul class="dish-list">${occupants.map((npc) => `<li><strong>${escapeHtml(npc.name)}</strong><small>${escapeHtml(npc.currentReason)}</small></li>`).join("")}</ul>` : ""}
+    <div class="meal-summary"><span>目前使用中 ${occupants.length} 人</span><span>${occupants.length ? escapeHtml(occupants.map(npcDisplayName).join("、")) : "現在較安靜"}</span></div>
+    ${occupants.length ? `<ul class="dish-list">${occupants.map((npc) => `<li><strong>${escapeHtml(npcDisplayName(npc))}</strong><small>${escapeHtml(townText(npc.currentReason))}</small></li>`).join("")}</ul>` : ""}
     ${venue.sourceUrl ? `<a class="source-link" href="${escapeAttribute(venue.sourceUrl)}" target="_blank" rel="noreferrer">查看官方地標或美食參考來源</a>` : ""}
   `;
   refs.dialog.showModal();
-  announce(`已進入${venue.label}。`);
+  announce(townUsesEnglish() ? `Entered ${displayLabel}.` : `已進入${displayLabel}。`);
 }
 
 function openNpcDialogue(npc, method = "nearby_action") {
@@ -7334,14 +10347,14 @@ function openNpcDialogue(npc, method = "nearby_action") {
   });
   void recordAchievementEvent("npc_talk", `${npc.district}:${npc.name}`);
   renderNpcDialogue();
-  announce(`${npc.name}（${ROLE_LABELS[npc.role]}）開始對話。`);
+  announce(townText(`${npc.name}（${ROLE_LABELS[npc.role]}）開始對話。`));
 }
 
 function renderNpcDialogue() {
   const npc = state.dialogueNpc;
   if (!npc) return;
-  refs.npcName.textContent = npc.name;
-  refs.npcRole.textContent = `${npc.district}・${ROLE_LABELS[npc.role]}・住家：${npc.residenceLabel || "小鎮住宅"}・${npc.personality.label}・${npc.currentReason}`;
+  refs.npcName.textContent = npcDisplayName(npc);
+  refs.npcRole.textContent = townText(`${npc.district}・${ROLE_LABELS[npc.role]}・住家：${npc.residenceLabel || "小鎮住宅"}・${npc.personality.label}・${npc.currentReason}`);
   const sourceUrl = npc.campaignSourceUrl || npc.sourceUrl;
   refs.npcSource.hidden = !sourceUrl;
   refs.npcSource.textContent = npc.role === "candidate" ? "候選人公開資料" : "公開身分來源";
@@ -7384,6 +10397,15 @@ function closeNpcDialogue() {
 }
 
 function buildPlayerConversation(npc) {
+  if (npc.featuredResident && ROLE_DIALOGUES[npc.role]?.length) {
+    const dialogue = ROLE_DIALOGUES[npc.role];
+    const start = npc.dialogueCursor % dialogue.length;
+    npc.dialogueCursor = (start + 1) % dialogue.length;
+    return {
+      topicId: `resident-${npc.role}`,
+      lines: Array.from({ length: 3 }, (_, index) => dialogue[(start + index) % dialogue.length]),
+    };
+  }
   if (npc.role === "candidate") {
     return {
       topicId: "civic-campaign",
@@ -7435,6 +10457,35 @@ function drawNearbyNpcMarker() {
   context.fillText("!", Math.round(npc.x), Math.round(npc.y) - 36);
 }
 
+function openNeighborSchool(school, method = "nearby_action") {
+  if (schoolHasCurrentMeal(school)) {
+    void openSchool(school, method);
+    return;
+  }
+  if (state.townEvent) {
+    announce("請先完成目前的街區事件。 ");
+    return;
+  }
+  setQuestPanelOpen(false);
+  if (state.dialogueNpc) closeNpcDialogue();
+  refs.dialogKicker.textContent = `${townText(school.city)}・${townText(school.district)}・${townText("學校地圖")}`;
+  refs.dialogTitle.textContent = school.name;
+  refs.dialogBody.innerHTML = `
+    <p class="venue-description">${escapeHtml(townText("這所國小已依審核學校名冊放入行政區的相對位置。"))}</p>
+    <div class="meal-summary"><span>${escapeHtml(townText("午餐資料建設中"))}</span><span>${escapeHtml(townText("校園已放入地圖"))}</span></div>
+    <p class="data-note">${escapeHtml(townText("地圖位置為遊戲化示意，行政區遵循大致東南西北；校園並非精確校址或比例。"))}</p>
+    <p class="data-note">${escapeHtml(townText("目前可散步查看校名；苗栗與彰化的午餐內容尚未在午餐小鎮開放。"))}</p>
+  `;
+  if (!refs.dialog.open) refs.dialog.showModal();
+  trackTownEvent("lunch_town_neighbor_school_viewed", {
+    school_id: String(school.fatraceSchoolId),
+    city: school.city,
+    district: school.district,
+    method,
+  });
+  announce(townText(`已開啟 ${school.name} 地圖資訊。`));
+}
+
 async function openSchool(school, method = "nearby_action") {
   if (state.townEvent) {
     announce("請先完成目前的街區事件。 ");
@@ -7443,10 +10494,12 @@ async function openSchool(school, method = "nearby_action") {
   setQuestPanelOpen(false);
   if (state.dialogueNpc) closeNpcDialogue();
   const id = String(school.fatraceSchoolId);
-  state.visited.add(id);
-  void recordAchievementEvent("school_visit", id);
-  refreshSchoolListIfRendered();
-  updateProgress();
+  if (school.mapScope !== "neighbor-county") {
+    state.visited.add(id);
+    void recordAchievementEvent("school_visit", id);
+    refreshSchoolListIfRendered();
+    updateProgress();
+  }
   refs.dialogKicker.textContent = `${school.city}・${school.district}・${formatDate(state.date)}`;
   refs.dialogTitle.textContent = school.name;
   refs.dialogBody.innerHTML = '<p class="empty-meal">正在讀取學校午餐資料…</p>';
@@ -7476,25 +10529,31 @@ async function openSchool(school, method = "nearby_action") {
 }
 
 function trackTownEvent(name, params = {}) {
+  if (state.townMapPreview.active) return;
   window.ProductAnalytics?.event(name, params);
 }
 
 async function loadSchoolMeal(school, date) {
   const endpoint = `/api/dashboard?schoolId=${encodeURIComponent(school.fatraceSchoolId)}&date=${encodeURIComponent(date)}&mealType=meat`;
   try {
-    const response = await fetch(endpoint, { headers: { Accept: "application/json" } });
+    const response = await fetch(endpoint, { headers: { Accept: "application/json" }, cache: "no-store" });
     if (!response.ok) throw new Error(`午餐 API 回傳 ${response.status}`);
     const payload = await response.json();
     return { record: payload.record ?? payload.officialRecord ?? null, sourceUrl: payload.sourceUrl || payload.record?.source?.url || "" };
   } catch (apiError) {
     const response = await fetch(`/data/school-meals/${encodeURIComponent(school.fatraceSchoolId)}.json`, {
       headers: { Accept: "application/json" },
+      cache: "no-store",
     });
     if (!response.ok) throw apiError;
     const payload = await response.json();
     const record = payload.records?.[date] || null;
     return { record, sourceUrl: record?.source?.url || school.sourceUrl || "" };
   }
+}
+
+function schoolHasCurrentMeal(school) {
+  return Array.isArray(school?.recordDates) && school.recordDates.includes(state.date);
 }
 
 function renderMeal(dashboard, school) {
@@ -7516,7 +10575,10 @@ function renderMeal(dashboard, school) {
     </div>
     <ul class="dish-list">
       ${dishes.map((dish) => `
-        <li><strong>${escapeHtml(dish.name || "未命名菜色")}</strong><small>${escapeHtml(dish.category || "午餐菜色")}</small></li>
+        <li class="daily-dish-row">
+          <div><strong>${escapeHtml(dish.name || "未命名菜色")}</strong><small>${escapeHtml(dish.category || "午餐菜色")}</small></div>
+          <button class="daily-dish-pick" type="button" data-daily-dish="school-${escapeAttribute(school.fatraceSchoolId)}" data-dish-name="${escapeAttribute(dish.name || "這道菜")}" aria-pressed="false">今天想吃</button>
+        </li>
       `).join("")}
     </ul>
     <p class="data-note">菜色與營養欄位來自校方公開紀錄；不從菜名推測過敏原或整餐營養安全。</p>
@@ -7541,6 +10603,26 @@ function placePlayerAtHome() {
   state.player.x = home.x + home.w / 2;
   state.player.y = home.y + home.h + 14;
   state.player.direction = "up";
+}
+
+function placePlayerAtTownMapPreview() {
+  if (!state.townMapPreview.active || !state.townMapPreview.focus) return;
+  const { city, district, placementId } = state.townMapPreview.focus;
+  const target = state.venues.find((venue) => (
+    venue.editorManaged && venue.city === city && venue.district === district
+      && (!placementId || venue.townMapPlacementId === placementId)
+  ));
+  if (target) {
+    state.player.x = target.x + target.w / 2;
+    state.player.y = target.y + target.h + 14;
+    state.player.direction = "up";
+    return;
+  }
+  const zone = districtZoneForName(district);
+  if (!zone) return;
+  state.player.x = zone.x + zone.w * 0.34;
+  state.player.y = zone.y + zone.h * 0.71;
+  state.player.direction = "down";
 }
 
 function schoolGatePoint(school) {

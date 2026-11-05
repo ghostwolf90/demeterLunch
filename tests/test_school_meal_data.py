@@ -225,7 +225,11 @@ class ReviewedSchoolMealTests(unittest.TestCase):
         self.assertEqual(catalog["defaultSchoolId"], 193609)
         registry = json.loads(ACTIVE_REGISTRY.read_text(encoding="utf-8"))
         self.assertEqual(len(catalog["schools"]), len(registry["schools"]))
-        self.assertEqual(catalog["schools"][0]["district"], "西區")
+        self.assertEqual(
+            catalog["schools"][0]["fatraceSchoolId"],
+            registry["schools"][0]["fatraceSchoolId"],
+        )
+        self.assertEqual(catalog["schools"][0]["district"], "北投區")
         self.assertEqual(dashboard["viewMode"], "detailed")
         self.assertEqual(dashboard["school"]["name"], "忠信國小")
         self.assertEqual(dashboard["officialRecord"]["summary"]["dishCount"], 8)

@@ -2,6 +2,7 @@
 export const LINE_CALLBACK_PATH = "/api/auth/line/callback";
 export const LINE_OAUTH_COOKIE = "demeter_line_oauth";
 export const LINE_OAUTH_TTL = 600;
+export const LINE_OAUTH_TOWN_RETURN_PATH = "/lunch-town/";
 
 export function randomOAuthValue() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -16,24 +17,33 @@ export async function oauthDigest(value: string) {
   return base64Url(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value))));
 }
 
-export function lineAuthorizationUrl(channelId: string, redirectUri: string, state: string, nonce: string, challenge: string) {
+export function lineAuthorizationUrl(channelId: string, redirectUri: string, state: string, nonce: string, challenge: string, stayInWeb = false) {
   const url = new URL("https://access.line.me/oauth2/v2.1/authorize");
   url.search = new URLSearchParams({
     response_type: "code", client_id: channelId, redirect_uri: redirectUri,
     state, nonce, scope: "openid", code_challenge: challenge, code_challenge_method: "S256",
     ui_locales: "zh-TW",
   }).toString();
+  if (stayInWeb) url.searchParams.set("disable_auto_login", "true");
   return url.toString();
 }
 
-export function oauthCookie(request: Request, value: string, clear = false) {
-  return `${LINE_OAUTH_COOKIE}=${value}; Path=/api/auth/line; HttpOnly; SameSite=Lax; Max-Age=${clear ? 0 : LINE_OAUTH_TTL}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
+export function oauthCookie(request: Request, value: string, clear = false, returnTo = "/") {
+  const destination = returnTo === LINE_OAUTH_TOWN_RETURN_PATH ? ".town" : "";
+  return `${LINE_OAUTH_COOKIE}=${value}${clear ? "" : destination}; Path=/api/auth/line; HttpOnly; SameSite=Lax; Max-Age=${clear ? 0 : LINE_OAUTH_TTL}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
 }
 
 export function oauthBrowserToken(request: Request) {
   const cookie = request.headers.get("cookie") || "";
   const value = cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${LINE_OAUTH_COOKIE}=`))?.slice(LINE_OAUTH_COOKIE.length + 1);
-  return value && /^[A-Za-z0-9_-]{43}$/.test(value) ? value : null;
+  const token = value?.split(".", 1)[0];
+  return token && /^[A-Za-z0-9_-]{43}$/.test(token) ? token : null;
+}
+
+export function oauthReturnPath(request: Request) {
+  const cookie = request.headers.get("cookie") || "";
+  const value = cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${LINE_OAUTH_COOKIE}=`))?.slice(LINE_OAUTH_COOKIE.length + 1);
+  return value?.endsWith(".town") ? LINE_OAUTH_TOWN_RETURN_PATH : "/";
 }
 
 export async function verifiedLineSubject(options: {
