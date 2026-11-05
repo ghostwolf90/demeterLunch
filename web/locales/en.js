@@ -413,6 +413,9 @@ window.LunchEnglish = {
   "午餐資料建設中": "Lunch data under construction",
   "午餐資料持續更新": "Lunch data update in progress",
   "當日午餐已更新": "Today's lunch data is ready",
+  "各校當日午餐可查詢": "Check today's lunch for any school",
+  "學校午餐查詢": "School lunch lookup",
+  "校園已放入地圖｜各校當日午餐可查詢": "Campuses mapped | Check today's lunch for any school",
   "午餐資料建設中｜可散步探索，尚未開放學校與菜單": "Lunch data under construction | Open for walking; schools and menus are not available yet",
   "午餐資料建設中｜校園已放入地圖，可散步探索": "Lunch data under construction | School campuses are mapped and open for exploration",
   "苗栗山海客庄": "Miaoli mountains, coast, and Hakka communities",
@@ -533,7 +536,7 @@ window.LunchEnglish = {
   "這所國小已依審核學校名冊放入行政區的相對位置。": "This elementary school has been placed within its district using the reviewed school directory.",
   "地圖位置為遊戲化示意，行政區遵循大致東南西北；校園並非精確校址或比例。": "Map placement is game-like. Districts follow approximate cardinal directions; campuses do not show exact addresses or scale.",
   "目前可散步查看校名；苗栗與彰化的午餐內容尚未在午餐小鎮開放。": "You can explore school names now; Miaoli and Changhua lunch content is not yet available in Lunch Town.",
-  "苗栗與彰化的國小已依審核名冊放入地圖，目前僅供探索校名與地方景觀；午餐資料仍在建設中，不會以其他縣市或其他日期的資料替代。": "Miaoli and Changhua elementary schools are mapped from the reviewed directory for exploring school names and local scenery. Lunch data remains under construction and is never replaced with another county's or date's data.",
+  "苗栗與彰化的國小已依審核名冊放入地圖；走近校門即可查詢所選日期的該校午餐。尚未取得資料不代表沒有供餐，也不會以其他縣市或其他日期的紀錄替代。": "Miaoli and Changhua elementary schools are mapped from the reviewed directory. Approach a school gate to check that school's lunch for the selected date. Missing data does not mean no meal was served, and records from another county or date are never substituted.",
   "臺中・苗栗・彰化午餐小鎮": "Taichung · Miaoli · Changhua Lunch Town",
   "走進原創復古像素風格的臺中、苗栗與彰化午餐小鎮，依行政區相對方位探索國小、地方建築、山海與農田景觀。": "Enter a retro pixel-art Lunch Town spanning Taichung, Miaoli, and Changhua, with elementary schools, local landmarks, mountains, coast, and farmland arranged by approximate district geography.",
   "準備臺中、苗栗與彰化的街道、景觀與學校…": "Preparing streets, landscapes, and schools across Taichung, Miaoli, and Changhua…",
@@ -545,6 +548,9 @@ window.LunchEnglish = {
   "縣界水泥橋": "County-border concrete bridge",
   "沿縣界橋前往鄰近縣市散步": "Crossing the county-border bridge for a walk in a neighboring county",
   "到鄰近縣市施工區散步，看看地圖未來會往哪裡延伸": "Taking a walk through a neighboring county work zone to see where the map may grow next",
+  "午餐情報站": "Lunch information stop",
+  "抵達苗栗或彰化的學校午餐查詢告示牌。": "Reach a school-lunch lookup sign in Miaoli or Changhua.",
+  "找到午餐查詢告示牌": "Find a lunch lookup sign",
   "臺中 29 區營養午餐小鎮": "Taichung 29-District Lunch Town",
   "臺中小鎮": "Taichung Town",
   "可操作的 2D 營養午餐小鎮地圖": "Interactive 2D Lunch Town map",
@@ -1047,6 +1053,25 @@ window.LunchEnglish = {
   "正在確認登入…": "Checking sign-in…",
   "正在確認登入狀態…": "Checking sign-in status…",
   "國小營養午餐查詢": "Elementary school lunch menus",
+  "目前查看": "Currently viewing",
+  "正在讀取學校…": "Loading schools…",
+  "縣市、行政區與學校": "City / county, district, and school",
+  "預設": "Default",
+  "切換": "Change",
+  "切換目前查看的學校": "Change the school currently being viewed",
+  "公開午餐查詢": "Public lunch lookup",
+  "選擇要查看的學校": "Choose a school to view",
+  "關閉選校": "Close school picker",
+  "搜尋學校": "Search schools",
+  "搜尋所有縣市的學校或行政區": "Search schools or districts across all cities and counties",
+  "請選擇一所學校": "Choose a school",
+  "可上下滑動選擇學校": "Scroll up or down to choose a school",
+  "已選擇學校": "School selected",
+  "學校搜尋結果": "School search results",
+  "這裡只切換公開午餐菜單，不會更改孩子就讀學校。": "This changes only the public lunch menu. It does not change your child's school.",
+  "查看學校菜單": "View school menu",
+  "找不到符合條件的學校": "No matching schools found",
+  "結果較多，請選行政區或繼續輸入名稱。": "There are many results. Choose a district or keep typing a name.",
   "縣市": "City / county",
   "選擇縣市": "Choose a city or county",
   "行政區": "District",
@@ -1059,6 +1084,9 @@ window.LunchEnglish = {
   "請選擇國小": "Please choose an elementary school",
   "更改孩子資料": "Edit child profile",
   "選擇午餐餐別": "Choose a meal type",
+  "午餐餐別": "Meal type",
+  "菜色分組": "Dish grouping",
+  "依官方菜名標示分組，非素食認證。": "Grouped by official dish labels; this is not a vegetarian certification.",
   "葷食": "Regular",
   "素食": "Vegetarian",
   "孩子今天": "What is your child",
@@ -3469,8 +3497,8 @@ window.LunchEnglishTemplates = [
     "Back at {0} to rest, take care of things at home, or prepare dinner."
   ],
   [
-    "{0} 所國小已放入地圖｜午餐資料仍在建設中",
-    "{0} elementary schools mapped · Lunch data remains under construction"
+    "{0} 所國小已放入地圖｜各校當日午餐開放查詢",
+    "{0} elementary schools mapped · Today's lunch lookup is available for every school"
   ],
   [
     "{0} 所國小已放入地圖｜今日 {1} 校已有午餐資料",
@@ -3497,7 +3525,7 @@ window.LunchEnglishTemplates = [
     "View the official reference for local features in {0}"
   ],
   [
-    "午餐小鎮已建立，臺中有 {0} 間午餐學校，苗栗與彰化另有 {1} 間地圖學校，並有 {2} 處建築、{3} 處 YouBike 站與 {4} 位跨區行動角色。",
-    "Lunch Town is ready with {0} lunch schools in Taichung, {1} mapped schools in Miaoli and Changhua, {2} venues, {3} YouBike stations, and {4} cross-district characters."
+    "午餐小鎮已建立，臺中、苗栗與彰化共 {0} 間午餐學校，並有 {1} 處建築、{2} 處 YouBike 站與 {3} 位跨區行動角色。",
+    "Lunch Town is ready with {0} lunch schools across Taichung, Miaoli, and Changhua, plus {1} venues, {2} YouBike stations, and {3} cross-district characters."
   ]
 ];

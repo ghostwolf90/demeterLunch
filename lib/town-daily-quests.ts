@@ -125,8 +125,8 @@ export const TOWN_DAILY_TASKS: readonly TownDailyTaskDefinition[] = [
   task("explore-mountain", "explore", "山", "山腳遠望", "抵達山腳安全位置，不必也不能走進山區。", [
     requirement("checkpoint_visit", "抵達山腳觀景點", ["mountain"]),
   ]),
-  task("explore-construction", "explore", "工", "工地探路", "抵達苗栗或彰化的午餐資料施工告示牌。", [
-    requirement("checkpoint_visit", "找到施工告示牌", ["miaoli-sign", "changhua-sign"]),
+  task("explore-construction", "explore", "餐", "午餐情報站", "抵達苗栗或彰化的學校午餐查詢告示牌。", [
+    requirement("checkpoint_visit", "找到午餐查詢告示牌", ["miaoli-sign", "changhua-sign"]),
   ]),
   task("explore-dog", "explore", "犬", "狗狗散步觀察", "靠近一組正在散步的主人與牽繩狗，不必對話。", [
     requirement("dog_observe", "找到牽繩狗"),

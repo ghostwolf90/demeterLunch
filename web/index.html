@@ -11,8 +11,8 @@
       gtag('config', 'G-EDXYFV1B3L');
     </script>
     <meta charset="utf-8" />
-    <script src="/locales/en.js?v=20261104-desktop-campus-menu"></script>
-    <script src="/i18n.js?v=20261104-desktop-campus-menu"></script>
+    <script src="/locales/en.js?v=20261105-mobile-menu-hierarchy"></script>
+    <script src="/i18n.js?v=20261105-mobile-menu-hierarchy"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="好好吃飯提供臺北市、桃園市、苗栗縣、臺中市、彰化縣、臺南市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
     <meta property="og:type" content="website" />
@@ -56,7 +56,7 @@
     <link rel="manifest" href="/site.webmanifest?v=20261022-child-meals" />
     <link rel="stylesheet" href="./passport-memory.css?v=20261023-single-memory-list" />
     <link rel="stylesheet" href="./legal.css?v=20261020-brand-story" />
-    <link rel="stylesheet" href="./styles.css?v=20261023-settings-version" />
+    <link rel="stylesheet" href="./styles.css?v=20261105-mobile-menu-hierarchy" />
       <script src="/maintenance.js" defer></script>
   </head>
   <body>
@@ -82,7 +82,7 @@
           <h1 class="eyebrow intro-service-heading">國小營養午餐查詢</h1>
           <nav class="lunch-view-nav" aria-label="營養午餐檢視">
             <a class="today-link active" href="#today" aria-current="page">今日菜單</a>
-            <a href="#week">本週菜單</a>
+            <a href="#week">校園菜單</a>
           </nav>
           <div class="school-picker">
             <div class="school-field">
@@ -104,9 +104,21 @@
               <button id="editChildFromSchoolPicker" type="button">更改孩子資料</button>
             </div>
           </div>
-          <div class="meal-type-switch" id="mealTypeSwitch" role="group" aria-label="選擇午餐餐別">
-            <button id="mealTypeMeat" type="button" aria-pressed="true">葷食</button>
-            <button id="mealTypeVegetarian" type="button" aria-pressed="false">素食</button>
+          <button class="mobile-school-context" id="mobileSchoolContext" type="button" aria-haspopup="dialog" aria-controls="mobileSchoolPickerDialog" aria-expanded="false" disabled>
+            <span class="mobile-school-context-copy">
+              <small>目前查看</small>
+              <strong id="mobileSchoolName">正在讀取學校…</strong>
+              <span id="mobileSchoolLocation">縣市、行政區與學校</span>
+            </span>
+            <span class="mobile-school-default-badge" id="mobileSchoolDefaultBadge" hidden>預設</span>
+            <span class="mobile-school-context-action">切換</span>
+          </button>
+          <p class="mobile-school-scope" id="mobileSchoolScope" role="status" aria-live="polite">正在讀取學校名冊…</p>
+          <div class="desktop-meal-type-slot" id="desktopMealTypeSlot">
+            <div class="meal-type-switch" id="mealTypeSwitch" role="group" aria-label="選擇午餐餐別">
+              <button id="mealTypeMeat" type="button" aria-pressed="true">葷食</button>
+              <button id="mealTypeVegetarian" type="button" aria-pressed="false">素食</button>
+            </div>
           </div>
           <p class="today-label" id="todayLabel">—</p>
           <p class="intro-display"><span id="mealMoment">孩子今天</span><br /><em id="heroDish">中午吃什麼？</em></p>
@@ -138,6 +150,13 @@
       <section class="today-grid" id="todayGrid">
         <article class="menu-board card" id="menuBoard">
           <div class="card-heading"><div><p class="kicker" id="menuKicker">選擇的午餐</p><h2 id="menuHeading">午餐內容</h2></div><span class="review-badge" id="reviewBadge">✓ 已校讀</span></div>
+          <div class="mobile-meal-type-control" id="mobileMealTypeControl" hidden>
+            <div class="mobile-meal-type-heading">
+              <span class="mobile-meal-type-label" id="mobileMealTypeLabel">菜色分組</span>
+              <div class="mobile-meal-type-slot" id="mobileMealTypeSlot"></div>
+            </div>
+            <p class="mobile-meal-type-help" id="mobileMealTypeHelp">依官方菜名標示分組，非素食認證。</p>
+          </div>
           <button class="main-dish" id="mainDishButton" type="button"><span>這餐主角</span><strong id="mainDish">—</strong></button>
           <p class="dish-count" id="dishCount">—</p>
           <button class="dish-photo-date-button" id="dishPhotoDateButton" type="button" hidden></button>
@@ -485,24 +504,6 @@
             <button class="settings-row settings-mobile-link" type="button" data-settings-page="terms" aria-haspopup="dialog"><span>服務條款</span><span aria-hidden="true">›</span></button>
           </div>
         </section>
-        <section class="settings-section developer-support" aria-labelledby="developerSupportTitle">
-          <details>
-            <summary class="settings-row"><span id="developerSupportTitle">支持開發者</span><span aria-hidden="true">＋</span></summary>
-            <div class="developer-support-body">
-              <p>如果好好吃飯讓你每天少一點煩惱，歡迎請開發者吃點東西，支持持續維護與改進。</p>
-              <p id="developerSupportNotice" class="settings-note">付款尚未開放，目前無法扣款。以下為預定的單次支持金額。</p>
-              <ul class="developer-support-amounts" aria-describedby="developerSupportNotice">
-                <li><span aria-hidden="true">🧋</span><span>一杯珍奶</span><strong>NT$30</strong></li>
-                <li><span aria-hidden="true">🧋</span><span>兩杯珍奶</span><strong>NT$60</strong></li>
-                <li><span aria-hidden="true">🍱</span><span>一份便當</span><strong>NT$90</strong></li>
-                <li><span aria-hidden="true">☕</span><span>咖啡＋點心</span><strong>NT$150</strong></li>
-                <li><span aria-hidden="true">🍜</span><span>一碗拉麵</span><strong>NT$290</strong></li>
-                <li><span aria-hidden="true">🍣</span><span>迴轉壽司</span><strong>NT$490</strong></li>
-              </ul>
-              <p class="settings-note">每次支持皆為單次付款，不會自動續扣，也不會解鎖功能或變更家庭方案。正式開放後將於 haohaofood.cc 付款。</p>
-            </div>
-          </details>
-        </section>
         <section class="settings-section" aria-labelledby="settingsVersionTitle">
           <h3 id="settingsVersionTitle">版本資訊</h3>
           <div class="settings-group">
@@ -548,12 +549,12 @@
         </header>
         <button class="account-dialog-close modal-close-button" id="closeAccountDialog" type="button" aria-label="關閉登入視窗"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
         <div class="account-signed-out-view" id="accountSignedOutView">
-          <span class="account-dialog-mark" aria-hidden="true">家</span>
-          <p class="kicker">免費建立家庭帳號</p>
-          <h2 id="accountDialogTitle">替孩子留一份飲食紀錄</h2>
+          <header class="account-login-heading">
+            <span class="account-dialog-mark" aria-hidden="true">家</span>
+            <div><p class="kicker">免費建立家庭帳號</p><h2 id="accountDialogTitle">登入家庭帳號</h2></div>
+          </header>
           <p class="account-intent-notice" id="accountIntentNotice" role="status" hidden></p>
-          <p class="account-value-copy">登入後，可以保存孩子提過的食物、說過的話，還有你想記住的事。</p>
-          <ul><li>免費建立 1 位孩子的飲食紀錄</li><li>記錄學校午餐與日常飲食</li><li>留下孩子對不同食物的感受與嘗試</li></ul>
+          <p class="account-value-copy">保存孩子資料與一口護照。</p>
           <form class="account-auth-form" id="emailAuthForm">
             <label id="emailEntryFields">家長 Email
               <input id="authEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" maxlength="254" required placeholder="請輸入電子郵件" />
@@ -570,20 +571,23 @@
             <button class="account-sign-in line-sign-in" id="continueLineAuth" type="button" hidden>確認並前往 LINE</button>
             <button class="account-text-button" id="backAuthMethod" type="button">返回選擇登入方式</button>
             </div>
-            <button class="account-sign-in" id="requestAuthCode" type="submit" aria-disabled="false">寄送登入驗證碼</button>
-            <p class="account-login-note">不需要設定密碼，透過 Email 驗證即可登入。</p>
-            <p class="account-legal-note">繼續使用即表示你同意<a href="/terms">服務條款</a>，並已閱讀<a href="/privacy">隱私權政策</a>；公開午餐查詢不需要註冊。</p>
-            <p class="account-registration-notice" id="authRegistrationNotice">驗證碼 10 分鐘內有效；完整生日不會保存。</p>
+            <button class="account-sign-in" id="requestAuthCode" type="submit" aria-disabled="false">使用 Email 繼續</button>
+            <p class="account-login-note" id="emailAuthNote">不需要設定密碼，透過 Email 驗證即可登入。</p>
+            <p class="account-login-note" id="lineAuthNote" hidden>將前往 LINE 完成身分驗證，授權後即可返回好好吃飯。</p>
             <p class="form-status" id="authRequestStatus" role="status" aria-live="polite"></p>
           </form>
           <div class="account-social-login" id="lineLoginOptions" hidden>
             <p class="account-login-divider"><span>或使用其他方式登入</span></p>
-            <button class="line-icon-button" id="lineSignIn" type="button" aria-label="使用 LINE 登入或免費註冊" title="使用 LINE 登入或免費註冊"><img src="/assets/line-login-icon.png" width="64" height="64" alt="" /></button>
-            <p id="lineLoginNote" class="account-login-note">使用 LINE 登入／免費註冊</p>
-            <p class="account-login-note">已有家庭帳號？先用 Email 登入，再到家庭設定綁定 LINE。</p>
+            <div class="account-login-providers" role="group" aria-label="其他登入方式">
+              <div class="account-login-provider">
+                <button class="line-icon-button" id="lineSignIn" type="button" aria-label="使用 LINE 登入或免費註冊" title="使用 LINE 登入或免費註冊"><img src="/assets/line-login-icon.png" width="64" height="64" alt="" /></button>
+                <span id="lineLoginNote" class="account-provider-label">LINE 登入</span>
+              </div>
+            </div>
+            <p class="account-login-note account-provider-help">已用 Email 建立帳號、尚未綁定 LINE？請先用 Email 登入，再到家庭設定綁定。已綁定者可直接用 LINE 登入。</p>
           </div>
           <div class="account-code-step" id="emailCodeStep" hidden>
-            <p>已寄出驗證碼，請查看 <strong id="authMaskedEmail">—</strong> 的信箱，並在 10 分鐘內輸入。</p>
+            <p>已寄出驗證碼，請查看 <strong id="authMaskedEmail">—</strong> 的信箱。驗證碼 10 分鐘內有效。</p>
             <form class="account-auth-form" id="emailCodeForm">
               <label>六位數驗證碼
                 <input id="authCode" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" autocapitalize="none" spellcheck="false" enterkeyhint="done" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="000000" />
@@ -591,8 +595,15 @@
               <button class="account-sign-in" id="verifyAuthCode" type="submit">驗證並登入</button>
               <p class="form-status" id="authVerifyStatus" role="status" aria-live="polite"></p>
             </form>
-            <button class="account-text-button" id="changeAuthEmail" type="button">返回並重新寄送驗證碼</button>
+            <button class="account-text-button" id="changeAuthEmail" type="button">返回修改 Email</button>
           </div>
+          <p class="account-legal-note">繼續使用即表示你同意<a href="/terms">服務條款</a>，並已閱讀<a href="/privacy">隱私權政策</a>；公開午餐查詢不需要註冊。</p>
+          <details class="account-privacy account-login-benefits">
+            <summary>免費帳號可以做什麼？</summary>
+            <p><strong>替孩子留一份飲食紀錄</strong></p>
+            <p>登入後，可以保存孩子提過的食物、說過的話，還有你想記住的事。</p>
+            <ul><li>免費建立 1 位孩子的飲食紀錄</li><li>記錄學校午餐與日常飲食</li><li>留下孩子對不同食物的感受與嘗試</li></ul>
+          </details>
           <details class="account-privacy"><summary>資料使用說明</summary><p>我們保存已驗證的家長 Email 或 LINE 帳號識別碼、成年確認結果，以及家長自行填寫的家庭成員姓名、暱稱、大頭貼與飲食紀錄。完整生日不會寫入資料庫，也不要求孩子提供 Email 或生日；大頭貼只供登入後的家庭帳號讀取。<a href="/privacy">查看完整隱私權政策</a></p></details>
           <p class="account-public-menu-note">只想查看學校午餐嗎？不需要註冊，也能免費使用。</p>
         </div>
@@ -794,6 +805,42 @@
       </div>
     </template>
 
+    <dialog class="mobile-school-picker-dialog" id="mobileSchoolPickerDialog" aria-labelledby="mobileSchoolPickerTitle" aria-describedby="mobileSchoolPickerNote">
+      <div class="mobile-school-picker-shell">
+        <header class="mobile-school-picker-header">
+          <div>
+            <p class="kicker">公開午餐查詢</p>
+            <h2 id="mobileSchoolPickerTitle">選擇要查看的學校</h2>
+          </div>
+          <button class="mobile-school-picker-close modal-close-button" id="closeMobileSchoolPicker" type="button" aria-label="關閉選校"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+        </header>
+        <label class="mobile-school-search" for="mobileSchoolSearch">
+          <span>搜尋學校</span>
+          <input id="mobileSchoolSearch" type="search" inputmode="search" autocomplete="off" placeholder="搜尋所有縣市的學校或行政區" />
+        </label>
+        <section class="mobile-school-filter" aria-labelledby="mobileCityHeading">
+          <h3 id="mobileCityHeading">縣市</h3>
+          <div class="mobile-school-chip-row" id="mobileCityChoices" role="group" aria-label="選擇縣市"></div>
+        </section>
+        <section class="mobile-school-filter" aria-labelledby="mobileDistrictHeading">
+          <h3 id="mobileDistrictHeading">行政區</h3>
+          <div class="mobile-school-chip-row" id="mobileDistrictChoices" role="group" aria-label="選擇行政區"></div>
+        </section>
+        <section class="mobile-school-result-section" aria-labelledby="mobileSchoolResultHeading">
+          <div class="mobile-school-result-heading">
+            <h3 id="mobileSchoolResultHeading">學校</h3>
+            <span id="mobileSchoolPickerStatus" role="status" aria-live="polite">可上下滑動選擇學校</span>
+          </div>
+          <div class="mobile-school-results" id="mobileSchoolResults" aria-label="學校搜尋結果"></div>
+        </section>
+        <p class="mobile-school-picker-note" id="mobileSchoolPickerNote">這裡只切換公開午餐菜單，不會更改孩子就讀學校。</p>
+        <div class="mobile-school-picker-actions">
+          <button class="mobile-school-default-action" id="mobileDefaultSchoolAction" type="button" disabled>☆ 設為預設學校</button>
+          <button class="mobile-school-apply" id="mobileSchoolApply" type="button" disabled>查看學校菜單</button>
+        </div>
+      </div>
+    </dialog>
+
     <dialog class="source-dialog" id="sourceDialog" aria-labelledby="dialogTitle">
       <button class="dialog-close modal-close-button" id="closeSource" type="button" aria-label="關閉"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
       <div><p class="kicker">原始菜單</p><h2 id="dialogTitle">本週原始菜單</h2></div>
@@ -830,7 +877,8 @@
     <script src="./sample-dashboard.js" defer></script>
     <script src="./passport-memory.js?v=20261023-single-memory-list" defer></script>
     <script src="./meal-photos.js" defer></script>
+    <script src="./line-auth-return.js" defer></script>
     <script src="./product-analytics.js" defer></script>
-    <script src="./app.js?v=20261023-settings-version" defer></script>
+    <script src="./app.js?v=20261105-mobile-menu-hierarchy" defer></script>
   </body>
 </html>

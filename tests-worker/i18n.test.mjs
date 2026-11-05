@@ -70,6 +70,8 @@ test('English covers dynamic notices without changing embedded personal or offic
   assert.equal(api.t('編輯喜歡的設定'), 'Edit settings for 喜歡');
   assert.equal(api.t('2026年10月24日 星期六'), 'October 24, 2026 (Sat)');
   assert.equal(api.t('素食，3 道官方公開菜色'), 'Vegetarian, 3 officially listed dishes');
+  assert.equal(api.t('菜色分組'), 'Dish grouping');
+  assert.equal(api.t('依官方菜名標示分組，非素食認證。'), 'Grouped by official dish labels; this is not a vegetarian certification.');
 });
 
 test('English localizes Lunch Town dialogue and City Hall after-hours routines', () => {
@@ -123,7 +125,8 @@ test('English localizes Lunch Town dialogue and City Hall after-hours routines',
     'Stopping by Changhua Civic Market after work for dinner and daily essentials before heading home.',
   );
   assert.equal(api.t('臺中・苗栗・彰化午餐小鎮'), 'Taichung · Miaoli · Changhua Lunch Town');
-  assert.equal(api.t('午餐資料建設中'), 'Lunch data under construction');
+  assert.equal(api.t('各校當日午餐可查詢'), "Check today's lunch for any school");
+  assert.equal(api.t('學校午餐查詢'), 'School lunch lookup');
   assert.equal(api.t('午餐資料持續更新'), 'Lunch data update in progress');
   assert.equal(api.t('當日午餐已更新'), "Today's lunch data is ready");
   assert.equal(api.t('回家報到'), 'Check in at home');
@@ -152,12 +155,8 @@ test('English localizes Lunch Town dialogue and City Hall after-hours routines',
     'Walking through Sanyi Township to see its schools and local scenery.',
   );
   assert.equal(
-    api.t('按 Enter 查看 勝興國小 地圖資訊'),
-    'Press Enter: view map information for 勝興國小',
-  );
-  assert.equal(
-    api.t('114 所國小已放入地圖｜午餐資料仍在建設中'),
-    '114 elementary schools mapped · Lunch data remains under construction',
+    api.t('114 所國小已放入地圖｜各校當日午餐開放查詢'),
+    "114 elementary schools mapped · Today's lunch lookup is available for every school",
   );
   assert.equal(
     api.t('114 所國小已放入地圖｜今日 27 校已有午餐資料'),

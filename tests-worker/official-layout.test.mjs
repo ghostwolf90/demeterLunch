@@ -12,10 +12,10 @@ function setup() {
       setAttribute() {}, replaceChildren(...children) { this.children = children; } };
     } return target[key];
   } });
-  const data = { snapshots: [], dinner: null };
+  const data = { snapshots: [], dinner: null, hasVariants: false };
   const context = vm.createContext({ refs, state: { mealType: 'meat' },
     document: { body: { dataset: {} }, querySelectorAll: () => [] },
-    OfficialDiet: { profile: () => ({ hasVariants: false }), summary: () => ({ dishCount: 1, ingredientCount: 0 }),
+    OfficialDiet: { profile: () => ({ hasVariants: data.hasVariants }), summary: () => ({ dishCount: 1, ingredientCount: 0 }),
       nutritionSnapshots: () => data.snapshots, dinnerSuggestion: () => data.dinner },
     officialDishes: () => [], localIsoDate: () => '2026-10-27', formatDate: value => value,
     watchProductContent() {}, renderSchoolContext() {}, renderOfficialMeal() {}, renderPassportFoodChoices() {}, renderOfficialTraceability() {}, renderOfficialWeek() {}, setDashboardStatus() {},
@@ -50,4 +50,14 @@ test('available daily data and returning to weekly mode clear the unavailable st
   h.data.snapshots = []; h.context.renderOfficial(h.dashboard); h.context.setViewMode('detailed');
   assert.equal(h.refs.nutritionCard.classList.contains('is-unavailable'), false);
   assert.equal(h.refs.dinnerCard.hidden, false);
+});
+
+test('official variants expose the same meal type control inside the mobile menu card', () => {
+  const h = setup();
+  h.data.hasVariants = true;
+  h.context.renderOfficial(h.dashboard);
+  assert.equal(h.refs.mealTypeSwitch.hidden, false);
+  assert.equal(h.refs.mobileMealTypeControl.hidden, false);
+  assert.equal(h.refs.mobileMealTypeLabel.textContent, '菜色分組');
+  assert.equal(h.refs.mobileMealTypeHelp.hidden, false);
 });

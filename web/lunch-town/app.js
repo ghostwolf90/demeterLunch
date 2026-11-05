@@ -1349,7 +1349,7 @@ async function init() {
       void recordAchievementEvent("town_visit", state.environment?.dateKey || state.date);
       if (state.activeDistrict) void recordAchievementEvent("district_visit", state.activeDistrict);
     });
-    announce(`午餐小鎮已建立，臺中有 ${state.schools.length} 間午餐學校，苗栗與彰化另有 ${state.neighborSchools.length} 間地圖學校，並有 ${state.venues.length} 處建築、${state.bikeStations.length} 處 YouBike 站與 ${state.npcs.length} 位跨區行動角色。`);
+    announce(`午餐小鎮已建立，臺中、苗栗與彰化共 ${state.schools.length + state.neighborSchools.length} 間午餐學校，並有 ${state.venues.length} 處建築、${state.bikeStations.length} 處 YouBike 站與 ${state.npcs.length} 位跨區行動角色。`);
   } catch (error) {
     console.error(error);
     refs.loadingTitle.textContent = "午餐小鎮暫時無法建立";
@@ -4792,7 +4792,7 @@ function updateCamera(snap = false, delta = 0) {
     const neighborAvailableCount = neighborDistrictSchools.filter(schoolHasCurrentMeal).length;
     const neighborMealStatus = neighborAvailableCount
       ? townText(`今日 ${neighborAvailableCount}/${neighborDistrictSchools.length} 校有午餐資料`)
-      : townText("午餐資料建設中");
+      : townText("各校當日午餐可查詢");
     refs.districtBadge.textContent = theme
       ? `${theme.group}・${district}`
       : neighborDistrictTheme
@@ -4805,7 +4805,7 @@ function updateCamera(snap = false, delta = 0) {
       : neighborDistrictTheme
         ? `${townText(neighborDistrictTheme.featureLabel)}｜${neighborMealStatus}`
       : neighborCounty
-        ? townText("午餐資料建設中｜校園已放入地圖，可散步探索")
+        ? townText("校園已放入地圖｜各校當日午餐可查詢")
         : state.mapNote;
     const sourceUrl = theme?.sourceUrl || neighborCountyTheme?.sourceUrl || "";
     refs.districtSource.hidden = !sourceUrl;
@@ -7074,7 +7074,7 @@ function drawNeighborCountyDetails(now) {
     context.fillText(townText(countyTheme.tagline), labelX + 18, labelY + 35, 490);
     const countyStatus = availableCount
       ? townText(`${schoolCount} 所國小已放入地圖｜今日 ${availableCount} 校已有午餐資料`)
-      : townText(`${schoolCount} 所國小已放入地圖｜午餐資料仍在建設中`);
+      : townText(`${schoolCount} 所國小已放入地圖｜各校當日午餐開放查詢`);
     context.fillText(countyStatus, labelX + 18, labelY + 53, 490);
 
     countyTheme.districts.forEach((districtTheme) => {
@@ -7086,10 +7086,8 @@ function drawNeighborCountyDetails(now) {
     });
     const signLabel = availableCount === schoolCount
       ? "當日午餐已更新"
-      : availableCount > 0
-        ? "午餐資料持續更新"
-        : "午餐資料建設中";
-    drawConstructionSign(
+      : "學校午餐查詢";
+    drawLunchInfoSign(
       county.bridgeX + (county.side === "north" ? 92 : -258),
       county.side === "north" ? county.y + county.h - 104 : county.y + 8,
       now,
@@ -7307,28 +7305,26 @@ function drawPixelCountyLandmark(style, x, y, scale = 1) {
   context.restore();
 }
 
-function drawConstructionSign(x, y, now, index, label = "午餐資料建設中") {
-  const light = reducedMotion ? 1 : (Math.floor(now / 520) + index) % 2;
+function drawLunchInfoSign(x, y, now, index, label = "學校午餐查詢") {
+  const light = reducedMotion ? 1 : (Math.floor(now / 900) + index) % 2;
   context.fillStyle = "rgba(30, 54, 58, 0.22)";
   context.fillRect(x + 5, y + 8, 166, 82);
   context.fillStyle = "#6d5138";
   context.fillRect(x + 18, y + 62, 8, 34);
   context.fillRect(x + 140, y + 62, 8, 34);
-  context.fillStyle = "#f0c34e";
+  context.fillStyle = "#d9efe4";
   context.fillRect(x, y + 10, 166, 62);
-  for (let stripe = 0; stripe < 166; stripe += 24) {
-    context.fillStyle = stripe % 48 ? "#30393c" : "#f0c34e";
-    context.fillRect(x + stripe, y + 10, Math.min(14, 166 - stripe), 8);
-    context.fillRect(x + stripe, y + 64, Math.min(14, 166 - stripe), 8);
-  }
+  context.fillStyle = "#4d7d67";
+  context.fillRect(x, y + 10, 166, 8);
+  context.fillRect(x, y + 64, 166, 8);
   context.fillStyle = COLORS.ink;
   context.font = "bold 11px ui-monospace, monospace";
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillText(townText(label), x + 83, y + 42, 142);
-  context.fillStyle = light ? "#ef5d43" : "#9f593e";
-  context.fillRect(x + 12, y, 13, 10);
-  context.fillRect(x + 141, y, 13, 10);
+  context.fillStyle = light ? "#f0c34e" : "#d99f3d";
+  context.fillRect(x + 12, y + 1, 10, 9);
+  context.fillRect(x + 144, y + 1, 10, 9);
 }
 
 function coastlineXAt(y) {
@@ -10142,9 +10138,7 @@ function updateNearbyPrompt() {
         : school
           ? `${actionLead} 查看 ${school.name} ${formatDate(state.date)} 午餐`
           : neighborSchool
-            ? schoolHasCurrentMeal(neighborSchool)
-              ? `${actionLead} 查看 ${neighborSchool.name} ${formatDate(state.date)} 午餐`
-              : townText(`${actionLead} 查看 ${neighborSchool.name} 地圖資訊`)
+            ? `${actionLead} 查看 ${neighborSchool.name} ${formatDate(state.date)} 午餐`
           : venue
             ? townUsesEnglish()
               ? `${actionLead} enter ${venueDisplayLabel(venue)}`
@@ -10458,32 +10452,7 @@ function drawNearbyNpcMarker() {
 }
 
 function openNeighborSchool(school, method = "nearby_action") {
-  if (schoolHasCurrentMeal(school)) {
-    void openSchool(school, method);
-    return;
-  }
-  if (state.townEvent) {
-    announce("請先完成目前的街區事件。 ");
-    return;
-  }
-  setQuestPanelOpen(false);
-  if (state.dialogueNpc) closeNpcDialogue();
-  refs.dialogKicker.textContent = `${townText(school.city)}・${townText(school.district)}・${townText("學校地圖")}`;
-  refs.dialogTitle.textContent = school.name;
-  refs.dialogBody.innerHTML = `
-    <p class="venue-description">${escapeHtml(townText("這所國小已依審核學校名冊放入行政區的相對位置。"))}</p>
-    <div class="meal-summary"><span>${escapeHtml(townText("午餐資料建設中"))}</span><span>${escapeHtml(townText("校園已放入地圖"))}</span></div>
-    <p class="data-note">${escapeHtml(townText("地圖位置為遊戲化示意，行政區遵循大致東南西北；校園並非精確校址或比例。"))}</p>
-    <p class="data-note">${escapeHtml(townText("目前可散步查看校名；苗栗與彰化的午餐內容尚未在午餐小鎮開放。"))}</p>
-  `;
-  if (!refs.dialog.open) refs.dialog.showModal();
-  trackTownEvent("lunch_town_neighbor_school_viewed", {
-    school_id: String(school.fatraceSchoolId),
-    city: school.city,
-    district: school.district,
-    method,
-  });
-  announce(townText(`已開啟 ${school.name} 地圖資訊。`));
+  void openSchool(school, method);
 }
 
 async function openSchool(school, method = "nearby_action") {

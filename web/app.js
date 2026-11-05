@@ -28,6 +28,7 @@ const state = {
   lastSourceTrigger: null,
   accountRequestId: 0,
   dialogMotion: {
+    mobileSchool: { openFrame: 0, closeTimer: 0, closePromise: null },
     settingsPage: { openFrame: 0, closeTimer: 0, closePromise: null },
     settings: { openFrame: 0, closeTimer: 0, closePromise: null },
     account: { openFrame: 0, closeTimer: 0, closePromise: null },
@@ -78,6 +79,15 @@ const state = {
   onboardingActive: false,
   onboardingStartPending: false,
   lastFamilyPlanTrigger: null,
+  lastMobileSchoolTrigger: null,
+  mobileSchoolScrollY: 0,
+  mobileSchoolScrollLocked: false,
+  mobileSchoolPicker: {
+    city: null,
+    district: null,
+    schoolId: null,
+    query: "",
+  },
   schoolDataScopeTimer: 0,
   sampleRequestId: 0,
   dashboardRequestId: 0,
@@ -186,8 +196,12 @@ const ids = [
   "standardMetrics", "standardGuidance", "standardObservations", "standardMethod",
   "standardCoverage", "standardSource", "standardRevision",
   "citySelect", "districtSelect", "schoolSelect", "defaultSchoolButton", "schoolDataScope", "schoolBrowserNote", "schoolBrowserNoteText", "editChildFromSchoolPicker", "brandSchoolLabel", "footerSource",
+  "mobileSchoolContext", "mobileSchoolName", "mobileSchoolLocation", "mobileSchoolDefaultBadge", "mobileSchoolScope",
+  "mobileSchoolPickerDialog", "closeMobileSchoolPicker", "mobileSchoolSearch", "mobileCityChoices", "mobileDistrictChoices",
+  "mobileSchoolPickerStatus", "mobileSchoolResults", "mobileDefaultSchoolAction", "mobileSchoolApply",
   "sampleModeBanner", "sampleModeDate", "sampleSelectSchool",
-  "mealTypeSwitch", "menuBoard", "menuKicker", "menuHeading", "reviewBadge",
+  "desktopMealTypeSlot", "mealTypeSwitch", "mobileMealTypeControl", "mobileMealTypeLabel", "mobileMealTypeSlot", "mobileMealTypeHelp",
+  "menuBoard", "menuKicker", "menuHeading", "reviewBadge",
   "officialSourceLink", "schoolMenuSourceButton", "schoolMenuNutritionButton", "nutritionCard", "dinnerCard", "standard", "learn",
   "week", "todayGrid", "traceability", "news", "insights", "source", "traceabilityKicker", "traceabilityHeading",
   "passport", "passportLocked", "passportUnlock", "passportSetup", "openChildSettings", "childForm", "childNickname",
@@ -210,7 +224,7 @@ const ids = [
   "emailLinkSettings", "emailLinkForm", "linkEmail", "requestLinkEmailCode", "emailLinkCodeForm", "linkEmailCode", "verifyLinkEmailCode", "cancelEmailLink", "emailLinkStatus",
   "settingsSignOutSection", "settingsSignOutStatus", "emailEntryFields", "authEligibilityGate", "continueLineAuth", "backAuthMethod", "lineLoginOptions",
   "lineSignIn", "lineLoginNote", "lineAccountSettings", "linkLineAccount", "lineLinkNote", "lineLinkStatus",
-  "emailAuthForm", "authEmail", "authBirthDate", "authCaregiverConfirmed", "requestAuthCode", "authRequestStatus",
+  "emailAuthNote", "lineAuthNote", "emailAuthForm", "authEmail", "authBirthDate", "authCaregiverConfirmed", "requestAuthCode", "authRequestStatus",
   "emailCodeStep", "authMaskedEmail", "emailCodeForm", "authCode", "verifyAuthCode", "authVerifyStatus",
   "changeAuthEmail", "accountSignOut",
 ];
@@ -1385,6 +1399,10 @@ function renderAccount() {
 function renderEmailAuthStep() {
   const awaitingCode = EMAIL_REGISTRATION_ENABLED && Boolean(state.authChallengeId);
   refs.lineLoginOptions.hidden = !state.account.lineLoginEnabled || awaitingCode || !refs.authEligibilityGate.hidden;
+  const lineSelected = !refs.authEligibilityGate.hidden && !refs.continueLineAuth.hidden;
+  refs.emailAuthNote.hidden = lineSelected;
+  refs.lineAuthNote.hidden = !lineSelected;
+  refs.requestAuthCode.textContent = refs.authEligibilityGate.hidden ? "使用 Email 繼續" : "寄送登入驗證碼";
   refs.emailAuthForm.hidden = awaitingCode;
   refs.emailCodeStep.hidden = !awaitingCode;
   refs.requestAuthCode.disabled = !EMAIL_REGISTRATION_ENABLED;
@@ -1436,6 +1454,24 @@ async function loadAccount({ childId = state.activeChildId } = {}) {
   if (state.onboardingActive && refs.accountDialog.open) void markOnboardingStarted();
 }
 
+function lineAuthResultMessage(status, linking = false) {
+  if (linking && status !== "success" && status !== "linked") return {
+    cancelled: "已取消 LINE 綁定，你仍可使用原本的登入方式。",
+    expired: "LINE 綁定驗證已過期或帳號狀態改變，請重新開始綁定。",
+    conflict: "這個 LINE 或家庭帳號已綁定其他帳號，無法完成此次綁定。",
+    failed: "LINE 綁定暫時無法完成，請稍後再試。",
+    closed: "已關閉 LINE 綁定視窗，尚未完成綁定，可以重新開始。",
+  }[status] || null;
+  return {
+    success: "已使用 LINE 登入。", linked: "LINE 已綁定，孩子資料與一口護照會保留。",
+    cancelled: "你已取消 LINE 授權，可以重新登入或使用 Email。",
+    expired: "登入已過期或帳號狀態改變，請重新開始。",
+    conflict: "這個 LINE 或家庭帳號已綁定其他帳號，請使用原本的登入方式。",
+    failed: "LINE 登入暫時無法完成，請重新開始或使用 Email。",
+    closed: "已關閉 LINE 登入視窗，尚未完成驗證，可以重新開始。",
+  }[status] || null;
+}
+
 async function startLineAuth(mode) {
   const linking = mode === "link";
   const status = linking ? refs.lineLinkStatus : refs.authRequestStatus;
@@ -1448,6 +1484,35 @@ async function startLineAuth(mode) {
   button.disabled = true;
   setFormStatus(status, "正在前往 LINE…", "loading");
   try {
+    if (window.LineAuthReturn?.isStandalone()) {
+      try {
+        const result = await window.LineAuthReturn.start({
+          mode, stayInWeb: true, birthDate: linking ? undefined : refs.authBirthDate.value,
+          caregiverConfirmed: linking ? undefined : refs.authCaregiverConfirmed.checked,
+        });
+        await loadAccount();
+        const succeeded = linking
+          ? state.account.authenticated && state.account.lineLinked
+          : state.account.authenticated;
+        if ((result.status === "success" || result.status === "linked" || result.status === "closed") && succeeded) {
+          if (!linking) await window.ProductAnalytics?.lineSignup();
+          resetEmailAuthForm();
+          setFormStatus(linking ? refs.lineLinkStatus : refs.authRequestStatus,
+            linking ? "LINE 已綁定，孩子資料與一口護照會保留。" : "已使用 LINE 登入。", "success");
+          if (state.onboardingActive) {
+            void markOnboardingStarted();
+            focusAccountChildEditor(refs.childNickname);
+          }
+        } else {
+          throw new Error(result.status === "success" || result.status === "linked"
+            ? "目前無法確認 LINE 登入結果，請重新整理後再試。"
+            : lineAuthResultMessage(result.status, linking) || "目前無法確認 LINE 登入結果，請重新整理後再試。");
+        }
+      } finally {
+        button.disabled = linking && Boolean(state.account.lineLinked);
+      }
+      return;
+    }
     const response = await fetch("/api/auth/line/start", {
       method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" },
       body: JSON.stringify({ mode, birthDate: linking ? undefined : refs.authBirthDate.value,
@@ -1702,15 +1767,9 @@ function openRequestedAccountDialog() {
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   openSettingsDialog(refs.accountButton);
   openAccountDialog(refs.settingsFamilyAccount);
-  const messages = {
-    success: "已使用 LINE 登入。", linked: "LINE 已綁定，孩子資料與一口護照會保留。",
-    cancelled: "你已取消 LINE 授權，可以重新登入或使用 Email。",
-    expired: "登入已過期或帳號狀態改變，請重新開始。",
-    conflict: "這個 LINE 或家庭帳號已綁定其他帳號，請使用原本的登入方式。",
-    failed: "LINE 登入暫時無法完成，請重新開始或使用 Email。",
-  };
-  if (messages[lineResult]) setFormStatus(state.account.authenticated ? refs.lineLinkStatus : refs.authRequestStatus,
-    messages[lineResult], lineResult === "success" || lineResult === "linked" ? "success" : "error");
+  const message = lineAuthResultMessage(lineResult, state.account.authenticated && lineResult !== "success");
+  if (message) setFormStatus(state.account.authenticated ? refs.lineLinkStatus : refs.authRequestStatus,
+    message, lineResult === "success" || lineResult === "linked" ? "success" : "error");
 }
 
 function openFamilyPlanDialog(trigger) {
@@ -2965,12 +3024,16 @@ function schoolDataScopeText(dashboard = state.dashboard) {
 function setSchoolDataScope(message, { temporary = false } = {}) {
   window.clearTimeout(state.schoolDataScopeTimer);
   state.schoolDataScopeTimer = 0;
-  refs.schoolDataScope.textContent = message;
-  refs.schoolDataScope.classList.toggle("is-feedback", temporary);
+  for (const scope of [refs.schoolDataScope, refs.mobileSchoolScope]) {
+    scope.textContent = message;
+    scope.classList.toggle("is-feedback", temporary);
+  }
   if (!temporary) return;
   state.schoolDataScopeTimer = window.setTimeout(() => {
-    refs.schoolDataScope.textContent = schoolDataScopeText();
-    refs.schoolDataScope.classList.remove("is-feedback");
+    for (const scope of [refs.schoolDataScope, refs.mobileSchoolScope]) {
+      scope.textContent = schoolDataScopeText();
+      scope.classList.remove("is-feedback");
+    }
     state.schoolDataScopeTimer = 0;
   }, 2600);
 }
@@ -2983,6 +3046,210 @@ function renderDefaultSchoolButton() {
   refs.defaultSchoolButton.classList.toggle("is-default", Boolean(isDefault));
   refs.defaultSchoolButton.textContent = isDefault ? "✓ 預設學校" : "☆ 設為預設學校";
   refs.defaultSchoolButton.setAttribute("aria-pressed", String(Boolean(isDefault)));
+  renderMobileSchoolContext();
+  renderMobileDefaultSchoolAction();
+  if (refs.mobileSchoolPickerDialog.open) renderMobileSchoolPicker();
+}
+
+function schoolCities() {
+  return [...new Set(state.schoolDirectory.map((school) => school.city).filter(Boolean))];
+}
+
+function schoolDistricts(city) {
+  const districts = [];
+  const seen = new Set();
+  for (const school of state.schoolDirectory) {
+    if (school.city !== city) continue;
+    const key = districtKey(school);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    districts.push({ key, district: school.district });
+  }
+  return districts;
+}
+
+function mobileDraftSchool() {
+  return schoolById(state.mobileSchoolPicker.schoolId);
+}
+
+function renderMobileSchoolContext() {
+  const school = selectedSchool();
+  const isDefault = school
+    && Number(school.fatraceSchoolId) === Number(state.account.defaultSchoolId);
+  refs.mobileSchoolContext.disabled = state.schoolDirectory.length === 0;
+  refs.mobileSchoolName.textContent = school?.name || (state.schoolDirectory.length ? "選擇學校" : "正在讀取學校…");
+  if (school) LunchI18n.keep(refs.mobileSchoolName);
+  refs.mobileSchoolLocation.textContent = school
+    ? `${school.city}・${school.district}`
+    : "縣市、行政區與學校";
+  refs.mobileSchoolDefaultBadge.hidden = !isDefault;
+  refs.mobileSchoolContext.setAttribute("aria-label", school ? "切換目前查看的學校" : "選擇學校");
+}
+
+function renderMobileDefaultSchoolAction() {
+  const school = refs.mobileSchoolPickerDialog.open ? mobileDraftSchool() : selectedSchool();
+  const isDefault = school
+    && Number(school.fatraceSchoolId) === Number(state.account.defaultSchoolId);
+  refs.mobileDefaultSchoolAction.disabled = !school || state.account.loading;
+  refs.mobileDefaultSchoolAction.classList.toggle("is-default", Boolean(isDefault));
+  refs.mobileDefaultSchoolAction.textContent = isDefault ? "✓ 預設學校" : "☆ 設為預設學校";
+  refs.mobileDefaultSchoolAction.setAttribute("aria-pressed", String(Boolean(isDefault)));
+}
+
+function normalizeSchoolSearch(value) {
+  return String(value || "").trim().toLocaleLowerCase("zh-Hant").replace(/\s+/g, "");
+}
+
+function renderMobileSchoolPicker() {
+  const picker = state.mobileSchoolPicker;
+  const cities = schoolCities();
+  if (!picker.city || !cities.includes(picker.city)) picker.city = cities[0] || null;
+  const districts = schoolDistricts(picker.city);
+  if (picker.district && !districts.some((district) => district.key === picker.district)) {
+    picker.district = null;
+  }
+
+  refs.mobileCityChoices.replaceChildren();
+  for (const city of cities) {
+    const button = node("button", "mobile-school-chip", city);
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(city === picker.city));
+    button.addEventListener("click", () => {
+      picker.city = city;
+      picker.district = null;
+      picker.schoolId = null;
+      picker.query = "";
+      refs.mobileSchoolSearch.value = "";
+      renderMobileSchoolPicker();
+      refs.mobileSchoolResults.scrollTop = 0;
+      refs.mobileCityChoices.querySelector('[aria-pressed="true"]')?.focus({ preventScroll: true });
+    });
+    refs.mobileCityChoices.append(button);
+  }
+
+  refs.mobileDistrictChoices.replaceChildren();
+  const allDistricts = node("button", "mobile-school-chip", "全部");
+  allDistricts.type = "button";
+  allDistricts.setAttribute("aria-pressed", String(!picker.district));
+  allDistricts.addEventListener("click", () => {
+    picker.district = null;
+    picker.schoolId = null;
+    picker.query = "";
+    refs.mobileSchoolSearch.value = "";
+    renderMobileSchoolPicker();
+    refs.mobileSchoolResults.scrollTop = 0;
+    refs.mobileDistrictChoices.querySelector('[aria-pressed="true"]')?.focus({ preventScroll: true });
+  });
+  refs.mobileDistrictChoices.append(allDistricts);
+  for (const district of districts) {
+    const button = node("button", "mobile-school-chip", district.district);
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(district.key === picker.district));
+    button.addEventListener("click", () => {
+      picker.district = district.key;
+      picker.schoolId = null;
+      picker.query = "";
+      refs.mobileSchoolSearch.value = "";
+      renderMobileSchoolPicker();
+      refs.mobileSchoolResults.scrollTop = 0;
+      refs.mobileDistrictChoices.querySelector('[aria-pressed="true"]')?.focus({ preventScroll: true });
+    });
+    refs.mobileDistrictChoices.append(button);
+  }
+
+  const query = normalizeSchoolSearch(picker.query);
+  let schools = state.schoolDirectory.filter((school) => {
+    if (query) {
+      return normalizeSchoolSearch(`${school.city}${school.district}${school.name}${school.fullName || ""}`)
+        .includes(query);
+    }
+    if (school.city !== picker.city) return false;
+    return !picker.district || districtKey(school) === picker.district;
+  });
+  const hasMore = schools.length > 80;
+  schools = schools.slice(0, 80);
+
+  refs.mobileSchoolResults.replaceChildren();
+  for (const school of schools) {
+    const selected = Number(school.fatraceSchoolId) === Number(picker.schoolId);
+    const button = node("button", "mobile-school-result");
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(selected));
+    const copy = node("span", "mobile-school-result-copy");
+    copy.append(
+      LunchI18n.keep(node("strong", "", school.name)),
+      node("small", "", `${school.city}・${school.district}`),
+    );
+    button.append(copy);
+    if (Number(school.fatraceSchoolId) === Number(state.account.defaultSchoolId)) {
+      button.append(node("span", "mobile-school-result-badge", "預設"));
+    }
+    button.addEventListener("click", () => {
+      picker.schoolId = Number(school.fatraceSchoolId);
+      picker.city = school.city;
+      picker.district = districtKey(school);
+      renderMobileSchoolPicker();
+      refs.mobileSchoolApply.focus({ preventScroll: true });
+    });
+    refs.mobileSchoolResults.append(button);
+  }
+  if (!schools.length) {
+    refs.mobileSchoolResults.append(node("p", "mobile-school-empty", "找不到符合條件的學校"));
+  }
+  if (hasMore) {
+    refs.mobileSchoolResults.append(node("p", "mobile-school-more", "結果較多，請選行政區或繼續輸入名稱。"));
+  }
+  refs.mobileSchoolPickerStatus.textContent = picker.schoolId ? "已選擇學校" : "可上下滑動選擇學校";
+  refs.mobileSchoolApply.disabled = !mobileDraftSchool();
+  renderMobileDefaultSchoolAction();
+}
+
+function lockMobileSchoolBackground() {
+  if (state.mobileSchoolScrollLocked) return;
+  state.mobileSchoolScrollY = Math.max(0, window.scrollY || window.pageYOffset || 0);
+  state.mobileSchoolScrollLocked = true;
+  document.body.style.top = `-${state.mobileSchoolScrollY}px`;
+  document.body.classList.add("mobile-school-picker-open");
+}
+
+function unlockMobileSchoolBackground() {
+  if (!state.mobileSchoolScrollLocked) return;
+  const scrollY = state.mobileSchoolScrollY;
+  state.mobileSchoolScrollLocked = false;
+  state.mobileSchoolScrollY = 0;
+  document.body.classList.remove("mobile-school-picker-open");
+  document.body.style.removeProperty("top");
+  window.scrollTo(0, scrollY);
+}
+
+function openMobileSchoolPicker(trigger = refs.mobileSchoolContext) {
+  if (!window.matchMedia("(max-width: 720px)").matches || !state.schoolDirectory.length) return;
+  const school = selectedSchool();
+  state.lastMobileSchoolTrigger = trigger;
+  state.mobileSchoolPicker.city = school?.city || state.city || schoolCities()[0] || null;
+  state.mobileSchoolPicker.district = school ? districtKey(school) : null;
+  state.mobileSchoolPicker.schoolId = school ? Number(school.fatraceSchoolId) : null;
+  state.mobileSchoolPicker.query = "";
+  refs.mobileSchoolSearch.value = "";
+  refs.mobileSchoolContext.setAttribute("aria-expanded", "true");
+  renderMobileSchoolPicker();
+  lockMobileSchoolBackground();
+  openStagedDialog(
+    refs.mobileSchoolPickerDialog,
+    state.dialogMotion.mobileSchool,
+    refs.closeMobileSchoolPicker,
+  );
+}
+
+async function closeMobileSchoolPicker({ restoreFocus = true, immediate = false } = {}) {
+  refs.mobileSchoolContext.setAttribute("aria-expanded", "false");
+  await closeStagedDialog(
+    refs.mobileSchoolPickerDialog,
+    state.dialogMotion.mobileSchool,
+    { immediate },
+  );
+  unlockMobileSchoolBackground();
+  if (restoreFocus) state.lastMobileSchoolTrigger?.focus({ preventScroll: true });
 }
 
 function populateSchoolSelectors() {
@@ -3069,13 +3336,17 @@ function renderSchoolContext(dashboard) {
 function setViewMode(mode, { showOfficialMealTypes = false } = {}) {
   const official = mode === "officialDaily";
   const sample = mode === "sample";
+  const showMealTypes = !official || showOfficialMealTypes;
   document.body.dataset.viewMode = official ? "official" : sample ? "sample" : "detailed";
   refs.sampleModeBanner.hidden = !sample;
   refs.week.hidden = false;
   refs.todayGrid.hidden = false;
   refs.traceability.hidden = false;
   refs.news.hidden = false;
-  refs.mealTypeSwitch.hidden = official && !showOfficialMealTypes;
+  refs.mealTypeSwitch.hidden = !showMealTypes;
+  refs.mobileMealTypeControl.hidden = !showMealTypes;
+  refs.mobileMealTypeLabel.textContent = official ? "菜色分組" : "午餐餐別";
+  refs.mobileMealTypeHelp.hidden = !official;
   refs.mealTypeSwitch.setAttribute(
     "aria-label",
     official ? "依官方菜名標示切換葷食或素食" : "選擇午餐餐別",
@@ -3117,6 +3388,7 @@ async function renderNoSchoolSelected() {
   populateSchoolSelectors();
   document.body.dataset.viewMode = "empty";
   refs.mealTypeSwitch.hidden = true;
+  refs.mobileMealTypeControl.hidden = true;
   refs.sampleModeBanner.hidden = true;
   refs.week.hidden = true;
   refs.todayGrid.hidden = true;
@@ -3773,6 +4045,16 @@ async function selectMealType(mealType) {
 refs.mealTypeMeat.addEventListener("click", () => selectMealType("meat"));
 refs.mealTypeVegetarian.addEventListener("click", () => selectMealType("vegetarian"));
 
+const mobileMealTypeMedia = window.matchMedia("(max-width: 720px)");
+
+function syncMealTypePlacement(media = mobileMealTypeMedia) {
+  const target = media.matches ? refs.mobileMealTypeSlot : refs.desktopMealTypeSlot;
+  if (refs.mealTypeSwitch.parentElement !== target) target.append(refs.mealTypeSwitch);
+}
+
+mobileMealTypeMedia.addEventListener?.("change", syncMealTypePlacement);
+syncMealTypePlacement();
+
 async function selectSchool(schoolId, { trackSelection = false } = {}) {
   state.sampleRequestId += 1;
   const nextSchoolId = Number(schoolId);
@@ -3804,13 +4086,43 @@ refs.districtSelect.addEventListener("change", async () => {
   await renderNoSchoolSelected();
   refs.schoolSelect.focus();
 });
+refs.mobileSchoolContext.addEventListener("click", () => openMobileSchoolPicker(refs.mobileSchoolContext));
+refs.closeMobileSchoolPicker.addEventListener("click", () => void closeMobileSchoolPicker());
+refs.mobileSchoolPickerDialog.addEventListener("click", (event) => {
+  if (event.target === refs.mobileSchoolPickerDialog) void closeMobileSchoolPicker();
+});
+refs.mobileSchoolPickerDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  void closeMobileSchoolPicker();
+});
+refs.mobileSchoolPickerDialog.addEventListener("close", () => {
+  refs.mobileSchoolContext.setAttribute("aria-expanded", "false");
+  unlockMobileSchoolBackground();
+});
+refs.mobileSchoolSearch.addEventListener("input", () => {
+  state.mobileSchoolPicker.query = refs.mobileSchoolSearch.value;
+  state.mobileSchoolPicker.schoolId = null;
+  renderMobileSchoolPicker();
+  refs.mobileSchoolResults.scrollTop = 0;
+});
+refs.mobileSchoolApply.addEventListener("click", async () => {
+  const schoolId = Number(mobileDraftSchool()?.fatraceSchoolId);
+  if (!schoolId) return;
+  await closeMobileSchoolPicker();
+  await selectSchool(schoolId, { trackSelection: true });
+});
 refs.sampleSelectSchool.addEventListener("click", () => {
+  if (window.matchMedia("(max-width: 720px)").matches) {
+    openMobileSchoolPicker(refs.sampleSelectSchool);
+    return;
+  }
   refs.schoolSelect.scrollIntoView({ behavior: "smooth", block: "center" });
   refs.schoolSelect.focus({ preventScroll: true });
 });
 async function persistDefaultSchool(schoolId) {
   const isClearing = Number(state.account.defaultSchoolId) === schoolId;
   refs.defaultSchoolButton.disabled = true;
+  refs.mobileDefaultSchoolAction.disabled = true;
   try {
     const response = await fetch("/api/account/default-school", {
       method: isClearing ? "DELETE" : "PUT",
@@ -3827,13 +4139,13 @@ async function persistDefaultSchool(schoolId) {
   }
 }
 
-refs.defaultSchoolButton.addEventListener("click", async () => {
-  const school = selectedSchool();
+async function toggleDefaultSchool(school, trigger, { closeMobile = false } = {}) {
   if (!school) return;
   const schoolId = Number(school.fatraceSchoolId);
   if (!state.account.authenticated) {
     state.pendingDefaultSchoolId = schoolId;
-    openAccountDialog(refs.defaultSchoolButton);
+    if (closeMobile) await closeMobileSchoolPicker({ restoreFocus: false });
+    openAccountDialog(closeMobile ? refs.mobileSchoolContext : trigger);
     return;
   }
   try {
@@ -3846,6 +4158,19 @@ refs.defaultSchoolButton.addEventListener("click", async () => {
     setSchoolDataScope(error instanceof Error ? error.message : "目前無法更新預設學校，請稍後再試。");
   } finally {
     renderDefaultSchoolButton();
+  }
+}
+
+refs.defaultSchoolButton.addEventListener("click", () => {
+  void toggleDefaultSchool(selectedSchool(), refs.defaultSchoolButton);
+});
+refs.mobileDefaultSchoolAction.addEventListener("click", () => {
+  void toggleDefaultSchool(mobileDraftSchool(), refs.mobileDefaultSchoolAction, { closeMobile: true });
+});
+
+window.matchMedia("(max-width: 720px)").addEventListener?.("change", (event) => {
+  if (!event.matches && refs.mobileSchoolPickerDialog.open) {
+    void closeMobileSchoolPicker({ restoreFocus: false, immediate: true });
   }
 });
 
@@ -4590,6 +4915,11 @@ for (const link of document.querySelectorAll("a.today-link")) {
     event.preventDefault();
     if (state.schoolId) {
       await loadDashboard(localIsoDate(), { announce: true });
+    } else if (window.matchMedia("(max-width: 720px)").matches) {
+      history.replaceState(null, "", "#today");
+      document.getElementById("today").scrollIntoView();
+      openMobileSchoolPicker(link);
+      return;
     } else {
       refs.schoolSelect.focus();
     }

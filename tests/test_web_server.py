@@ -571,7 +571,7 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("登入後，可以保存孩子提過的食物、說過的話", index_html)
         self.assertIn("免費建立 1 位孩子的飲食紀錄", index_html)
         self.assertIn('placeholder="請輸入電子郵件"', index_html)
-        self.assertIn("寄送登入驗證碼", index_html)
+        self.assertIn("使用 Email 繼續", index_html)
         self.assertIn("不需要設定密碼，透過 Email 驗證即可登入。", index_html)
         self.assertIn("只想查看學校午餐嗎？不需要註冊，也能免費使用。", index_html)
         signed_out_view = index_html[

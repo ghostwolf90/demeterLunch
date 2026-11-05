@@ -5,6 +5,7 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
 const homepage = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
+const styles = readFileSync(new URL('../web/styles.css', import.meta.url), 'utf8');
 function fixture({ mobile = true } = {}) {
   function element(extra = {}) {
     const classes = new Set();
@@ -65,6 +66,9 @@ test('mobile navigation presents lunch as the primary destination and moves date
   assert.match(markup, /href="\/lunch-town\/"[\s\S]*?<span>小鎮<\/span>/);
   assert.doesNotMatch(markup, /href="#week"/);
   assert.match(homepage, /<nav class="lunch-view-nav" aria-label="營養午餐檢視">[\s\S]*?href="#today"[\s\S]*?href="#week"/);
+  assert.match(styles, /@media \(max-width: 720px\)[\s\S]*?\.lunch-view-nav \{ display: none; \}/);
+  assert.match(homepage, /id="mobileMealTypeControl"[\s\S]*?id="mobileMealTypeSlot"/);
+  assert.match(source, /function syncMealTypePlacement\([\s\S]*?refs\.mobileMealTypeSlot[\s\S]*?target\.append\(refs\.mealTypeSwitch\)/);
 });
 
 test('scrolling through the weekly selector keeps Lunch as the active bottom tab', () => {

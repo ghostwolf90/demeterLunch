@@ -138,13 +138,13 @@ class LunchTownTests(unittest.TestCase):
             'name: "苗栗縣"', 'name: "彰化縣"', "const BORDER_RIVER_WIDTH = 112",
             "function drawBoundaryRivers", "function drawBoundaryBridges",
             "function drawIronBoundaryBridge", "function drawConcreteBoundaryBridge",
-            "function drawConstructionSign", "function createNeighborCountyExcursion",
+            "function drawLunchInfoSign", "function createNeighborCountyExcursion",
             "function neighborCountyForNpc", "neighborCountyAtPoint(point)?.name",
         ):
             self.assertIn(marker, app)
         self.assertIn('material: "iron"', app)
         self.assertIn('material: "concrete"', app)
-        self.assertIn('townText("午餐資料建設中")', app)
+        self.assertNotIn('townText("午餐資料建設中")', app)
         self.assertIn('path.moveTo(x, DISTRICT_ZONE_ORIGIN_Y)', app)
         self.assertIn('path.lineTo(x, TAICHUNG_SOUTH_EDGE_Y)', app)
         self.assertNotIn("path.moveTo(x, 0)", app)
@@ -153,9 +153,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertNotIn("彰化縣", json.dumps(themes, ensure_ascii=False))
         self.assertIn('"苗栗縣": "Miaoli County"', english)
         self.assertIn('"彰化縣": "Changhua County"', english)
-        self.assertIn("app.js?v=20261105-player-civic-map-preview", html)
-        self.assertIn("/locales/en.js?v=20261105-player-civic", html)
-        self.assertIn("/i18n.js?v=20261105-player-civic", html)
+        self.assertIn("app.js?v=20261105-neighbor-lunch-live", html)
+        self.assertIn("/locales/en.js?v=20261105-neighbor-lunch-live", html)
+        self.assertIn("/i18n.js?v=20261105-neighbor-lunch-live", html)
 
     def test_miaoli_and_changhua_map_every_reviewed_primary_school_by_realistic_district_position(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -212,7 +212,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('/farm|plain|flower|sugar|orchard/.test(terrain)', app)
         self.assertIn('state.neighborSchools.filter((school) => isVisibleRect(school.layout, 60))', app)
         self.assertIn("school.recordDates.includes(state.date)", app)
-        self.assertIn("if (schoolHasCurrentMeal(school))", app)
+        self.assertIn('function openNeighborSchool(school, method = "nearby_action") {\n  void openSchool(school, method);\n}', app)
+        self.assertNotIn("目前可散步查看校名；苗栗與彰化的午餐內容尚未在午餐小鎮開放。", app)
         self.assertIn('if (school.mapScope !== "neighbor-county")', app)
         self.assertIn('cache: "no-store"', app)
         self.assertIn('availableCount === schoolCount', app)
@@ -220,9 +221,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('"當日午餐已更新": "Today\'s lunch data is ready"', english)
         self.assertIn('"到{0}散步，看看當地學校與景觀": [0]', i18n)
         self.assertIn('neighbor-county-themes.json?v=20261105-player-civic', app)
-        self.assertIn("app.js?v=20261105-player-civic-map-preview", html)
-        self.assertIn("/locales/en.js?v=20261105-player-civic", html)
-        self.assertIn("/i18n.js?v=20261105-player-civic", html)
+        self.assertIn("app.js?v=20261105-neighbor-lunch-live", html)
+        self.assertIn("/locales/en.js?v=20261105-neighbor-lunch-live", html)
+        self.assertIn("/i18n.js?v=20261105-neighbor-lunch-live", html)
 
     def test_neighbor_counties_follow_taichung_district_block_layout(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -270,7 +271,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("context.lineTo(2, 0)", river)
         self.assertIn("context.createLinearGradient", app)
         self.assertLess(app.index("drawBoundaryRivers(now);"), app.index("drawBoundaryBridges();"))
-        self.assertIn("app.js?v=20261105-player-civic-map-preview", html)
+        self.assertIn("app.js?v=20261105-neighbor-lunch-live", html)
 
     def test_riverbanks_have_safe_landscapes_and_npc_leisure_activities(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -307,9 +308,9 @@ class LunchTownTests(unittest.TestCase):
             self.assertIn(translated, english)
         self.assertIn('"在{0}的安全平台釣魚，釣線朝向河道但人留在護欄內": [0]', i18n)
         self.assertIn('"在{0}使用指定烤肉台休憩，並把垃圾與火源收拾好": [0]', i18n)
-        self.assertIn("app.js?v=20261105-player-civic-map-preview", html)
-        self.assertIn("/locales/en.js?v=20261105-player-civic", html)
-        self.assertIn("/i18n.js?v=20261105-player-civic", html)
+        self.assertIn("app.js?v=20261105-neighbor-lunch-live", html)
+        self.assertIn("/locales/en.js?v=20261105-neighbor-lunch-live", html)
+        self.assertIn("/i18n.js?v=20261105-neighbor-lunch-live", html)
 
     def test_town_map_labels_every_school_with_a_readable_primary_school_name(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -320,8 +321,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("fitSchoolLabelFont", app)
         self.assertIn("splitSchoolMapLabel", app)
         self.assertNotIn("String(school.name).slice(0, 6)", app)
-        self.assertIn("styles.css?v=20261105-player-civic", html)
-        self.assertIn("app.js?v=20261105-player-civic-map-preview", html)
+        self.assertIn("styles.css?v=20261105-neighbor-lunch-live", html)
+        self.assertIn("app.js?v=20261105-neighbor-lunch-live", html)
 
     def test_player_can_walk_through_buildings_but_not_sea_mountains_or_rivers(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -781,7 +782,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("650", app)
         self.assertIn("setLoadingProgress(100", app)
         self.assertIn(".loading-progress", styles)
-        self.assertIn("20261105-player-civic", html)
+        self.assertIn("20261105-neighbor-lunch-live", html)
 
     def test_town_has_opt_in_original_web_audio_music(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1113,7 +1114,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("npc.hasLeashedDog", app)
         self.assertIn("牽著狗散步", app)
         self.assertIn("!pet.hidden", app)
-        self.assertIn("app.js?v=20261105-player-civic-map-preview", self.read("web/lunch-town/index.html"))
+        self.assertIn("app.js?v=20261105-neighbor-lunch-live", self.read("web/lunch-town/index.html"))
 
     def test_town_has_visible_youbike_stations_and_rental_trips(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1212,8 +1213,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('venue.id === "civic-south-night-convenience"', app)
         self.assertIn('!CIVIC_AFTER_HOURS_ROLES.has(npc.role) && !NEIGHBOR_CIVIC_ROLES.has(npc.role)', app)
         self.assertIn("const civicAfterHours = transitionNeighborCivicAfterHoursRoutine(npc, index)", app)
-        self.assertIn('/locales/en.js?v=20261105-player-civic', html)
-        self.assertIn('/i18n.js?v=20261105-player-civic', html)
+        self.assertIn('/locales/en.js?v=20261105-neighbor-lunch-live', html)
+        self.assertIn('/i18n.js?v=20261105-neighbor-lunch-live', html)
 
     def test_npcs_take_evening_trips_to_department_stores_and_lalaport(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1403,16 +1404,16 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("taipeiDateKey", route)
         self.assertIn('"回家報到": "Check in at home"', english)
         self.assertIn('"每日任務完成": "Daily quest complete"', english)
-        self.assertIn("app.js?v=20261105-player-civic-map-preview", html)
-        self.assertIn("/locales/en.js?v=20261105-player-civic", html)
-        self.assertIn("/i18n.js?v=20261105-player-civic", html)
+        self.assertIn("app.js?v=20261105-neighbor-lunch-live", html)
+        self.assertIn("/locales/en.js?v=20261105-neighbor-lunch-live", html)
+        self.assertIn("/i18n.js?v=20261105-neighbor-lunch-live", html)
 
     def test_lunch_town_line_login_icon_stays_inside_pixel_button(self) -> None:
         html = self.read("web/lunch-town/index.html")
         styles = self.read("web/lunch-town/styles.css")
         scoped_button = styles.split(".account-dialog .line-icon-button {", 1)[1].split("}", 1)[0]
         scoped_image = styles.split(".account-dialog .line-icon-button img {", 1)[1].split("}", 1)[0]
-        self.assertIn("styles.css?v=20261105-player-civic", html)
+        self.assertIn("styles.css?v=20261105-neighbor-lunch-live", html)
         self.assertIn("overflow: hidden", scoped_button)
         self.assertIn("width: 48px", scoped_image)
         self.assertIn("height: 48px", scoped_image)
