@@ -5,6 +5,7 @@ from pathlib import Path
 from scripts.build_city_service_catalog import (
     TAIWAN_CITY_ORDER,
     TAIWAN_DISTRICT_ORDER,
+    district_order_key,
 )
 
 
@@ -31,7 +32,17 @@ class DistrictOrderingTests(unittest.TestCase):
             ),
         )
 
-    def test_active_registry_follows_geographic_city_and_district_order(self) -> None:
+    def test_district_key_prioritizes_short_names_then_geographic_order(self) -> None:
+        self.assertLess(
+            district_order_key("臺中市", "北區"),
+            district_order_key("臺中市", "大甲區"),
+        )
+        self.assertLess(
+            district_order_key("臺中市", "大甲區"),
+            district_order_key("臺中市", "大安區"),
+        )
+
+    def test_active_registry_follows_city_and_district_name_length_order(self) -> None:
         registry = json.loads(
             (PROJECT_ROOT / "data/reference/active-elementary-schools.json").read_text(
                 encoding="utf-8"
@@ -52,11 +63,10 @@ class DistrictOrderingTests(unittest.TestCase):
                     if school["city"] == city
                 )
             )
-            expected_districts = [
-                district
-                for district in TAIWAN_DISTRICT_ORDER[city]
-                if district in set(districts)
-            ]
+            expected_districts = sorted(
+                set(districts),
+                key=lambda district: district_order_key(city, district),
+            )
             self.assertEqual(districts, expected_districts, city)
 
     def test_school_selectors_preserve_registry_order(self) -> None:

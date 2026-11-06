@@ -115,6 +115,23 @@ test('English localizes Lunch Town dialogue and City Hall after-hours routines',
   assert.equal(api.t('向野'), 'Xiangye');
   assert.equal(api.t('岳陽造型，俐落黑髮、藍灰運動裝與水壺'), 'Yueyang style with neat black hair, blue-gray activewear, and a water bottle');
   assert.equal(api.t('玩家已切換為海音造型。'), 'Player switched to the Haiyin style.');
+  assert.equal(api.t('時間與音樂'), 'Time and music');
+  assert.equal(api.t('已自動移到最近的安全步道。'), 'Moved you to the nearest safe path.');
+  assert.equal(api.t('我的家'), 'My Home');
+  assert.equal(api.t('陽光庭院之家'), 'Sunny Garden Home');
+  assert.equal(api.t('選擇造型'), 'Choose a look');
+  assert.equal(api.t('目前人物造型全身預覽'), 'Full-body preview of the current avatar');
+  assert.equal(api.t('海音全身造型預覽'), 'Full-body preview of Haiyin');
+  assert.equal(api.t('短黑髮・皮衣・咖啡'), 'Short black hair · Leather jacket · Coffee');
+  assert.equal(api.t('人物表情特寫'), 'Character expression close-up');
+  assert.equal(api.t('表情'), 'Expression');
+  assert.equal(api.t('開心'), 'Happy');
+  assert.equal(api.t('溫和'), 'Gentle');
+  assert.equal(api.t('專注'), 'Focused');
+  assert.equal(api.t('自信'), 'Confident');
+  assert.equal(api.t('思考'), 'Thoughtful');
+  assert.equal(api.t('驚訝'), 'Surprised');
+  assert.equal(api.t('平靜'), 'Calm');
   assert.equal(api.t('苗栗縣政生活公寓 A棟'), 'Miaoli Civic Residence · Building A');
   assert.equal(
     api.t('縣府已下班，正在回到苗栗縣政生活公寓 A棟｜2樓1室休息'),

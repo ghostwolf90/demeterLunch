@@ -230,19 +230,19 @@ test("Email claimed by another family during verification cannot be linked", asy
 });
 
 const uiSource = readFileSync(new URL("../web/app.js", import.meta.url), "utf8");
-test("LINE choice needs no email; returning restores the email entry and disables hidden required fields", () => {
-  const refs = Object.fromEntries(["authEligibilityGate", "authBirthDate", "authCaregiverConfirmed", "emailEntryFields", "authEmail", "requestAuthCode", "continueLineAuth", "authRequestStatus"].map(key => [key, { focus() {} }]));
-  const context = vm.createContext({ refs, setFormStatus() {}, renderEmailAuthStep() {} });
-  const start = uiSource.indexOf("function chooseAuthMethod(");
-  vm.runInContext(uiSource.slice(start, uiSource.indexOf("function resetEmailAuthForm(", start)), context);
-  context.chooseAuthMethod("line");
-  assert.equal(refs.authEmail.disabled, true);
-  assert.equal(refs.continueLineAuth.hidden, false);
-  assert.equal(refs.authBirthDate.disabled, false);
-  context.resetAuthMethod();
-  assert.equal(refs.authEmail.disabled, false);
-  assert.equal(refs.authEligibilityGate.hidden, true);
-  assert.equal(refs.authBirthDate.disabled, true);
+const homeHtml = readFileSync(new URL("../web/index.html", import.meta.url), "utf8");
+test("Home sign-in shows email and adult eligibility together while LINE does not require email", () => {
+  assert.doesNotMatch(homeHtml, /id="authEligibilityGate"/);
+  assert.doesNotMatch(homeHtml, /id="continueLineAuth"/);
+  assert.match(homeHtml, /id="authBirthDate"[^>]+required/);
+  assert.match(homeHtml, /id="authCaregiverConfirmed"[^>]+required/);
+  assert.match(homeHtml, /id="requestAuthCode"[^>]*>寄送登入驗證碼<\/button>/);
+  assert.doesNotMatch(uiSource, /function chooseAuthMethod\(/);
+  const lineStart = uiSource.indexOf("async function startLineAuth(");
+  const lineFlow = uiSource.slice(lineStart, uiSource.indexOf("async function requestEmailAuthCode(", lineStart));
+  assert.match(lineFlow, /authBirthDate\.reportValidity\(\)/);
+  assert.match(lineFlow, /authCaregiverConfirmed\.reportValidity\(\)/);
+  assert.doesNotMatch(lineFlow, /authEmail\.reportValidity\(\)/);
 });
 
 

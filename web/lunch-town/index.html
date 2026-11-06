@@ -21,12 +21,12 @@
       gtag('js', new Date());
       gtag('config', 'G-EDXYFV1B3L');
     </script>
-    <script src="/locales/en.js?v=20261105-neighbor-lunch-live"></script>
-    <script src="/i18n.js?v=20261105-neighbor-lunch-live"></script>
+    <script src="/locales/en.js?v=20261106-terrain-escape"></script>
+    <script src="/i18n.js?v=20261106-terrain-escape"></script>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href="/styles.css?v=20261104-town-auth" />
-    <link rel="stylesheet" href="./styles.css?v=20261105-neighbor-lunch-live" />
+    <link rel="stylesheet" href="./styles.css?v=20261106-terrain-escape" />
   </head>
   <body>
     <header class="town-topbar">
@@ -59,41 +59,8 @@
               <small class="date-picker-note">依臺中當日自動更新</small>
             </div>
             <details class="town-options">
-              <summary>角色、時間與音樂</summary>
+              <summary>時間與音樂</summary>
               <div class="town-options-content">
-                <div class="player-style-picker" role="group" aria-label="玩家角色外型">
-                  <span>角色造型</span>
-                  <div class="player-avatar-groups">
-                    <section aria-labelledby="femaleAvatarHeading">
-                      <small id="femaleAvatarHeading">女性角色</small>
-                      <div class="player-avatar-grid">
-                        <button type="button" data-player-avatar="haiyin" aria-pressed="false" aria-label="海音造型，短黑髮、皮衣與咖啡">
-                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>海音</strong><small>皮衣・咖啡</small>
-                        </button>
-                        <button type="button" data-player-avatar="mubai" aria-pressed="false" aria-label="沐白造型，金色短髮與白洋裝">
-                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>沐白</strong><small>白洋裝・花藝</small>
-                        </button>
-                        <button type="button" data-player-avatar="qingxia" aria-pressed="true" aria-label="晴夏造型，金色高馬尾與運動裝">
-                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>晴夏</strong><small>馬尾・運動</small>
-                        </button>
-                      </div>
-                    </section>
-                    <section aria-labelledby="maleAvatarHeading">
-                      <small id="maleAvatarHeading">男性角色</small>
-                      <div class="player-avatar-grid">
-                        <button type="button" data-player-avatar="xiangye" aria-pressed="false" aria-label="向野造型，黑色短髮、戶外外套與斜背包">
-                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>向野</strong><small>外套・探索</small>
-                        </button>
-                        <button type="button" data-player-avatar="qingchuan" aria-pressed="false" aria-label="青川造型，棕色短髮、米白上衣與筆記本">
-                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>青川</strong><small>針織・筆記</small>
-                        </button>
-                        <button type="button" data-player-avatar="yueyang" aria-pressed="false" aria-label="岳陽造型，俐落黑髮、藍灰運動裝與水壺">
-                          <span class="player-avatar-preview" aria-hidden="true"></span><strong>岳陽</strong><small>運動・水壺</small>
-                        </button>
-                      </div>
-                    </section>
-                  </div>
-                </div>
                 <div class="environment-status" id="environmentStatus" role="status" aria-live="polite">
                   <span aria-hidden="true">☀</span>
                   <strong>臺中現實時間</strong>
@@ -141,16 +108,24 @@
           </div>
           <div class="interaction-prompt" id="interactionPrompt" hidden></div>
           <section class="npc-dialogue" id="npcDialogue" role="dialog" aria-modal="false" aria-labelledby="npcName" hidden>
-            <div class="npc-dialogue-heading">
-              <div>
-                <strong id="npcName"></strong>
-                <span id="npcRole"></span>
-                <a id="npcSource" href="#" target="_blank" rel="noreferrer" hidden>公開身分來源</a>
+            <div class="npc-dialogue-layout">
+              <figure class="npc-portrait">
+                <canvas id="npcPortrait" width="76" height="88" role="img" aria-label="人物表情特寫"></canvas>
+                <figcaption id="npcExpression"></figcaption>
+              </figure>
+              <div class="npc-dialogue-copy">
+                <div class="npc-dialogue-heading">
+                  <div>
+                    <strong id="npcName"></strong>
+                    <span id="npcRole"></span>
+                    <a id="npcSource" href="#" target="_blank" rel="noreferrer" hidden>公開身分來源</a>
+                  </div>
+                  <button id="npcClose" type="button" aria-label="結束人物對話">×</button>
+                </div>
+                <p id="npcText"></p>
+                <button class="npc-next" id="npcNext" type="button">再聊一句</button>
               </div>
-              <button id="npcClose" type="button" aria-label="結束人物對話">×</button>
             </div>
-            <p id="npcText"></p>
-            <button class="npc-next" id="npcNext" type="button">再聊一句</button>
           </section>
           <section class="town-event-panel" id="townEventPanel" role="region" aria-live="polite" aria-labelledby="townEventTitle" hidden>
             <p class="town-event-kicker" id="townEventKicker">街區突發事件</p>
@@ -286,6 +261,6 @@
     <script src="/product-analytics.js?v=20261104-town-auth" defer></script>
     <script src="/line-auth-return.js?v=20261104-town-auth" defer></script>
     <script src="/account-panel.js?v=20261104-town-auth" defer></script>
-    <script type="module" src="./app.js?v=20261105-neighbor-lunch-live"></script>
+    <script type="module" src="./app.js?v=20261106-terrain-escape"></script>
   </body>
 </html>

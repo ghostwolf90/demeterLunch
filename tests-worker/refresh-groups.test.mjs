@@ -41,3 +41,13 @@ test("refresh plan does not invent districts", () => {
   );
   assert.deepEqual([...plannedDistricts].sort(), [...registryDistricts].sort());
 });
+
+test("refresh plan visits shorter district names before longer names", () => {
+  for (const city of plan.cityOrder) {
+    const districts = plan.groups
+      .filter((group) => group.city === city)
+      .flatMap((group) => group.districts);
+    const lengths = districts.map((district) => [...district].length);
+    assert.deepEqual(lengths, [...lengths].sort((left, right) => left - right), city);
+  }
+});

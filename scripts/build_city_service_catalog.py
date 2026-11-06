@@ -56,6 +56,11 @@ def district_order_index(city: str, district: str) -> int:
     return districts.index(district)
 
 
+def district_order_key(city: str, district: str) -> tuple[int, int]:
+    """Order shorter district names first, then retain geographic order."""
+    return (len(district), district_order_index(city, district))
+
+
 def read_json(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):

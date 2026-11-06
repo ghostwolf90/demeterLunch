@@ -19,7 +19,7 @@ from scripts.build_city_service_catalog import (  # noqa: E402
     TAIWAN_CITY_ORDER,
     TAIWAN_DISTRICT_ORDER,
     build_catalog_payload,
-    district_order_index,
+    district_order_key,
 )
 
 COLLECTION_CITIES = frozenset(
@@ -101,7 +101,7 @@ def merge_registries(payloads: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 f"{city}包含地理順序未登錄行政區：{'、'.join(sorted(unknown_districts))}"
             )
         schools.sort(
-            key=lambda school: district_order_index(city, str(school["district"]))
+            key=lambda school: district_order_key(city, str(school["district"]))
         )
         by_city[city] = schools
     missing_cities = [city for city in CITY_ORDER if city not in by_city]
@@ -125,7 +125,7 @@ def partition_city_districts(
     city = next(iter(cities), "")
     districts = sorted(
         counts,
-        key=lambda district: district_order_index(city, district),
+        key=lambda district: district_order_key(city, district),
     )
     if not districts:
         return []
@@ -164,7 +164,7 @@ def build_refresh_groups(
             for source in taichung_plan.get("groups", []):
                 districts = sorted(
                     list(source.get("districts", [])),
-                    key=lambda district: district_order_index(city, district),
+                    key=lambda district: district_order_key(city, district),
                 )
                 selected = [
                     school for school in city_schools

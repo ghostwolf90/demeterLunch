@@ -11,6 +11,10 @@ const DISTRICT_ZONE_WIDTH = 560;
 const DISTRICT_ZONE_HEIGHT = 360;
 const DISTRICT_ZONE_GAP_X = 34;
 const DISTRICT_ZONE_GAP_Y = 34;
+const ROAD_EDGE_WIDTH = 30;
+const ROAD_SURFACE_WIDTH = 20;
+const ROAD_CONTENT_INSET = 16;
+const ROAD_CONTENT_CLEARANCE = 5;
 const WEST_COAST_WIDTH = 320;
 const WEST_COAST_LAND_GAP = 40;
 const EAST_MOUNTAIN_WIDTH = 500;
@@ -25,12 +29,17 @@ const NEIGHBOR_COUNTY_FOOTER_HEIGHT = 42;
 const NEIGHBOR_COUNTY_ZONE_GAP = 40;
 const BORDER_RIVER_WIDTH = 112;
 const BORDER_LAND_BUFFER = 38;
+const OUTER_BORDER_RIVER_EDGE_MARGIN = 12;
+const OUTER_BORDER_RIVER_SPAN = BORDER_RIVER_WIDTH + OUTER_BORDER_RIVER_EDGE_MARGIN * 2;
 const PLAYER_TERRAIN_PADDING = 10;
 const BOUNDARY_BRIDGE_PASSAGE_HALF_WIDTH = 20;
 const RIVER_FLOW_LANE_OFFSETS = Object.freeze([-34, -14, 14, 34]);
 const RIVER_FLOW_CHEVRON_SPACING = 132;
 const MAX_NIGHT_DARKNESS = 0.4;
-const DISTRICT_ZONE_ORIGIN_Y = NORTH_COUNTY_HEIGHT + BORDER_RIVER_WIDTH + BORDER_LAND_BUFFER;
+const NORTH_OUTER_RIVER_Y = OUTER_BORDER_RIVER_SPAN / 2;
+const NORTH_COUNTY_START_Y = OUTER_BORDER_RIVER_SPAN + BORDER_LAND_BUFFER;
+const DISTRICT_ZONE_ORIGIN_Y = NORTH_COUNTY_START_Y
+  + NORTH_COUNTY_HEIGHT + BORDER_RIVER_WIDTH + BORDER_LAND_BUFFER;
 const DISTRICT_GRID_COLUMNS = 8;
 const DISTRICT_GRID_ROWS = 6;
 const DISTRICT_GRID_WIDTH = DISTRICT_GRID_COLUMNS * DISTRICT_ZONE_WIDTH
@@ -40,10 +49,12 @@ const DISTRICT_GRID_HEIGHT = DISTRICT_GRID_ROWS * DISTRICT_ZONE_HEIGHT
 const EAST_MOUNTAIN_START_X = DISTRICT_ZONE_ORIGIN_X + DISTRICT_GRID_WIDTH;
 const WORLD_WIDTH = EAST_MOUNTAIN_START_X + EAST_MOUNTAIN_WIDTH;
 const TAICHUNG_SOUTH_EDGE_Y = DISTRICT_ZONE_ORIGIN_Y + DISTRICT_GRID_HEIGHT;
-const NORTH_BORDER_RIVER_Y = NORTH_COUNTY_HEIGHT + BORDER_RIVER_WIDTH / 2;
+const NORTH_BORDER_RIVER_Y = NORTH_COUNTY_START_Y + NORTH_COUNTY_HEIGHT + BORDER_RIVER_WIDTH / 2;
 const SOUTH_BORDER_RIVER_Y = TAICHUNG_SOUTH_EDGE_Y + BORDER_LAND_BUFFER + BORDER_RIVER_WIDTH / 2;
 const SOUTH_COUNTY_START_Y = SOUTH_BORDER_RIVER_Y + BORDER_RIVER_WIDTH / 2 + BORDER_LAND_BUFFER;
-const WORLD_HEIGHT = SOUTH_COUNTY_START_Y + SOUTH_COUNTY_HEIGHT;
+const SOUTH_COUNTY_END_Y = SOUTH_COUNTY_START_Y + SOUTH_COUNTY_HEIGHT;
+const SOUTH_OUTER_RIVER_Y = SOUTH_COUNTY_END_Y + OUTER_BORDER_RIVER_SPAN / 2;
+const WORLD_HEIGHT = SOUTH_COUNTY_END_Y + OUTER_BORDER_RIVER_SPAN;
 const COASTAL_ROAD_START_X = DISTRICT_ZONE_ORIGIN_X - 22;
 const EASTERN_ROAD_END_X = EAST_MOUNTAIN_START_X - 18;
 const COASTAL_HARBOR_Y = DISTRICT_ZONE_ORIGIN_Y
@@ -58,7 +69,7 @@ const SOUTH_BOUNDARY_BRIDGE_X = DISTRICT_ZONE_ORIGIN_X
 const NEIGHBOR_COUNTIES = Object.freeze([
   {
     id: "miaoli", name: "苗栗縣", side: "north", color: "#82a86f",
-    x: COASTAL_ROAD_START_X, y: 24, w: EASTERN_ROAD_END_X - COASTAL_ROAD_START_X,
+    x: COASTAL_ROAD_START_X, y: NORTH_COUNTY_START_Y + 24, w: EASTERN_ROAD_END_X - COASTAL_ROAD_START_X,
     h: NORTH_COUNTY_HEIGHT - 48, bridgeX: NORTH_BOUNDARY_BRIDGE_X, riverY: NORTH_BORDER_RIVER_Y,
   },
   {
@@ -99,7 +110,21 @@ const BOUNDARY_BRIDGES = Object.freeze([
   { id: "miaoli-iron-bridge", countyId: "miaoli", x: NORTH_BOUNDARY_BRIDGE_X, riverY: NORTH_BORDER_RIVER_Y, material: "iron" },
   { id: "changhua-concrete-bridge", countyId: "changhua", x: SOUTH_BOUNDARY_BRIDGE_X, riverY: SOUTH_BORDER_RIVER_Y, material: "concrete" },
 ]);
-const RIVERBANK_PATH_OFFSET = BORDER_RIVER_WIDTH / 2 + 34;
+const OUTER_BOUNDARY_RIVERS = Object.freeze([
+  {
+    id: "miaoli-north-yanshuigang", countyId: "miaoli", x: NORTH_BOUNDARY_BRIDGE_X,
+    riverY: NORTH_OUTER_RIVER_Y, bankSide: 1, meanderScale: 0.35,
+    label: "苗栗北界・鹽水港溪",
+  },
+  {
+    id: "changhua-south-zhuoshui", countyId: "changhua", x: SOUTH_BOUNDARY_BRIDGE_X,
+    riverY: SOUTH_OUTER_RIVER_Y, bankSide: -1, meanderScale: 0.35,
+    label: "彰化南界・濁水溪",
+  },
+]);
+const BOUNDARY_RIVERS = Object.freeze([...OUTER_BOUNDARY_RIVERS, ...BOUNDARY_BRIDGES]);
+const RIVERBANK_NAVIGATION_CLEARANCE = 46;
+const RIVERBANK_PATH_OFFSET = BORDER_RIVER_WIDTH / 2 + RIVERBANK_NAVIGATION_CLEARANCE;
 const RIVERBANK_LEISURE_ROLES = new Set([
   "parent", "community-resident", "office-worker", "senior", "teacher", "cook",
   "nurse", "high-school-student", "university-student", "college-volunteer",
@@ -180,6 +205,8 @@ const refs = {
   districtFeature: document.querySelector("#districtFeature"),
   districtSource: document.querySelector("#districtSource"),
   npcDialogue: document.querySelector("#npcDialogue"),
+  npcPortrait: document.querySelector("#npcPortrait"),
+  npcExpression: document.querySelector("#npcExpression"),
   npcName: document.querySelector("#npcName"),
   npcRole: document.querySelector("#npcRole"),
   npcSource: document.querySelector("#npcSource"),
@@ -205,7 +232,6 @@ const refs = {
   dailyStoryChoices: document.querySelector("#dailyStoryChoices"),
   dailyStoryResult: document.querySelector("#dailyStoryResult"),
   announcement: document.querySelector("#townAnnouncement"),
-  playerAvatarButtons: [...document.querySelectorAll("[data-player-avatar]")],
 };
 
 const COLORS = {
@@ -236,6 +262,14 @@ const COLORS = {
 const CAMPUS_THEMES = ["brick", "fence", "lamps", "hedge", "open", "mixed"];
 const CAMPUS_FACILITIES = ["playground", "garden", "track", "court", "library", "garden"];
 const CAMPUS_COLORS = ["#a8c888", "#9bc7a5", "#b6c99b", "#9dc3a5", "#b6c69a", "#9fc7b3"];
+const CAMPUS_ARCHITECTURES = ["gable", "flat", "stepped", "courtyard", "eco-roof"];
+const CAMPUS_WINDOW_STYLES = ["classic", "paired", "ribbon"];
+const CAMPUS_ENTRANCE_STYLES = ["canopy", "brick", "bright"];
+const CAMPUS_YARD_DETAILS = ["flagpole", "reading-tree", "rain-tank", "bike-rack", "flower-beds"];
+const CAMPUS_WALL_COLORS = [COLORS.wall, COLORS.wallBlue, "#e4c8aa", "#d6d8bd", "#d7c6b5"];
+const CAMPUS_ROOF_COLORS = [COLORS.roof, "#416b82", "#a85645", "#54745e", "#80624f"];
+const MIAOLI_CAMPUS_COLORS = ["#9fbd88", "#a8c399", "#91b7a0", "#b3c58e"];
+const CHANGHUA_CAMPUS_COLORS = ["#c1bd7a", "#b6c68a", "#c5b98b", "#aebf83"];
 
 const ORIGINAL_CONVENIENCE_BRANDS = [
   { name: "日曜便利", shortLabel: "日曜便利", style: "sunrise", wall: "#f2ddaa", roof: "#d86445", accent: "#287a83" },
@@ -270,6 +304,27 @@ const NPC_PERSONALITIES = [
   { id: "curious", label: "好奇", turnCount: 4, greeting: "你有沒有發現街上今天有點不一樣？" },
   { id: "calm", label: "沉穩", turnCount: 3, greeting: "慢慢來，今天還有時間。" },
 ];
+const CHARACTER_EXPRESSION_LABELS = Object.freeze({
+  cheerful: "開心",
+  happy: "開心",
+  gentle: "溫和",
+  kind: "溫和",
+  focused: "專注",
+  determined: "專注",
+  curious: "好奇",
+  confident: "自信",
+  thoughtful: "思考",
+  surprised: "驚訝",
+  calm: "平靜",
+});
+const DIALOGUE_EXPRESSION_SEQUENCES = Object.freeze({
+  chatty: ["cheerful", "curious", "happy", "confident"],
+  reserved: ["calm", "thoughtful", "gentle"],
+  cheerful: ["happy", "cheerful", "curious"],
+  practical: ["focused", "thoughtful", "calm"],
+  curious: ["curious", "surprised", "happy", "thoughtful"],
+  calm: ["calm", "gentle", "thoughtful"],
+});
 const DAILY_TOPIC_IDS = [
   "weather", "errands", "work-school", "family", "shopping", "cooking",
   "lunch", "neighborhood", "transport", "rest", "animals", "seasonal",
@@ -297,10 +352,10 @@ const EVENING_SHOPPING_ROLES = new Set([
   "cook", "nurse", "senior", "college-volunteer",
 ]);
 const PLAYER_HOME_STAGE = Object.freeze({
-  id: "starter-townhouse",
-  label: "起步透天小屋",
-  rooms: 2,
-  renovationPaths: ["庭院與植栽", "房間與廚房", "外觀與屋頂"],
+  id: "sunny-garden-home",
+  label: "陽光庭院之家",
+  rooms: 3,
+  renovationPaths: ["前庭花園與露台", "客廳、廚房與更衣間", "二樓臥室與景觀窗"],
 });
 const OUTDOOR_ACTIVITIES = new Set([
   "waiting", "queuing", "resting", "greeting", "watching-birds", "feeding-birds",
@@ -1145,6 +1200,15 @@ const PLAYER_AVATAR_LABELS = Object.freeze({
   yueyang: "岳陽",
 });
 
+const PLAYER_AVATAR_DETAILS = Object.freeze({
+  haiyin: "短黑髮・皮衣・咖啡",
+  mubai: "金色短髮・白洋裝・花藝",
+  qingxia: "金色馬尾・運動裝・水壺",
+  xiangye: "黑色短髮・戶外外套・斜背包",
+  qingchuan: "棕色短髮・米白針織・筆記本",
+  yueyang: "俐落黑髮・藍灰運動裝・水壺",
+});
+
 const PLAYER_AVATARS = Object.freeze({
   haiyin: {
     ...CHARACTER_PROFILES.find((profile) => profile.role === "coffee-lover"),
@@ -1184,6 +1248,7 @@ const state = {
   neighborWorkZones: [],
   townMapManifest: { schemaVersion: 1, placements: [], npcs: [] },
   townMapPreview: { active: false, focus: null, expiresAt: null, error: "" },
+  terrainAudit: { sampleCount: 0, trapped: [] },
   activeNpcIds: new Set(),
   districtGroups: [],
   mapNote: "",
@@ -1191,6 +1256,7 @@ const state = {
   visited: new Set(),
   keys: new Set(),
   moveTarget: null,
+  blockedMoveFrames: 0,
   pendingBikeStationId: "",
   lastTime: performance.now(),
   lastFrameAt: performance.now(),
@@ -1316,6 +1382,7 @@ async function init() {
     createTownVenues();
     applyTownMapPlacements();
     createBikeStations();
+    state.terrainAudit = auditTownTerrainEscapes();
     await nextPaint();
     await Promise.race([
       accountPromise,
@@ -1445,7 +1512,7 @@ function bindEvents() {
         interactWithBikeStation(bikeStation, "map_click");
       } else {
         state.pendingBikeStationId = bikeStation.id;
-        state.moveTarget = accessPoint;
+        state.moveTarget = nearestWalkableTownPoint(accessPoint, 96) || accessPoint;
         announce(`正前往${bikeStation.label}，抵達後會自動${state.player.ridingBike ? "還車" : "租車"}。`);
       }
       return;
@@ -1474,10 +1541,15 @@ function bindEvents() {
       openVenue(venue, "map_click");
       return;
     }
-    state.moveTarget = point;
+    state.moveTarget = nearestWalkableTownPoint(point, 128) || point;
   });
   refs.dialogClose.addEventListener("click", () => refs.dialog.close());
   refs.dialogBody.addEventListener("click", (event) => {
+    const avatarButton = event.target.closest("button[data-player-avatar]");
+    if (avatarButton) {
+      setPlayerAvatar(avatarButton.dataset.playerAvatar);
+      return;
+    }
     const button = event.target.closest("button[data-daily-dish]");
     if (!button) return;
     refs.dialogBody.querySelectorAll("button[data-daily-dish]").forEach((candidate) => {
@@ -1490,6 +1562,7 @@ function bindEvents() {
   refs.dialog.addEventListener("click", (event) => {
     if (event.target === refs.dialog) refs.dialog.close();
   });
+  refs.dialog.addEventListener("close", () => refs.dialog.classList.remove("is-player-home"));
   refs.npcNext.addEventListener("click", advanceNpcDialogue);
   refs.npcClose.addEventListener("click", closeNpcDialogue);
   refs.townEventChoices.addEventListener("click", (event) => {
@@ -1565,9 +1638,6 @@ function bindEvents() {
     }, { rootMargin: "120px" });
     canvasObserver.observe(canvas);
   }
-  refs.playerAvatarButtons.forEach((button) => {
-    button.addEventListener("click", () => setPlayerAvatar(button.dataset.playerAvatar));
-  });
   refs.dailyStoryChoices.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-story-choice]");
     if (button) chooseDailyStory(button.dataset.storyChoice);
@@ -1798,13 +1868,107 @@ function setPlayerAvatar(avatarId) {
   syncPlayerAvatarButtons();
   if (changed) trackTownEvent("lunch_town_player_style_changed", { player_style: avatarId });
   announce(`玩家已切換為${PLAYER_AVATAR_LABELS[avatarId]}造型。`);
-  canvas.focus({ preventScroll: true });
+  if (!refs.dialog.open) canvas.focus({ preventScroll: true });
 }
 
 function syncPlayerAvatarButtons() {
-  refs.playerAvatarButtons.forEach((button) => {
+  document.querySelectorAll("button[data-player-avatar]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.playerAvatar === state.playerAvatarId));
   });
+  const currentName = refs.dialogBody.querySelector("[data-current-avatar-name]");
+  const currentDetail = refs.dialogBody.querySelector("[data-current-avatar-detail]");
+  if (currentName) currentName.textContent = townText(PLAYER_AVATAR_LABELS[state.playerAvatarId]);
+  if (currentDetail) currentDetail.textContent = townText(PLAYER_AVATAR_DETAILS[state.playerAvatarId]);
+  renderAvatarPreviewCanvases();
+}
+
+function playerHomeAvatarPickerMarkup() {
+  const groups = [
+    { label: "女性角色", ids: ["haiyin", "mubai", "qingxia"] },
+    { label: "男性角色", ids: ["xiangye", "qingchuan", "yueyang"] },
+  ];
+  const cards = groups.map((group) => `
+    <section class="home-avatar-group" aria-label="${group.label}">
+      <h4>${group.label}</h4>
+      <div class="home-avatar-grid">
+        ${group.ids.map((avatarId) => `
+          <button class="home-avatar-card" type="button" data-player-avatar="${avatarId}"
+            aria-pressed="${avatarId === state.playerAvatarId}" aria-label="${PLAYER_AVATAR_LABELS[avatarId]}造型，${PLAYER_AVATAR_DETAILS[avatarId]}">
+            <canvas width="88" height="112" data-avatar-preview="${avatarId}" role="img" aria-label="${PLAYER_AVATAR_LABELS[avatarId]}全身造型預覽"></canvas>
+            <span class="home-avatar-copy"><strong>${PLAYER_AVATAR_LABELS[avatarId]}</strong><small>${PLAYER_AVATAR_DETAILS[avatarId]}</small></span>
+            <span class="home-avatar-selected">目前穿著</span>
+          </button>
+        `).join("")}
+      </div>
+    </section>
+  `).join("");
+  return `
+    <div class="player-home-shell">
+      <section class="home-room-card" aria-labelledby="homeRoomHeading">
+        <div class="home-room-heading">
+          <span>WELCOME HOME</span>
+          <h3 id="homeRoomHeading">歡迎回家</h3>
+          <p>這裡是你的生活基地。站到穿衣鏡前挑選造型，再帶著喜歡的樣子出門探索。</p>
+        </div>
+        <div class="home-room-scene" aria-label="明亮客廳、更衣間與庭院景觀">
+          <span class="home-scene-window" aria-hidden="true"></span>
+          <span class="home-scene-wardrobe" aria-hidden="true"></span>
+          <span class="home-scene-sofa" aria-hidden="true"></span>
+          <span class="home-scene-rug" aria-hidden="true"></span>
+          <span class="home-scene-plant" aria-hidden="true"></span>
+          <div class="home-dressing-mirror">
+            <canvas width="132" height="168" data-current-avatar-preview role="img" aria-label="目前人物造型全身預覽"></canvas>
+          </div>
+        </div>
+        <div class="home-current-avatar" aria-live="polite">
+          <span>目前穿著</span>
+          <strong data-current-avatar-name>${PLAYER_AVATAR_LABELS[state.playerAvatarId]}</strong>
+          <small data-current-avatar-detail>${PLAYER_AVATAR_DETAILS[state.playerAvatarId]}</small>
+        </div>
+      </section>
+      <section class="home-wardrobe-panel" aria-labelledby="homeWardrobeHeading">
+        <div class="home-wardrobe-heading">
+          <div><span>WARDROBE</span><h3 id="homeWardrobeHeading">選擇造型</h3></div>
+          <p>六種造型都使用遊戲中的實際人物像素預覽。</p>
+        </div>
+        ${cards}
+      </section>
+    </div>
+  `;
+}
+
+function renderAvatarPreviewCanvases() {
+  const previews = [...refs.dialogBody.querySelectorAll("canvas[data-avatar-preview], canvas[data-current-avatar-preview]")];
+  if (!previews.length || !context) return;
+  const sampleSize = 72;
+  let savedPixels;
+  try {
+    savedPixels = context.getImageData(0, 0, sampleSize, sampleSize);
+  } catch {
+    return;
+  }
+  context.save();
+  try {
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    previews.forEach((preview) => {
+      const avatarId = preview.dataset.avatarPreview || state.playerAvatarId;
+      const avatar = PLAYER_AVATARS[avatarId];
+      const previewContext = preview.getContext("2d");
+      if (!avatar || !previewContext) return;
+      context.clearRect(0, 0, sampleSize, sampleSize);
+      drawPerson({
+        ...avatar,
+        x: 36, y: 49, direction: "down", step: 0, lookIndex: 1,
+        player: false, isMoving: false, activity: "standing",
+      }, 0);
+      previewContext.imageSmoothingEnabled = false;
+      previewContext.clearRect(0, 0, preview.width, preview.height);
+      previewContext.drawImage(canvas, 10, 8, 52, 58, 0, 0, preview.width, preview.height);
+    });
+  } finally {
+    context.restore();
+    context.putImageData(savedPixels, 0, 0);
+  }
 }
 
 async function loadSchools() {
@@ -1838,7 +2002,7 @@ async function loadDistrictThemes() {
 }
 
 async function loadNeighborCountyThemes() {
-  const response = await fetch("./neighbor-county-themes.json?v=20261105-player-civic", {
+  const response = await fetch("./neighbor-county-themes.json?v=20261105-outer-rivers", {
     headers: { Accept: "application/json" },
     cache: "no-cache",
   });
@@ -2424,6 +2588,30 @@ function townMapEditorLaneHeight(city, district) {
   return townMapPlacementsForDistrict(city, district).length ? 92 : 0;
 }
 
+function campusVisualProfile(school) {
+  const identity = `${school.city || SHOWCASE_CITY}|${school.district || ""}|${school.fatraceSchoolId || school.name || "school"}`;
+  const seed = hashText(identity);
+  const choose = (options, salt) => options[hashText(`${identity}|${salt}`) % options.length];
+  const regionalColors = school.city === "苗栗縣"
+    ? MIAOLI_CAMPUS_COLORS
+    : school.city === "彰化縣"
+      ? CHANGHUA_CAMPUS_COLORS
+      : CAMPUS_COLORS;
+  return {
+    seed,
+    theme: choose(CAMPUS_THEMES, "theme"),
+    facility: choose(CAMPUS_FACILITIES, "facility"),
+    color: choose(regionalColors, "grounds"),
+    architecture: choose(CAMPUS_ARCHITECTURES, "architecture"),
+    windowStyle: choose(CAMPUS_WINDOW_STYLES, "windows"),
+    entranceStyle: choose(CAMPUS_ENTRANCE_STYLES, "entrance"),
+    yardDetail: choose(CAMPUS_YARD_DETAILS, "yard"),
+    wallColor: choose(CAMPUS_WALL_COLORS, "wall"),
+    roofColor: choose(CAMPUS_ROOF_COLORS, "roof"),
+    gate: seed % 2 === 0 ? "south" : "north",
+  };
+}
+
 function createSchoolLayouts(schools) {
   const results = [];
   DISTRICT_DISPLAY_ORDER.forEach((district) => {
@@ -2444,7 +2632,7 @@ function createSchoolLayouts(schools) {
       const row = Math.floor(districtIndex / columns);
       const x = zone.x + 16 + column * cellWidth + (cellWidth - width) / 2;
       const y = zone.y + 78 + row * cellHeight + (cellHeight - height) / 2;
-      const styleIndex = (districtIndex + DISTRICT_DISPLAY_ORDER.indexOf(district) * 2) % CAMPUS_THEMES.length;
+      const visual = campusVisualProfile(school);
       results.push({
         ...school,
         index: results.length,
@@ -2454,10 +2642,11 @@ function createSchoolLayouts(schools) {
           y,
           w: width,
           h: height,
-          gate: row % 2 === 0 ? "south" : "north",
-          theme: CAMPUS_THEMES[styleIndex],
-          facility: CAMPUS_FACILITIES[styleIndex],
-          color: CAMPUS_COLORS[styleIndex],
+          gate: visual.gate,
+          theme: visual.theme,
+          facility: visual.facility,
+          color: visual.color,
+          visual,
           district,
           compact: true,
         },
@@ -2487,7 +2676,7 @@ function createNeighborSchoolLayouts(schools) {
       const row = Math.floor(districtIndex / columns);
       const x = zone.x + 16 + column * cellWidth + (cellWidth - width) / 2;
       const y = zone.y + 78 + row * cellHeight + (cellHeight - height) / 2;
-      const styleIndex = (districtIndex + results.length + district.length) % CAMPUS_THEMES.length;
+      const visual = campusVisualProfile(school);
       results.push({
         ...school,
         index: 1_000 + results.length,
@@ -2498,10 +2687,11 @@ function createNeighborSchoolLayouts(schools) {
           y,
           w: width,
           h: height,
-          gate: row % 2 === 0 ? "south" : "north",
-          theme: CAMPUS_THEMES[styleIndex],
-          facility: CAMPUS_FACILITIES[styleIndex],
-          color: districtTheme.county.id === "miaoli" ? "#9fbd88" : "#c1bd7a",
+          gate: visual.gate,
+          theme: visual.theme,
+          facility: visual.facility,
+          color: visual.color,
+          visual,
           district,
           compact: true,
           neighborCounty: true,
@@ -3570,12 +3760,17 @@ function configurePlayerHome(venues) {
   const starter = venues.find((venue) => venue.district === "西區" && venue.type === "townhouse")
     || venues.find((venue) => venue.district === "西區" && venue.type === "apartment");
   if (!starter) return venues;
+  const zone = DISTRICT_ZONES["西區"];
   Object.assign(starter, {
     id: "player-home",
     type: "player-home",
     label: "我的家",
     shortLabel: "我的家",
-    description: "這是玩家在臺中午餐小鎮的起步住所，也是每次進入小鎮的出發點。",
+    description: "明亮的兩層庭院住宅，有前廊、花園、客廳、廚房與專屬更衣間，也是每次進入午餐小鎮的生活基地。",
+    x: zone.x + 18,
+    y: zone.y + 8,
+    w: 220,
+    h: 72,
     homeStage: PLAYER_HOME_STAGE,
     residentCapacity: 1,
   });
@@ -4604,7 +4799,17 @@ function updatePlayer(delta) {
     const speed = state.player.ridingBike ? PLAYER_BIKE_SPEED : PLAYER_WALK_SPEED;
     const movedX = tryMovePlayer(dx * speed * delta, 0);
     const movedY = tryMovePlayer(0, dy * speed * delta);
-    state.player.isMoving = movedX || movedY;
+    const movedBySlide = !movedX && !movedY && trySlidePlayer(dx, dy, speed * delta);
+    let movedByRecovery = false;
+    if (movedX || movedY || movedBySlide) {
+      state.blockedMoveFrames = 0;
+    } else {
+      state.blockedMoveFrames += 1;
+      if (state.blockedMoveFrames >= 6 && isBlockedTownTerrain(state.player)) {
+        movedByRecovery = recoverPlayerToWalkableTerrain();
+      }
+    }
+    state.player.isMoving = movedX || movedY || movedBySlide || movedByRecovery;
     if (state.moveTarget && !state.player.isMoving) state.moveTarget = null;
     if (state.player.isMoving) {
       if (Math.abs(dx) > Math.abs(dy)) state.player.direction = dx > 0 ? "right" : "left";
@@ -4700,18 +4905,95 @@ function observeDailyMapCheckpoints() {
 }
 
 function tryMovePlayer(dx, dy) {
-  const next = { x: state.player.x + dx, y: state.player.y + dy };
-  next.x = Math.max(12, Math.min(WORLD_WIDTH - 12, next.x));
-  next.y = Math.max(12, Math.min(WORLD_HEIGHT - 12, next.y));
-  const nextBlocked = isBlockedTownTerrain(next);
-  const currentBlocked = isBlockedTownTerrain(state.player);
-  const currentBlockDepth = currentBlocked ? blockedTerrainEscapeDepth(state.player) : 0;
-  const nextBlockDepth = nextBlocked ? blockedTerrainEscapeDepth(next) : 0;
-  const canEscapeBlockedTerrain = currentBlocked && nextBlockDepth < currentBlockDepth;
-  if ((next.x === state.player.x && next.y === state.player.y)
-    || (nextBlocked && !canEscapeBlockedTerrain)) return false;
+  const current = { x: state.player.x, y: state.player.y };
+  const next = clampTownPoint({ x: current.x + dx, y: current.y + dy });
+  if (!playerTerrainMoveAllowed(current, next)) return false;
   state.player.x = next.x;
   state.player.y = next.y;
+  return true;
+}
+
+function clampTownPoint(point) {
+  return {
+    x: Math.max(12, Math.min(WORLD_WIDTH - 12, point.x)),
+    y: Math.max(12, Math.min(WORLD_HEIGHT - 12, point.y)),
+  };
+}
+
+function playerTerrainMoveAllowed(current, next) {
+  if (next.x === current.x && next.y === current.y) return false;
+  const nextBlocked = isBlockedTownTerrain(next);
+  if (!nextBlocked) return true;
+  const currentBlocked = isBlockedTownTerrain(current);
+  if (!currentBlocked) return false;
+  const currentBlockDepth = blockedTerrainEscapeDepth(current);
+  const nextBlockDepth = nextBlocked ? blockedTerrainEscapeDepth(next) : 0;
+  return nextBlockDepth + 0.001 < currentBlockDepth;
+}
+
+function trySlidePlayer(dx, dy, distance) {
+  if ((!dx && !dy) || distance <= 0) return false;
+  const perpendicular = { x: -dy, y: dx };
+  const target = state.moveTarget || {
+    x: state.player.x + dx * distance * 4,
+    y: state.player.y + dy * distance * 4,
+  };
+  const directions = [
+    { x: dx + perpendicular.x * 0.82, y: dy + perpendicular.y * 0.82 },
+    { x: dx - perpendicular.x * 0.82, y: dy - perpendicular.y * 0.82 },
+    perpendicular,
+    { x: -perpendicular.x, y: -perpendicular.y },
+  ];
+  const current = { x: state.player.x, y: state.player.y };
+  const candidates = directions.map((direction) => {
+    const length = Math.hypot(direction.x, direction.y) || 1;
+    const next = clampTownPoint({
+      x: current.x + direction.x / length * distance,
+      y: current.y + direction.y / length * distance,
+    });
+    if (!playerTerrainMoveAllowed(current, next)) return null;
+    const lookAhead = clampTownPoint({
+      x: next.x + dx * distance * 1.5,
+      y: next.y + dy * distance * 1.5,
+    });
+    const forwardPenalty = playerTerrainMoveAllowed(next, lookAhead) ? 0 : distance * 8;
+    return {
+      next,
+      score: Math.hypot(target.x - next.x, target.y - next.y)
+        + blockedTerrainEscapeDepth(next) * 20
+        + forwardPenalty,
+    };
+  }).filter(Boolean).sort((first, second) => first.score - second.score);
+  if (!candidates.length) return false;
+  return tryMovePlayer(candidates[0].next.x - current.x, candidates[0].next.y - current.y);
+}
+
+function nearestWalkableTownPoint(origin, maxRadius = 384) {
+  const clampedOrigin = clampTownPoint(origin);
+  if (!isBlockedTownTerrain(clampedOrigin)) return clampedOrigin;
+  for (let radius = 8; radius <= maxRadius; radius += 8) {
+    const sampleCount = Math.max(12, Math.ceil(Math.PI * 2 * radius / 12));
+    for (let index = 0; index < sampleCount; index += 1) {
+      const angle = index / sampleCount * Math.PI * 2;
+      const candidate = clampTownPoint({
+        x: clampedOrigin.x + Math.cos(angle) * radius,
+        y: clampedOrigin.y + Math.sin(angle) * radius,
+      });
+      if (!isBlockedTownTerrain(candidate)) return candidate;
+    }
+  }
+  return null;
+}
+
+function recoverPlayerToWalkableTerrain() {
+  const destination = nearestWalkableTownPoint(state.player);
+  if (!destination) return false;
+  state.player.x = destination.x;
+  state.player.y = destination.y;
+  state.blockedMoveFrames = 0;
+  state.moveTarget = null;
+  state.pendingBikeStationId = "";
+  announce(townText("已自動移到最近的安全步道。"));
   return true;
 }
 
@@ -4727,6 +5009,10 @@ function isBlockedTownTerrain(point) {
   // Administrative-area scenery shares land with schools, public facilities,
   // attractions and farms. Keep those blocks walkable instead of treating an
   // entire hill or field backdrop as one oversized collision rectangle.
+  if (OUTER_BOUNDARY_RIVERS.some((river) => (
+    Math.abs(point.y - boundaryRiverYAt(point.x, river))
+      <= BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
+  ))) return true;
   return BOUNDARY_BRIDGES.some((bridge) => (
     !pointIsOnBoundaryBridge(point, bridge)
     && Math.abs(point.y - boundaryRiverYAt(point.x, bridge))
@@ -4765,7 +5051,67 @@ function blockedTerrainEscapeDepth(point) {
         - Math.abs(point.y - boundaryRiverYAt(point.x, bridge)),
     ));
   });
-  return Math.max(...depths);
+  OUTER_BOUNDARY_RIVERS.forEach((river) => {
+    depths.push(Math.max(
+      0,
+      BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
+        - Math.abs(point.y - boundaryRiverYAt(point.x, river)),
+    ));
+  });
+  return depths.reduce((total, depth) => total + depth, 0);
+}
+
+function terrainEscapeAuditPoints() {
+  const samples = [];
+  const add = (point, source) => {
+    const candidate = clampTownPoint(point);
+    samples.push({ ...candidate, source });
+  };
+  for (let y = 48; y < WORLD_HEIGHT - 48; y += 160) {
+    add({ x: coastlineXAt(y) + PLAYER_TERRAIN_PADDING - 4, y }, "coast");
+    add({ x: EAST_MOUNTAIN_START_X - PLAYER_TERRAIN_PADDING + 4, y }, "mountain");
+  }
+  BOUNDARY_RIVERS.forEach((river) => {
+    const { startX, endX } = boundaryRiverBounds(river);
+    for (let x = startX + 72; x < endX - 72; x += 192) {
+      if (BOUNDARY_BRIDGES.includes(river) && Math.abs(x - river.x) < BOUNDARY_BRIDGE_PASSAGE_HALF_WIDTH + 36) continue;
+      const centerY = boundaryRiverYAt(x, river);
+      for (const side of [-1, 1]) {
+        add({
+          x,
+          y: centerY + side * (BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING - 4),
+        }, `river:${river.id}`);
+      }
+    }
+  });
+  state.neighborWorkZones.filter((zone) => zone.restricted).forEach((zone) => {
+    add({ x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 }, `work-zone:${zone.id || zone.type}`);
+    add({ x: zone.x - PLAYER_TERRAIN_PADDING + 4, y: zone.y + zone.h / 2 }, `work-zone:${zone.id || zone.type}`);
+    add({ x: zone.x + zone.w + PLAYER_TERRAIN_PADDING - 4, y: zone.y + zone.h / 2 }, `work-zone:${zone.id || zone.type}`);
+  });
+  return samples;
+}
+
+function pointHasLocalTerrainEscape(point, step = 12) {
+  if (!isBlockedTownTerrain(point)) return true;
+  for (let index = 0; index < 16; index += 1) {
+    const angle = index / 16 * Math.PI * 2;
+    const candidate = clampTownPoint({
+      x: point.x + Math.cos(angle) * step,
+      y: point.y + Math.sin(angle) * step,
+    });
+    if (playerTerrainMoveAllowed(point, candidate)) return true;
+  }
+  return false;
+}
+
+function auditTownTerrainEscapes() {
+  const samples = terrainEscapeAuditPoints();
+  const trapped = samples.filter((sample) => !pointHasLocalTerrainEscape(sample));
+  if (trapped.length) {
+    console.warn("Lunch Town terrain audit found blocked points without a local escape", trapped);
+  }
+  return { sampleCount: samples.length, trapped };
 }
 
 function updateCamera(snap = false, delta = 0) {
@@ -6053,18 +6399,19 @@ function drawTown(now, environment = townEnvironmentAt()) {
   drawEasternMountainRange(now);
   drawBoundaryRivers(now);
   drawRiverbankLandscapes(now);
+  drawBoundaryRiverLabels();
   drawMapEdges(now);
   drawRoads(now);
   drawBoundaryBridges();
   drawNeighborWorkZones(now, environment);
   drawNeighborCountyDetails(now);
+  drawStreetDetails(now, environment);
   drawDistrictLabels();
   drawTownSquare();
   drawTownVenues(now);
   drawWeekendMarkets();
   state.schools.filter((school) => isVisibleRect(school.layout, 60)).forEach((school) => drawCampus(school, now));
   state.neighborSchools.filter((school) => isVisibleRect(school.layout, 60)).forEach((school) => drawCampus(school, now));
-  drawStreetDetails(now, environment);
   drawBikeStations();
   const actors = [
     ...state.npcs.filter((person) => !person.insideVenueId && !person.backgroundSimulated).map((person) => ({ kind: "person", y: person.y, person })),
@@ -6617,9 +6964,10 @@ function drawIrrigationWorkZone({ x, y, w, h }) {
 }
 
 function boundaryRiverYAt(x, bridge) {
+  const meanderScale = bridge.meanderScale ?? 1;
   return bridge.riverY
-    + Math.sin((x - bridge.x) / 218) * 18
-    + Math.sin((x - bridge.x) / 73) * 5;
+    + Math.sin((x - bridge.x) / 218) * 18 * meanderScale
+    + Math.sin((x - bridge.x) / 73) * 5 * meanderScale;
 }
 
 function boundaryRiverBounds(bridge) {
@@ -6703,7 +7051,7 @@ function drawBoundaryRiverCurrents(now, bridge, path) {
 }
 
 function drawBoundaryRivers(now) {
-  BOUNDARY_BRIDGES.forEach((bridge) => {
+  BOUNDARY_RIVERS.forEach((bridge) => {
     if (!isVisibleRect({ x: 0, y: bridge.riverY - 90, w: WORLD_WIDTH, h: 180 }, 20)) return;
     const path = boundaryRiverPath(bridge);
     context.save();
@@ -6738,7 +7086,7 @@ function drawBoundaryRivers(now) {
 }
 
 function taichungRiverbankSide(bridge) {
-  return bridge.countyId === "miaoli" ? 1 : -1;
+  return bridge.bankSide ?? (bridge.countyId === "miaoli" ? 1 : -1);
 }
 
 function riverbankYAt(x, bridge, bankSide = taichungRiverbankSide(bridge)) {
@@ -6807,7 +7155,7 @@ function riverbankFixturePositions() {
 }
 
 function drawRiverbankLandscapes(now) {
-  BOUNDARY_BRIDGES.forEach((bridge) => drawRiverbankLevee(bridge));
+  BOUNDARY_RIVERS.forEach((bridge) => drawRiverbankLevee(bridge));
   riverbankFixturePositions().forEach((fixture) => {
     if (fixture.kind === "lamp") drawLamp(fixture.x, fixture.y + fixture.bankSide * 7);
     else drawRiverbankBench(fixture.x, fixture.y + fixture.bankSide * 8);
@@ -6816,6 +7164,30 @@ function drawRiverbankLandscapes(now) {
     if (!isVisibleRect({ x: site.x - 90, y: site.y - 80, w: 180, h: 160 }, 40)) return;
     if (site.activity === "fishing") drawRiverbankFishingDeck(site);
     else drawRiverbankBarbecueArea(site, now);
+  });
+}
+
+function drawBoundaryRiverLabels() {
+  OUTER_BOUNDARY_RIVERS.forEach((river, index) => {
+    const x = river.x + (index === 0 ? -520 : 520);
+    const y = boundaryRiverYAt(x, river)
+      + taichungRiverbankSide(river) * (BORDER_RIVER_WIDTH / 2 + 44);
+    if (!isVisibleRect({ x: x - 90, y: y - 22, w: 180, h: 44 }, 24)) return;
+    context.save();
+    context.translate(Math.round(x), Math.round(y));
+    context.fillStyle = "rgba(24, 55, 66, 0.24)";
+    context.fillRect(-82, -12, 168, 30);
+    context.fillStyle = "#efe2b8";
+    context.fillRect(-86, -16, 168, 30);
+    context.strokeStyle = "#315568";
+    context.lineWidth = 3;
+    context.strokeRect(-86, -16, 168, 30);
+    context.fillStyle = COLORS.navy;
+    context.font = "bold 12px ui-monospace, monospace";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(townText(river.label), -2, -1, 154);
+    context.restore();
   });
 }
 
@@ -7384,9 +7756,9 @@ function drawWesternCoast(now) {
     }
   }
 
-  fillCoastalBand(54, NORTH_COUNTY_HEIGHT - 30, 0, 56, "#e4cc91");
+  fillCoastalBand(NORTH_COUNTY_START_Y + 54, NORTH_COUNTY_START_Y + NORTH_COUNTY_HEIGHT - 30, 0, 56, "#e4cc91");
   fillCoastalBand(DISTRICT_ZONE_ORIGIN_Y + 1480, TAICHUNG_SOUTH_EDGE_Y - 54, 0, 48, "#ddc184");
-  fillCoastalBand(SOUTH_COUNTY_START_Y + 54, WORLD_HEIGHT - 54, 0, 48, "#e2c98d");
+  fillCoastalBand(SOUTH_COUNTY_START_Y + 54, SOUTH_COUNTY_END_Y - 54, 0, 48, "#e2c98d");
   fillCoastalBand(DISTRICT_ZONE_ORIGIN_Y + 600, DISTRICT_ZONE_ORIGIN_Y + 762, 4, 30, "#91b78a");
 
   context.strokeStyle = "rgba(237, 247, 231, 0.88)";
@@ -7419,9 +7791,9 @@ function drawWesternCoast(now) {
 }
 
 function isCoastalBeachY(y) {
-  return (y > 54 && y < NORTH_COUNTY_HEIGHT - 30)
+  return (y > NORTH_COUNTY_START_Y + 54 && y < NORTH_COUNTY_START_Y + NORTH_COUNTY_HEIGHT - 30)
     || (y > DISTRICT_ZONE_ORIGIN_Y + 1480 && y < TAICHUNG_SOUTH_EDGE_Y - 54)
-    || (y > SOUTH_COUNTY_START_Y + 54 && y < WORLD_HEIGHT - 54);
+    || (y > SOUTH_COUNTY_START_Y + 54 && y < SOUTH_COUNTY_END_Y - 54);
 }
 
 function drawTetrapod(x, y, rotation = 0, scale = 1) {
@@ -7658,7 +8030,21 @@ function drawMapEdges(now) {
   }
 }
 
+function roadCurveLimitForGap(gap) {
+  return Math.max(0, gap / 2 + ROAD_CONTENT_INSET - ROAD_EDGE_WIDTH / 2 - ROAD_CONTENT_CLEARANCE);
+}
+
+function roundaboutRadiusForDistrictCorridors() {
+  return Math.min(
+    38,
+    DISTRICT_ZONE_GAP_X / 2 + ROAD_CONTENT_INSET - ROAD_CONTENT_CLEARANCE,
+    DISTRICT_ZONE_GAP_Y / 2 + ROAD_CONTENT_INSET - ROAD_CONTENT_CLEARANCE,
+  );
+}
+
 function drawRoads(now) {
+  const verticalCurveLimit = roadCurveLimitForGap(DISTRICT_ZONE_GAP_X);
+  const horizontalCurveLimit = roadCurveLimitForGap(DISTRICT_ZONE_GAP_Y);
   for (let column = 1; column < DISTRICT_GRID_COLUMNS; column += 1) {
     const x = DISTRICT_ZONE_ORIGIN_X + column * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X) - DISTRICT_ZONE_GAP_X / 2;
     const path = new Path2D();
@@ -7666,7 +8052,8 @@ function drawRoads(now) {
     if ([3, 6].includes(column)) {
       for (let y = DISTRICT_ZONE_ORIGIN_Y; y < TAICHUNG_SOUTH_EDGE_Y; y += 230) {
         const endY = Math.min(TAICHUNG_SOUTH_EDGE_Y, y + 230);
-        const bend = ((column + Math.floor((y - DISTRICT_ZONE_ORIGIN_Y) / 230)) % 2 ? 1 : -1) * (column === 3 ? 15 : 9);
+        const bendMagnitude = Math.min(column === 3 ? 15 : 9, verticalCurveLimit);
+        const bend = ((column + Math.floor((y - DISTRICT_ZONE_ORIGIN_Y) / 230)) % 2 ? 1 : -1) * bendMagnitude;
         path.quadraticCurveTo(x + bend, y + (endY - y) / 2, x, endY);
       }
     } else {
@@ -7682,7 +8069,8 @@ function drawRoads(now) {
     if ([2, 5].includes(row)) {
       for (let x = COASTAL_ROAD_START_X; x < EASTERN_ROAD_END_X; x += 260) {
         const endX = Math.min(EASTERN_ROAD_END_X, x + 260);
-        const bend = ((row + Math.floor(x / 260)) % 2 ? 1 : -1) * (row === 2 ? 11 : 7);
+        const bendMagnitude = Math.min(row === 2 ? 11 : 7, horizontalCurveLimit);
+        const bend = ((row + Math.floor(x / 260)) % 2 ? 1 : -1) * bendMagnitude;
         path.quadraticCurveTo(x + (endX - x) / 2, y + bend, endX, y);
       }
     } else {
@@ -7697,7 +8085,9 @@ function drawRoads(now) {
   ].forEach((location, index) => {
     const x = DISTRICT_ZONE_ORIGIN_X + location.column * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X) - DISTRICT_ZONE_GAP_X / 2;
     const y = DISTRICT_ZONE_ORIGIN_Y + location.row * (DISTRICT_ZONE_HEIGHT + DISTRICT_ZONE_GAP_Y) - DISTRICT_ZONE_GAP_Y / 2;
-    if (isVisibleRect({ x: x - 45, y: y - 45, w: 90, h: 90 }, 30)) drawRoundabout(x, y, now, index);
+    if (isVisibleRect({ x: x - 45, y: y - 45, w: 90, h: 90 }, 30)) {
+      drawRoundabout(x, y, now, index, roundaboutRadiusForDistrictCorridors());
+    }
   });
 }
 
@@ -7706,10 +8096,10 @@ function strokeRoadPath(path) {
   context.lineCap = "round";
   context.lineJoin = "round";
   context.strokeStyle = COLORS.roadEdge;
-  context.lineWidth = 30;
+  context.lineWidth = ROAD_EDGE_WIDTH;
   context.stroke(path);
   context.strokeStyle = COLORS.road;
-  context.lineWidth = 20;
+  context.lineWidth = ROAD_SURFACE_WIDTH;
   context.stroke(path);
   context.strokeStyle = COLORS.roadLine;
   context.lineWidth = 3;
@@ -7718,27 +8108,30 @@ function strokeRoadPath(path) {
   context.restore();
 }
 
-function drawRoundabout(x, y, now, index) {
+function drawRoundabout(x, y, now, index, outerRadius = 38) {
+  const roadRadius = Math.max(12, outerRadius - 6);
+  const laneRadius = Math.max(5, roadRadius - 8);
+  const islandRadius = Math.max(4, laneRadius - 7);
   context.fillStyle = COLORS.roadEdge;
   context.beginPath();
-  context.arc(x, y, 38, 0, Math.PI * 2);
+  context.arc(x, y, outerRadius, 0, Math.PI * 2);
   context.fill();
   context.fillStyle = COLORS.road;
   context.beginPath();
-  context.arc(x, y, 32, 0, Math.PI * 2);
+  context.arc(x, y, roadRadius, 0, Math.PI * 2);
   context.fill();
   context.strokeStyle = COLORS.roadLine;
   context.lineWidth = 2;
   context.setLineDash([8, 7]);
   context.beginPath();
-  context.arc(x, y, 24, 0, Math.PI * 2);
+  context.arc(x, y, laneRadius, 0, Math.PI * 2);
   context.stroke();
   context.setLineDash([]);
   context.fillStyle = index % 2 ? "#8db477" : "#86aa70";
   context.beginPath();
-  context.arc(x, y, 13, 0, Math.PI * 2);
+  context.arc(x, y, islandRadius, 0, Math.PI * 2);
   context.fill();
-  drawTree(x, y - 4, now, index + 0.5, 0.62);
+  drawTree(x, y - 3, now, index + 0.5, Math.max(0.34, outerRadius / 38 * 0.62));
 }
 
 function drawTownSquare() {
@@ -7892,27 +8285,78 @@ function drawApartment(venue) {
 
 function drawPlayerHome(venue) {
   const { x, y, w, h } = venue;
-  context.fillStyle = "#8eb67b";
+  context.fillStyle = "#8fbd78";
   context.fillRect(x, y, w, h);
-  context.fillStyle = "#f0dfb5";
-  context.fillRect(x + 10, y + 15, w - 24, h - 15);
-  context.fillStyle = "#c85d46";
-  context.fillRect(x + 6, y + 9, w - 16, 9);
-  context.fillStyle = residentialWindowColor(1);
-  context.fillRect(x + 17, y + 25, 12, 10);
-  context.fillStyle = "#6f513f";
-  context.fillRect(x + w - 30, y + h - 19, 10, 19);
-  context.fillStyle = "#f2c657";
-  context.fillRect(x + w - 27, y + h - 11, 3, 3);
-  context.fillStyle = "#537b62";
-  context.fillRect(x + w - 12, y + h - 14, 4, 14);
+  context.fillStyle = "#d8c99f";
+  context.fillRect(x + 4, y + h - 10, w - 8, 6);
+  context.fillRect(x + w / 2 - 11, y + h - 25, 22, 25);
+  context.fillStyle = "#6f9b64";
+  context.fillRect(x + 8, y + 8, 28, h - 20);
+  context.fillRect(x + w - 40, y + 8, 31, h - 20);
+  context.fillStyle = "#f1d45f";
+  for (let flower = 0; flower < 5; flower += 1) {
+    context.fillRect(x + 12 + flower * 5, y + h - 20 - flower % 2 * 4, 3, 3);
+    context.fillRect(x + w - 35 + flower * 5, y + h - 18 - (flower + 1) % 2 * 4, 3, 3);
+  }
+
+  const houseX = x + 42;
+  const houseY = y + 13;
+  const houseW = w - 86;
+  const houseH = h - 18;
+  context.fillStyle = "rgba(23, 52, 67, 0.18)";
+  context.fillRect(houseX + 5, houseY + houseH, houseW, 5);
+  context.fillStyle = "#f2dfb8";
+  context.fillRect(houseX, houseY + 8, houseW, houseH - 8);
+  context.fillStyle = "#d66c52";
+  context.beginPath();
+  context.moveTo(houseX - 8, houseY + 10);
+  context.lineTo(houseX + 17, houseY - 2);
+  context.lineTo(houseX + houseW - 15, houseY - 2);
+  context.lineTo(houseX + houseW + 8, houseY + 10);
+  context.closePath();
+  context.fill();
+  context.fillStyle = "#9d4c43";
+  context.fillRect(houseX - 4, houseY + 8, houseW + 8, 5);
+  context.fillStyle = "#b55c45";
+  context.fillRect(houseX + houseW - 25, houseY - 11, 9, 12);
+  context.fillStyle = "#e9cfa1";
+  context.fillRect(houseX + 3, houseY + 29, houseW - 6, 4);
+
+  for (let column = 0; column < 3; column += 1) {
+    const windowX = houseX + 12 + column * 38;
+    context.fillStyle = residentialWindowColor(column + 1);
+    context.fillRect(windowX, houseY + 15, 16, 10);
+    context.fillStyle = "#4f7180";
+    context.fillRect(windowX + 7, houseY + 15, 2, 10);
+    context.fillStyle = "#cd6b58";
+    context.fillRect(windowX - 2, houseY + 26, 20, 3);
+  }
+
+  context.fillStyle = "#f8ead0";
+  context.fillRect(houseX + 8, houseY + 36, 36, 15);
+  context.fillStyle = residentialWindowColor(6);
+  context.fillRect(houseX + 14, houseY + 39, 24, 8);
+  context.fillStyle = "#6d5142";
+  context.fillRect(houseX + houseW - 36, houseY + 34, 19, houseH - 34);
+  context.fillStyle = "#efc55b";
+  context.fillRect(houseX + houseW - 22, houseY + 43, 3, 3);
+  context.fillStyle = "#4e725c";
+  context.fillRect(houseX + houseW - 46, houseY + houseH - 5, 38, 5);
+
+  context.fillStyle = "#547b5e";
+  context.fillRect(x + 20, y + 19, 6, 31);
+  context.fillStyle = "#3f7654";
+  context.fillRect(x + 10, y + 12, 27, 21);
+  context.fillRect(x + 14, y + 8, 19, 27);
+  context.fillStyle = "#b36f4c";
+  context.fillRect(x + w - 25, y + h - 25, 4, 20);
   context.fillStyle = COLORS.paper;
-  context.fillRect(x + w - 17, y + h - 19, 14, 8);
+  context.fillRect(x + w - 39, y + h - 29, 32, 12);
   context.fillStyle = COLORS.ink;
-  context.font = "bold 6px ui-monospace, monospace";
+  context.font = "bold 8px ui-monospace, monospace";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText("HOME", x + w - 10, y + h - 15);
+  context.fillText("我的家", x + w - 23, y + h - 23);
 }
 
 function drawCountyGovernmentVenue(venue) {
@@ -8855,87 +9299,243 @@ function drawCompactCampus(school, now) {
   const building = schoolBuildingRect(school);
   context.fillStyle = layout.color;
   context.fillRect(layout.x, layout.y, layout.w, layout.h);
-  if (layout.w >= 70 && layout.h >= 54) {
-    const facilityX = layout.x + layout.w - 17;
-    const facilityY = layout.gate === "south" ? layout.y + layout.h - 21 : layout.y + 16;
-    if (layout.facility === "track") {
-      context.strokeStyle = COLORS.track;
-      context.lineWidth = 5;
-      context.beginPath();
-      context.ellipse(facilityX, facilityY, 10, 14, 0, 0, Math.PI * 2);
-      context.stroke();
-    } else if (layout.facility === "garden") {
-      context.fillStyle = "#805b3d";
-      context.fillRect(facilityX - 9, facilityY - 8, 18, 16);
-      context.fillStyle = COLORS.treeLight;
-      context.fillRect(facilityX - 6, facilityY - 11, 4, 6);
-      context.fillRect(facilityX + 3, facilityY - 11, 4, 6);
-    } else if (layout.facility === "playground") {
-      context.fillStyle = COLORS.yellow;
-      context.fillRect(facilityX - 9, facilityY - 8, 18, 5);
-      context.fillStyle = COLORS.window;
-      context.fillRect(facilityX + 3, facilityY - 3, 5, 12);
-    } else {
-      context.fillStyle = layout.facility === "court" ? "#5f9380" : "#d6c999";
-      context.fillRect(facilityX - 10, facilityY - 10, 20, 20);
-      context.strokeStyle = COLORS.paper;
-      context.lineWidth = 1;
-      context.strokeRect(facilityX - 7.5, facilityY - 7.5, 15, 15);
-    }
-  }
-
-  context.fillStyle = school.index % 2 ? COLORS.wallBlue : COLORS.wall;
-  context.fillRect(building.x, building.y, building.w, building.h);
-  context.fillStyle = school.index % 3 === 0 ? "#416b82" : COLORS.roof;
-  if (school.index % 3 === 1) {
-    context.beginPath();
-    context.moveTo(building.x - 3, building.y);
-    context.lineTo(building.x + building.w / 2, building.y - 9);
-    context.lineTo(building.x + building.w + 3, building.y);
-    context.fill();
-  } else {
-    context.fillRect(building.x - 3, building.y - 6, building.w + 6, 8);
-  }
-  context.fillStyle = COLORS.window;
-  const windows = Math.max(1, Math.floor((building.w - 10) / 12));
-  for (let windowIndex = 0; windowIndex < windows; windowIndex += 1) {
-    context.fillRect(building.x + 6 + windowIndex * 12, building.y + 6, 7, 6);
-  }
-  context.fillStyle = "#76513a";
-  context.fillRect(building.x + building.w / 2 - 3, building.y + building.h - 9, 6, 9);
-
-  const gateX = layout.x + layout.w / 2;
-  const gateY = layout.gate === "south" ? layout.y + layout.h : layout.y;
-  context.strokeStyle = "#eee4c8";
-  context.lineWidth = 5;
-  context.beginPath();
-  context.moveTo(gateX, gateY);
-  context.lineTo(gateX, layout.gate === "south" ? building.y + building.h : building.y);
-  context.stroke();
+  drawCompactCampusBoundary(layout);
+  drawCompactFacility(layout);
+  drawCompactYardDetail(school);
+  drawCompactCampusPath(layout, building);
+  drawCompactSchoolBuilding(school, building);
+  drawCompactCampusLights(school, state.environment);
 
   drawCompactSchoolSign(school);
   if (layout.neighborCounty) drawNeighborSchoolDataMarker(school);
   if (state.isWeekend) drawWeekendSchoolMarker(layout);
 
-  if (!reducedMotion && now && school.index % 13 === 0) {
+  if (!reducedMotion && now && layout.visual.seed % 13 === 0) {
     context.fillStyle = COLORS.yellow;
     context.fillRect(layout.x + layout.w - 8, layout.y + 6 + Math.floor(now / 500) % 2, 4, 4);
   }
+}
+
+function drawCompactCampusBoundary(layout) {
+  context.strokeStyle = layout.theme === "brick" || layout.theme === "mixed" ? "#9f5b46" : "rgba(55, 101, 78, 0.62)";
+  context.lineWidth = layout.theme === "open" ? 1 : 2;
+  context.strokeRect(layout.x + 1, layout.y + 1, layout.w - 2, layout.h - 2);
+  if (layout.theme === "fence") {
+    context.fillStyle = COLORS.fenceDark;
+    for (let offset = 8; offset < layout.w - 6; offset += 14) {
+      context.fillRect(layout.x + offset, layout.y + 1, 2, 5);
+    }
+  } else if (layout.theme === "hedge" || layout.theme === "mixed") {
+    context.fillStyle = COLORS.tree;
+    context.fillRect(layout.x + 4, layout.y + 4, 12, 6);
+    context.fillRect(layout.x + layout.w - 16, layout.y + layout.h - 10, 12, 6);
+  }
+}
+
+function drawCompactFacility(layout) {
+  if (layout.w < 120 || layout.h < 58) return;
+  const facilityX = layout.x + layout.w - 16;
+  const facilityY = layout.y + layout.h / 2;
+  if (layout.facility === "track") {
+    context.strokeStyle = COLORS.track;
+    context.lineWidth = 4;
+    context.beginPath();
+    context.ellipse(facilityX, facilityY, 8, 12, 0, 0, Math.PI * 2);
+    context.stroke();
+    context.strokeStyle = COLORS.trackLine;
+    context.lineWidth = 1;
+    context.beginPath();
+    context.ellipse(facilityX, facilityY, 4, 8, 0, 0, Math.PI * 2);
+    context.stroke();
+  } else if (layout.facility === "garden") {
+    context.fillStyle = "#805b3d";
+    context.fillRect(facilityX - 8, facilityY - 10, 16, 20);
+    context.fillStyle = COLORS.treeLight;
+    for (let row = -7; row <= 7; row += 7) {
+      context.fillRect(facilityX - 5, facilityY + row, 3, 4);
+      context.fillRect(facilityX + 3, facilityY + row, 3, 4);
+    }
+  } else if (layout.facility === "playground") {
+    context.fillStyle = COLORS.yellow;
+    context.fillRect(facilityX - 9, facilityY - 8, 18, 5);
+    context.fillStyle = COLORS.window;
+    context.fillRect(facilityX + 3, facilityY - 3, 5, 12);
+    context.fillStyle = "#d86243";
+    context.fillRect(facilityX - 8, facilityY + 5, 11, 4);
+  } else if (layout.facility === "library") {
+    context.fillStyle = "#d6c999";
+    context.fillRect(facilityX - 9, facilityY - 10, 18, 20);
+    context.fillStyle = "#416b82";
+    context.fillRect(facilityX - 6, facilityY - 6, 12, 5);
+    context.fillStyle = "#76513a";
+    context.fillRect(facilityX - 2, facilityY + 2, 4, 8);
+  } else {
+    context.fillStyle = "#5f9380";
+    context.fillRect(facilityX - 9, facilityY - 11, 18, 22);
+    context.strokeStyle = COLORS.paper;
+    context.lineWidth = 1;
+    context.strokeRect(facilityX - 7.5, facilityY - 9.5, 15, 19);
+    context.beginPath();
+    context.moveTo(facilityX, facilityY - 9);
+    context.lineTo(facilityX, facilityY + 9);
+    context.stroke();
+  }
+}
+
+function drawCompactCampusPath(layout, building) {
+  const gateX = layout.x + layout.w / 2;
+  const gateY = layout.gate === "south" ? layout.y + layout.h : layout.y;
+  const doorY = layout.gate === "south" ? building.y + building.h : building.y;
+  context.strokeStyle = "#eee4c8";
+  context.lineWidth = 5;
+  context.beginPath();
+  context.moveTo(gateX, gateY);
+  context.lineTo(gateX, doorY);
+  context.stroke();
+}
+
+function drawCompactSchoolBuilding(school, building) {
+  const { layout } = school;
+  const visual = layout.visual;
+  context.fillStyle = "rgba(35, 58, 55, 0.17)";
+  context.fillRect(building.x + 2, building.y + building.h, building.w, 3);
+  if (visual.architecture === "courtyard" && building.w >= 44) {
+    context.fillStyle = visual.wallColor;
+    context.fillRect(building.x - 4, building.y + 6, 7, building.h - 4);
+    context.fillRect(building.x + building.w - 3, building.y + 6, 7, building.h - 4);
+  }
+  context.fillStyle = visual.wallColor;
+  context.fillRect(building.x, building.y, building.w, building.h);
+  context.fillStyle = visual.roofColor;
+  if (visual.architecture === "gable") {
+    context.beginPath();
+    context.moveTo(building.x - 3, building.y);
+    context.lineTo(building.x + building.w / 2, building.y - 9);
+    context.lineTo(building.x + building.w + 3, building.y);
+    context.closePath();
+    context.fill();
+  } else if (visual.architecture === "stepped") {
+    context.fillRect(building.x - 3, building.y - 5, building.w + 6, 7);
+    context.fillRect(building.x + building.w * 0.28, building.y - 9, building.w * 0.44, 5);
+  } else {
+    context.fillRect(building.x - 3, building.y - 6, building.w + 6, 8);
+    if (visual.architecture === "eco-roof") {
+      context.fillStyle = "#5d8c57";
+      context.fillRect(building.x + 5, building.y - 8, Math.max(8, building.w - 10), 4);
+    }
+  }
+
+  const doorX = building.x + building.w / 2;
+  const doorY = layout.gate === "south" ? building.y + building.h - 9 : building.y;
+  const windowY = layout.gate === "south" ? building.y + 6 : building.y + building.h - 12;
+  context.fillStyle = COLORS.window;
+  if (visual.windowStyle === "ribbon") {
+    context.fillRect(building.x + 6, windowY, Math.max(8, building.w - 12), 6);
+    context.fillStyle = visual.wallColor;
+    for (let divider = building.x + 16; divider < building.x + building.w - 5; divider += 11) {
+      context.fillRect(divider, windowY, 2, 6);
+    }
+  } else {
+    const spacing = visual.windowStyle === "paired" ? 10 : 12;
+    const windowWidth = visual.windowStyle === "paired" ? 6 : 7;
+    for (let x = building.x + 6; x <= building.x + building.w - windowWidth - 5; x += spacing) {
+      context.fillRect(x, windowY, windowWidth, 6);
+      if (visual.windowStyle === "paired" && x + 8 <= building.x + building.w - 5) {
+        context.fillRect(x + 7, windowY, 2, 6);
+      }
+    }
+  }
+
+  context.fillStyle = visual.entranceStyle === "bright" ? "#4f8091" : "#76513a";
+  context.fillRect(doorX - 3, doorY, 6, 9);
+  if (visual.entranceStyle === "canopy") {
+    context.fillStyle = visual.roofColor;
+    context.fillRect(doorX - 7, layout.gate === "south" ? doorY - 3 : doorY + 8, 14, 3);
+  } else if (visual.entranceStyle === "brick") {
+    context.fillStyle = "#a45842";
+    context.fillRect(doorX - 6, doorY, 2, 9);
+    context.fillRect(doorX + 4, doorY, 2, 9);
+  }
+}
+
+function drawCompactYardDetail(school) {
+  const { layout } = school;
+  if (layout.w < 80 || layout.h < 56) return;
+  const x = layout.x + 11;
+  const y = layout.y + layout.h / 2 + 2;
+  if (layout.visual.yardDetail === "flagpole") {
+    context.fillStyle = "#6d7774";
+    context.fillRect(x, y - 15, 2, 27);
+    context.fillStyle = "#d96348";
+    context.fillRect(x + 2, y - 14, 8, 5);
+  } else if (layout.visual.yardDetail === "reading-tree") {
+    drawTree(x + 1, y + 4, 0, 0, 0.38);
+    context.fillStyle = "#a2714e";
+    context.fillRect(x - 5, y + 8, 13, 3);
+  } else if (layout.visual.yardDetail === "rain-tank") {
+    context.fillStyle = "#4f8790";
+    context.fillRect(x - 5, y - 8, 11, 18);
+    context.fillStyle = COLORS.waterLight;
+    context.fillRect(x - 3, y - 6, 7, 3);
+  } else if (layout.visual.yardDetail === "bike-rack") {
+    context.strokeStyle = "#687674";
+    context.lineWidth = 2;
+    for (let rack = -5; rack <= 5; rack += 5) {
+      context.beginPath();
+      context.arc(x + rack, y + 2, 3, Math.PI, 0);
+      context.stroke();
+    }
+  } else {
+    ["#df6c67", "#edbd55", "#7f9bd0"].forEach((color, index) => {
+      context.fillStyle = color;
+      context.fillRect(x - 7 + index * 6, y - 3 + (index % 2) * 3, 4, 4);
+    });
+  }
+}
+
+function campusLightPositions(school) {
+  const { layout } = school;
+  if (!["lamps", "open"].includes(layout.theme)) return [];
+  if (!layout.compact) {
+    return [
+      { x: layout.x + 16, y: layout.y + 16 },
+      { x: layout.x + layout.w - 16, y: layout.y + 16 },
+      { x: layout.x + 16, y: layout.y + layout.h - 16 },
+      { x: layout.x + layout.w - 16, y: layout.y + layout.h - 16 },
+    ];
+  }
+  const building = schoolBuildingRect(school);
+  const fixtureY = layout.gate === "south" ? building.y + building.h - 4 : building.y + 4;
+  const spacing = Math.min(10, building.w / 4);
+  return [
+    { x: building.x + building.w / 2 - spacing, y: fixtureY, glowOffsetY: 0, wallMounted: true },
+    { x: building.x + building.w / 2 + spacing, y: fixtureY, glowOffsetY: 0, wallMounted: true },
+  ];
+}
+
+function drawCompactCampusLights(school, environment) {
+  campusLightPositions(school).forEach((lamp) => {
+    context.fillStyle = environment?.darkness > 0.08 ? "#ffe78a" : "#e8d7a2";
+    context.fillRect(lamp.x - 2, lamp.y - 2, 4, 4);
+    context.fillStyle = "#596564";
+    context.fillRect(lamp.x - 1, lamp.y + 2, 2, 2);
+  });
 }
 
 function drawNeighborSchoolDataMarker(school) {
   const { layout } = school;
   const available = schoolHasCurrentMeal(school);
   context.fillStyle = available ? "#3f8b58" : "#d7a33a";
-  context.fillRect(layout.x + 3, layout.y + 3, 7, 7);
+  const markerY = layout.gate === "north" ? layout.y + layout.h - 10 : layout.y + 3;
+  context.fillRect(layout.x + 3, markerY, 7, 7);
   context.strokeStyle = "rgba(255, 248, 231, 0.9)";
   context.lineWidth = 1;
-  context.strokeRect(layout.x + 2.5, layout.y + 2.5, 8, 8);
+  context.strokeRect(layout.x + 2.5, markerY - 0.5, 8, 8);
 }
 
 function drawWeekendSchoolMarker(layout) {
   const x = layout.x + layout.w - 32;
-  const y = layout.y + 4;
+  const y = layout.gate === "north" ? layout.y + layout.h - 16 : layout.y + 4;
   context.fillStyle = "#496379";
   context.fillRect(x, y, 28, 12);
   context.fillStyle = COLORS.paper;
@@ -9104,7 +9704,9 @@ function drawCompactSchoolSign(school) {
   const lineHeight = fontSize + 2;
   const signHeight = lines.length * lineHeight + 5;
   const signX = layout.x + (layout.w - signWidth) / 2;
-  const signY = layout.y + layout.h - signHeight - 3;
+  const signY = layout.gate === "south"
+    ? layout.y + layout.h - signHeight - 3
+    : layout.y + 3;
 
   context.fillStyle = "#fff8df";
   context.fillRect(signX, signY, signWidth, signHeight);
@@ -9154,23 +9756,57 @@ function fitSchoolLabelFont(label, maxWidth, preferredSize, minimumSize) {
   return minimumSize - 1;
 }
 
-function streetDecorationsForZone(zone, districtIndex) {
-  const treeXs = [62, 138, 222, 310, 402, 496];
+function districtDecorationExclusionRects(district) {
+  const zone = DISTRICT_ZONES[district];
+  if (!zone) return [];
+  const districtSchools = state.schools
+    .filter((school) => school.district === district)
+    .map((school) => school.layout);
+  const districtVenues = state.venues.filter((venue) => venue.district === district);
+  const districtStations = state.bikeStations
+    .filter((station) => station.district === district)
+    .map((station) => bikeStationHitRect(station));
+  return [
+    { x: zone.x + 14, y: zone.y + 12, w: 286, h: 50 },
+    ...districtSchools,
+    ...districtVenues,
+    ...districtStations,
+  ];
+}
+
+function streetDecorationsForZone(zone, districtIndex, district = DISTRICT_DISPLAY_ORDER[districtIndex]) {
+  const identity = district || `${zone.x},${zone.y}`;
+  const seed = hashText(identity);
+  const exclusions = districtDecorationExclusionRects(district);
+  const pointIsClear = (point, padding) => !exclusions.some((rect) => pointInExpandedRect(point, rect, padding));
+  const treeCandidates = [
+    ...[330, 394, 458, 522].map((offset) => ({ x: zone.x + offset, y: zone.y + 66 })),
+    ...[60, 132, 204, 276, 348, 420, 492].map((offset) => ({ x: zone.x + offset, y: zone.y + zone.h - 12 })),
+    ...[102, 166, 230, 294].flatMap((offset) => ([
+      { x: zone.x + 8, y: zone.y + offset },
+      { x: zone.x + zone.w - 8, y: zone.y + offset },
+    ])),
+  ];
+  const lampCandidates = [
+    ...[332, 398, 464, 530].map((offset) => ({ x: zone.x + offset, y: zone.y + 8 })),
+    ...[66, 142, 218, 294, 370, 446, 522].map((offset) => ({ x: zone.x + offset, y: zone.y + zone.h - 8 })),
+    ...[104, 184, 264].flatMap((offset) => ([
+      { x: zone.x + 8, y: zone.y + offset },
+      { x: zone.x + zone.w - 8, y: zone.y + offset },
+    ])),
+  ];
+  const benchCandidates = [
+    { x: zone.x + 330, y: zone.y + 48, w: 38, h: 7 },
+    { x: zone.x + 420, y: zone.y + 48, w: 38, h: 7 },
+    { x: zone.x + 72, y: zone.y + zone.h - 30, w: 42, h: 7 },
+    { x: zone.x + 354, y: zone.y + zone.h - 30, w: 42, h: 7 },
+  ];
   return {
-    trees: [
-      ...treeXs.map((offset, index) => ({ x: zone.x + offset, y: zone.y + 54, phase: districtIndex * 0.7 + index * 0.45 })),
-      ...treeXs.slice(0, 5).map((offset, index) => ({ x: zone.x + offset + 34, y: zone.y + zone.h - 24, phase: districtIndex + index * 0.52 })),
-      { x: zone.x + 24, y: zone.y + 148, phase: districtIndex * 0.4 },
-      { x: zone.x + zone.w - 24, y: zone.y + 198, phase: districtIndex * 0.4 + 1.7 },
-    ],
-    lamps: [
-      { x: zone.x + 28, y: zone.y + 44 },
-      { x: zone.x + zone.w - 28, y: zone.y + 44 },
-      { x: zone.x + 20, y: zone.y + zone.h / 2 },
-      { x: zone.x + zone.w - 20, y: zone.y + zone.h / 2 },
-      { x: zone.x + 162, y: zone.y + zone.h - 18 },
-      { x: zone.x + zone.w - 162, y: zone.y + zone.h - 18 },
-    ],
+    trees: treeCandidates
+      .filter((tree, index) => (index + seed) % 3 !== 0 && pointIsClear(tree, 20))
+      .map((tree, index) => ({ ...tree, phase: (seed % 17) * 0.19 + index * 0.47 })),
+    lamps: lampCandidates.filter((lamp, index) => (index + seed) % 3 !== 0 && pointIsClear(lamp, 12)),
+    benches: benchCandidates.filter((bench) => !exclusions.some((rect) => lotsIntersect(bench, rect, 8))),
   };
 }
 
@@ -9178,12 +9814,11 @@ function drawStreetDetails(now, environment) {
   DISTRICT_DISPLAY_ORDER.filter((district) => isVisibleRect(DISTRICT_ZONES[district], 40)).forEach((district) => {
     const zone = DISTRICT_ZONES[district];
     const districtIndex = DISTRICT_DISPLAY_ORDER.indexOf(district);
-    const decorations = streetDecorationsForZone(zone, districtIndex);
+    const decorations = streetDecorationsForZone(zone, districtIndex, district);
     decorations.trees.forEach((tree) => drawTree(tree.x, tree.y, now, tree.phase));
     decorations.lamps.forEach((lamp) => drawLamp(lamp.x, lamp.y, environment));
     context.fillStyle = "#a2714e";
-    context.fillRect(zone.x + zone.w - 92, zone.y + 48, 38, 7);
-    context.fillRect(zone.x + 206, zone.y + zone.h - 30, 42, 7);
+    decorations.benches.forEach((bench) => context.fillRect(bench.x, bench.y, bench.w, bench.h));
   });
 }
 
@@ -9240,18 +9875,11 @@ function visibleLampPositions() {
   DISTRICT_DISPLAY_ORDER.filter((district) => isVisibleRect(DISTRICT_ZONES[district], 80)).forEach((district) => {
     const zone = DISTRICT_ZONES[district];
     const districtIndex = DISTRICT_DISPLAY_ORDER.indexOf(district);
-    positions.push(...streetDecorationsForZone(zone, districtIndex).lamps);
+    positions.push(...streetDecorationsForZone(zone, districtIndex, district).lamps);
   });
-  state.schools.filter((school) => isVisibleRect(school.layout, 80)).forEach((school) => {
-    const { layout } = school;
-    if (!["lamps", "open"].includes(layout.theme)) return;
-    positions.push(
-      { x: layout.x + 16, y: layout.y + 16 },
-      { x: layout.x + layout.w - 16, y: layout.y + 16 },
-      { x: layout.x + 16, y: layout.y + layout.h - 16 },
-      { x: layout.x + layout.w - 16, y: layout.y + layout.h - 16 },
-    );
-  });
+  [...state.schools, ...state.neighborSchools]
+    .filter((school) => isVisibleRect(school.layout, 80))
+    .forEach((school) => positions.push(...campusLightPositions(school)));
   state.venues
     .filter((venue) => venue.id === "waternan-central-park" && isVisibleRect(venue, 80))
     .forEach((venue) => positions.push(...centralParkLampPositions(venue)));
@@ -9269,15 +9897,17 @@ function drawStreetLightGlows(environment, now) {
   context.globalCompositeOperation = "screen";
   visibleLampPositions().forEach((lamp) => {
     const x = lamp.x - state.camera.x;
-    const y = lamp.y - 20 - state.camera.y;
+    const y = lamp.y + (lamp.glowOffsetY ?? -20) - state.camera.y;
     if (x < -45 || x > WIDTH + 45 || y < -45 || y > HEIGHT + 45) return;
-    const glowWidth = Math.round(27 * pulse);
+    const fixtureScale = lamp.wallMounted ? 0.65 : 1;
+    const glowWidth = Math.round(27 * pulse * fixtureScale);
+    const glowHeight = Math.round(40 * fixtureScale);
     context.fillStyle = `rgba(255, 203, 82, ${0.045 * strength})`;
-    context.fillRect(Math.round(x - glowWidth), Math.round(y - 20), glowWidth * 2, 40);
+    context.fillRect(Math.round(x - glowWidth), Math.round(y - glowHeight / 2), glowWidth * 2, glowHeight);
     context.fillStyle = `rgba(255, 215, 105, ${0.1 * strength})`;
-    context.fillRect(Math.round(x - 16), Math.round(y - 12), 32, 24);
+    context.fillRect(Math.round(x - 16 * fixtureScale), Math.round(y - 12 * fixtureScale), Math.round(32 * fixtureScale), Math.round(24 * fixtureScale));
     context.fillStyle = `rgba(255, 233, 137, ${0.22 * strength})`;
-    context.fillRect(Math.round(x - 8), Math.round(y - 7), 16, 14);
+    context.fillRect(Math.round(x - 8 * fixtureScale), Math.round(y - 7 * fixtureScale), Math.round(16 * fixtureScale), Math.round(14 * fixtureScale));
     context.fillStyle = "#ffe99b";
     context.fillRect(Math.round(x - 3), Math.round(y - 2), 6, 5);
   });
@@ -9370,7 +10000,9 @@ function drawPerson(person, now) {
   drawCharacterHair(person, direction);
   drawCharacterFace(person, direction, now);
   drawCharacterAccessory(person, direction, armSwing, player);
-  if (state.environment?.isRaining && (player || person.hasUmbrella || (person.lookIndex || 0) % 3 === 0)) {
+  if (!person.portraitPreview
+    && state.environment?.isRaining
+    && (player || person.hasUmbrella || (person.lookIndex || 0) % 3 === 0)) {
     drawRainUmbrella(person);
   }
   context.restore();
@@ -9826,68 +10458,128 @@ function drawCharacterHair(person, direction) {
 
 function drawCharacterFace(person, direction, now) {
   if (direction === "up") return;
+  const expression = currentCharacterExpression(person);
   const facePhase = Math.floor(((now || 0) + (person.lookIndex || 0) * 173) / 90) % 67;
-  const isBlinking = !reducedMotion && facePhase < 2;
-  const eyeColor = person.eyeColor || "#243238";
+  const isBlinking = !person.portraitPreview && !reducedMotion && facePhase < 2;
+  const gazePhase = Math.floor(((now || 0) + (person.lookIndex || 0) * 311) / 1100) % 4;
+  const gazeOffset = person.portraitPreview || reducedMotion ? 0 : [0, 1, 0, -1][gazePhase];
+  const eyeOutline = "#243238";
+  const eyeColor = person.eyeColor || eyeOutline;
+  const lipColor = person.makeup ? (person.lipColor || "#ad4658") : eyeOutline;
+  const smilingEyes = ["happy", "cheerful", "kind"].includes(expression);
   if (direction === "down") {
-    context.fillStyle = eyeColor;
-    if (isBlinking) {
+    if (isBlinking || smilingEyes) {
+      context.fillStyle = eyeOutline;
       context.fillRect(-5, -18, 3, 1);
       context.fillRect(3, -18, 3, 1);
+      if (smilingEyes && !isBlinking) {
+        context.fillRect(-5, -19, 1, 1);
+        context.fillRect(5, -19, 1, 1);
+      }
     } else {
-      context.fillRect(-5, -19, 3, 3);
-      context.fillRect(3, -19, 3, 3);
       context.fillStyle = COLORS.paper;
-      context.fillRect(-4, -19, 1, 1);
-      context.fillRect(4, -19, 1, 1);
+      context.fillRect(-6, -19, 4, 3);
+      context.fillRect(2, -19, 4, 3);
+      context.fillStyle = eyeColor;
+      context.fillRect(-5 + gazeOffset, -19, 2, 2);
+      context.fillRect(3 + gazeOffset, -19, 2, 2);
+      context.fillStyle = eyeOutline;
+      context.fillRect(-5 + gazeOffset, -18, 1, 1);
+      context.fillRect(3 + gazeOffset, -18, 1, 1);
+      context.fillStyle = COLORS.paper;
+      context.fillRect(-5 + gazeOffset, -19, 1, 1);
+      context.fillRect(3 + gazeOffset, -19, 1, 1);
     }
-    context.fillStyle = eyeColor;
-    if (["focused", "determined"].includes(person.expression)) {
-      context.fillRect(-5, -21, 4, 1);
+
+    context.fillStyle = eyeOutline;
+    if (["focused", "determined"].includes(expression)) {
+      context.fillRect(-6, -21, 4, 1);
       context.fillRect(2, -21, 4, 1);
-      context.fillRect(-4, -20, 2, 1);
-      context.fillRect(3, -20, 2, 1);
-    } else if (person.expression === "curious" || person.expression === "surprised") {
+      context.fillRect(-3, -20, 2, 1);
+      context.fillRect(2, -20, 2, 1);
+    } else if (expression === "surprised") {
+      context.fillRect(-6, -22, 4, 1);
+      context.fillRect(2, -22, 4, 1);
+    } else if (expression === "curious") {
+      context.fillRect(-6, -22, 4, 1);
+      context.fillRect(2, -21, 4, 1);
+      context.fillRect(5, -20, 1, 1);
+    } else if (expression === "confident") {
+      context.fillRect(-6, -20, 4, 1);
+      context.fillRect(2, -21, 4, 1);
+    } else if (expression === "thoughtful") {
+      context.fillRect(-6, -21, 3, 1);
+      context.fillRect(2, -20, 4, 1);
+      context.fillRect(-6, -22, 1, 1);
+    } else if (!smilingEyes) {
       context.fillRect(-5, -21, 3, 1);
-      context.fillRect(3, -20, 3, 1);
-    } else if (person.expression === "confident") {
-      context.fillRect(-5, -20, 4, 1);
       context.fillRect(3, -21, 3, 1);
-    } else if (person.expression === "thoughtful") {
-      context.fillRect(-5, -20, 3, 1);
-      context.fillRect(3, -20, 3, 1);
-      context.fillRect(-5, -21, 1, 1);
     }
-    if (person.makeup || ["cheerful", "gentle", "kind"].includes(person.expression)) {
+
+    context.fillStyle = "rgba(104, 67, 55, 0.34)";
+    context.fillRect(0, -17, 1, 2);
+    context.fillRect(1, -16, 1, 1);
+    if (person.makeup || ["happy", "cheerful", "gentle", "kind"].includes(expression)) {
       context.fillStyle = person.blushColor || "#d97d7d";
       context.fillRect(-7, -15, 2, 1);
       context.fillRect(6, -15, 2, 1);
     }
-    context.fillStyle = person.makeup ? (person.lipColor || "#ad4658") : eyeColor;
-    if (["happy", "kind", "gentle", "cheerful"].includes(person.expression)) {
+
+    context.fillStyle = lipColor;
+    if (["happy", "kind", "cheerful"].includes(expression)) {
+      context.fillRect(-3, -14, 2, 1);
+      context.fillRect(2, -14, 2, 1);
+      context.fillRect(-1, -13, 3, 2);
+      context.fillStyle = COLORS.paper;
+      context.fillRect(-1, -13, 3, 1);
+    } else if (expression === "gentle") {
       context.fillRect(-3, -14, 2, 1);
       context.fillRect(2, -14, 2, 1);
       context.fillRect(-1, -13, 3, 1);
-    } else if (person.expression === "surprised") {
-      context.fillRect(-1, -14, 3, 2);
-    } else if (person.expression === "curious") {
+    } else if (expression === "surprised") {
+      context.fillRect(-1, -15, 3, 3);
+      context.fillStyle = "#713b43";
+      context.fillRect(0, -14, 1, 1);
+    } else if (expression === "curious") {
       context.fillRect(-2, -14, 4, 1);
       context.fillRect(1, -13, 2, 1);
-    } else if (person.expression === "confident") {
+    } else if (expression === "confident") {
       context.fillRect(-3, -14, 6, 1);
       context.fillRect(1, -13, 2, 1);
-    } else if (person.expression === "thoughtful") {
+    } else if (expression === "thoughtful") {
       context.fillRect(-2, -13, 4, 1);
       context.fillRect(2, -14, 2, 1);
+    } else if (["focused", "determined"].includes(expression)) {
+      context.fillRect(-3, -14, 6, 1);
+      context.fillRect(-3, -13, 2, 1);
     } else {
       context.fillRect(-2, -14, 5, 1);
     }
   } else {
-    context.fillStyle = eyeColor;
-    context.fillRect(3, isBlinking ? -18 : -19, 3, isBlinking ? 1 : 3);
-    if (["focused", "determined", "confident"].includes(person.expression)) context.fillRect(3, -21, 4, 1);
-    context.fillStyle = person.makeup ? (person.lipColor || "#ad4658") : eyeColor;
-    context.fillRect(5, -14, 2, 1);
+    if (isBlinking || smilingEyes) {
+      context.fillStyle = eyeOutline;
+      context.fillRect(3, -18, 3, 1);
+      if (smilingEyes && !isBlinking) context.fillRect(5, -19, 1, 1);
+    } else {
+      context.fillStyle = COLORS.paper;
+      context.fillRect(3, -19, 4, 3);
+      context.fillStyle = eyeColor;
+      context.fillRect(4 + Math.max(0, gazeOffset), -19, 2, 2);
+      context.fillStyle = eyeOutline;
+      context.fillRect(5 + Math.max(0, gazeOffset), -18, 1, 1);
+    }
+    context.fillStyle = eyeOutline;
+    if (expression === "surprised") context.fillRect(3, -22, 4, 1);
+    else if (["focused", "determined", "confident"].includes(expression)) context.fillRect(3, -21, 4, 1);
+    else if (!smilingEyes) context.fillRect(4, -21, 3, 1);
+    context.fillStyle = "rgba(104, 67, 55, 0.34)";
+    context.fillRect(7, -16, 2, 2);
+    context.fillStyle = lipColor;
+    if (expression === "surprised") context.fillRect(6, -14, 2, 2);
+    else if (["happy", "cheerful", "kind", "gentle", "confident"].includes(expression)) {
+      context.fillRect(5, -14, 3, 1);
+      context.fillRect(7, -13, 2, 1);
+    } else context.fillRect(5, -14, 3, 1);
   }
 }
 
@@ -10297,12 +10989,17 @@ function openVenue(venue, method = "nearby_action") {
   const residentNames = registeredResidents.slice(0, 6).map(npcDisplayName).join("、");
   const homeStage = venue.type === "player-home" ? venue.homeStage || PLAYER_HOME_STAGE : null;
   const homeDetails = homeStage ? `
-    <div class="meal-summary"><span>目前住所</span><strong>${escapeHtml(homeStage.label)}</strong></div>
-    <p class="data-note">房屋階段：${homeStage.rooms} 房。可規劃的改建方向包含${escapeHtml(homeStage.renovationPaths.join("、"))}；日後正式改建會綁定家庭帳號保存。</p>
+    ${playerHomeAvatarPickerMarkup()}
+    <div class="home-house-details">
+      <div><span>目前住所</span><strong>${escapeHtml(homeStage.label)}</strong></div>
+      <div><span>生活空間</span><strong>${homeStage.rooms} 房・客廳・廚房・更衣間</strong></div>
+      <p>一樓有明亮客廳與廚房，二樓安排臥室和更衣間，屋外保留前廊、花園與回家步道。</p>
+    </div>
   ` : RESIDENTIAL_VENUE_TYPES.has(venue.type)
     ? `<p class="data-note">這棟住宅已納入居民行程；居民會從這裡出門，也會在傍晚或行程結束後回家。</p>`
     : "";
   const displayLabel = venueDisplayLabel(venue);
+  refs.dialog.classList.toggle("is-player-home", Boolean(homeStage));
   refs.dialogKicker.textContent = `${venue.district}・${VENUE_LABELS[venue.type] || "街區設施"}`;
   refs.dialogTitle.textContent = displayLabel;
   refs.dialogBody.innerHTML = `
@@ -10315,7 +11012,79 @@ function openVenue(venue, method = "nearby_action") {
     ${venue.sourceUrl ? `<a class="source-link" href="${escapeAttribute(venue.sourceUrl)}" target="_blank" rel="noreferrer">查看官方地標或美食參考來源</a>` : ""}
   `;
   refs.dialog.showModal();
+  if (homeStage) requestAnimationFrame(syncPlayerAvatarButtons);
   announce(townUsesEnglish() ? `Entered ${displayLabel}.` : `已進入${displayLabel}。`);
+}
+
+function npcDialogueExpression(npc) {
+  const baseExpression = npc?.expression || "calm";
+  const line = state.dialogueLines[state.dialogueStep] || npc?.dialogues?.[0] || "";
+  if (/(注意|確認|安全|小心|check|confirm|safe|careful)/i.test(line)) return "focused";
+  if (/[?？]/.test(line)) return "curious";
+  if (/[!！]/.test(line)) return "cheerful";
+  if (!state.dialogueStep) return baseExpression;
+  const sequence = DIALOGUE_EXPRESSION_SEQUENCES[npc?.personality?.id]
+    || [baseExpression, "curious", "thoughtful"];
+  const offset = Number.isFinite(npc?.lookIndex) ? npc.lookIndex : 0;
+  return sequence[(state.dialogueStep - 1 + offset) % sequence.length] || baseExpression;
+}
+
+function currentCharacterExpression(person) {
+  if (person?.previewExpression) return person.previewExpression;
+  if (person && state.dialogueNpc === person) return person.dialogueExpression || person.expression || "calm";
+  return person?.expression || "calm";
+}
+
+function characterExpressionLabel(expression) {
+  return CHARACTER_EXPRESSION_LABELS[expression] || CHARACTER_EXPRESSION_LABELS.calm;
+}
+
+function renderNpcPortrait(npc, expression) {
+  const portraitContext = refs.npcPortrait?.getContext("2d");
+  if (!npc || !portraitContext || !context) return;
+  const sampleSize = 72;
+  let savedPixels;
+  try {
+    savedPixels = context.getImageData(0, 0, sampleSize, sampleSize);
+  } catch {
+    return;
+  }
+  context.save();
+  try {
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.globalAlpha = 1;
+    context.globalCompositeOperation = "source-over";
+    context.fillStyle = "#dce8dc";
+    context.fillRect(0, 0, sampleSize, sampleSize);
+    context.fillStyle = "#c5d8c8";
+    context.fillRect(0, 49, sampleSize, 23);
+    drawPerson({
+      ...npc,
+      x: 36,
+      y: 52,
+      direction: "down",
+      step: 0,
+      isMoving: false,
+      isCollapsed: false,
+      ridingBike: false,
+      riverbankSiteId: "",
+      activity: "standing",
+      emote: "",
+      emoteUntil: 0,
+      previewExpression: expression,
+      portraitPreview: true,
+    }, 0);
+    portraitContext.imageSmoothingEnabled = false;
+    portraitContext.clearRect(0, 0, refs.npcPortrait.width, refs.npcPortrait.height);
+    portraitContext.drawImage(
+      canvas,
+      18, 15, 36, 42,
+      0, 0, refs.npcPortrait.width, refs.npcPortrait.height,
+    );
+  } finally {
+    context.restore();
+    context.putImageData(savedPixels, 0, 0);
+  }
 }
 
 function openNpcDialogue(npc, method = "nearby_action") {
@@ -10347,6 +11116,9 @@ function openNpcDialogue(npc, method = "nearby_action") {
 function renderNpcDialogue() {
   const npc = state.dialogueNpc;
   if (!npc) return;
+  const expression = npcDialogueExpression(npc);
+  const expressionLabel = characterExpressionLabel(expression);
+  npc.dialogueExpression = expression;
   refs.npcName.textContent = npcDisplayName(npc);
   refs.npcRole.textContent = townText(`${npc.district}・${ROLE_LABELS[npc.role]}・住家：${npc.residenceLabel || "小鎮住宅"}・${npc.personality.label}・${npc.currentReason}`);
   const sourceUrl = npc.campaignSourceUrl || npc.sourceUrl;
@@ -10355,6 +11127,13 @@ function renderNpcDialogue() {
   if (sourceUrl) refs.npcSource.href = sourceUrl;
   refs.npcText.textContent = state.dialogueLines[state.dialogueStep] || npc.dialogues[0];
   refs.npcNext.textContent = state.dialogueStep >= state.dialogueLines.length - 1 ? "結束對話" : "再聊一句";
+  refs.npcExpression.textContent = `${townText("表情")}・${townText(expressionLabel)}`;
+  refs.npcPortrait.setAttribute("aria-label",
+    townUsesEnglish()
+      ? `${npcDisplayName(npc)}, ${townText(expressionLabel)} expression close-up`
+      : `${npcDisplayName(npc)}，${expressionLabel}表情特寫`,
+  );
+  renderNpcPortrait(npc, expression);
 }
 
 function advanceNpcDialogue() {
@@ -10379,6 +11158,7 @@ function closeNpcDialogue() {
       endedAt: performance.now(),
     });
     state.dialogueNpc.activity = "waiting";
+    state.dialogueNpc.dialogueExpression = "";
   }
   state.dialogueNpc = null;
   state.dialogueStep = 0;

@@ -62,6 +62,25 @@ class ActiveSchoolRegistryTests(unittest.TestCase):
                 registry("桃園市"),
             ])
 
+    def test_merge_prioritizes_two_character_districts(self):
+        merged = merge_registries([
+            registry("臺北市"),
+            registry("桃園市"),
+            registry("苗栗縣"),
+            registry("臺中市", [
+                school(1, "臺中市", "大甲區", "甲國小"),
+                school(2, "臺中市", "北區", "乙國小"),
+                school(3, "臺中市", "西區", "丙國小"),
+                school(4, "臺中市", "大安區", "丁國小"),
+            ]),
+            registry("彰化縣"),
+            registry("臺南市"),
+        ])
+        self.assertEqual(
+            [item["district"] for item in merged],
+            ["北區", "西區", "大甲區", "大安區"],
+        )
+
     def test_partition_keeps_districts_whole(self):
         schools = [
             school(index, "臺南市", district, f"學校{index}")

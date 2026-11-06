@@ -222,9 +222,9 @@ const ids = [
   "parentNickname", "saveParentProfile", "parentProfileStatus", "accountChildList", "accountAddChild",
   "accountFamilyStatus", "accountChildEditor", "accountChildBack",
   "emailLinkSettings", "emailLinkForm", "linkEmail", "requestLinkEmailCode", "emailLinkCodeForm", "linkEmailCode", "verifyLinkEmailCode", "cancelEmailLink", "emailLinkStatus",
-  "settingsSignOutSection", "settingsSignOutStatus", "emailEntryFields", "authEligibilityGate", "continueLineAuth", "backAuthMethod", "lineLoginOptions",
+  "settingsSignOutSection", "settingsSignOutStatus", "lineLoginOptions",
   "lineSignIn", "lineLoginNote", "lineAccountSettings", "linkLineAccount", "lineLinkNote", "lineLinkStatus",
-  "emailAuthNote", "lineAuthNote", "emailAuthForm", "authEmail", "authBirthDate", "authCaregiverConfirmed", "requestAuthCode", "authRequestStatus",
+  "emailAuthForm", "authEmail", "authBirthDate", "authCaregiverConfirmed", "requestAuthCode", "authRequestStatus",
   "emailCodeStep", "authMaskedEmail", "emailCodeForm", "authCode", "verifyAuthCode", "authVerifyStatus",
   "changeAuthEmail", "accountSignOut",
 ];
@@ -1398,11 +1398,7 @@ function renderAccount() {
 
 function renderEmailAuthStep() {
   const awaitingCode = EMAIL_REGISTRATION_ENABLED && Boolean(state.authChallengeId);
-  refs.lineLoginOptions.hidden = !state.account.lineLoginEnabled || awaitingCode || !refs.authEligibilityGate.hidden;
-  const lineSelected = !refs.authEligibilityGate.hidden && !refs.continueLineAuth.hidden;
-  refs.emailAuthNote.hidden = lineSelected;
-  refs.lineAuthNote.hidden = !lineSelected;
-  refs.requestAuthCode.textContent = refs.authEligibilityGate.hidden ? "使用 Email 繼續" : "寄送登入驗證碼";
+  refs.lineLoginOptions.hidden = !state.account.lineLoginEnabled || awaitingCode;
   refs.emailAuthForm.hidden = awaitingCode;
   refs.emailCodeStep.hidden = !awaitingCode;
   refs.requestAuthCode.disabled = !EMAIL_REGISTRATION_ENABLED;
@@ -1476,10 +1472,6 @@ async function startLineAuth(mode) {
   const linking = mode === "link";
   const status = linking ? refs.lineLinkStatus : refs.authRequestStatus;
   const button = linking ? refs.linkLineAccount : refs.lineSignIn;
-  if (!linking && refs.authEligibilityGate.hidden) {
-    chooseAuthMethod("line");
-    return;
-  }
   if (!linking && (!refs.authBirthDate.reportValidity() || !refs.authCaregiverConfirmed.reportValidity())) return;
   button.disabled = true;
   setFormStatus(status, "正在前往 LINE…", "loading");
@@ -1531,14 +1523,8 @@ async function startLineAuth(mode) {
 
 
 async function requestEmailAuthCode() {
-  if (!refs.authEligibilityGate.hidden && !refs.continueLineAuth.hidden) return startLineAuth("login");
   if (!EMAIL_REGISTRATION_ENABLED) {
     setFormStatus(refs.authRequestStatus, "免費註冊準備中，目前尚未開放。", "error");
-    return;
-  }
-  if (refs.authEligibilityGate.hidden) {
-    if (!refs.authEmail.reportValidity()) return;
-    chooseAuthMethod("email");
     return;
   }
   if (!refs.emailAuthForm.reportValidity()) return;
@@ -1626,31 +1612,7 @@ async function verifyEmailAuthCode() {
   }
 }
 
-function chooseAuthMethod(method) {
-  refs.authEligibilityGate.hidden = false;
-  refs.authBirthDate.disabled = false;
-  refs.authCaregiverConfirmed.disabled = false;
-  refs.emailEntryFields.hidden = method === "line";
-  refs.authEmail.disabled = method === "line";
-  refs.requestAuthCode.hidden = method === "line";
-  refs.continueLineAuth.hidden = method !== "line";
-  setFormStatus(refs.authRequestStatus);
-  renderEmailAuthStep();
-  refs.authBirthDate.focus();
-}
-
-function resetAuthMethod() {
-  refs.authEligibilityGate.hidden = true;
-  refs.authBirthDate.disabled = true;
-  refs.authCaregiverConfirmed.disabled = true;
-  refs.emailEntryFields.hidden = false;
-  refs.authEmail.disabled = false;
-  refs.requestAuthCode.hidden = false;
-  refs.continueLineAuth.hidden = true;
-}
-
 function resetEmailAuthForm() {
-  resetAuthMethod();
   state.authChallengeId = null;
   state.authEmail = null;
   refs.emailAuthForm.reset();
@@ -4380,13 +4342,6 @@ refs.emailLinkCodeForm.addEventListener("submit", async (event) => {
   } finally { refs.verifyLinkEmailCode.disabled = false; }
 });
 
-refs.continueLineAuth.addEventListener("click", () => void startLineAuth("login"));
-refs.backAuthMethod.addEventListener("click", () => {
-  resetAuthMethod();
-  renderEmailAuthStep();
-  setFormStatus(refs.authRequestStatus);
-  refs.authEmail.focus();
-});
 refs.lineSignIn.addEventListener("click", () => void startLineAuth("login"));
 refs.linkLineAccount.addEventListener("click", () => void startLineAuth("link"));
 
