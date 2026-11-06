@@ -339,7 +339,11 @@ python3 scripts/build_city_service_catalog.py
 修改程式或文件後執行：
 
 ```bash
-python3 -m unittest discover -s tests -v
+npm test
 ```
+
+這個單一入口會依序完成 Python、Worker、TypeScript 與 `web/` JavaScript
+語法檢查；全部通過時只顯示四類摘要，失敗時才展開該階段的完整診斷。
+需要逐項輸出時可執行 `npm test -- --verbose`。
 
 日常腳本發布的是午餐資料，透過既有網站的資料 API 寫入 D1 與 R2，不會重新部署整個網站程式，也不遞增網站版本。若要正式發布網站程式變更，需另依專案規則使用 `npm run build` 產生正式版本，不能把本機 `dist/` 重建當成已完成網站程式部署。正式建置已包含一次 SQLite 與靜態資產重建，不需要事先再單獨執行 `build_database.py` 或把 `dist/` 複製到 `public/`。相同來源的發布重試應沿用原版本與已驗證的部署封包；只有來源變動時才重新建置。

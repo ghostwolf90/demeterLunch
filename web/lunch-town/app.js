@@ -31,8 +31,9 @@ const BORDER_RIVER_WIDTH = 112;
 const BORDER_LAND_BUFFER = 38;
 const OUTER_BORDER_RIVER_EDGE_MARGIN = 12;
 const OUTER_BORDER_RIVER_SPAN = BORDER_RIVER_WIDTH + OUTER_BORDER_RIVER_EDGE_MARGIN * 2;
-const PLAYER_TERRAIN_PADDING = 10;
-const BOUNDARY_BRIDGE_PASSAGE_HALF_WIDTH = 20;
+const MAP_CHECKPOINT_PROXIMITY = 10;
+const NATURAL_TERRAIN_MARGIN = 10;
+const RIVER_BRIDGE_PASSAGE_HALF_WIDTH = 28;
 const RIVER_FLOW_LANE_OFFSETS = Object.freeze([-34, -14, 14, 34]);
 const RIVER_FLOW_CHEVRON_SPACING = 132;
 const MAX_NIGHT_DARKNESS = 0.4;
@@ -130,6 +131,9 @@ const RIVERBANK_LEISURE_ROLES = new Set([
   "nurse", "high-school-student", "university-student", "college-volunteer",
 ]);
 let riverbankLeisureSiteCache = null;
+const boundaryRiverPathCache = new Map();
+const coastlinePathCache = new Map();
+const neighborPaddyParcelCache = new Map();
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const PLAYER_AVATAR_STORAGE_KEY = "lunchTownPlayerAvatar";
 const LEGACY_PLAYER_STYLE_STORAGE_KEY = "lunchTownPlayerStyle";
@@ -140,10 +144,39 @@ const TOWN_EVENT_INITIAL_DELAY_MS = 120_000;
 const TOWN_EVENT_COOLDOWN_MS = 240_000;
 const TOWN_EVENT_COOLDOWN_STEP_MS = 45_000;
 const TOWN_EVENT_AUTO_DISMISS_MS = 30_000;
+const TOWN_FRAME_WATCHDOG_MS = 750;
 const NPC_OFFSCREEN_VENUE_ID = "__candidate_offscreen__";
 const CANDIDATE_APPEARANCE_RULES = Object.freeze({
   "何欣純": { cycleSeconds: 120, visibleSeconds: 120, initialDelaySeconds: 0 },
   "江啟臣": { cycleSeconds: 120, visibleSeconds: 18, initialDelaySeconds: 45 },
+});
+const CROP_GROWTH_DURATION_MS = Object.freeze({
+  rice: 80_000,
+  wheat: 75_000,
+  vegetable: 60_000,
+  flower: 70_000,
+  grape: 90_000,
+  fruit: 100_000,
+  sugarcane: 90_000,
+});
+const CROP_FALLOW_DURATION_MS = 12_000;
+const CROP_HARVEST_INTERVAL_MS = 1_800;
+const CROP_HARVEST_REACH = 48;
+const CROP_HARVEST_ROLES = new Set([
+  "farmer", "fruit-farmer", "flower-grower", "rice-farmer", "vegetable-farmer", "grape-grower",
+]);
+const CROP_TYPE_BY_WORK_ZONE = Object.freeze({
+  "rice-paddy": "rice",
+  "vegetable-field": "vegetable",
+  "produce-coop": "vegetable",
+  "grape-packing-yard": "grape",
+  "nursery-field": "flower",
+});
+const CROP_TYPE_BY_DISTRICT_FEATURE = Object.freeze({
+  rice: "rice",
+  wheat: "wheat",
+  orchard: "fruit",
+  loquat: "fruit",
 });
 
 const canvas = document.querySelector("#townCanvas");
@@ -1246,22 +1279,29 @@ const state = {
   neighborCountyThemes: new Map(),
   neighborDistrictThemes: new Map(),
   neighborWorkZones: [],
+  cropPlots: new Map(),
+  cropPlotsByDistrict: new Map(),
   townMapManifest: { schemaVersion: 1, placements: [], npcs: [] },
   townMapPreview: { active: false, focus: null, expiresAt: null, error: "" },
-  terrainAudit: { sampleCount: 0, trapped: [] },
   activeNpcIds: new Set(),
+  activeNpcRefreshElapsed: 0,
+  neighborSchoolStatsDate: "",
+  neighborSchoolStats: new Map(),
+  renderBudget: { reducedDetail: false, slowFrames: 0, fastFrames: 0, lastCost: 0 },
   districtGroups: [],
   mapNote: "",
   date: "",
   visited: new Set(),
   keys: new Set(),
   moveTarget: null,
-  blockedMoveFrames: 0,
   pendingBikeStationId: "",
   lastTime: performance.now(),
   lastFrameAt: performance.now(),
   frameRequestId: 0,
   frameErrorReported: false,
+  frameStageFailures: new Map(),
+  lastFrameFaultAnnouncementAt: Number.NEGATIVE_INFINITY,
+  frameWatchdogId: 0,
   lastPromptTarget: null,
   player: {
     x: WIDTH / 2, y: HEIGHT / 2 + 24, size: 16, direction: "down", step: 0, isMoving: false, ridingBike: false,
@@ -1381,8 +1421,8 @@ async function init() {
     setLoadingProgress(58, "正在放置公園、地標、醫院與商場…");
     createTownVenues();
     applyTownMapPlacements();
+    createTownCropPlots(performance.now());
     createBikeStations();
-    state.terrainAudit = auditTownTerrainEscapes();
     await nextPaint();
     await Promise.race([
       accountPromise,
@@ -1512,7 +1552,7 @@ function bindEvents() {
         interactWithBikeStation(bikeStation, "map_click");
       } else {
         state.pendingBikeStationId = bikeStation.id;
-        state.moveTarget = nearestWalkableTownPoint(accessPoint, 96) || accessPoint;
+        state.moveTarget = accessPoint;
         announce(`正前往${bikeStation.label}，抵達後會自動${state.player.ridingBike ? "還車" : "租車"}。`);
       }
       return;
@@ -1541,7 +1581,7 @@ function bindEvents() {
       openVenue(venue, "map_click");
       return;
     }
-    state.moveTarget = nearestWalkableTownPoint(point, 128) || point;
+    state.moveTarget = point;
   });
   refs.dialogClose.addEventListener("click", () => refs.dialog.close());
   refs.dialogBody.addEventListener("click", (event) => {
@@ -1637,6 +1677,12 @@ function bindEvents() {
       if (!state.canvasVisible) state.keys.clear();
     }, { rootMargin: "120px" });
     canvasObserver.observe(canvas);
+  }
+  if (!state.frameWatchdogId) {
+    state.frameWatchdogId = window.setInterval(() => {
+      if (!state.ready || document.hidden || !state.canvasVisible) return;
+      if (performance.now() - state.lastFrameAt >= TOWN_FRAME_WATCHDOG_MS) ensureTownFrameRunning();
+    }, TOWN_FRAME_WATCHDOG_MS);
   }
   refs.dailyStoryChoices.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-story-choice]");
@@ -2730,6 +2776,9 @@ function neighborFarmlandGeometry(theme) {
 
 function neighborPaddyParcels(theme) {
   if (!isNeighborFarmTerrain(theme.terrain)) return [];
+  const cacheKey = `${theme.county.id}|${theme.name}|${theme.terrain}`;
+  const cached = neighborPaddyParcelCache.get(cacheKey);
+  if (cached) return cached;
   const geometry = neighborFarmlandGeometry(theme);
   const parcels = [];
   for (let row = 0; row < geometry.rows; row += 1) {
@@ -2744,7 +2793,186 @@ function neighborPaddyParcels(theme) {
       });
     }
   }
-  return parcels;
+  const stableParcels = Object.freeze(parcels.map((parcel) => Object.freeze(parcel)));
+  neighborPaddyParcelCache.set(cacheKey, stableParcels);
+  return stableParcels;
+}
+
+function cropDistrictKey(city, district) {
+  return `${city || ""}|${district || ""}`;
+}
+
+function cropGrowthDuration(cropType) {
+  return CROP_GROWTH_DURATION_MS[cropType] || CROP_GROWTH_DURATION_MS.rice;
+}
+
+function backgroundCropPlotId(theme, parcelIndex) {
+  return `district:${theme.county.id}:${theme.name}:${theme.terrain}:plot-${parcelIndex}`;
+}
+
+function workZoneCropPlotId(zone) {
+  return `work-zone:${zone.id}`;
+}
+
+function districtFeatureCropPlotId(theme) {
+  return `district-feature:${theme.name}:${theme.feature}`;
+}
+
+function cropTypeForTheme(theme) {
+  const profile = String(theme.workProfile || "").toLowerCase();
+  const terrain = String(theme.terrain || "").toLowerCase();
+  if (/grape/.test(profile)) return "grape";
+  if (/flower|horticulture|nursery/.test(profile) || /flower|garden/.test(terrain)) return "flower";
+  if (/vegetable|produce/.test(profile)) return "vegetable";
+  if (/fruit|orchard/.test(profile) || terrain.includes("orchard")) return "fruit";
+  if (/sugar/.test(profile) || terrain.includes("sugar")) return "sugarcane";
+  return "rice";
+}
+
+function registerCropPlot(definition, now = performance.now()) {
+  if (!definition?.id || !definition?.district || !definition?.cropType) return null;
+  const existing = state.cropPlots.get(definition.id);
+  if (existing) return existing;
+  const duration = cropGrowthDuration(definition.cropType);
+  const seededGrowth = definition.initialGrowth == null
+    ? 0.18 + (hashText(definition.id) % 120) / 100
+    : Math.max(0, Number(definition.initialGrowth) || 0);
+  const plot = {
+    ...definition,
+    growthStartedAt: now - Math.min(1, seededGrowth) * duration,
+    harvestedAt: Number.NEGATIVE_INFINITY,
+    harvestedBy: "",
+    harvestCount: 0,
+  };
+  state.cropPlots.set(plot.id, plot);
+  const districtKey = cropDistrictKey(plot.city, plot.district);
+  const districtPlots = state.cropPlotsByDistrict.get(districtKey) || [];
+  districtPlots.push(plot);
+  state.cropPlotsByDistrict.set(districtKey, districtPlots);
+  return plot;
+}
+
+function cropLifecycleAt(plot, now = performance.now()) {
+  if (!plot) return { phase: "mature", growth: 1 };
+  if (now < plot.growthStartedAt) return { phase: "fallow", growth: 0 };
+  const growth = Math.max(0, Math.min(1, (now - plot.growthStartedAt) / cropGrowthDuration(plot.cropType)));
+  const phase = growth >= 1 ? "mature" : growth >= 0.72 ? "ripening" : growth >= 0.34 ? "growing" : "sprouting";
+  return { phase, growth };
+}
+
+function cropVisibleGrowth(lifecycle) {
+  if (!lifecycle || lifecycle.phase === "fallow") return 0;
+  const growth = Math.max(0, Math.min(1, lifecycle.growth));
+  if (reducedMotion) return Math.floor(growth * 4) / 4;
+  return growth * growth * (3 - 2 * growth);
+}
+
+function cropLifecycleForPlotId(plotId, now = performance.now()) {
+  return cropLifecycleAt(state.cropPlots.get(plotId), now);
+}
+
+function createTownCropPlots(now = performance.now()) {
+  state.cropPlots.clear();
+  state.cropPlotsByDistrict.clear();
+  state.districtThemes.forEach((theme) => {
+    const cropType = CROP_TYPE_BY_DISTRICT_FEATURE[theme.feature];
+    const zone = DISTRICT_ZONES[theme.name];
+    if (!cropType || !zone) return;
+    const centerX = zone.x + zone.w - 66;
+    const centerY = zone.y + 36;
+    registerCropPlot({
+      id: districtFeatureCropPlotId(theme),
+      city: SHOWCASE_CITY,
+      district: theme.name,
+      label: theme.featureLabel || `${theme.name}農田`,
+      cropType,
+      x: centerX - 30,
+      y: centerY - 24,
+      w: 60,
+      h: 50,
+    }, now);
+  });
+  state.neighborDistrictThemes.forEach((theme) => {
+    const cropType = cropTypeForTheme(theme);
+    neighborPaddyParcels(theme).forEach((parcel, parcelIndex) => {
+      registerCropPlot({
+        id: backgroundCropPlotId(theme, parcelIndex),
+        city: theme.county.name,
+        district: theme.name,
+        label: `${theme.name}農田`,
+        cropType,
+        ...parcel,
+      }, now);
+    });
+  });
+  state.neighborWorkZones.forEach((zone) => {
+    const cropType = CROP_TYPE_BY_WORK_ZONE[zone.type];
+    if (!cropType) return;
+    registerCropPlot({
+      id: workZoneCropPlotId(zone),
+      city: zone.countyName,
+      district: zone.district,
+      label: zone.name,
+      cropType,
+      x: zone.x + 4,
+      y: zone.y + 4,
+      w: zone.w - 8,
+      h: zone.h - 21,
+    }, now);
+  });
+  state.venues.filter((venue) => venue.cropType && venue.district).forEach((venue) => {
+    registerCropPlot({
+      id: `venue:${venue.id}`,
+      city: venue.city || SHOWCASE_CITY,
+      district: venue.district,
+      label: venue.cropLabel || venue.label,
+      cropType: venue.cropType,
+      x: venue.x,
+      y: venue.y,
+      w: venue.w,
+      h: venue.h,
+    }, now);
+  });
+}
+
+function cropPlotDistanceToPoint(plot, point) {
+  const nearestX = Math.max(plot.x, Math.min(point.x, plot.x + plot.w));
+  const nearestY = Math.max(plot.y, Math.min(point.y, plot.y + plot.h));
+  return Math.hypot(point.x - nearestX, point.y - nearestY);
+}
+
+function npcCropDistrictKey(npc) {
+  return cropDistrictKey(npc.homeCounty || npc.countyName || npc.city || SHOWCASE_CITY, npc.homeDistrict || npc.district);
+}
+
+function updateNpcCropHarvest(npc, now = performance.now()) {
+  if (!CROP_HARVEST_ROLES.has(npc.role)) return false;
+  if ((npc.cropHarvestActivityUntil || 0) > now) {
+    npc.activity = "harvesting";
+    npc.insideVenueId = "";
+    npc.isMoving = false;
+    npc.currentReason = activityReason("harvesting", npc.cropHarvestLabel || npc.district, npc.currentReason);
+    return true;
+  }
+  if ((npc.cropHarvestCooldownUntil || 0) > now) return false;
+  const maturePlot = (state.cropPlotsByDistrict.get(npcCropDistrictKey(npc)) || [])
+    .filter((plot) => cropLifecycleAt(plot, now).phase === "mature")
+    .map((plot) => ({ plot, distance: cropPlotDistanceToPoint(plot, npc) }))
+    .filter(({ distance }) => distance <= CROP_HARVEST_REACH)
+    .sort((first, second) => first.distance - second.distance)[0]?.plot;
+  if (!maturePlot) return false;
+  maturePlot.harvestedAt = now;
+  maturePlot.harvestedBy = npc.name || npc.role;
+  maturePlot.harvestCount += 1;
+  maturePlot.growthStartedAt = now + CROP_FALLOW_DURATION_MS;
+  npc.cropHarvestLabel = maturePlot.label;
+  npc.cropHarvestActivityUntil = now + 1_100;
+  npc.cropHarvestCooldownUntil = now + CROP_HARVEST_INTERVAL_MS;
+  npc.activity = "harvesting";
+  npc.insideVenueId = "";
+  npc.isMoving = false;
+  npc.currentReason = activityReason("harvesting", maturePlot.label, npc.currentReason);
+  return true;
 }
 
 function schoolBuildingRect(school) {
@@ -2983,7 +3211,12 @@ function createNeighborNpcTimeSchedule(identity, index) {
     ? venueScheduleStop(office, identity.role, index + 17)
     : neighborLandmarkStop(identity, index + 1, "waiting");
   const workZones = neighborWorkZonesForIdentity(identity);
-  const secondWork = workZones.length > 1 ? neighborWorkZoneStop(identity, index + 1, workZones[(index + 1) % workZones.length]) : work;
+  const districtTheme = state.neighborDistrictThemes.get(identity.district);
+  const farmStop = CROP_HARVEST_ROLES.has(identity.role) && neighborPaddyParcels(districtTheme || {}).length
+    ? neighborFarmWorkStop(identity, index + 1)
+    : null;
+  const secondWork = farmStop
+    || (workZones.length > 1 ? neighborWorkZoneStop(identity, index + 1, workZones[(index + 1) % workZones.length]) : work);
   const canCross = hashText(`${identity.countyId}-${identity.district}-${identity.role}-bridge`) % 3 === 0;
   const bridgeStops = canCross ? neighborBridgeTripStops(identity, index) : [];
   const midday = identity.role === "agricultural-technician"
@@ -4737,7 +4970,37 @@ function ensureTownFrameRunning() {
   scheduleTownFrame();
 }
 
+function runTownFrameStage(stage, task, { critical = false } = {}) {
+  const now = performance.now();
+  const previous = state.frameStageFailures.get(stage);
+  if (!critical && previous?.suspendedUntil > now) return false;
+  try {
+    task();
+    if (previous && now - previous.lastFailureAt > 5_000) state.frameStageFailures.delete(stage);
+    return true;
+  } catch (error) {
+    const repeated = previous && now - previous.lastFailureAt < 10_000;
+    const count = repeated ? previous.count + 1 : 1;
+    const lastLoggedAt = previous?.lastLoggedAt || Number.NEGATIVE_INFINITY;
+    const shouldLog = count === 1 || now - lastLoggedAt > 2_000;
+    const fault = {
+      count,
+      lastFailureAt: now,
+      lastLoggedAt: shouldLog ? now : lastLoggedAt,
+      suspendedUntil: critical || count < 3 ? 0 : now + Math.min(3_000, count * 250),
+    };
+    state.frameStageFailures.set(stage, fault);
+    if (shouldLog) console.error(`Lunch Town isolated a failing frame stage: ${stage}`, error);
+    if (now - state.lastFrameFaultAnnouncementAt > 5_000) {
+      state.lastFrameFaultAnnouncementAt = now;
+      announce(townText("小鎮已隔離一個異常畫面項目，人物可以繼續移動。"));
+    }
+    return false;
+  }
+}
+
 function frame(now) {
+  const frameStartedAt = performance.now();
   state.frameRequestId = 0;
   state.lastFrameAt = now;
   try {
@@ -4747,19 +5010,19 @@ function frame(now) {
     }
     const delta = Math.min(0.04, Math.max(0, (now - state.lastTime) / 1000));
     state.lastTime = now;
-    updateTownEnvironment(now);
+    runTownFrameStage("environment", () => updateTownEnvironment(now));
     if (state.ready && !refs.dialog.open && !state.dialogueNpc) {
-      updatePlayer(delta);
-      updateNpcs(delta);
-      updatePets(delta);
-      updateBirds(delta);
-      updateTownMoment(now);
-      updateTownEvent(now, delta);
-      updateAmbientConversation(now);
+      runTownFrameStage("player", () => updatePlayer(delta), { critical: true });
+      runTownFrameStage("npcs", () => updateNpcs(delta));
+      runTownFrameStage("pets", () => updatePets(delta));
+      runTownFrameStage("birds", () => updateBirds(delta));
+      runTownFrameStage("town-moment", () => updateTownMoment(now));
+      runTownFrameStage("town-event", () => updateTownEvent(now, delta));
+      runTownFrameStage("ambient-conversation", () => updateAmbientConversation(now));
     }
-    if (state.ready) updateCamera(false, delta);
-    drawTown(now, state.environment);
-    renderComicBubble();
+    if (state.ready) runTownFrameStage("camera", () => updateCamera(false, delta), { critical: true });
+    runTownFrameStage("town-drawing", () => drawTown(now, state.environment), { critical: true });
+    runTownFrameStage("comic-bubble", renderComicBubble);
     state.frameErrorReported = false;
   } catch (error) {
     console.error("Lunch Town frame recovered after an update error", error);
@@ -4771,8 +5034,34 @@ function frame(now) {
       announce("小鎮已自動略過一次畫面更新；請再按方向鍵即可繼續移動。");
     }
   } finally {
+    if (!document.hidden && state.canvasVisible) {
+      runTownFrameStage("render-budget", () => updateTownRenderBudget(performance.now() - frameStartedAt));
+    }
     scheduleTownFrame();
   }
+}
+
+function updateTownRenderBudget(frameCost) {
+  if (!Number.isFinite(frameCost)) return;
+  const budget = state.renderBudget;
+  budget.lastCost = frameCost;
+  if (frameCost > 22) {
+    budget.slowFrames += 1;
+    budget.fastFrames = 0;
+    if (frameCost > 50 || budget.slowFrames >= 4) budget.reducedDetail = true;
+    return;
+  }
+  budget.slowFrames = Math.max(0, budget.slowFrames - 1);
+  if (frameCost < 14) budget.fastFrames += 1;
+  else budget.fastFrames = 0;
+  if (budget.reducedDetail && budget.fastFrames >= 90) {
+    budget.reducedDetail = false;
+    budget.fastFrames = 0;
+  }
+}
+
+function townUsesReducedDetail() {
+  return state.player.ridingBike || state.renderBudget.reducedDetail;
 }
 
 function updatePlayer(delta) {
@@ -4799,17 +5088,7 @@ function updatePlayer(delta) {
     const speed = state.player.ridingBike ? PLAYER_BIKE_SPEED : PLAYER_WALK_SPEED;
     const movedX = tryMovePlayer(dx * speed * delta, 0);
     const movedY = tryMovePlayer(0, dy * speed * delta);
-    const movedBySlide = !movedX && !movedY && trySlidePlayer(dx, dy, speed * delta);
-    let movedByRecovery = false;
-    if (movedX || movedY || movedBySlide) {
-      state.blockedMoveFrames = 0;
-    } else {
-      state.blockedMoveFrames += 1;
-      if (state.blockedMoveFrames >= 6 && isBlockedTownTerrain(state.player)) {
-        movedByRecovery = recoverPlayerToWalkableTerrain();
-      }
-    }
-    state.player.isMoving = movedX || movedY || movedBySlide || movedByRecovery;
+    state.player.isMoving = movedX || movedY;
     if (state.moveTarget && !state.player.isMoving) state.moveTarget = null;
     if (state.player.isMoving) {
       if (Math.abs(dx) > Math.abs(dy)) state.player.direction = dx > 0 ? "right" : "left";
@@ -4880,17 +5159,17 @@ function observeDailyBridgeCrossing() {
 
 function observeDailyMapCheckpoints() {
   const coastDistance = state.player.x - coastlineXAt(state.player.y);
-  if (coastDistance >= PLAYER_TERRAIN_PADDING && coastDistance <= 72) {
+  if (coastDistance >= MAP_CHECKPOINT_PROXIMITY && coastDistance <= 72) {
     void recordDailyQuestEvent("checkpoint_visit", "coast");
   }
   const mountainDistance = EAST_MOUNTAIN_START_X - state.player.x;
-  if (mountainDistance >= PLAYER_TERRAIN_PADDING && mountainDistance <= 72) {
+  if (mountainDistance >= MAP_CHECKPOINT_PROXIMITY && mountainDistance <= 72) {
     void recordDailyQuestEvent("checkpoint_visit", "mountain");
   }
   const nearRiverbank = BOUNDARY_BRIDGES.some((bridge) => {
     const distance = Math.abs(state.player.y - boundaryRiverYAt(state.player.x, bridge));
     return Math.abs(state.player.x - bridge.x) > 90
-      && distance >= BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
+      && distance >= BORDER_RIVER_WIDTH / 2 + MAP_CHECKPOINT_PROXIMITY
       && distance <= BORDER_RIVER_WIDTH / 2 + 48;
   });
   if (nearRiverbank) void recordDailyQuestEvent("checkpoint_visit", "riverbank");
@@ -4907,7 +5186,7 @@ function observeDailyMapCheckpoints() {
 function tryMovePlayer(dx, dy) {
   const current = { x: state.player.x, y: state.player.y };
   const next = clampTownPoint({ x: current.x + dx, y: current.y + dy });
-  if (!playerTerrainMoveAllowed(current, next)) return false;
+  if (!playerNaturalTerrainMoveAllowed(current, next)) return false;
   state.player.x = next.x;
   state.player.y = next.y;
   return true;
@@ -4920,198 +5199,41 @@ function clampTownPoint(point) {
   };
 }
 
-function playerTerrainMoveAllowed(current, next) {
+function playerNaturalTerrainMoveAllowed(current, next) {
   if (next.x === current.x && next.y === current.y) return false;
-  const nextBlocked = isBlockedTownTerrain(next);
-  if (!nextBlocked) return true;
-  const currentBlocked = isBlockedTownTerrain(current);
-  if (!currentBlocked) return false;
-  const currentBlockDepth = blockedTerrainEscapeDepth(current);
-  const nextBlockDepth = nextBlocked ? blockedTerrainEscapeDepth(next) : 0;
-  return nextBlockDepth + 0.001 < currentBlockDepth;
+  const nextDepth = naturalTerrainCollisionDepth(next);
+  if (nextDepth <= 0) return true;
+  const currentDepth = naturalTerrainCollisionDepth(current);
+  return currentDepth > 0 && nextDepth <= currentDepth + 0.001;
 }
 
-function trySlidePlayer(dx, dy, distance) {
-  if ((!dx && !dy) || distance <= 0) return false;
-  const perpendicular = { x: -dy, y: dx };
-  const target = state.moveTarget || {
-    x: state.player.x + dx * distance * 4,
-    y: state.player.y + dy * distance * 4,
-  };
-  const directions = [
-    { x: dx + perpendicular.x * 0.82, y: dy + perpendicular.y * 0.82 },
-    { x: dx - perpendicular.x * 0.82, y: dy - perpendicular.y * 0.82 },
-    perpendicular,
-    { x: -perpendicular.x, y: -perpendicular.y },
-  ];
-  const current = { x: state.player.x, y: state.player.y };
-  const candidates = directions.map((direction) => {
-    const length = Math.hypot(direction.x, direction.y) || 1;
-    const next = clampTownPoint({
-      x: current.x + direction.x / length * distance,
-      y: current.y + direction.y / length * distance,
-    });
-    if (!playerTerrainMoveAllowed(current, next)) return null;
-    const lookAhead = clampTownPoint({
-      x: next.x + dx * distance * 1.5,
-      y: next.y + dy * distance * 1.5,
-    });
-    const forwardPenalty = playerTerrainMoveAllowed(next, lookAhead) ? 0 : distance * 8;
-    return {
-      next,
-      score: Math.hypot(target.x - next.x, target.y - next.y)
-        + blockedTerrainEscapeDepth(next) * 20
-        + forwardPenalty,
-    };
-  }).filter(Boolean).sort((first, second) => first.score - second.score);
-  if (!candidates.length) return false;
-  return tryMovePlayer(candidates[0].next.x - current.x, candidates[0].next.y - current.y);
-}
-
-function nearestWalkableTownPoint(origin, maxRadius = 384) {
-  const clampedOrigin = clampTownPoint(origin);
-  if (!isBlockedTownTerrain(clampedOrigin)) return clampedOrigin;
-  for (let radius = 8; radius <= maxRadius; radius += 8) {
-    const sampleCount = Math.max(12, Math.ceil(Math.PI * 2 * radius / 12));
-    for (let index = 0; index < sampleCount; index += 1) {
-      const angle = index / sampleCount * Math.PI * 2;
-      const candidate = clampTownPoint({
-        x: clampedOrigin.x + Math.cos(angle) * radius,
-        y: clampedOrigin.y + Math.sin(angle) * radius,
-      });
-      if (!isBlockedTownTerrain(candidate)) return candidate;
-    }
-  }
-  return null;
-}
-
-function recoverPlayerToWalkableTerrain() {
-  const destination = nearestWalkableTownPoint(state.player);
-  if (!destination) return false;
-  state.player.x = destination.x;
-  state.player.y = destination.y;
-  state.blockedMoveFrames = 0;
-  state.moveTarget = null;
-  state.pendingBikeStationId = "";
-  announce(townText("已自動移到最近的安全步道。"));
-  return true;
-}
-
-function pointIsOnBoundaryBridge(point, bridge) {
-  return Math.abs(point.x - bridge.x) <= BOUNDARY_BRIDGE_PASSAGE_HALF_WIDTH
-    && Math.abs(point.y - bridge.riverY) <= BORDER_RIVER_WIDTH / 2 + 30;
-}
-
-function isBlockedTownTerrain(point) {
-  if (point.x - PLAYER_TERRAIN_PADDING <= coastlineXAt(point.y)) return true;
-  if (point.x + PLAYER_TERRAIN_PADDING >= EAST_MOUNTAIN_START_X) return true;
-  if (state.neighborWorkZones.some((zone) => zone.restricted && pointInExpandedRect(point, zone, PLAYER_TERRAIN_PADDING))) return true;
-  // Administrative-area scenery shares land with schools, public facilities,
-  // attractions and farms. Keep those blocks walkable instead of treating an
-  // entire hill or field backdrop as one oversized collision rectangle.
-  if (OUTER_BOUNDARY_RIVERS.some((river) => (
-    Math.abs(point.y - boundaryRiverYAt(point.x, river))
-      <= BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
-  ))) return true;
-  return BOUNDARY_BRIDGES.some((bridge) => (
-    !pointIsOnBoundaryBridge(point, bridge)
+function pointIsOnRiverBridge(point, bridge) {
+  return Math.abs(point.x - bridge.x) <= RIVER_BRIDGE_PASSAGE_HALF_WIDTH
     && Math.abs(point.y - boundaryRiverYAt(point.x, bridge))
-      <= BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
-  ));
+      <= BORDER_RIVER_WIDTH / 2 + NATURAL_TERRAIN_MARGIN;
 }
 
-function pointDepthInsideRect(point, rect) {
-  if (!pointInRect(point, rect)) return 0;
-  return Math.max(0, Math.min(
-    point.x - rect.x,
-    rect.x + rect.w - point.x,
-    point.y - rect.y,
-    rect.y + rect.h - point.y,
-  ));
-}
-
-function blockedTerrainEscapeDepth(point) {
+function naturalTerrainCollisionDepth(point) {
   const depths = [
-    Math.max(0, coastlineXAt(point.y) + PLAYER_TERRAIN_PADDING - point.x),
-    Math.max(0, point.x + PLAYER_TERRAIN_PADDING - EAST_MOUNTAIN_START_X),
+    Math.max(0, coastlineXAt(point.y) + NATURAL_TERRAIN_MARGIN - point.x),
+    Math.max(0, point.x + NATURAL_TERRAIN_MARGIN - EAST_MOUNTAIN_START_X),
   ];
-  state.neighborWorkZones.filter((zone) => zone.restricted).forEach((zone) => {
-    depths.push(pointDepthInsideRect(point, {
-      x: zone.x - PLAYER_TERRAIN_PADDING,
-      y: zone.y - PLAYER_TERRAIN_PADDING,
-      w: zone.w + PLAYER_TERRAIN_PADDING * 2,
-      h: zone.h + PLAYER_TERRAIN_PADDING * 2,
-    }));
-  });
   BOUNDARY_BRIDGES.forEach((bridge) => {
-    if (pointIsOnBoundaryBridge(point, bridge)) return;
+    if (pointIsOnRiverBridge(point, bridge)) return;
     depths.push(Math.max(
       0,
-      BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
+      BORDER_RIVER_WIDTH / 2 + NATURAL_TERRAIN_MARGIN
         - Math.abs(point.y - boundaryRiverYAt(point.x, bridge)),
     ));
   });
   OUTER_BOUNDARY_RIVERS.forEach((river) => {
     depths.push(Math.max(
       0,
-      BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING
+      BORDER_RIVER_WIDTH / 2 + NATURAL_TERRAIN_MARGIN
         - Math.abs(point.y - boundaryRiverYAt(point.x, river)),
     ));
   });
-  return depths.reduce((total, depth) => total + depth, 0);
-}
-
-function terrainEscapeAuditPoints() {
-  const samples = [];
-  const add = (point, source) => {
-    const candidate = clampTownPoint(point);
-    samples.push({ ...candidate, source });
-  };
-  for (let y = 48; y < WORLD_HEIGHT - 48; y += 160) {
-    add({ x: coastlineXAt(y) + PLAYER_TERRAIN_PADDING - 4, y }, "coast");
-    add({ x: EAST_MOUNTAIN_START_X - PLAYER_TERRAIN_PADDING + 4, y }, "mountain");
-  }
-  BOUNDARY_RIVERS.forEach((river) => {
-    const { startX, endX } = boundaryRiverBounds(river);
-    for (let x = startX + 72; x < endX - 72; x += 192) {
-      if (BOUNDARY_BRIDGES.includes(river) && Math.abs(x - river.x) < BOUNDARY_BRIDGE_PASSAGE_HALF_WIDTH + 36) continue;
-      const centerY = boundaryRiverYAt(x, river);
-      for (const side of [-1, 1]) {
-        add({
-          x,
-          y: centerY + side * (BORDER_RIVER_WIDTH / 2 + PLAYER_TERRAIN_PADDING - 4),
-        }, `river:${river.id}`);
-      }
-    }
-  });
-  state.neighborWorkZones.filter((zone) => zone.restricted).forEach((zone) => {
-    add({ x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 }, `work-zone:${zone.id || zone.type}`);
-    add({ x: zone.x - PLAYER_TERRAIN_PADDING + 4, y: zone.y + zone.h / 2 }, `work-zone:${zone.id || zone.type}`);
-    add({ x: zone.x + zone.w + PLAYER_TERRAIN_PADDING - 4, y: zone.y + zone.h / 2 }, `work-zone:${zone.id || zone.type}`);
-  });
-  return samples;
-}
-
-function pointHasLocalTerrainEscape(point, step = 12) {
-  if (!isBlockedTownTerrain(point)) return true;
-  for (let index = 0; index < 16; index += 1) {
-    const angle = index / 16 * Math.PI * 2;
-    const candidate = clampTownPoint({
-      x: point.x + Math.cos(angle) * step,
-      y: point.y + Math.sin(angle) * step,
-    });
-    if (playerTerrainMoveAllowed(point, candidate)) return true;
-  }
-  return false;
-}
-
-function auditTownTerrainEscapes() {
-  const samples = terrainEscapeAuditPoints();
-  const trapped = samples.filter((sample) => !pointHasLocalTerrainEscape(sample));
-  if (trapped.length) {
-    console.warn("Lunch Town terrain audit found blocked points without a local escape", trapped);
-  }
-  return { sampleCount: samples.length, trapped };
+  return Math.max(...depths);
 }
 
 function updateCamera(snap = false, delta = 0) {
@@ -5188,7 +5310,10 @@ function npcSimulationId(npc, index) {
   return Number.isFinite(npc.lookIndex) ? npc.lookIndex : index;
 }
 
-function refreshActiveNpcSimulationSet() {
+function refreshActiveNpcSimulationSet(delta = 0) {
+  state.activeNpcRefreshElapsed += delta;
+  if (state.activeNpcIds.size && state.activeNpcRefreshElapsed < 0.2) return;
+  state.activeNpcRefreshElapsed = 0;
   const ranked = state.npcs.map((npc, index) => ({
     npc,
     id: npcSimulationId(npc, index),
@@ -5334,10 +5459,10 @@ function finishEveningShoppingTrip(npc) {
 }
 
 function updateNpcs(delta) {
-  refreshActiveNpcSimulationSet();
+  refreshActiveNpcSimulationSet(delta);
   state.npcs.forEach((npc, index) => {
+    runTownFrameStage(`npc:${index}:${npc.name || "resident"}`, () => {
     let npcDelta = delta;
-    const npcDistrict = districtAtPoint(npc) || npc.schedule[npc.segment % npc.schedule.length]?.district || npc.district;
     if (npc.backgroundSimulated) {
       npc.coarseElapsed = (npc.coarseElapsed || 0) + delta;
       if (npc.coarseElapsed < BACKGROUND_NPC_UPDATE_SECONDS) return;
@@ -5404,6 +5529,7 @@ function updateNpcs(delta) {
       if (npc.hasLeashedDog && !npc.insideVenueId) {
         npc.currentReason = `牽著狗在${stop?.label || npc.district}散步並短暫停留`;
       }
+      if (updateNpcCropHarvest(npc, performance.now())) return;
       return;
     }
     npc.insideVenueId = "";
@@ -5447,6 +5573,7 @@ function updateNpcs(delta) {
       ? (currentTo.x > currentFrom.x ? "right" : "left")
       : (currentTo.y > currentFrom.y ? "down" : "up");
     npc.step += npcDelta * (ridingBike ? 10 : 6);
+    });
   });
 }
 
@@ -5502,6 +5629,7 @@ function activityReason(activity, location, fallback) {
     "inspecting-paddy": `在${location}巡田，查看水位與稻作狀況`,
     "releasing-water": `在${location}依灌溉安排放水並確認田間分水`,
     "mending-ridge": `在${location}整理田埂與農路邊緣`,
+    harvesting: `在${location}採收成熟作物，採收後田區暫時留空`,
     "sorting-produce": `在${location}分級、裝箱並核對農產品紀錄`,
     "tending-grapes": `在${location}整理葡萄棚、枝蔓與果串`,
     "tending-flowers": `在${location}澆灌花卉、苗木並整理出貨區`,
@@ -6391,28 +6519,51 @@ function drawTown(now, environment = townEnvironmentAt()) {
   context.fillStyle = COLORS.water;
   context.fillRect(0, 0, WIDTH, HEIGHT);
   context.save();
-  context.translate(-Math.round(state.camera.x), -Math.round(state.camera.y));
-  drawGround();
-  drawNeighborCountyGrounds();
-  drawChanghuaRidgeConnection();
-  drawWesternCoast(now);
-  drawEasternMountainRange(now);
-  drawBoundaryRivers(now);
-  drawRiverbankLandscapes(now);
-  drawBoundaryRiverLabels();
-  drawMapEdges(now);
-  drawRoads(now);
-  drawBoundaryBridges();
-  drawNeighborWorkZones(now, environment);
-  drawNeighborCountyDetails(now);
-  drawStreetDetails(now, environment);
-  drawDistrictLabels();
-  drawTownSquare();
-  drawTownVenues(now);
-  drawWeekendMarkets();
-  state.schools.filter((school) => isVisibleRect(school.layout, 60)).forEach((school) => drawCampus(school, now));
-  state.neighborSchools.filter((school) => isVisibleRect(school.layout, 60)).forEach((school) => drawCampus(school, now));
-  drawBikeStations();
+  try {
+    context.translate(-Math.round(state.camera.x), -Math.round(state.camera.y));
+    drawTownLayer("ground", drawGround);
+    drawTownLayer("neighbor-grounds", drawNeighborCountyGrounds);
+    drawTownLayer("changhua-ridge", drawChanghuaRidgeConnection);
+    drawTownLayer("western-coast", () => drawWesternCoast(now));
+    drawTownLayer("eastern-mountains", () => drawEasternMountainRange(now));
+    drawTownLayer("boundary-rivers", () => drawBoundaryRivers(now));
+    drawTownLayer("riverbanks", () => drawRiverbankLandscapes(now));
+    drawTownLayer("river-labels", drawBoundaryRiverLabels);
+    drawTownLayer("map-edges", () => drawMapEdges(now));
+    drawTownLayer("roads", () => drawRoads(now));
+    drawTownLayer("bridges", drawBoundaryBridges);
+    drawTownLayer("neighbor-work-zones", () => drawNeighborWorkZones(now, environment));
+    drawTownLayer("neighbor-details", () => drawNeighborCountyDetails(now));
+    drawTownLayer("street-details", () => drawStreetDetails(now, environment));
+    drawTownLayer("district-labels", drawDistrictLabels);
+    drawTownLayer("town-square", drawTownSquare);
+    drawTownLayer("venues", () => drawTownVenues(now));
+    drawTownLayer("weekend-markets", drawWeekendMarkets);
+    drawTownLayer("schools", () => {
+      state.schools.filter((school) => isVisibleRect(school.layout, 60)).forEach((school) => drawCampus(school, now));
+      state.neighborSchools.filter((school) => isVisibleRect(school.layout, 60)).forEach((school) => drawCampus(school, now));
+    });
+    drawTownLayer("bike-stations", drawBikeStations);
+    drawTownLayer("actors", () => drawTownActors(now));
+  } finally {
+    context.restore();
+  }
+  drawTownLayer("atmosphere", () => drawAtmosphereOverlay(environment));
+  drawTownLayer("street-light-glows", () => drawStreetLightGlows(environment, now));
+  drawTownLayer("rain", () => drawRain(environment, now));
+  drawTownLayer("compass", drawCompass);
+}
+
+function drawTownLayer(name, draw) {
+  context.save();
+  try {
+    return runTownFrameStage(`draw:${name}`, draw);
+  } finally {
+    context.restore();
+  }
+}
+
+function drawTownActors(now) {
   const actors = [
     ...state.npcs.filter((person) => !person.insideVenueId && !person.backgroundSimulated).map((person) => ({ kind: "person", y: person.y, person })),
     ...state.pets.filter((pet) => !pet.hidden).map((pet) => ({ kind: "pet", y: pet.y, pet })),
@@ -6424,23 +6575,27 @@ function drawTown(now, environment = townEnvironmentAt()) {
     const subject = actor.person || actor.pet || actor.bird;
     return isVisibleRect({ x: subject.x - 30, y: subject.y - 45, w: 60, h: 70 }, 40);
   }).sort((first, second) => first.y - second.y);
-  drawDogLeashes();
-  actors.forEach((actor) => {
-    if (actor.kind === "person") drawPerson(actor.person, now);
-    else if (actor.kind === "pet") drawPet(actor.pet, now);
-    else drawBird(actor.bird, now);
+  drawTownLayer("dog-leashes", drawDogLeashes);
+  actors.forEach((actor, index) => {
+    const subject = actor.person || actor.pet || actor.bird;
+    const actorId = subject.player ? "player" : subject.lookIndex ?? subject.name ?? index;
+    drawTownLayer(`actor:${actor.kind}:${actorId}:${index}`, () => {
+      if (actor.kind === "person") drawPerson(actor.person, now);
+      else if (actor.kind === "pet") drawPet(actor.pet, now);
+      else drawBird(actor.bird, now);
+    });
   });
-  drawNearbyNpcMarker();
-  context.restore();
-  drawAtmosphereOverlay(environment);
-  drawStreetLightGlows(environment, now);
-  drawRain(environment, now);
-  drawCompass();
+  drawTownLayer("nearby-npc-marker", drawNearbyNpcMarker);
 }
 
 function drawGround() {
   context.fillStyle = COLORS.grass;
-  context.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+  context.fillRect(
+    Math.max(0, state.camera.x - 2),
+    Math.max(0, state.camera.y - 2),
+    Math.min(WORLD_WIDTH, WIDTH + 4),
+    Math.min(WORLD_HEIGHT, HEIGHT + 4),
+  );
   DISTRICT_DISPLAY_ORDER.filter((district) => isVisibleRect(DISTRICT_ZONES[district], 40)).forEach((district) => {
     const zone = DISTRICT_ZONES[district];
     context.fillStyle = zone.color;
@@ -6501,8 +6656,12 @@ function neighborCountyAtPoint(point) {
 
 function drawNeighborCountyGrounds() {
   NEIGHBOR_COUNTIES.filter((county) => isVisibleRect(county, 40)).forEach((county) => {
+    const visibleLeft = Math.max(county.x, state.camera.x - 2);
+    const visibleTop = Math.max(county.y, state.camera.y - 2);
+    const visibleRight = Math.min(county.x + county.w, state.camera.x + WIDTH + 2);
+    const visibleBottom = Math.min(county.y + county.h, state.camera.y + HEIGHT + 2);
     context.fillStyle = county.color;
-    context.fillRect(county.x, county.y, county.w, county.h);
+    context.fillRect(visibleLeft, visibleTop, Math.max(0, visibleRight - visibleLeft), Math.max(0, visibleBottom - visibleTop));
     drawNeighborCountyBackdrop(county);
     [...state.neighborDistrictThemes.values()]
       .filter((theme) => theme.county.id === county.id && isVisibleRect(theme.zone, 40))
@@ -6513,10 +6672,23 @@ function drawNeighborCountyGrounds() {
 function drawNeighborCountyBackdrop(county) {
   if (county.id === "miaoli") {
     const mountainStartX = county.x + county.w * 0.6;
+    const visibleLeft = Math.max(mountainStartX + 30, state.camera.x - 70);
+    const visibleRight = Math.min(county.x + county.w, state.camera.x + WIDTH + 70);
+    const visibleTop = Math.max(county.y + 70, state.camera.y - 70);
+    const visibleBottom = Math.min(county.y + county.h, state.camera.y + HEIGHT + 70);
+    const startX = mountainStartX + 30
+      + Math.max(0, Math.floor((visibleLeft - mountainStartX - 30) / 78)) * 78;
+    const startY = county.y + 70
+      + Math.max(0, Math.floor((visibleTop - county.y - 70) / 82)) * 82;
     context.fillStyle = "rgba(52, 92, 63, 0.32)";
-    context.fillRect(mountainStartX, county.y, county.x + county.w - mountainStartX, county.h);
-    for (let y = county.y + 70; y < county.y + county.h; y += 82) {
-      for (let x = mountainStartX + 30; x < county.x + county.w; x += 78) {
+    context.fillRect(
+      Math.max(mountainStartX, state.camera.x - 40),
+      Math.max(county.y, state.camera.y - 40),
+      Math.max(0, Math.min(county.x + county.w, state.camera.x + WIDTH + 40) - Math.max(mountainStartX, state.camera.x - 40)),
+      Math.max(0, Math.min(county.y + county.h, state.camera.y + HEIGHT + 40) - Math.max(county.y, state.camera.y - 40)),
+    );
+    for (let y = startY; y < visibleBottom; y += 82) {
+      for (let x = startX; x < visibleRight; x += 78) {
         context.fillStyle = (Math.floor((x + y) / 78) % 2) ? "rgba(42, 84, 58, 0.46)" : "rgba(64, 108, 67, 0.48)";
         context.beginPath();
         context.moveTo(x - 44, y + 44);
@@ -6528,24 +6700,33 @@ function drawNeighborCountyBackdrop(county) {
     return;
   }
 
+  const visibleLeft = Math.max(county.x + 24, state.camera.x - 40);
+  const visibleRight = Math.min(county.x + county.w - 24, state.camera.x + WIDTH + 40);
+  const visibleTop = Math.max(county.y + 22, state.camera.y - 40);
+  const visibleBottom = Math.min(county.y + county.h - 22, state.camera.y + HEIGHT + 40);
+  const verticalStart = county.x + 36
+    + Math.max(0, Math.floor((visibleLeft - county.x - 36) / 76)) * 76;
+  const horizontalStart = county.y + 46
+    + Math.max(0, Math.floor((visibleTop - county.y - 46) / 72)) * 72;
   context.strokeStyle = "rgba(139, 126, 62, 0.2)";
   context.lineWidth = 2;
-  for (let x = county.x + 36; x < county.x + county.w; x += 76) {
+  for (let x = verticalStart; x < visibleRight; x += 76) {
     context.beginPath();
-    context.moveTo(x, county.y + 22);
-    context.lineTo(x, county.y + county.h - 22);
+    context.moveTo(x, visibleTop);
+    context.lineTo(x, visibleBottom);
     context.stroke();
   }
-  for (let y = county.y + 46; y < county.y + county.h; y += 72) {
+  for (let y = horizontalStart; y < visibleBottom; y += 72) {
     context.beginPath();
-    context.moveTo(county.x + 24, y);
-    context.lineTo(county.x + county.w - 24, y);
+    context.moveTo(visibleLeft, y);
+    context.lineTo(visibleRight, y);
     context.stroke();
   }
   context.strokeStyle = "rgba(80, 156, 174, 0.42)";
   context.lineWidth = 8;
   for (let canal = 0; canal < 3; canal += 1) {
     const canalY = county.y + 260 + canal * 430;
+    if (canalY < state.camera.y - 80 || canalY > state.camera.y + HEIGHT + 80) continue;
     context.beginPath();
     context.moveTo(county.x + 16, canalY);
     context.quadraticCurveTo(county.x + county.w / 2, canalY + 34, county.x + county.w - 18, canalY - 12);
@@ -6617,9 +6798,12 @@ function drawNeighborFarmland(theme) {
   const { zone, terrain } = theme;
   const geometry = neighborFarmlandGeometry(theme);
   const fieldSeed = hashText(`${theme.county.id}-${theme.name}-${terrain}-fields`);
+  const lifecycleNow = performance.now();
+  const cropType = cropTypeForTheme(theme);
   const fieldColors = terrain === "flower-field" || terrain === "garden-farm"
     ? ["#bdad69", "#c89e72", "#a6b06a", "#c7ad6c"]
     : ["#839f78", "#91a76f", "#a69f62", "#78978a"];
+  const detailStride = townUsesReducedDetail() ? 2 : 1;
 
   context.fillStyle = "#8a7852";
   context.fillRect(
@@ -6629,14 +6813,15 @@ function drawNeighborFarmland(theme) {
     geometry.fieldHeight + 10,
   );
   neighborPaddyParcels(theme).forEach((parcel, parcelIndex) => {
-    const stage = Math.abs(fieldSeed + parcelIndex * 7) % fieldColors.length;
-    context.fillStyle = fieldColors[stage];
+    const fieldStage = Math.abs(fieldSeed + parcelIndex * 7) % fieldColors.length;
+    const lifecycle = cropLifecycleForPlotId(backgroundCropPlotId(theme, parcelIndex), lifecycleNow);
+    context.fillStyle = fieldColors[fieldStage];
     context.fillRect(parcel.x, parcel.y, parcel.w, parcel.h);
     context.fillStyle = "rgba(178, 212, 204, 0.16)";
-    for (let waterY = parcel.y + 7; waterY < parcel.y + parcel.h - 4; waterY += 13) {
+    for (let waterY = parcel.y + 7; waterY < parcel.y + parcel.h - 4; waterY += 13 * detailStride) {
       context.fillRect(parcel.x + 5, waterY, Math.max(4, parcel.w - 10), 2);
     }
-    drawFieldCrops(parcel, terrain, fieldSeed + parcelIndex * 13);
+    drawFieldCrops(parcel, terrain, fieldSeed + parcelIndex * 13, detailStride, lifecycle, cropType);
     context.strokeStyle = "rgba(91, 78, 48, 0.62)";
     context.lineWidth = 2;
     context.strokeRect(parcel.x + 1, parcel.y + 1, parcel.w - 2, parcel.h - 2);
@@ -6653,51 +6838,78 @@ function drawNeighborFarmland(theme) {
   context.stroke();
 }
 
-function drawFieldCrops(parcel, terrain, seed) {
-  if (/flower|garden/.test(terrain)) {
+function drawFieldCrops(parcel, terrain, seed, detailStride = 1, lifecycle = null, cropType = "rice") {
+  const growth = lifecycle ? cropVisibleGrowth(lifecycle) : 1;
+  if (growth <= 0) return;
+  if (cropType === "flower" || /flower|garden/.test(terrain)) {
     const colors = ["#e76868", "#efc54d", "#d284b4", "#ed9452"];
-    for (let y = parcel.y + 9; y < parcel.y + parcel.h - 4; y += 11) {
-      for (let x = parcel.x + 8; x < parcel.x + parcel.w - 4; x += 12) {
-        context.fillStyle = colors[Math.abs(seed + Math.floor(x + y)) % colors.length];
-        context.fillRect(x, y, 4, 4);
+    const flowerSize = Math.max(1, Math.round(1 + growth * 3));
+    for (let y = parcel.y + 9; y < parcel.y + parcel.h - 4; y += 11 * detailStride) {
+      for (let x = parcel.x + 8; x < parcel.x + parcel.w - 4; x += 12 * detailStride) {
+        context.fillStyle = growth >= 0.62 ? colors[Math.abs(seed + Math.floor(x + y)) % colors.length] : "#4f7b4f";
+        context.fillRect(x, y + 4 - flowerSize, flowerSize, flowerSize);
       }
     }
     return;
   }
-  if (terrain.includes("orchard")) {
-    for (let y = parcel.y + 12; y < parcel.y + parcel.h - 5; y += 16) {
-      for (let x = parcel.x + 11; x < parcel.x + parcel.w - 5; x += 17) {
+  if (cropType === "fruit" || cropType === "grape" || terrain.includes("orchard")) {
+    const canopyWidth = Math.max(2, Math.round(3 + growth * 7));
+    const canopyHeight = Math.max(2, Math.round(2 + growth * 5));
+    const trunkHeight = Math.max(1, Math.round(1 + growth * 5));
+    for (let y = parcel.y + 12; y < parcel.y + parcel.h - 5; y += 16 * detailStride) {
+      for (let x = parcel.x + 11; x < parcel.x + parcel.w - 5; x += 17 * detailStride) {
         context.fillStyle = "#70553a";
-        context.fillRect(x, y, 2, 6);
+        context.fillRect(x, y + 6 - trunkHeight, 2, trunkHeight);
         context.fillStyle = (seed + Math.floor(x + y)) % 2 ? "#47754f" : "#598352";
-        context.fillRect(x - 4, y - 4, 10, 7);
+        context.fillRect(x - canopyWidth / 2 + 1, y - canopyHeight, canopyWidth, canopyHeight);
+        if (growth >= 0.72) {
+          context.fillStyle = cropType === "grape" ? "#704a79" : "#d59646";
+          context.fillRect(x - 2, y - 2, 2, 2);
+          context.fillRect(x + 2, y - 3, 2, 2);
+        }
       }
     }
     return;
   }
-  if (terrain.includes("sugar")) {
+  if (cropType === "sugarcane" || terrain.includes("sugar")) {
     context.fillStyle = "rgba(63, 111, 64, 0.86)";
-    for (let x = parcel.x + 7; x < parcel.x + parcel.w - 4; x += 8) {
-      context.fillRect(x, parcel.y + 7, 3, Math.max(5, parcel.h - 14));
+    const cropHeight = Math.max(2, Math.round((parcel.h - 14) * growth));
+    for (let x = parcel.x + 7; x < parcel.x + parcel.w - 4; x += 8 * detailStride) {
+      context.fillRect(x, parcel.y + parcel.h - 7 - cropHeight, 3, cropHeight);
     }
     return;
   }
-  drawRiceSeedlings(parcel, seed);
+  if (cropType === "vegetable") {
+    const leafSize = Math.max(1, Math.round(1 + growth * 4));
+    context.fillStyle = growth >= 0.72 ? "#3d7443" : "#5d8a50";
+    for (let y = parcel.y + 10; y < parcel.y + parcel.h - 5; y += 11 * detailStride) {
+      for (let x = parcel.x + 8; x < parcel.x + parcel.w - 5; x += 12 * detailStride) {
+        context.fillRect(x - Math.floor(leafSize / 2), y - leafSize, leafSize, leafSize);
+      }
+    }
+    return;
+  }
+  drawRiceSeedlings(parcel, seed, detailStride, growth);
 }
 
-function drawRiceSeedlings(parcel, seed) {
+function drawRiceSeedlings(parcel, seed, detailStride = 1, growth = 1) {
   const offset = Math.abs(seed) % 4;
-  context.fillStyle = "rgba(43, 91, 57, 0.84)";
-  for (let y = parcel.y + 9 + offset; y < parcel.y + parcel.h - 5; y += 12) {
-    for (let x = parcel.x + 8 + offset; x < parcel.x + parcel.w - 5; x += 12) {
-      context.fillRect(x, y, 2, 6);
-      context.fillRect(x - 2, y + 2, 3, 2);
-      context.fillRect(x + 1, y + 1, 3, 2);
+  const cropHeight = Math.max(1, Math.round(1 + growth * 5));
+  context.fillStyle = growth >= 0.95 ? "rgba(190, 159, 67, 0.92)" : "rgba(43, 91, 57, 0.84)";
+  for (let y = parcel.y + 9 + offset; y < parcel.y + parcel.h - 5; y += 12 * detailStride) {
+    for (let x = parcel.x + 8 + offset; x < parcel.x + parcel.w - 5; x += 12 * detailStride) {
+      context.fillRect(x, y + 6 - cropHeight, 2, cropHeight);
+      if (growth >= 0.38) {
+        context.fillRect(x - 2, y + 2, 3, 2);
+        context.fillRect(x + 1, y + 1, 3, 2);
+      }
     }
   }
 }
 
 function drawChanghuaRidgeConnection() {
+  const changhua = neighborCountyById("changhua");
+  if (!changhua || !isVisibleRect(changhua, 80)) return;
   const ridgeDistricts = ["彰化市", "芬園鄉", "花壇鄉", "社頭鄉", "田中鎮", "二水鄉"]
     .map((district) => state.neighborDistrictThemes.get(district))
     .filter(Boolean)
@@ -6729,16 +6941,18 @@ function drawNeighborWorkZones(now, environment) {
 
 function drawNeighborWorkZone(zone, now, environment) {
   const { x, y, w, h, type } = zone;
+  const cropType = CROP_TYPE_BY_WORK_ZONE[type];
+  const cropLifecycle = cropType ? cropLifecycleForPlotId(workZoneCropPlotId(zone), now) : null;
   context.save();
   context.fillStyle = "rgba(36, 54, 48, 0.2)";
   context.fillRect(x + 3, y + 4, w, h);
   context.fillStyle = "#a8ac72";
   context.fillRect(x, y, w, h);
 
-  if (type === "rice-paddy") drawRiceWorkZone(zone);
-  else if (["vegetable-field", "produce-coop"].includes(type)) drawVegetableWorkZone(zone, type === "produce-coop");
-  else if (type === "grape-packing-yard") drawGrapeWorkZone(zone);
-  else if (["nursery-field", "horticulture-market", "lit-flower-route"].includes(type)) drawHorticultureWorkZone(zone, environment);
+  if (type === "rice-paddy") drawRiceWorkZone(zone, cropLifecycle);
+  else if (["vegetable-field", "produce-coop"].includes(type)) drawVegetableWorkZone(zone, type === "produce-coop", cropLifecycle);
+  else if (type === "grape-packing-yard") drawGrapeWorkZone(zone, cropLifecycle);
+  else if (["nursery-field", "horticulture-market", "lit-flower-route"].includes(type)) drawHorticultureWorkZone(zone, environment, cropLifecycle);
   else if (type === "tidal-oyster-field") drawTidalOysterWorkZone(zone, now);
   else if (["wanggong-harbor", "harbor-village"].includes(type)) drawHarborWorkZone(zone, type === "wanggong-harbor");
   else if (type === "railway-yard") drawRailWorkZone(zone, false);
@@ -6763,15 +6977,21 @@ function drawNeighborWorkZone(zone, now, environment) {
   context.restore();
 }
 
-function drawRiceWorkZone({ x, y, w, h }) {
+function drawRiceWorkZone({ x, y, w, h }, lifecycle = null) {
+  const growth = lifecycle ? cropVisibleGrowth(lifecycle) : 1;
   context.fillStyle = "#72a2a0";
   context.fillRect(x + 4, y + 4, w - 8, h - 21);
   context.fillStyle = "#806a43";
   context.fillRect(x + w / 2 - 2, y + 4, 5, h - 21);
   context.fillRect(x + 4, y + 20, w - 8, 4);
-  context.fillStyle = "#3f7750";
-  for (let cropY = y + 9; cropY < y + h - 18; cropY += 11) {
-    for (let cropX = x + 10; cropX < x + w - 8; cropX += 15) context.fillRect(cropX, cropY, 2, 6);
+  if (growth > 0) {
+    const cropHeight = Math.max(1, Math.round(1 + growth * 5));
+    context.fillStyle = growth >= 0.95 ? "#c7a94f" : "#3f7750";
+    for (let cropY = y + 9; cropY < y + h - 18; cropY += 11) {
+      for (let cropX = x + 10; cropX < x + w - 8; cropX += 15) {
+        context.fillRect(cropX, cropY + 6 - cropHeight, 2, cropHeight);
+      }
+    }
   }
   context.fillStyle = "#c9ba78";
   context.fillRect(x + 7, y + 4, 10, 9);
@@ -6779,13 +6999,19 @@ function drawRiceWorkZone({ x, y, w, h }) {
   context.fillRect(x + 10, y + 7, 4, 8);
 }
 
-function drawVegetableWorkZone({ x, y, w, h }, withWarehouse) {
+function drawVegetableWorkZone({ x, y, w, h }, withWarehouse, lifecycle = null) {
+  const growth = lifecycle ? cropVisibleGrowth(lifecycle) : 1;
   context.fillStyle = "#7d9d65";
   context.fillRect(x + 4, y + 4, w - 8, h - 21);
-  context.fillStyle = "#456e47";
-  for (let row = 0; row < 4; row += 1) {
-    const rowY = y + 9 + row * 8;
-    for (let cropX = x + 9; cropX < x + w - (withWarehouse ? 48 : 7); cropX += 11) context.fillRect(cropX, rowY, 5, 4);
+  if (growth > 0) {
+    const leafSize = Math.max(1, Math.round(1 + growth * 4));
+    context.fillStyle = growth >= 0.72 ? "#456e47" : "#5f8750";
+    for (let row = 0; row < 4; row += 1) {
+      const rowY = y + 9 + row * 8;
+      for (let cropX = x + 9; cropX < x + w - (withWarehouse ? 48 : 7); cropX += 11) {
+        context.fillRect(cropX, rowY + 4 - leafSize, leafSize, leafSize);
+      }
+    }
   }
   context.fillStyle = "#b77845";
   context.fillRect(x + w - 44, y + 25, 13, 9);
@@ -6798,7 +7024,8 @@ function drawVegetableWorkZone({ x, y, w, h }, withWarehouse) {
   }
 }
 
-function drawGrapeWorkZone({ x, y, w, h }) {
+function drawGrapeWorkZone({ x, y, w, h }, lifecycle = null) {
+  const growth = lifecycle ? cropVisibleGrowth(lifecycle) : 1;
   context.fillStyle = "#9a9564";
   context.fillRect(x + 4, y + 4, w - 8, h - 21);
   context.strokeStyle = "#6e563c";
@@ -6806,12 +7033,17 @@ function drawGrapeWorkZone({ x, y, w, h }) {
   for (let postX = x + 9; postX < x + w - 48; postX += 18) {
     context.beginPath(); context.moveTo(postX, y + 7); context.lineTo(postX, y + h - 17); context.stroke();
   }
-  context.strokeStyle = "#3e7048";
-  for (let lineY = y + 10; lineY < y + h - 18; lineY += 9) {
-    context.beginPath(); context.moveTo(x + 7, lineY); context.lineTo(x + w - 48, lineY); context.stroke();
+  if (growth > 0) {
+    context.strokeStyle = "#3e7048";
+    context.lineWidth = Math.max(1, growth * 2);
+    for (let lineY = y + 10; lineY < y + h - 18; lineY += 9) {
+      context.beginPath(); context.moveTo(x + 7, lineY); context.lineTo(x + 7 + (w - 55) * growth, lineY); context.stroke();
+    }
+    if (growth >= 0.72) {
+      context.fillStyle = "#704a79";
+      for (let grapeX = x + 15; grapeX < x + w - 50; grapeX += 25) context.fillRect(grapeX, y + 14, 5, 7);
+    }
   }
-  context.fillStyle = "#704a79";
-  for (let grapeX = x + 15; grapeX < x + w - 50; grapeX += 25) context.fillRect(grapeX, y + 14, 5, 7);
   context.fillStyle = "#d2c392";
   context.fillRect(x + w - 43, y + 7, 35, 25);
   context.fillStyle = "#9a5b45";
@@ -6820,7 +7052,8 @@ function drawGrapeWorkZone({ x, y, w, h }) {
   context.fillRect(x + w - 36, y + 22, 10, 10);
 }
 
-function drawHorticultureWorkZone({ x, y, w, h, type }, environment) {
+function drawHorticultureWorkZone({ x, y, w, h, type }, environment, lifecycle = null) {
+  const growth = lifecycle ? cropVisibleGrowth(lifecycle) : 1;
   context.fillStyle = "#809b68";
   context.fillRect(x + 4, y + 4, w - 8, h - 21);
   if (type === "horticulture-market") {
@@ -6837,9 +7070,12 @@ function drawHorticultureWorkZone({ x, y, w, h, type }, environment) {
   context.lineWidth = type === "lit-flower-route" ? 6 : 2;
   context.beginPath(); context.moveTo(x + 8, y + h - 22); context.lineTo(x + w - 8, y + 8); context.stroke();
   const colors = ["#e7666d", "#edc04c", "#bd7cad", "#ef8d4e"];
-  for (let flower = 0; flower < 10; flower += 1) {
-    context.fillStyle = colors[flower % colors.length];
-    context.fillRect(x + 10 + flower * (w - 22) / 10, y + 11 + (flower % 3) * 7, 4, 4);
+  if (growth > 0) {
+    const flowerSize = Math.max(1, Math.round(1 + growth * 3));
+    for (let flower = 0; flower < 10; flower += 1) {
+      context.fillStyle = growth >= 0.62 ? colors[flower % colors.length] : "#507a4f";
+      context.fillRect(x + 10 + flower * (w - 22) / 10, y + 15 + (flower % 3) * 7 - flowerSize, flowerSize, flowerSize);
+    }
   }
   if (type === "lit-flower-route" && environment?.isNight) {
     context.fillStyle = "rgba(255, 226, 120, 0.9)";
@@ -6978,14 +7214,20 @@ function boundaryRiverBounds(bridge) {
 }
 
 function boundaryRiverPath(bridge) {
+  const cached = boundaryRiverPathCache.get(bridge.id);
+  if (cached) return cached;
   const path = new Path2D();
-  const { startX, endX } = boundaryRiverBounds(bridge);
-  for (let x = startX; x <= endX; x += 42) {
+  const bounds = boundaryRiverBounds(bridge);
+  const { startX, endX } = bounds;
+  if (endX <= startX) return path;
+  path.moveTo(startX, boundaryRiverYAt(startX, bridge));
+  const firstSampleX = Math.ceil(startX / 42) * 42;
+  for (let x = firstSampleX; x <= endX; x += 42) {
     const y = boundaryRiverYAt(x, bridge);
-    if (x === startX) path.moveTo(x, y);
-    else path.lineTo(x, y);
+    path.lineTo(x, y);
   }
   path.lineTo(endX, boundaryRiverYAt(endX, bridge));
+  boundaryRiverPathCache.set(bridge.id, path);
   return path;
 }
 
@@ -7311,8 +7553,12 @@ function drawNeighborCountyRoads() {
   BOUNDARY_BRIDGES.forEach((bridge) => {
     const county = neighborCountyById(bridge.countyId);
     const countyTheme = state.neighborCountyThemes.get(bridge.countyId);
-    if (!county || !countyTheme) return;
+    if (!county || !countyTheme || !isVisibleRect(county, 100)) return;
     const metrics = neighborCountyGridMetrics(county, countyTheme.rows);
+    const visibleLeft = Math.max(metrics.left, state.camera.x - 60);
+    const visibleRight = Math.min(metrics.right, state.camera.x + WIDTH + 60);
+    const visibleTop = Math.max(metrics.top, state.camera.y - 60);
+    const visibleBottom = Math.min(metrics.bottom, state.camera.y + HEIGHT + 60);
     const riverEdgeY = bridge.riverY + (county.side === "north" ? -1 : 1) * (BORDER_RIVER_WIDTH / 2 + 24);
     const entryY = county.side === "north" ? metrics.bottom : metrics.top;
     const nearestBoundary = Math.max(1, Math.min(
@@ -7320,14 +7566,22 @@ function drawNeighborCountyRoads() {
       Math.round((bridge.x - metrics.left) / metrics.cellWidth),
     ));
     const entryX = metrics.left + nearestBoundary * metrics.cellWidth;
-    const path = new Path2D();
-    path.moveTo(bridge.x, riverEdgeY);
-    path.lineTo(bridge.x, entryY);
-    path.lineTo(entryX, entryY);
-    strokeRoadPath(path);
+    if (isVisibleRect({
+      x: Math.min(bridge.x, entryX) - ROAD_EDGE_WIDTH,
+      y: Math.min(riverEdgeY, entryY) - ROAD_EDGE_WIDTH,
+      w: Math.abs(entryX - bridge.x) + ROAD_EDGE_WIDTH * 2,
+      h: Math.abs(entryY - riverEdgeY) + ROAD_EDGE_WIDTH * 2,
+    }, 60)) {
+      const path = new Path2D();
+      path.moveTo(bridge.x, riverEdgeY);
+      path.lineTo(bridge.x, entryY);
+      path.lineTo(entryX, entryY);
+      strokeRoadPath(path);
+    }
 
     for (let column = 1; column < NEIGHBOR_COUNTY_DISTRICT_COLUMNS; column += 1) {
       const x = metrics.left + column * metrics.cellWidth;
+      if (x < state.camera.x - 60 || x > state.camera.x + WIDTH + 60 || visibleBottom <= visibleTop) continue;
       const route = new Path2D();
       route.moveTo(x, metrics.top);
       route.lineTo(x, metrics.bottom);
@@ -7335,6 +7589,7 @@ function drawNeighborCountyRoads() {
     }
     for (let row = 1; row < countyTheme.rows; row += 1) {
       const y = metrics.top + row * metrics.cellHeight;
+      if (y < state.camera.y - 60 || y > state.camera.y + HEIGHT + 60 || visibleRight <= visibleLeft) continue;
       const route = new Path2D();
       route.moveTo(metrics.left, y);
       route.lineTo(metrics.right, y);
@@ -7423,13 +7678,36 @@ function drawConcreteBoundaryBridge(length) {
   for (let y = -length / 2 + 30; y < length / 2; y += 54) context.fillRect(-42, y, 84, 8);
 }
 
+function refreshNeighborSchoolStats() {
+  const dateKey = state.date || "no-date";
+  if (state.neighborSchoolStatsDate === dateKey && state.neighborSchoolStats.size) return;
+  const stats = new Map();
+  const add = (key, available) => {
+    const current = stats.get(key) || { schoolCount: 0, availableCount: 0 };
+    current.schoolCount += 1;
+    if (available) current.availableCount += 1;
+    stats.set(key, current);
+  };
+  state.neighborSchools.forEach((school) => {
+    const available = schoolHasCurrentMeal(school);
+    add(`county:${school.city}`, available);
+    add(`district:${school.city}|${school.district}`, available);
+  });
+  state.neighborSchoolStatsDate = dateKey;
+  state.neighborSchoolStats = stats;
+}
+
+function neighborSchoolStats(city, district = "") {
+  refreshNeighborSchoolStats();
+  return state.neighborSchoolStats.get(district ? `district:${city}|${district}` : `county:${city}`)
+    || { schoolCount: 0, availableCount: 0 };
+}
+
 function drawNeighborCountyDetails(now) {
   NEIGHBOR_COUNTIES.filter((county) => isVisibleRect(county, 60)).forEach((county, index) => {
     const countyTheme = state.neighborCountyThemes.get(county.id);
     if (!countyTheme) return;
-    const countySchools = state.neighborSchools.filter((school) => school.city === county.name);
-    const schoolCount = countySchools.length;
-    const availableCount = countySchools.filter(schoolHasCurrentMeal).length;
+    const { schoolCount, availableCount } = neighborSchoolStats(county.name);
     const labelX = county.x + 24;
     const labelY = county.y + 8;
     context.fillStyle = "rgba(255, 248, 231, 0.94)";
@@ -7471,9 +7749,7 @@ function drawNeighborCountyDetails(now) {
 
 function drawNeighborDistrictLabel(theme) {
   const { zone } = theme;
-  const districtSchools = state.neighborSchools.filter((school) => school.district === theme.name && school.city === theme.county.name);
-  const schoolCount = districtSchools.length;
-  const availableCount = districtSchools.filter(schoolHasCurrentMeal).length;
+  const { schoolCount, availableCount } = neighborSchoolStats(theme.county.name, theme.name);
   context.fillStyle = "rgba(255, 248, 226, 0.9)";
   context.fillRect(zone.x + 8, zone.y + 8, 142, 40);
   context.fillStyle = theme.county.id === "miaoli" ? "#345f48" : "#6d5c2d";
@@ -7706,16 +7982,30 @@ function coastlineXAt(y) {
 }
 
 function traceCoastline(offset = 0, startY = 0, endY = WORLD_HEIGHT) {
-  context.beginPath();
-  for (let y = startY; y <= endY; y += 28) {
+  const boundedStartY = Math.max(0, startY);
+  const boundedEndY = Math.min(WORLD_HEIGHT, endY);
+  const cacheKey = `${offset}|${boundedStartY}|${boundedEndY}`;
+  const cached = coastlinePathCache.get(cacheKey);
+  if (cached) return cached;
+  const path = new Path2D();
+  if (boundedEndY <= boundedStartY) return path;
+  startY = boundedStartY;
+  endY = boundedEndY;
+  const firstSampleY = Math.ceil(startY / 28) * 28;
+  path.moveTo(coastlineXAt(startY) + offset, startY);
+  for (let y = firstSampleY; y <= endY; y += 28) {
     const x = coastlineXAt(y) + offset;
-    if (y === startY) context.moveTo(x, y);
-    else context.lineTo(x, y);
+    path.lineTo(x, y);
   }
-  if ((endY - startY) % 28 !== 0) context.lineTo(coastlineXAt(endY) + offset, endY);
+  path.lineTo(coastlineXAt(endY) + offset, endY);
+  coastlinePathCache.set(cacheKey, path);
+  return path;
 }
 
 function fillCoastalBand(startY, endY, innerOffset, outerOffset, color) {
+  startY = Math.max(startY, state.camera.y - 80);
+  endY = Math.min(endY, state.camera.y + HEIGHT + 80);
+  if (endY <= startY) return;
   context.beginPath();
   for (let y = startY; y <= endY; y += 24) {
     const x = coastlineXAt(y) + innerOffset;
@@ -7732,18 +8022,22 @@ function fillCoastalBand(startY, endY, innerOffset, outerOffset, color) {
 }
 
 function drawWesternCoast(now) {
+  if (state.camera.x > WEST_COAST_WIDTH + 140) return;
+  const coastTop = Math.max(0, state.camera.y - 120);
+  const coastBottom = Math.min(WORLD_HEIGHT, state.camera.y + HEIGHT + 120);
   context.save();
   context.fillStyle = "#4f93aa";
   context.beginPath();
-  context.moveTo(0, 0);
-  context.lineTo(coastlineXAt(0), 0);
-  for (let y = 28; y <= WORLD_HEIGHT; y += 28) context.lineTo(coastlineXAt(y), y);
-  context.lineTo(0, WORLD_HEIGHT);
+  context.moveTo(0, coastTop);
+  context.lineTo(coastlineXAt(coastTop), coastTop);
+  for (let y = Math.ceil(coastTop / 28) * 28; y <= coastBottom; y += 28) context.lineTo(coastlineXAt(y), y);
+  context.lineTo(coastlineXAt(coastBottom), coastBottom);
+  context.lineTo(0, coastBottom);
   context.closePath();
   context.fill();
 
   context.fillStyle = "#3f839f";
-  context.fillRect(0, 0, 88, WORLD_HEIGHT);
+  context.fillRect(0, coastTop, 88, Math.max(0, coastBottom - coastTop));
   const waveOffset = reducedMotion ? 0 : Math.floor(now / 150) % 22;
   const visibleStartY = Math.max(20, Math.floor((state.camera.y - 40) / 48) * 48);
   const visibleEndY = Math.min(WORLD_HEIGHT, state.camera.y + HEIGHT + 40);
@@ -7765,28 +8059,26 @@ function drawWesternCoast(now) {
   context.lineWidth = 6;
   context.setLineDash([18, 13]);
   context.lineDashOffset = -waveOffset;
-  traceCoastline(1);
-  context.stroke();
+  context.stroke(traceCoastline(1));
   context.setLineDash([]);
 
   context.strokeStyle = "#cab98d";
   context.lineWidth = 13;
-  traceCoastline(62);
-  context.stroke();
+  context.stroke(traceCoastline(62));
   context.strokeStyle = "#7f8d7b";
   context.lineWidth = 4;
-  traceCoastline(62);
-  context.stroke();
+  context.stroke(traceCoastline(62));
 
   for (let index = 0; index < COASTAL_TETRAPOD_COUNT; index += 1) {
     const y = 38 + index * (WORLD_HEIGHT - 76) / (COASTAL_TETRAPOD_COUNT - 1);
+    if (y < coastTop - 20 || y > coastBottom + 20) continue;
     if (Math.abs(y - COASTAL_HARBOR_Y) < 174) continue;
     const beach = isCoastalBeachY(y);
     if (beach && index % 3 !== 0) continue;
     drawTetrapod(coastlineXAt(y) - 10 - index % 2 * 7, y, index * 0.83, beach ? 0.72 : 0.9);
   }
 
-  drawFishingHarbor(now);
+  if (COASTAL_HARBOR_Y >= coastTop - 180 && COASTAL_HARBOR_Y <= coastBottom + 180) drawFishingHarbor(now);
   context.restore();
 }
 
@@ -7906,19 +8198,22 @@ function drawFishingBoat(x, y, hull, flipped = false, bob = 0) {
 }
 
 function drawEasternMountainRange(now) {
+  if (state.camera.x + WIDTH < EAST_MOUNTAIN_START_X - 140) return;
+  const visibleTop = Math.max(0, state.camera.y - 140);
+  const visibleBottom = Math.min(WORLD_HEIGHT, state.camera.y + HEIGHT + 140);
   context.save();
   context.fillStyle = "#416f4e";
-  context.fillRect(EAST_MOUNTAIN_START_X, 0, EAST_MOUNTAIN_WIDTH, WORLD_HEIGHT);
+  context.fillRect(EAST_MOUNTAIN_START_X, visibleTop, EAST_MOUNTAIN_WIDTH, Math.max(0, visibleBottom - visibleTop));
 
   context.fillStyle = "#5d8958";
   context.beginPath();
-  context.moveTo(EAST_MOUNTAIN_START_X + 4, 0);
-  for (let y = 0; y <= WORLD_HEIGHT; y += 72) {
+  context.moveTo(EAST_MOUNTAIN_START_X + 4, visibleTop);
+  for (let y = Math.ceil(visibleTop / 72) * 72; y <= visibleBottom; y += 72) {
     const x = EAST_MOUNTAIN_START_X + 34 + Math.sin(y / 177) * 24 + Math.sin(y / 59) * 8;
     context.lineTo(x, y);
   }
-  context.lineTo(EAST_MOUNTAIN_START_X + 184, WORLD_HEIGHT);
-  context.lineTo(EAST_MOUNTAIN_START_X + 184, 0);
+  context.lineTo(EAST_MOUNTAIN_START_X + 184, visibleBottom);
+  context.lineTo(EAST_MOUNTAIN_START_X + 184, visibleTop);
   context.closePath();
   context.fill();
 
@@ -7926,10 +8221,11 @@ function drawEasternMountainRange(now) {
   context.lineWidth = 9;
   for (let ridge = 0; ridge < 3; ridge += 1) {
     context.beginPath();
-    for (let y = -30; y <= WORLD_HEIGHT + 30; y += 54) {
+    const ridgeStartY = Math.floor(visibleTop / 54) * 54 - 30;
+    for (let y = ridgeStartY; y <= visibleBottom + 30; y += 54) {
       const x = EAST_MOUNTAIN_START_X + 108 + ridge * 112
         + Math.sin(y / (118 + ridge * 27) + ridge) * (24 + ridge * 7);
-      if (y === -30) context.moveTo(x, y);
+      if (y === ridgeStartY) context.moveTo(x, y);
       else context.lineTo(x, y);
     }
     context.stroke();
@@ -7945,7 +8241,7 @@ function drawEasternMountainRange(now) {
   }
 
   context.fillStyle = "#2f6045";
-  for (let y = 36; y < WORLD_HEIGHT; y += 64) {
+  for (let y = Math.floor((visibleTop - 36) / 64) * 64 + 36; y < visibleBottom; y += 64) {
     const footX = EAST_MOUNTAIN_START_X + 32 + Math.sin(y / 177) * 24;
     drawTinyConifer(footX + 18 + y % 3 * 7, y, 0.9);
     drawTinyConifer(EAST_MOUNTAIN_START_X + 82 + y % 5 * 5, y + 27, 0.72);
@@ -8013,20 +8309,30 @@ function drawTinyConifer(x, y, scale = 1) {
 }
 
 function drawMapEdges(now) {
-  context.fillStyle = COLORS.water;
-  context.fillRect(0, 0, 12, WORLD_HEIGHT);
-  context.fillRect(0, 0, WEST_COAST_WIDTH, 12);
-  context.fillRect(0, WORLD_HEIGHT - 12, WEST_COAST_WIDTH, 12);
-  context.fillStyle = "#284d39";
-  context.fillRect(WORLD_WIDTH - 14, 0, 14, WORLD_HEIGHT);
-  context.fillStyle = COLORS.waterLight;
-  const offset = reducedMotion ? 0 : Math.floor(now / 260) % 12;
-  for (let y = -12 + offset; y < WORLD_HEIGHT; y += 24) {
-    context.fillRect(2, y, 6, 3);
+  const visibleTop = Math.max(0, state.camera.y - 20);
+  const visibleBottom = Math.min(WORLD_HEIGHT, state.camera.y + HEIGHT + 20);
+  const westVisible = state.camera.x <= WEST_COAST_WIDTH + 20;
+  const eastVisible = state.camera.x + WIDTH >= WORLD_WIDTH - 34;
+  if (westVisible) {
+    context.fillStyle = COLORS.water;
+    context.fillRect(0, visibleTop, 12, Math.max(0, visibleBottom - visibleTop));
+    if (state.camera.y <= 20) context.fillRect(0, 0, WEST_COAST_WIDTH, 12);
+    if (state.camera.y + HEIGHT >= WORLD_HEIGHT - 20) context.fillRect(0, WORLD_HEIGHT - 12, WEST_COAST_WIDTH, 12);
   }
-  context.fillStyle = "#5c8b5b";
-  for (let y = 8; y < WORLD_HEIGHT; y += 26) {
-    context.fillRect(WORLD_WIDTH - 11, y, 7, 5);
+  if (eastVisible) {
+    context.fillStyle = "#284d39";
+    context.fillRect(WORLD_WIDTH - 14, visibleTop, 14, Math.max(0, visibleBottom - visibleTop));
+  }
+  const offset = reducedMotion ? 0 : Math.floor(now / 260) % 12;
+  if (westVisible) {
+    context.fillStyle = COLORS.waterLight;
+    const startY = Math.floor((visibleTop - offset) / 24) * 24 + offset;
+    for (let y = startY; y < visibleBottom; y += 24) context.fillRect(2, y, 6, 3);
+  }
+  if (eastVisible) {
+    context.fillStyle = "#5c8b5b";
+    const startY = Math.floor((visibleTop - 8) / 26) * 26 + 8;
+    for (let y = startY; y < visibleBottom; y += 26) context.fillRect(WORLD_WIDTH - 11, y, 7, 5);
   }
 }
 
@@ -8047,6 +8353,7 @@ function drawRoads(now) {
   const horizontalCurveLimit = roadCurveLimitForGap(DISTRICT_ZONE_GAP_Y);
   for (let column = 1; column < DISTRICT_GRID_COLUMNS; column += 1) {
     const x = DISTRICT_ZONE_ORIGIN_X + column * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X) - DISTRICT_ZONE_GAP_X / 2;
+    if (!isVisibleRect({ x: x - ROAD_EDGE_WIDTH, y: DISTRICT_ZONE_ORIGIN_Y, w: ROAD_EDGE_WIDTH * 2, h: DISTRICT_GRID_HEIGHT }, 60)) continue;
     const path = new Path2D();
     path.moveTo(x, DISTRICT_ZONE_ORIGIN_Y);
     if ([3, 6].includes(column)) {
@@ -8064,6 +8371,7 @@ function drawRoads(now) {
   drawNeighborCountyRoads();
   for (let row = 1; row < DISTRICT_GRID_ROWS; row += 1) {
     const y = DISTRICT_ZONE_ORIGIN_Y + row * (DISTRICT_ZONE_HEIGHT + DISTRICT_ZONE_GAP_Y) - DISTRICT_ZONE_GAP_Y / 2;
+    if (!isVisibleRect({ x: COASTAL_ROAD_START_X, y: y - ROAD_EDGE_WIDTH, w: EASTERN_ROAD_END_X - COASTAL_ROAD_START_X, h: ROAD_EDGE_WIDTH * 2 }, 60)) continue;
     const path = new Path2D();
     path.moveTo(COASTAL_ROAD_START_X, y);
     if ([2, 5].includes(row)) {
@@ -8928,6 +9236,10 @@ function drawDistrictFeatures(now) {
 
 function drawDistrictFeature(theme, x, y, now) {
   const feature = theme.feature;
+  const cropType = CROP_TYPE_BY_DISTRICT_FEATURE[feature];
+  const cropGrowth = cropType
+    ? cropVisibleGrowth(cropLifecycleForPlotId(districtFeatureCropPlotId(theme), now))
+    : 1;
   context.save();
   context.translate(Math.round(x), Math.round(y));
   context.fillStyle = "rgba(20, 45, 55, 0.18)";
@@ -9025,15 +9337,23 @@ function drawDistrictFeature(theme, x, y, now) {
       for (let rail = -24; rail < 28; rail += 10) context.fillRect(rail, 13, 3, 12);
     }
   } else if (feature === "rice" || feature === "wheat") {
-    context.strokeStyle = feature === "rice" ? "#e5c75f" : "#d6a848";
-    context.lineWidth = 3;
-    for (let stalk = -24; stalk <= 24; stalk += 8) {
-      context.beginPath();
-      context.moveTo(stalk, 20);
-      context.lineTo(stalk + (stalk % 3), -12 + Math.abs(stalk % 5));
-      context.stroke();
-      context.fillStyle = feature === "rice" ? "#f0d36b" : "#e6b94f";
-      context.fillRect(stalk + 1, -10, 5, 7);
+    if (cropGrowth > 0) {
+      const stalkHeight = Math.max(3, Math.round(3 + cropGrowth * 29));
+      context.strokeStyle = cropGrowth >= 0.92
+        ? (feature === "rice" ? "#e5c75f" : "#d6a848")
+        : "#5d8a4f";
+      context.lineWidth = Math.max(1, Math.round(1 + cropGrowth * 2));
+      for (let stalk = -24; stalk <= 24; stalk += 8) {
+        const stalkTop = 20 - stalkHeight + Math.abs(stalk % 5);
+        context.beginPath();
+        context.moveTo(stalk, 20);
+        context.lineTo(stalk + (stalk % 3), stalkTop);
+        context.stroke();
+        if (cropGrowth >= 0.72) {
+          context.fillStyle = feature === "rice" ? "#f0d36b" : "#e6b94f";
+          context.fillRect(stalk + 1, stalkTop + 2, 5, 7);
+        }
+      }
     }
   } else if (feature === "cinema") {
     context.fillStyle = "#3f5967";
@@ -9169,14 +9489,20 @@ function drawDistrictFeature(theme, x, y, now) {
     }
     drawTinyBike(feature === "heritage-bike" ? 10 : 0, 8);
   } else if (feature === "orchard" || feature === "loquat") {
-    for (let tree = -20; tree <= 20; tree += 20) {
-      context.fillStyle = COLORS.trunk;
-      context.fillRect(tree - 2, 7, 5, 15);
-      context.fillStyle = COLORS.tree;
-      context.fillRect(tree - 11, -12, 22, 22);
-      context.fillStyle = feature === "loquat" ? "#efa83b" : "#d96a45";
-      context.fillRect(tree - 6, -5, 5, 5);
-      context.fillRect(tree + 3, 1, 5, 5);
+    if (cropGrowth > 0) {
+      const treeHeight = Math.max(3, Math.round(3 + cropGrowth * 19));
+      const canopySize = Math.max(3, Math.round(3 + cropGrowth * 19));
+      for (let tree = -20; tree <= 20; tree += 20) {
+        context.fillStyle = COLORS.trunk;
+        context.fillRect(tree - 2, 22 - treeHeight, Math.max(2, Math.round(2 + cropGrowth * 3)), treeHeight);
+        context.fillStyle = COLORS.tree;
+        context.fillRect(tree - canopySize / 2, 10 - treeHeight, canopySize, canopySize);
+        if (cropGrowth >= 0.72) {
+          context.fillStyle = feature === "loquat" ? "#efa83b" : "#d96a45";
+          context.fillRect(tree - 6, -5, 5, 5);
+          context.fillRect(tree + 3, 1, 5, 5);
+        }
+      }
     }
   } else if (feature === "flower-mushroom") {
     drawTinyFlower(-20, 6, "#d8667e");
@@ -9300,8 +9626,10 @@ function drawCompactCampus(school, now) {
   context.fillStyle = layout.color;
   context.fillRect(layout.x, layout.y, layout.w, layout.h);
   drawCompactCampusBoundary(layout);
-  drawCompactFacility(layout);
-  drawCompactYardDetail(school);
+  if (!townUsesReducedDetail()) {
+    drawCompactFacility(layout);
+    drawCompactYardDetail(school);
+  }
   drawCompactCampusPath(layout, building);
   drawCompactSchoolBuilding(school, building);
   drawCompactCampusLights(school, state.environment);
@@ -9774,6 +10102,79 @@ function districtDecorationExclusionRects(district) {
   ];
 }
 
+function neighborDistrictDecorationExclusionRects(theme) {
+  const { zone, county } = theme;
+  const countyTheme = state.neighborCountyThemes.get(county.id);
+  const schools = state.neighborSchools
+    .filter((school) => school.city === county.name && school.district === theme.name)
+    .map((school) => school.layout);
+  const venues = state.venues
+    .filter((venue) => venue.countyId === county.id && venue.district === theme.name);
+  const workZones = state.neighborWorkZones
+    .filter((workZone) => workZone.countyId === county.id && workZone.district === theme.name);
+  const landmarks = (countyTheme?.landmarks || [])
+    .filter((landmark) => landmark.district === theme.name)
+    .map((landmark, index) => ({
+      x: zone.x + zone.w - 136 - index * 126,
+      y: zone.y - 4,
+      w: 132,
+      h: 92,
+    }));
+  return [
+    { x: zone.x + 8, y: zone.y + 8, w: 142, h: 40 },
+    ...schools,
+    ...venues,
+    ...workZones,
+    ...landmarks,
+  ];
+}
+
+function roadsideOffsets(length, spacing, margin) {
+  const usableLength = Math.max(0, length - margin * 2);
+  const count = Math.max(2, Math.floor(usableLength / spacing) + 1);
+  const step = count > 1 ? usableLength / (count - 1) : 0;
+  return Array.from({ length: count }, (_, index) => margin + step * index);
+}
+
+function neighborStreetDecorationsForTheme(theme) {
+  const { zone, county } = theme;
+  const seed = hashText(`${county.id}-${theme.name}-street-furniture`);
+  const exclusions = neighborDistrictDecorationExclusionRects(theme);
+  const pointIsClear = (point, padding) => !exclusions.some((rect) => pointInExpandedRect(point, rect, padding));
+  const horizontalOffsets = roadsideOffsets(zone.w, 116, 54);
+  const verticalOffsets = roadsideOffsets(zone.h, 92, 46);
+  const treeCandidates = [
+    ...horizontalOffsets.flatMap((offset) => ([
+      { x: zone.x + offset, y: zone.y + 32 },
+      { x: zone.x + offset, y: zone.y + zone.h - 50 },
+    ])),
+    ...verticalOffsets.flatMap((offset) => ([
+      { x: zone.x + 28, y: zone.y + offset },
+      { x: zone.x + zone.w - 28, y: zone.y + offset },
+    ])),
+  ];
+  const lampCandidates = [
+    ...horizontalOffsets.flatMap((offset) => ([
+      { x: zone.x + offset, y: zone.y + 24 },
+      { x: zone.x + offset, y: zone.y + zone.h - 8 },
+    ])),
+    ...verticalOffsets.flatMap((offset) => ([
+      { x: zone.x + 8, y: zone.y + offset },
+      { x: zone.x + zone.w - 8, y: zone.y + offset },
+    ])),
+  ];
+  return {
+    trees: treeCandidates
+      .filter((tree) => pointIsClear(tree, 20))
+      .map((tree, index) => ({
+        ...tree,
+        phase: (seed % 19) * 0.17 + index * 0.41,
+        scale: county.id === "miaoli" ? 0.82 : 0.76,
+      })),
+    lamps: lampCandidates.filter((lamp) => pointIsClear(lamp, 12)),
+  };
+}
+
 function streetDecorationsForZone(zone, districtIndex, district = DISTRICT_DISPLAY_ORDER[districtIndex]) {
   const identity = district || `${zone.x},${zone.y}`;
   const seed = hashText(identity);
@@ -9820,6 +10221,13 @@ function drawStreetDetails(now, environment) {
     context.fillStyle = "#a2714e";
     decorations.benches.forEach((bench) => context.fillRect(bench.x, bench.y, bench.w, bench.h));
   });
+  [...state.neighborDistrictThemes.values()]
+    .filter((theme) => isVisibleRect(theme.zone, 40))
+    .forEach((theme) => {
+      const decorations = neighborStreetDecorationsForTheme(theme);
+      decorations.trees.forEach((tree) => drawTree(tree.x, tree.y, now, tree.phase, tree.scale));
+      decorations.lamps.forEach((lamp) => drawLamp(lamp.x, lamp.y, environment));
+    });
 }
 
 function drawTree(x, y, now = 0, phase = 0, scale = 1) {
@@ -9877,9 +10285,14 @@ function visibleLampPositions() {
     const districtIndex = DISTRICT_DISPLAY_ORDER.indexOf(district);
     positions.push(...streetDecorationsForZone(zone, districtIndex, district).lamps);
   });
-  [...state.schools, ...state.neighborSchools]
-    .filter((school) => isVisibleRect(school.layout, 80))
-    .forEach((school) => positions.push(...campusLightPositions(school)));
+  [...state.neighborDistrictThemes.values()]
+    .filter((theme) => isVisibleRect(theme.zone, 80))
+    .forEach((theme) => positions.push(...neighborStreetDecorationsForTheme(theme).lamps));
+  if (!townUsesReducedDetail()) {
+    [...state.schools, ...state.neighborSchools]
+      .filter((school) => isVisibleRect(school.layout, 80))
+      .forEach((school) => positions.push(...campusLightPositions(school)));
+  }
   state.venues
     .filter((venue) => venue.id === "waternan-central-park" && isVisibleRect(venue, 80))
     .forEach((venue) => positions.push(...centralParkLampPositions(venue)));

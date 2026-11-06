@@ -21,7 +21,7 @@ window.LunchEnglish = {
   "營養午餐小鎮｜好好吃飯": "Lunch Town | Hao Hao Food",
   "2D 午餐小鎮": "2D Lunch Town",
   "午餐小鎮": "Lunch Town",
-  "已自動移到最近的安全步道。": "Moved you to the nearest safe path.",
+  "小鎮已隔離一個異常畫面項目，人物可以繼續移動。": "Lunch Town isolated a faulty visual item so everyone can keep moving.",
   "回到好好吃飯首頁": "Back to Hao Hao Food home",
   "好好吃飯": "Hao Hao Food",
   "孩子午餐，晚餐靈感": "School lunch, dinner inspiration",
@@ -2695,6 +2695,10 @@ window.LunchEnglish = {
   "草稿預覽無法載入，現在顯示正式地圖。": "The draft preview could not be loaded. The live map is shown instead."
 };
 window.LunchEnglishTemplates = [
+  [
+    "在{0}採收成熟作物，採收後田區暫時留空",
+    "Harvesting mature crops at {0}; the plot stays briefly empty afterward."
+  ],
   [
     "今日已完成 {0} / {1} 題，金幣餘額 {2}。",
     "Completed {0} / {1} today · {2} coins available."

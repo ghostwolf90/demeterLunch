@@ -134,7 +134,7 @@ class LunchTownTests(unittest.TestCase):
 
     def test_town_roads_and_street_furniture_keep_building_clearance(self) -> None:
         app = self.read("web/lunch-town/app.js")
-        town = app.split("function drawTown(now, environment = townEnvironmentAt()) {", 1)[1].split("\n}\n\nfunction drawGround", 1)[0]
+        town = app.split("function drawTown(now, environment = townEnvironmentAt()) {", 1)[1].split("\n}\n\nfunction drawTownLayer", 1)[0]
         roads = app.split("function drawRoads(now) {", 1)[1].split("\n}\n\nfunction strokeRoadPath", 1)[0]
         decorations = app.split("function streetDecorationsForZone", 1)[1].split("\n}\n\nfunction drawStreetDetails", 1)[0]
 
@@ -144,8 +144,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("function roundaboutRadiusForDistrictCorridors", app)
         self.assertIn("Math.min(column === 3 ? 15 : 9, verticalCurveLimit)", roads)
         self.assertIn("Math.min(row === 2 ? 11 : 7, horizontalCurveLimit)", roads)
-        self.assertLess(town.index("drawStreetDetails(now, environment)"), town.index("drawDistrictLabels()"))
-        self.assertLess(town.index("drawStreetDetails(now, environment)"), town.index("drawTownVenues(now)"))
+        self.assertLess(town.index('drawTownLayer("street-details"'), town.index('drawTownLayer("district-labels"'))
+        self.assertLess(town.index('drawTownLayer("street-details"'), town.index('drawTownLayer("venues"'))
         self.assertIn("districtDecorationExclusionRects", decorations)
         self.assertIn("pointInExpandedRect", decorations)
         self.assertIn("lotsIntersect", decorations)
@@ -165,7 +165,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("function drawTetrapod(", app)
         self.assertIn("function drawEasternMountainRange(now)", app)
         self.assertIn("function drawMountainPeak(", app)
-        self.assertIn("drawWesternCoast(now);\n  drawEasternMountainRange(now);", app)
+        self.assertIn('drawTownLayer("western-coast", () => drawWesternCoast(now));\n    drawTownLayer("eastern-mountains", () => drawEasternMountainRange(now));', app)
         self.assertIn("path.moveTo(COASTAL_ROAD_START_X, y)", app)
         self.assertIn("path.lineTo(EASTERN_ROAD_END_X, y)", app)
         self.assertNotIn("path.moveTo(0, y)", app)
@@ -195,9 +195,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertNotIn("彰化縣", json.dumps(themes, ensure_ascii=False))
         self.assertIn('"苗栗縣": "Miaoli County"', english)
         self.assertIn('"彰化縣": "Changhua County"', english)
-        self.assertIn("app.js?v=20261106-terrain-escape", html)
-        self.assertIn("/locales/en.js?v=20261106-terrain-escape", html)
-        self.assertIn("/i18n.js?v=20261106-terrain-escape", html)
+        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
 
     def test_miaoli_and_changhua_map_every_reviewed_primary_school_by_realistic_district_position(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -263,16 +263,15 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('"當日午餐已更新": "Today\'s lunch data is ready"', english)
         self.assertIn('"到{0}散步，看看當地學校與景觀": [0]', i18n)
         self.assertIn('neighbor-county-themes.json?v=20261105-outer-rivers', app)
-        self.assertIn("app.js?v=20261106-terrain-escape", html)
-        self.assertIn("/locales/en.js?v=20261106-terrain-escape", html)
-        self.assertIn("/i18n.js?v=20261106-terrain-escape", html)
+        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
 
     def test_neighbor_counties_follow_taichung_district_block_layout(self) -> None:
         app = self.read("web/lunch-town/app.js")
         styles = self.read("web/lunch-town/styles.css")
         school_layout = app.split("function createNeighborSchoolLayouts(schools) {", 1)[1].split("\n}\n", 1)[0]
         road_layout = app.split("function drawNeighborCountyRoads() {", 1)[1].split("\n}\n", 1)[0]
-        blocked = app.split("function isBlockedTownTerrain(point) {", 1)[1].split("\n}\n", 1)[0]
         farmland = app.split("function drawNeighborFarmland(theme) {", 1)[1].split("\n}\n", 1)[0]
 
         self.assertIn("const NEIGHBOR_COUNTY_ZONE_GAP = 40", app)
@@ -292,11 +291,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertNotIn("+ index", farmland)
         self.assertIn("zone.x + zone.w - landscapeWidth + 12", app)
         self.assertIn("drawPixelCountyLandmark(landmark.style, x, y, scale)", app)
-        self.assertNotIn("pointIsInNeighborMountainTerrain", blocked)
-        self.assertNotIn("pointIsInNeighborFarmland", blocked)
+        self.assertNotIn("function isBlockedTownTerrain", app)
+        self.assertNotIn("function playerTerrainMoveAllowed", app)
         self.assertNotIn("pointIsOnNeighborCountyRoad", app)
-        self.assertIn("zone.restricted && pointInExpandedRect", blocked)
-        self.assertIn("function blockedTerrainEscapeDepth", app)
         self.assertIn("const MAX_NIGHT_DARKNESS = 0.4", app)
         self.assertIn("max-width: min(420px, calc(100% - 96px))", styles)
 
@@ -312,14 +309,12 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("const flowTravel = reducedMotion ? 0", river)
         self.assertIn("context.lineTo(2, 0)", river)
         self.assertIn("context.createLinearGradient", app)
-        self.assertLess(app.index("drawBoundaryRivers(now);"), app.index("drawBoundaryBridges();"))
-        self.assertIn("app.js?v=20261106-terrain-escape", html)
+        self.assertLess(app.index('drawTownLayer("boundary-rivers"'), app.index('drawTownLayer("bridges"'))
+        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
 
     def test_miaoli_north_and_changhua_south_have_named_boundary_rivers(self) -> None:
         app = self.read("web/lunch-town/app.js")
         english = self.read("web/locales/en.js")
-        blocked = app.split("function isBlockedTownTerrain(point) {", 1)[1].split("\n}\n", 1)[0]
-        escape = app.split("function blockedTerrainEscapeDepth(point) {", 1)[1].split("\n}\n", 1)[0]
         for marker in (
             "const NORTH_OUTER_RIVER_Y", "const SOUTH_OUTER_RIVER_Y",
             "const OUTER_BOUNDARY_RIVERS", "const BOUNDARY_RIVERS",
@@ -329,8 +324,7 @@ class LunchTownTests(unittest.TestCase):
             "const WORLD_HEIGHT = SOUTH_COUNTY_END_Y + OUTER_BORDER_RIVER_SPAN",
         ):
             self.assertIn(marker, app)
-        self.assertIn("OUTER_BOUNDARY_RIVERS.some", blocked)
-        self.assertIn("OUTER_BOUNDARY_RIVERS.forEach", escape)
+        self.assertNotIn("function blockedTerrainEscapeDepth", app)
         self.assertIn('"苗栗北界・鹽水港溪": "Northern Miaoli boundary · Yanshuigang Creek"', english)
         self.assertIn('"彰化南界・濁水溪": "Southern Changhua boundary · Zhuoshui River"', english)
 
@@ -354,11 +348,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('npc.riverbankSiteId === site.id', app)
         self.assertIn("state.environment?.isRaining", app)
         self.assertIn("hour < 7 || hour >= 21", app)
-        self.assertLess(app.index("drawBoundaryRivers(now);"), app.index("drawRiverbankLandscapes(now);"))
-        self.assertLess(app.index("drawRiverbankLandscapes(now);"), app.index("drawBoundaryBridges();"))
-        blocked = app.split("function isBlockedTownTerrain(point) {", 1)[1].split("\n}\n", 1)[0]
-        self.assertIn("boundaryRiverYAt(point.x, bridge)", blocked)
-        self.assertNotIn("riverbankSiteId", blocked)
+        self.assertLess(app.index('drawTownLayer("boundary-rivers"'), app.index('drawTownLayer("riverbanks"'))
+        self.assertLess(app.index('drawTownLayer("riverbanks"'), app.index('drawTownLayer("bridges"'))
+        self.assertNotIn("function isBlockedTownTerrain", app)
         for source, translated in (
             ('"釣魚平台":', "Fishing deck"),
             ('"指定休憩區":', "Designated recreation area"),
@@ -369,9 +361,9 @@ class LunchTownTests(unittest.TestCase):
             self.assertIn(translated, english)
         self.assertIn('"在{0}的安全平台釣魚，釣線朝向河道但人留在護欄內": [0]', i18n)
         self.assertIn('"在{0}使用指定烤肉台休憩，並把垃圾與火源收拾好": [0]', i18n)
-        self.assertIn("app.js?v=20261106-terrain-escape", html)
-        self.assertIn("/locales/en.js?v=20261106-terrain-escape", html)
-        self.assertIn("/i18n.js?v=20261106-terrain-escape", html)
+        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
 
     def test_town_map_labels_every_school_with_a_readable_primary_school_name(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -382,67 +374,61 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("fitSchoolLabelFont", app)
         self.assertIn("splitSchoolMapLabel", app)
         self.assertNotIn("String(school.name).slice(0, 6)", app)
-        self.assertIn("styles.css?v=20261106-terrain-escape", html)
-        self.assertIn("app.js?v=20261106-terrain-escape", html)
+        self.assertIn("styles.css?v=20261106-crop-lifecycle", html)
+        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
 
-    def test_player_can_walk_through_buildings_but_not_sea_mountains_or_rivers(self) -> None:
+    def test_player_movement_blocks_only_sea_mountains_and_rivers(self) -> None:
         app = self.read("web/lunch-town/app.js")
         move_player = app.split("function tryMovePlayer(dx, dy) {", 1)[1].split("\n}\n", 1)[0]
-        move_allowed = app.split("function playerTerrainMoveAllowed(current, next) {", 1)[1].split("\n}\n", 1)[0]
         update_player = app.split("function updatePlayer(delta) {", 1)[1].split("\n}\n\nfunction accumulateDailyWalkDistance", 1)[0]
         self.assertIn("state.player.x = next.x", move_player)
         self.assertIn("state.player.y = next.y", move_player)
-        self.assertIn("playerTerrainMoveAllowed(current, next)", move_player)
-        self.assertIn("isBlockedTownTerrain(next)", move_allowed)
-        self.assertIn("const currentBlockDepth = blockedTerrainEscapeDepth(current)", move_allowed)
-        self.assertIn("nextBlockDepth + 0.001 < currentBlockDepth", move_allowed)
+        self.assertIn("const next = clampTownPoint", move_player)
+        self.assertIn("playerNaturalTerrainMoveAllowed(current, next)", move_player)
         self.assertIn("return false", move_player)
         self.assertIn("return true", move_player)
-        self.assertIn("function pointIsOnBoundaryBridge", app)
-        self.assertIn("function isBlockedTownTerrain", app)
-        self.assertIn("point.x - PLAYER_TERRAIN_PADDING <= coastlineXAt(point.y)", app)
-        self.assertIn("point.x + PLAYER_TERRAIN_PADDING >= EAST_MOUNTAIN_START_X", app)
-        self.assertIn("Math.abs(point.y - boundaryRiverYAt(point.x, bridge))", app)
-        self.assertIn("!pointIsOnBoundaryBridge(point, bridge)", app)
         self.assertIn("const movedX = tryMovePlayer", app)
         self.assertIn("const movedY = tryMovePlayer", app)
-        self.assertIn("const movedBySlide", update_player)
-        self.assertIn("recoverPlayerToWalkableTerrain()", update_player)
+        self.assertIn("state.player.isMoving = movedX || movedY", update_player)
         self.assertIn("if (state.moveTarget && !state.player.isMoving) state.moveTarget = null", app)
-        self.assertNotIn("state.collisions", app)
+        for removed_collision in (
+            "PLAYER_TERRAIN_PADDING", "BOUNDARY_BRIDGE_PASSAGE_HALF_WIDTH",
+            "trySlidePlayer", "nearestWalkableTownPoint",
+            "recoverPlayerToWalkableTerrain", "pointIsOnBoundaryBridge", "isBlockedTownTerrain",
+            "blockedTerrainEscapeDepth", "terrainEscapeAuditPoints", "auditTownTerrainEscapes",
+        ):
+            self.assertNotIn(removed_collision, app)
+        self.assertIn("const NATURAL_TERRAIN_MARGIN = 10", app)
+        self.assertIn("const RIVER_BRIDGE_PASSAGE_HALF_WIDTH = 28", app)
+        self.assertIn("function playerNaturalTerrainMoveAllowed", app)
+        self.assertIn("function naturalTerrainCollisionDepth", app)
+        self.assertIn("coastlineXAt(point.y) + NATURAL_TERRAIN_MARGIN - point.x", app)
+        self.assertIn("point.x + NATURAL_TERRAIN_MARGIN - EAST_MOUNTAIN_START_X", app)
+        self.assertIn("BOUNDARY_BRIDGES.forEach", app)
+        self.assertIn("OUTER_BOUNDARY_RIVERS.forEach", app)
+        self.assertIn("function pointIsOnRiverBridge", app)
+        self.assertIn("currentDepth > 0 && nextDepth <= currentDepth + 0.001", app)
 
-    def test_riverbank_and_overlapping_terrain_masks_cannot_trap_the_player(self) -> None:
+    def test_natural_collision_has_no_object_masks_or_forced_relocation(self) -> None:
         app = self.read("web/lunch-town/app.js")
         english = self.read("web/locales/en.js")
-        escape_depth = app.split("function blockedTerrainEscapeDepth(point) {", 1)[1].split("\n}\n", 1)[0]
-        sliding = app.split("function trySlidePlayer(dx, dy, distance) {", 1)[1].split("\n}\n", 1)[0]
-        audit = app.split("function auditTownTerrainEscapes() {", 1)[1].split("\n}\n", 1)[0]
 
         self.assertIn("const RIVERBANK_NAVIGATION_CLEARANCE = 46", app)
         self.assertIn("BORDER_RIVER_WIDTH / 2 + RIVERBANK_NAVIGATION_CLEARANCE", app)
-        self.assertIn("depths.reduce((total, depth) => total + depth, 0)", escape_depth)
-        self.assertIn("perpendicular", sliding)
-        self.assertIn("forwardPenalty", sliding)
-        self.assertIn("function nearestWalkableTownPoint", app)
-        self.assertIn("function recoverPlayerToWalkableTerrain", app)
-        self.assertIn("function terrainEscapeAuditPoints", app)
-        self.assertIn("function pointHasLocalTerrainEscape", app)
-        self.assertIn("terrainEscapeAuditPoints()", audit)
-        self.assertIn("state.terrainAudit = auditTownTerrainEscapes()", app)
-        self.assertIn('"已自動移到最近的安全步道。": "Moved you to the nearest safe path."', english)
+        self.assertNotIn("blockedMoveFrames", app)
+        self.assertNotIn("terrainAudit", app)
+        self.assertNotIn("state.neighborWorkZones.some((zone) => zone.restricted", app)
+        self.assertNotIn("pointInExpandedRect(point, zone", app)
+        self.assertNotIn("已自動移到最近的安全步道。", app)
+        self.assertNotIn("已自動移到最近的安全步道。", english)
+        self.assertIn("const MAP_CHECKPOINT_PROXIMITY = 10", app)
 
-    def test_neighbor_city_blocks_public_facilities_and_farmland_are_walkable(self) -> None:
+    def test_neighbor_city_restricted_zones_are_visual_only_and_walkable(self) -> None:
         app = self.read("web/lunch-town/app.js")
-        blocked = app.split("function isBlockedTownTerrain(point) {", 1)[1].split("\n}\n", 1)[0]
-        escape_depth = app.split("function blockedTerrainEscapeDepth(point) {", 1)[1].split("\n}\n", 1)[0]
-
-        self.assertNotIn("neighborDistrictThemes", blocked)
-        self.assertNotIn("neighborPaddyParcels", blocked)
-        self.assertNotIn("neighborDistrictThemes", escape_depth)
-        self.assertNotIn("neighborPaddyParcels", escape_depth)
-        self.assertIn("state.neighborWorkZones.some((zone) => zone.restricted", blocked)
-        self.assertIn("EAST_MOUNTAIN_START_X", blocked)
-        self.assertIn("boundaryRiverYAt", blocked)
+        self.assertIn('context.fillStyle = zone.restricted ? "rgba(104, 50, 40, 0.93)"', app)
+        self.assertIn("if (zone.restricted)", app)
+        self.assertNotIn("state.neighborWorkZones.some((zone) => zone.restricted", app)
+        self.assertNotIn("pointInExpandedRect(point, zone", app)
 
     def test_town_syncs_time_weather_lighting_and_organic_streets(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -642,10 +628,10 @@ class LunchTownTests(unittest.TestCase):
             '"驚訝": "Surprised"', '"平靜": "Calm"',
         ):
             self.assertIn(translation, english)
-        self.assertIn("app.js?v=20261106-terrain-escape", html)
-        self.assertIn("styles.css?v=20261106-terrain-escape", html)
-        self.assertIn("/locales/en.js?v=20261106-terrain-escape", html)
-        self.assertIn("/i18n.js?v=20261106-terrain-escape", html)
+        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("styles.css?v=20261106-crop-lifecycle", html)
+        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
 
     def test_town_has_age_gender_and_workplace_diversity(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -766,7 +752,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("entityDistrict === state.activeDistrict", app)
         self.assertIn("const visible = isVisibleRect", app)
         self.assertIn("return !visible", app)
-        self.assertIn("refreshActiveNpcSimulationSet();", app)
+        self.assertIn("refreshActiveNpcSimulationSet(delta);", app)
         self.assertIn("if (npc.backgroundSimulated)", app)
         self.assertIn("npc.coarseElapsed < BACKGROUND_NPC_UPDATE_SECONDS", app)
         self.assertIn("shouldUseCoarseMobileUpdate(pet, pet.district)", app)
@@ -776,6 +762,100 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("pet.coarseElapsed", app)
         self.assertIn("const nearestNpc = bird.district === state.activeDistrict", app)
         self.assertIn("const startled = bird.species === \"sparrow\"", app)
+
+    def test_changhua_fast_travel_culls_and_caches_expensive_frame_work(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        backdrop = app.split("function drawNeighborCountyBackdrop(county) {", 1)[1].split("\n}\n\nfunction drawNeighborDistrictTerrain", 1)[0]
+        farmland = app.split("function drawNeighborFarmland(theme) {", 1)[1].split("\n}\n\nfunction drawFieldCrops", 1)[0]
+        npc_update = app.split("function updateNpcs(delta) {", 1)[1].split("\n}\n\nfunction contextualActivityForNpc", 1)[0]
+        compact_campus = app.split("function drawCompactCampus(school, now) {", 1)[1].split("\n}\n\nfunction drawCompactCampusBoundary", 1)[0]
+        roads = app.split("function drawRoads(now) {", 1)[1].split("\n}\n\nfunction strokeRoadPath", 1)[0]
+        neighbor_roads = app.split("function drawNeighborCountyRoads() {", 1)[1].split("\n}\n\nfunction neighborCountyDistrictRoutes", 1)[0]
+        river_path = app.split("function boundaryRiverPath(bridge) {", 1)[1].split("\n}\n\nfunction drawBoundaryRiverCurrents", 1)[0]
+
+        self.assertIn("state.camera.x - 40", backdrop)
+        self.assertIn("state.camera.x + WIDTH + 40", backdrop)
+        self.assertIn("state.camera.y - 40", backdrop)
+        self.assertIn("if (canalY < state.camera.y - 80", backdrop)
+        self.assertIn("const neighborPaddyParcelCache = new Map()", app)
+        self.assertIn("const boundaryRiverPathCache = new Map()", app)
+        self.assertIn("const coastlinePathCache = new Map()", app)
+        self.assertIn("neighborPaddyParcelCache.get(cacheKey)", app)
+        self.assertIn("neighborPaddyParcelCache.set(cacheKey, stableParcels)", app)
+        self.assertIn("const detailStride = townUsesReducedDetail() ? 2 : 1", farmland)
+        self.assertIn("if (!townUsesReducedDetail())", compact_campus)
+        self.assertIn("state.activeNpcRefreshElapsed < 0.2", app)
+        self.assertNotIn("const npcDistrict = districtAtPoint(npc)", npc_update)
+        self.assertIn("function refreshNeighborSchoolStats", app)
+        self.assertIn("state.neighborSchoolStatsDate === dateKey", app)
+        self.assertIn("function updateTownRenderBudget", app)
+        self.assertIn("frameCost > 22", app)
+        self.assertIn("frameCost > 50", app)
+        self.assertIn("budget.slowFrames >= 4", app)
+        self.assertIn("function townUsesReducedDetail", app)
+        self.assertIn("state.camera.x > WEST_COAST_WIDTH + 140", app)
+        self.assertIn("state.camera.x + WIDTH < EAST_MOUNTAIN_START_X - 140", app)
+        self.assertIn("isVisibleRect({ x: x - ROAD_EDGE_WIDTH", roads)
+        self.assertIn("!isVisibleRect(county, 100)", neighbor_roads)
+        self.assertIn("route.moveTo(x, metrics.top)", neighbor_roads)
+        self.assertIn("route.lineTo(x, metrics.bottom)", neighbor_roads)
+        self.assertIn("route.moveTo(metrics.left, y)", neighbor_roads)
+        self.assertIn("route.lineTo(metrics.right, y)", neighbor_roads)
+        self.assertNotIn("route.moveTo(x, visibleTop)", neighbor_roads)
+        self.assertNotIn("route.lineTo(visibleRight, y)", neighbor_roads)
+        self.assertIn("boundaryRiverPathCache.get(bridge.id)", river_path)
+        self.assertIn("const { startX, endX } = bounds", river_path)
+        self.assertIn("boundaryRiverPathCache.set(bridge.id, path)", river_path)
+        self.assertNotIn("state.camera", river_path)
+
+    def test_miaoli_and_changhua_roads_have_trees_lamps_and_night_glows(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        exclusions = app.split("function neighborDistrictDecorationExclusionRects(theme) {", 1)[1].split("\n}\n\nfunction roadsideOffsets", 1)[0]
+        decorations = app.split("function neighborStreetDecorationsForTheme(theme) {", 1)[1].split("\n}\n\nfunction streetDecorationsForZone", 1)[0]
+        street_details = app.split("function drawStreetDetails(now, environment) {", 1)[1].split("\n}\n\nfunction drawTree", 1)[0]
+        visible_lamps = app.split("function visibleLampPositions() {", 1)[1].split("\n}\n\nfunction drawStreetLightGlows", 1)[0]
+
+        self.assertIn("function roadsideOffsets", app)
+        self.assertIn("county.id === \"miaoli\" ? 0.82 : 0.76", decorations)
+        self.assertIn("pointIsClear(tree, 20)", decorations)
+        self.assertIn("pointIsClear(lamp, 12)", decorations)
+        self.assertIn("state.neighborSchools", exclusions)
+        self.assertIn("state.venues", exclusions)
+        self.assertIn("state.neighborWorkZones", exclusions)
+        self.assertIn("countyTheme?.landmarks", exclusions)
+        self.assertIn("neighborStreetDecorationsForTheme(theme)", street_details)
+        self.assertIn("drawTree(tree.x, tree.y, now, tree.phase, tree.scale)", street_details)
+        self.assertIn("drawLamp(lamp.x, lamp.y, environment)", street_details)
+        self.assertIn("neighborStreetDecorationsForTheme(theme).lamps", visible_lamps)
+        self.assertIn("app.js?v=20261106-crop-lifecycle", self.read("web/lunch-town/index.html"))
+
+    def test_frame_failures_cannot_freeze_players_or_npcs_when_entering_changhua(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        english = self.read("web/locales/en.js")
+        frame = app.split("function frame(now) {", 1)[1].split("\n}\n\nfunction updateTownRenderBudget", 1)[0]
+        isolated_stage = app.split("function runTownFrameStage(stage, task", 1)[1].split("\n}\n\nfunction frame", 1)[0]
+        drawing = app.split("function drawTown(now, environment = townEnvironmentAt()) {", 1)[1].split("\n}\n\nfunction drawTownLayer", 1)[0]
+        npc_update = app.split("function updateNpcs(delta) {", 1)[1].split("\n}\n\nfunction contextualActivityForNpc", 1)[0]
+        actors = app.split("function drawTownActors(now) {", 1)[1].split("\n}\n\nfunction drawGround", 1)[0]
+
+        self.assertIn("const TOWN_FRAME_WATCHDOG_MS = 750", app)
+        self.assertIn("performance.now() - state.lastFrameAt >= TOWN_FRAME_WATCHDOG_MS", app)
+        self.assertIn('runTownFrameStage("player", () => updatePlayer(delta), { critical: true })', frame)
+        self.assertIn('runTownFrameStage("npcs", () => updateNpcs(delta))', frame)
+        self.assertIn('runTownFrameStage("town-drawing", () => drawTown(now, state.environment), { critical: true })', frame)
+        self.assertIn("scheduleTownFrame();", frame)
+        self.assertIn("suspendedUntil", isolated_stage)
+        self.assertIn("state.frameStageFailures.set(stage, fault)", isolated_stage)
+        self.assertIn('drawTownLayer("actors", () => drawTownActors(now))', drawing)
+        self.assertIn("function drawTownLayer", app)
+        self.assertIn("context.restore();", drawing)
+        self.assertIn('runTownFrameStage(`npc:${index}:${npc.name || "resident"}`', npc_update)
+        self.assertIn('const actorId = subject.player ? "player"', actors)
+        self.assertIn("drawTownLayer(`actor:${actor.kind}:${actorId}:${index}`", actors)
+        self.assertIn(
+            '"小鎮已隔離一個異常畫面項目，人物可以繼續移動。": "Lunch Town isolated a faulty visual item so everyone can keep moving."',
+            english,
+        )
 
     def test_mobile_game_controls_avoid_selection_zoom_and_offer_immersive_mode(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -908,7 +988,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("650", app)
         self.assertIn("setLoadingProgress(100", app)
         self.assertIn(".loading-progress", styles)
-        self.assertIn("20261106-terrain-escape", html)
+        self.assertIn("20261106-crop-lifecycle", html)
 
     def test_town_has_opt_in_original_web_audio_music(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1091,9 +1171,10 @@ class LunchTownTests(unittest.TestCase):
             "function drawHarborWorkZone", "function drawRailWorkZone",
             "function drawCraftWorkZone", "function drawAgricultureServiceWorkZone",
             "function drawIrrigationWorkZone", 'id: "changhua-agriculture-office"',
-            'type: "agriculture-office"', "zone.restricted && pointInExpandedRect",
+            'type: "agriculture-office"',
         ):
             self.assertIn(marker, app)
+        self.assertNotIn("zone.restricted && pointInExpandedRect", app)
         for source in [*(zone["name"] for zone in work_zones), "稻農", "蔬菜農", "葡萄果農", "農業技術員", "鐵道維修員", "糖廠小火車人員", "園藝店員", "果菜市場人員", "農業處"]:
             self.assertIn(source, english)
             self.assertIsNone(re.search(r"[\u3400-\u9fff]", english[source]), source)
@@ -1232,7 +1313,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("function updateLeashedDog", app)
         self.assertIn('if (pet.kind === "dog")', app)
         self.assertIn("function drawDogLeashes", app)
-        self.assertIn("drawDogLeashes();\n  actors.forEach", app)
+        self.assertIn('drawTownLayer("dog-leashes", drawDogLeashes);\n  actors.forEach', app)
         self.assertIn("function drawDogLeash", app)
         self.assertIn("if (leashDistance > 64) return", app)
         self.assertIn("const leashSide = pet.x < owner.x ? -1 : 1", app)
@@ -1240,7 +1321,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("npc.hasLeashedDog", app)
         self.assertIn("牽著狗散步", app)
         self.assertIn("!pet.hidden", app)
-        self.assertIn("app.js?v=20261106-terrain-escape", self.read("web/lunch-town/index.html"))
+        self.assertIn("app.js?v=20261106-crop-lifecycle", self.read("web/lunch-town/index.html"))
 
     def test_town_has_visible_youbike_stations_and_rental_trips(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1354,8 +1435,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('venue.id === "civic-south-night-convenience"', app)
         self.assertIn('!CIVIC_AFTER_HOURS_ROLES.has(npc.role) && !NEIGHBOR_CIVIC_ROLES.has(npc.role)', app)
         self.assertIn("const civicAfterHours = transitionNeighborCivicAfterHoursRoutine(npc, index)", app)
-        self.assertIn('/locales/en.js?v=20261106-terrain-escape', html)
-        self.assertIn('/i18n.js?v=20261106-terrain-escape', html)
+        self.assertIn('/locales/en.js?v=20261106-crop-lifecycle', html)
+        self.assertIn('/i18n.js?v=20261106-crop-lifecycle', html)
 
     def test_npcs_take_evening_trips_to_department_stores_and_lalaport(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1545,21 +1626,52 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("taipeiDateKey", route)
         self.assertIn('"回家報到": "Check in at home"', english)
         self.assertIn('"每日任務完成": "Daily quest complete"', english)
-        self.assertIn("app.js?v=20261106-terrain-escape", html)
-        self.assertIn("/locales/en.js?v=20261106-terrain-escape", html)
-        self.assertIn("/i18n.js?v=20261106-terrain-escape", html)
+        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
 
     def test_lunch_town_line_login_icon_stays_inside_pixel_button(self) -> None:
         html = self.read("web/lunch-town/index.html")
         styles = self.read("web/lunch-town/styles.css")
         scoped_button = styles.split(".account-dialog .line-icon-button {", 1)[1].split("}", 1)[0]
         scoped_image = styles.split(".account-dialog .line-icon-button img {", 1)[1].split("}", 1)[0]
-        self.assertIn("styles.css?v=20261106-terrain-escape", html)
+        self.assertIn("styles.css?v=20261106-crop-lifecycle", html)
         self.assertIn("overflow: hidden", scoped_button)
         self.assertIn("width: 48px", scoped_image)
         self.assertIn("height: 48px", scoped_image)
         self.assertIn("object-fit: contain", scoped_image)
         self.assertIn("width: 64px", self.read("web/styles.css").split(".line-icon-button {", 1)[1].split("}", 1)[0])
+
+    def test_town_crops_grow_persist_and_require_a_farmer_to_harvest(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        html = self.read("web/lunch-town/index.html")
+        english = self.read("web/locales/en.js")
+        i18n = self.read("web/i18n.js")
+        registry = app.split("function registerCropPlot(definition", 1)[1].split("\n}\n\nfunction cropLifecycleAt", 1)[0]
+        lifecycle = app.split("function cropLifecycleAt(plot", 1)[1].split("\n}\n\nfunction cropVisibleGrowth", 1)[0]
+        harvest = app.split("function updateNpcCropHarvest(npc", 1)[1].split("\n}\n\nfunction schoolBuildingRect", 1)[0]
+
+        self.assertIn("const CROP_GROWTH_DURATION_MS", app)
+        self.assertIn("cropPlots: new Map()", app)
+        self.assertIn("cropPlotsByDistrict: new Map()", app)
+        self.assertIn("createTownCropPlots(performance.now())", app)
+        self.assertIn("venue.cropType && venue.district", app)
+        self.assertIn("CROP_TYPE_BY_DISTRICT_FEATURE[theme.feature]", app)
+        self.assertIn("cropLifecycleForPlotId(districtFeatureCropPlotId(theme), now)", app)
+        self.assertIn("Math.min(1, (now - plot.growthStartedAt)", lifecycle)
+        self.assertNotIn("harvest", lifecycle.lower(), "growth reaching maturity must not harvest or remove crops")
+        self.assertIn("CROP_HARVEST_ROLES.has(npc.role)", harvest)
+        self.assertIn("distance <= CROP_HARVEST_REACH", harvest)
+        self.assertIn("maturePlot.growthStartedAt = now + CROP_FALLOW_DURATION_MS", harvest)
+        self.assertNotRegex(registry + lifecycle + harvest, r"miaoli|changhua|苗栗|彰化")
+        self.assertIn("cropLifecycleForPlotId(backgroundCropPlotId(theme, parcelIndex)", app)
+        self.assertIn("cropLifecycleForPlotId(workZoneCropPlotId(zone), now)", app)
+        self.assertIn('harvesting: `在${location}採收成熟作物，採收後田區暫時留空`', app)
+        self.assertIn('"在{0}採收成熟作物，採收後田區暫時留空": [0]', i18n)
+        self.assertIn('"Harvesting mature crops at {0}; the plot stays briefly empty afterward."', english)
+        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
 
     def test_framework_route_serves_the_town_page(self) -> None:
         route = self.read("app/lunch-town/route.ts")

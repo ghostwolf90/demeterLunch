@@ -10,9 +10,8 @@ Add exact-copy entries for new interface text. For sentences with inserted data,
 
 Validation:
 
-- `python3 -m unittest discover -s tests -v` includes static page and authored family-content translation coverage.
-- `npm run test:worker` includes language priority, storage failure, live switching, dynamic notices, and preservation of original data. Use the project's required Node version (22.13 or newer).
-- `node --check web/app.js` and `node --check web/i18n.js` check frontend syntax.
+- `npm test` is the concise default entry point for Python, Worker, TypeScript, and all `web/` JavaScript syntax checks. It includes static pages, authored family-content translations, language priority, storage failure, live switching, dynamic notices, and preservation of original data. Use the project's required Node version (22.13 or newer).
+- Use `npm test -- --verbose` when individual test output is needed for diagnosis.
 - `python3 scripts/build_static_site.py` refreshes `dist/` without increasing the release version. Formal publication still requires the normal release build and latest remote Site source workflow.
 
 Browser automation is prohibited by project instructions. Manually verify desktop and mobile layouts, English text wrapping, first-paint language, keyboard operation of the language selector, and switching languages with a partially completed family form. Official menus, school and ingredient names, source articles, and family-written content intentionally retain their original language.

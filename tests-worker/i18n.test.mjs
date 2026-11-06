@@ -116,7 +116,7 @@ test('English localizes Lunch Town dialogue and City Hall after-hours routines',
   assert.equal(api.t('岳陽造型，俐落黑髮、藍灰運動裝與水壺'), 'Yueyang style with neat black hair, blue-gray activewear, and a water bottle');
   assert.equal(api.t('玩家已切換為海音造型。'), 'Player switched to the Haiyin style.');
   assert.equal(api.t('時間與音樂'), 'Time and music');
-  assert.equal(api.t('已自動移到最近的安全步道。'), 'Moved you to the nearest safe path.');
+  assert.equal(api.t('小鎮已隔離一個異常畫面項目，人物可以繼續移動。'), 'Lunch Town isolated a faulty visual item so everyone can keep moving.');
   assert.equal(api.t('我的家'), 'My Home');
   assert.equal(api.t('陽光庭院之家'), 'Sunny Garden Home');
   assert.equal(api.t('選擇造型'), 'Choose a look');

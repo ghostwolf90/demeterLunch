@@ -76,6 +76,7 @@ class ReleaseVersionTests(unittest.TestCase):
         )
         self.assertNotIn('build_database.py', prepare)
         self.assertIn('npm run prepare:assets', package['scripts']['build'])
+        self.assertEqual(package['scripts']['test'], 'node scripts/verify.mjs')
 
 
 if __name__ == '__main__': unittest.main()
