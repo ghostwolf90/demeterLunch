@@ -590,6 +590,11 @@ window.LunchEnglish = {
   "午餐情報站": "Lunch information stop",
   "抵達苗栗或彰化的學校午餐查詢告示牌。": "Reach a school-lunch lookup sign in Miaoli or Changhua.",
   "找到午餐查詢告示牌": "Find a lunch lookup sign",
+  "縣界歡迎牌": "County welcome sign",
+  "抵達苗栗或彰化的縣界歡迎牌。": "Reach the county welcome sign in Miaoli or Changhua.",
+  "找到縣界歡迎牌": "Find a county welcome sign",
+  "歡迎來到苗栗縣": "Welcome to Miaoli County",
+  "歡迎來到彰化縣": "Welcome to Changhua County",
   "臺中 29 區營養午餐小鎮": "Taichung 29-District Lunch Town",
   "臺中小鎮": "Taichung Town",
   "可操作的 2D 營養午餐小鎮地圖": "Interactive 2D Lunch Town map",
@@ -779,6 +784,46 @@ window.LunchEnglish = {
   "思考": "Thoughtful",
   "驚訝": "Surprised",
   "平靜": "Calm",
+  "疲倦": "Tired",
+  "有點餓": "A little hungry",
+  "想找人聊聊": "Looking for someone to talk with",
+  "專心": "Focused",
+  "心情": "Mood",
+  "目前想做": "Current goal",
+  "玩家": "the player",
+  "照著今天的行程生活": "following today's routine",
+  "在家休息": "resting at home",
+  "找個地方坐下休息": "finding somewhere to sit and rest",
+  "找點東西吃": "finding something to eat",
+  "找熟人聊聊": "talking with someone familiar",
+  "完成今天的工作": "finishing today's work",
+  "補齊出門需要的東西": "picking up what is needed for going out",
+  "把剛才提到的小事辦完": "finishing the errand just mentioned",
+  "回家看看家人": "checking in with family at home",
+  "照著採買清單買東西": "shopping from the list",
+  "準備下一餐需要的東西": "getting what is needed for the next meal",
+  "看看下一餐可以怎麼搭配": "thinking through the next meal",
+  "到附近看看剛才聊到的變化": "checking the neighborhood change just discussed",
+  "到公園安靜看看鳥": "quietly watching birds at the park",
+  "看看季節變化": "noticing the seasonal changes",
+  "確認小鎮剛發生的事": "checking what just happened in town",
+  "天氣與出門準備": "the weather and getting ready to go out",
+  "要辦的小事": "a small errand",
+  "工作與學校": "work and school",
+  "回家與家人": "home and family",
+  "採買清單": "the shopping list",
+  "晚餐準備": "dinner preparations",
+  "今天的午餐": "today's lunch",
+  "街區變化": "changes around the neighborhood",
+  "交通安全": "traffic safety",
+  "找地方休息": "finding somewhere to rest",
+  "街角的鳥": "the birds at the street corner",
+  "換季生活": "seasonal routines",
+  "小鎮剛發生的事": "what just happened in town",
+  "公開資料與選舉資訊": "public sources and election information",
+  "今天在小鎮遇到的事": "what happened in town today",
+  "我也記得；不是聊完就消失，今天還能接著說。": "I remember too. It did not disappear when the chat ended, so we can continue today.",
+  "完成剛才聊到的事情後回到原本行程": "Returning to the usual routine after following through on what we discussed.",
   "小鎮住宅": "Town residence",
   "市府南側道路另一邊的住宅生活街區，設有公寓、連棟住家、便利商店、巷道與夜間照明。": "A residential district across the road south of City Hall, with apartments, townhomes, a convenience store, neighborhood lanes, and nighttime lighting.",
   "市政南生活街區的住宅公寓，夜裡可看見住戶返家後亮起的窗燈。": "Apartments in the Civic South neighborhood, where windows light up as residents return home at night.",
@@ -2692,9 +2737,67 @@ window.LunchEnglish = {
   "主辦單位公告": "Organizer announcement",
   "草稿測試模式": "Draft test mode",
   "不會變更正式地圖，也不會記錄任務、成就或分析事件。": "This does not change the live map or record quests, achievements, or analytics.",
-  "草稿預覽無法載入，現在顯示正式地圖。": "The draft preview could not be loaded. The live map is shown instead."
+  "草稿預覽無法載入，現在顯示正式地圖。": "The draft preview could not be loaded. The live map is shown instead.",
+  "何欣純": "Ho Hsin-chun",
+  "智慧角色": "Adaptive role",
+  "聽取居民意見並核對公開資料": "listening to residents and checking public information",
+  "觀察縣市服務與街區狀況": "reviewing local services and neighborhood conditions",
+  "巡查公共安全與危險地形": "checking public safety and hazardous terrain",
+  "引導居民離開危險地形": "guiding a resident away from hazardous terrain",
+  "前往事件現場執行安全處置": "responding safely at an incident scene",
+  "前往街區事件現場協調處理": "coordinating a response at a neighborhood incident",
+  "整理剛才聽到的在地意見": "following up on local feedback from our conversation",
+  "依轄區安排安全巡查": "conducting a safety patrol within the assigned area",
+  "走訪公共場所並整理現場需求": "visiting public places and documenting local needs",
+  "完成任務並回到原行程": "finished the task and returned to the regular schedule",
+  "危險地形安全引導": "hazardous-terrain safety guidance",
+  "公共安全應變": "public-safety response",
+  "街區事件協調": "neighborhood incident coordination",
+  "居民意見後續走訪": "resident-feedback follow-up",
+  "轄區安全巡查": "assigned-area safety patrol",
+  "公共場所需求走訪": "public-place needs visit",
+  "街區事件追蹤": "neighborhood incident follow-up",
+  "居民對話": "resident conversation",
+  "安全步道": "safe walkway",
+  "原行程位置": "regular-route location",
+  "完成判斷任務後回到原本行程": "Return to the regular schedule after completing the assigned task",
+  "前往安全位置引導居民離開河道、海域或山區遮罩": "Heading to a safe location to guide a resident away from river, sea, or mountain hazards",
+  "依警察引導回到安全步道，避開河道、海域與山區": "Following police guidance back to a safe walkway away from rivers, the sea, and mountain hazards",
+  "這段記憶只保留在這次小鎮遊玩，用來延續剛才的事件與對話。": "This memory lasts only for this Town session and helps continue recent events and conversations.",
+  "我會先確認地點與現場狀況，再安排權責單位接手並留下處理紀錄。": "I will verify the location and conditions, then refer the matter to the responsible office and keep a handling record.",
+  "涉及真實公職身分的內容只採既有公開來源，不用遊戲對話補寫政策或承諾。": "Content about real public officials uses existing public sources only; game dialogue does not invent policies or promises.",
+  "發現人物進入河道、海域或山區時，我會先引導到安全步道，再記錄地點與狀況。": "If someone enters a river, sea, or mountain hazard, I first guide them to a safe walkway and then record the location and conditions.",
+  "街區事件以現場安全和官方指引為優先，不自行猜測身分或追逐攔人。": "Neighborhood incidents prioritize on-site safety and official guidance, without guessing identities or chasing people."
 };
 window.LunchEnglishTemplates = [
+  [
+    "我目前在{0}，正在{1}。",
+    "I am currently at {0}, {1}."
+  ],
+  [
+    "我記得先前在{0}完成過{1}；這次會接著已記錄的進度處理。",
+    "I remember completing {1} in {0}; I will continue from that recorded progress."
+  ],
+  [
+    "到{0}附近確認通學動線與現場需求",
+    "Visiting the area near {0} to check school routes and local needs"
+  ],
+  [
+    "到{0}走訪並確認現場狀況",
+    "Visiting {0} to check conditions on site"
+  ],
+  [
+    "到{0}公共空間走訪並確認現場狀況",
+    "Visiting public spaces in {0} to check conditions on site"
+  ],
+  [
+    "前往{0}事件現場，依通報確認方向與安全動線",
+    "Heading to the incident in {0} to verify the reported direction and safe access route"
+  ],
+  [
+    "前往{0}了解事件並確認權責單位已接手",
+    "Heading to {0} to assess the incident and confirm that the responsible office has taken over"
+  ],
   [
     "在{0}採收成熟作物，採收後田區暫時留空",
     "Harvesting mature crops at {0}; the plot stays briefly empty afterward."
@@ -3579,5 +3682,29 @@ window.LunchEnglishTemplates = [
   [
     "午餐小鎮已建立，臺中、苗栗與彰化共 {0} 間午餐學校，並有 {1} 處建築、{2} 處 YouBike 站與 {3} 位跨區行動角色。",
     "Lunch Town is ready with {0} lunch schools across Taichung, Miaoli, and Changhua, plus {1} venues, {2} YouBike stations, and {3} cross-district characters."
+  ],
+  [
+    "我記得我們上次聊過{0}，後來事情真的有接著往下走。",
+    "I remember we talked about {0} last time, and something really did happen afterward."
+  ],
+  [
+    "我記得你上次和我聊過{0}，今天又見面了。",
+    "I remember talking with you about {0} last time. It is good to see you again today."
+  ],
+  [
+    "聊完後前往{0}，{1}",
+    "After the conversation, heading to {0} to {1}."
+  ],
+  [
+    "已完成{0}，回到原本行程",
+    "Finished {0} and returned to the usual routine."
+  ],
+  [
+    "{0}，讓剛才的對話接著發生",
+    "{0}, so the conversation leads to a real next step."
+  ],
+  [
+    "{0}原行程",
+    "the usual routine in {0}"
   ]
 ];

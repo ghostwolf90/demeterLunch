@@ -195,9 +195,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertNotIn("彰化縣", json.dumps(themes, ensure_ascii=False))
         self.assertIn('"苗栗縣": "Miaoli County"', english)
         self.assertIn('"彰化縣": "Changhua County"', english)
-        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
+        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
 
     def test_miaoli_and_changhua_map_every_reviewed_primary_school_by_realistic_district_position(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -258,14 +258,14 @@ class LunchTownTests(unittest.TestCase):
         self.assertNotIn("目前可散步查看校名；苗栗與彰化的午餐內容尚未在午餐小鎮開放。", app)
         self.assertIn('if (school.mapScope !== "neighbor-county")', app)
         self.assertIn('cache: "no-store"', app)
-        self.assertIn('availableCount === schoolCount', app)
+        self.assertIn('`歡迎來到${county.name}`', app)
         self.assertIn('"午餐資料持續更新": "Lunch data update in progress"', english)
         self.assertIn('"當日午餐已更新": "Today\'s lunch data is ready"', english)
         self.assertIn('"到{0}散步，看看當地學校與景觀": [0]', i18n)
         self.assertIn('neighbor-county-themes.json?v=20261105-outer-rivers', app)
-        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
+        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
 
     def test_neighbor_counties_follow_taichung_district_block_layout(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -310,7 +310,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("context.lineTo(2, 0)", river)
         self.assertIn("context.createLinearGradient", app)
         self.assertLess(app.index('drawTownLayer("boundary-rivers"'), app.index('drawTownLayer("bridges"'))
-        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("app.js?v=20261107-living-npcs", html)
 
     def test_miaoli_north_and_changhua_south_have_named_boundary_rivers(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -361,9 +361,9 @@ class LunchTownTests(unittest.TestCase):
             self.assertIn(translated, english)
         self.assertIn('"在{0}的安全平台釣魚，釣線朝向河道但人留在護欄內": [0]', i18n)
         self.assertIn('"在{0}使用指定烤肉台休憩，並把垃圾與火源收拾好": [0]', i18n)
-        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
+        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
 
     def test_town_map_labels_every_school_with_a_readable_primary_school_name(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -374,8 +374,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("fitSchoolLabelFont", app)
         self.assertIn("splitSchoolMapLabel", app)
         self.assertNotIn("String(school.name).slice(0, 6)", app)
-        self.assertIn("styles.css?v=20261106-crop-lifecycle", html)
-        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("styles.css?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-living-npcs", html)
 
     def test_player_movement_blocks_only_sea_mountains_and_rivers(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -408,6 +408,31 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("OUTER_BOUNDARY_RIVERS.forEach", app)
         self.assertIn("function pointIsOnRiverBridge", app)
         self.assertIn("currentDepth > 0 && nextDepth <= currentDepth + 0.001", app)
+
+    def test_npcs_cross_rivers_only_on_bridges_and_spawn_safely_near_home(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        english = self.read("web/locales/en.js")
+        quests = self.read("lib/town-daily-quests.ts")
+        for marker in (
+            "function npcSegmentIntersectsBoundaryRiver", "function npcBoundaryRiverDetour",
+            "function npcSafeNaturalTerrainPoint", "function cachedNpcSegmentRoute", "function npcPointAlongRoute",
+            "function npcNaturalTerrainMoveAllowed", "const route = cachedNpcSegmentRoute(from, to)",
+            "const proposedPoint = npcPointAlongRoute(route, npc.progress)",
+            "const safeArrival = route.at(-1)",
+            "function chooseNpcInitialSpawn", "const NPC_LOAD_SPAWN_SEED",
+            "stop.district === homeDistrict", "naturalTerrainCollisionDepth(stop) <= 0",
+            "const spawn = chooseNpcInitialSpawn(identity, schedule, index)",
+            "const spawn = chooseNpcInitialSpawn(identity, schedule, lookIndex)",
+        ):
+            self.assertIn(marker, app)
+        self.assertNotIn('["neighborhood", "nearby", "citywide"][(hashText(identity.name) + districtIndex) % 3]', app)
+        self.assertIn("`歡迎來到${county.name}`", app)
+        self.assertNotIn('const signLabel = availableCount === schoolCount', app)
+        self.assertIn('"歡迎來到苗栗縣": "Welcome to Miaoli County"', english)
+        self.assertIn('"歡迎來到彰化縣": "Welcome to Changhua County"', english)
+        self.assertIn('"縣界歡迎牌"', quests)
+        self.assertIn('"抵達苗栗或彰化的縣界歡迎牌。"', quests)
+        self.assertIn('"找到縣界歡迎牌"', quests)
 
     def test_natural_collision_has_no_object_masks_or_forced_relocation(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -628,10 +653,10 @@ class LunchTownTests(unittest.TestCase):
             '"驚訝": "Surprised"', '"平靜": "Calm"',
         ):
             self.assertIn(translation, english)
-        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("styles.css?v=20261106-crop-lifecycle", html)
-        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("styles.css?v=20261107-living-npcs", html)
+        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
+        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
 
     def test_town_has_age_gender_and_workplace_diversity(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -687,8 +712,69 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("police-officer", app)
         self.assertIn("mayor", app)
         self.assertIn(".comic-bubble", styles)
-        self.assertIn("-webkit-line-clamp: 2", styles)
+        self.assertEqual(styles.count("-webkit-line-clamp: 4"), 2)
         self.assertIn("prefers-reduced-motion: reduce", styles)
+
+    def test_npc_conversation_bubbles_allow_reading_time_and_repeat_naturally(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        html = self.read("web/lunch-town/index.html")
+        update = app.split("function updateAmbientConversation(now) {", 1)[1].split(
+            "\n}\n\nfunction findConversationPair", 1
+        )[0]
+        pair_finder = app.split("function findConversationPair() {", 1)[1].split(
+            "\n}\n\nfunction startAmbientConversation", 1
+        )[0]
+
+        self.assertIn("const AMBIENT_TURN_MIN_MS = 6_000", app)
+        self.assertIn("const AMBIENT_TURN_MAX_MS = 11_000", app)
+        self.assertIn("const AMBIENT_PAIR_COOLDOWN_MS = 45_000", app)
+        self.assertIn("const AMBIENT_PLAYER_GRACE_MS = 8_000", app)
+        self.assertIn("function ambientConversationTurnDuration", app)
+        self.assertIn("characterCount * 145", app)
+        self.assertIn("playerGraceUntil", update)
+        self.assertIn("playerDistance > AMBIENT_PLAYER_DISMISS_DISTANCE", update)
+        self.assertNotIn("if (state.player.isMoving)", update)
+        self.assertIn("distance <= 240", pair_finder)
+        self.assertIn("!ambientPairRecentlyTalked(pairKey, now)", pair_finder)
+        self.assertIn("state.nextConversationAt = now + AMBIENT_CONVERSATION_RETRY_MS", update)
+        self.assertIn("max-width: min(300px, 48%)", self.read("web/lunch-town/styles.css"))
+        self.assertIn("max-width: min(260px, 78%)", self.read("web/lunch-town/styles.css"))
+        self.assertIn("app.js?v=20261107-living-npcs", html)
+
+    def test_npcs_have_needs_memory_relationship_growth_and_conversation_consequences(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        english = self.read("web/locales/en.js")
+        i18n = self.read("web/i18n.js")
+        html = self.read("web/lunch-town/index.html")
+        update = app.split("function updateNpcs(delta) {", 1)[1].split(
+            "\n}\n\nfunction contextualActivityForNpc", 1
+        )[0]
+        conversation_end = app.split("function endAmbientConversation", 1)[1].split(
+            "\n}\n\nfunction buildConversationContext", 1
+        )[0]
+
+        self.assertEqual(app.count("life: createNpcLifeState"), 2)
+        for behavior in (
+            "createNpcLifeState", "updateNpcLifeState", "rememberNpcLifeEvent",
+            "latestSharedNpcLifeMemory", "strengthenNpcLifeBond",
+            "beginNpcLifeFollowUp", "finishNpcLifeFollowUp", "maybeStartNpcNeedPlan",
+            "applyNpcConversationOutcome", "npcPlayerMemoryLines",
+        ):
+            self.assertIn(f"function {behavior}", app)
+        self.assertIn("const NPC_LIFE_MEMORY_LIMIT = 8", app)
+        self.assertIn("const NPC_LIFE_UPDATE_SECONDS = 1", app)
+        self.assertIn("updateNpcLifeState(npc, npcDelta", update)
+        self.assertIn("npc.life?.followUpPlan", update)
+        self.assertIn("finishNpcLifeFollowUp", update)
+        self.assertIn("applyNpcConversationOutcome", conversation_end)
+        self.assertIn("first.life.needs.social", app)
+        self.assertIn("bondStrength", app)
+        self.assertIn('townText("心情")', app)
+        self.assertIn('"疲倦": "Tired"', english)
+        self.assertIn('"我記得我們上次聊過{0}，後來事情真的有接著往下走。": [0]', i18n)
+        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
+        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
 
     def test_npc_conversations_use_identity_context_relationship_and_memory(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -827,7 +913,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("drawTree(tree.x, tree.y, now, tree.phase, tree.scale)", street_details)
         self.assertIn("drawLamp(lamp.x, lamp.y, environment)", street_details)
         self.assertIn("neighborStreetDecorationsForTheme(theme).lamps", visible_lamps)
-        self.assertIn("app.js?v=20261106-crop-lifecycle", self.read("web/lunch-town/index.html"))
+        self.assertIn("app.js?v=20261107-living-npcs", self.read("web/lunch-town/index.html"))
 
     def test_frame_failures_cannot_freeze_players_or_npcs_when_entering_changhua(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -988,7 +1074,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("650", app)
         self.assertIn("setLoadingProgress(100", app)
         self.assertIn(".loading-progress", styles)
-        self.assertIn("20261106-crop-lifecycle", html)
+        self.assertIn("20261107-living-npcs", html)
 
     def test_town_has_opt_in_original_web_audio_music(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1321,7 +1407,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("npc.hasLeashedDog", app)
         self.assertIn("牽著狗散步", app)
         self.assertIn("!pet.hidden", app)
-        self.assertIn("app.js?v=20261106-crop-lifecycle", self.read("web/lunch-town/index.html"))
+        self.assertIn("app.js?v=20261107-living-npcs", self.read("web/lunch-town/index.html"))
 
     def test_town_has_visible_youbike_stations_and_rental_trips(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1434,9 +1520,9 @@ class LunchTownTests(unittest.TestCase):
             self.assertIn(marker, app)
         self.assertIn('venue.id === "civic-south-night-convenience"', app)
         self.assertIn('!CIVIC_AFTER_HOURS_ROLES.has(npc.role) && !NEIGHBOR_CIVIC_ROLES.has(npc.role)', app)
-        self.assertIn("const civicAfterHours = transitionNeighborCivicAfterHoursRoutine(npc, index)", app)
-        self.assertIn('/locales/en.js?v=20261106-crop-lifecycle', html)
-        self.assertIn('/i18n.js?v=20261106-crop-lifecycle', html)
+        self.assertIn("civicAfterHours = transitionNeighborCivicAfterHoursRoutine(npc, index)", app)
+        self.assertIn('/locales/en.js?v=20261107-living-npcs', html)
+        self.assertIn('/i18n.js?v=20261107-living-npcs', html)
 
     def test_npcs_take_evening_trips_to_department_stores_and_lalaport(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1626,16 +1712,16 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("taipeiDateKey", route)
         self.assertIn('"回家報到": "Check in at home"', english)
         self.assertIn('"每日任務完成": "Daily quest complete"', english)
-        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
+        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
 
     def test_lunch_town_line_login_icon_stays_inside_pixel_button(self) -> None:
         html = self.read("web/lunch-town/index.html")
         styles = self.read("web/lunch-town/styles.css")
         scoped_button = styles.split(".account-dialog .line-icon-button {", 1)[1].split("}", 1)[0]
         scoped_image = styles.split(".account-dialog .line-icon-button img {", 1)[1].split("}", 1)[0]
-        self.assertIn("styles.css?v=20261106-crop-lifecycle", html)
+        self.assertIn("styles.css?v=20261107-living-npcs", html)
         self.assertIn("overflow: hidden", scoped_button)
         self.assertIn("width: 48px", scoped_image)
         self.assertIn("height: 48px", scoped_image)
@@ -1669,9 +1755,50 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('harvesting: `在${location}採收成熟作物，採收後田區暫時留空`', app)
         self.assertIn('"在{0}採收成熟作物，採收後田區暫時留空": [0]', i18n)
         self.assertIn('"Harvesting mature crops at {0}; the plot stays briefly empty afterward."', english)
-        self.assertIn("app.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/locales/en.js?v=20261106-crop-lifecycle", html)
-        self.assertIn("/i18n.js?v=20261106-crop-lifecycle", html)
+        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
+        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
+
+    def test_six_adaptive_civic_agents_use_bounded_session_memory_and_safe_local_plans(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        html = self.read("web/lunch-town/index.html")
+        english = self.read("web/locales/en.js")
+        i18n = self.read("web/i18n.js")
+
+        for name in ("何欣純", "盧秀燕", "鍾東錦", "王惠美"):
+            self.assertIn(f'"{name}": {{', app)
+        self.assertIn('identity.role === "police-officer" && ["miaoli", "changhua"].includes(identity.countyId)', app)
+        self.assertEqual(app.count("smartAgent: createSmartNpcState(identity)"), 2)
+        self.assertIn("const SMART_NPC_MEMORY_LIMIT = 6", app)
+        self.assertIn("const SMART_NPC_PROACTIVE_COOLDOWN_MS = 75_000", app)
+        self.assertIn("agent.memory.length - SMART_NPC_MEMORY_LIMIT", app)
+        self.assertIn("npc.schedule = [origin, proposal.target, origin]", app)
+        self.assertIn("const smartPlanActive = !lifePlanActive && updateSmartNpcAgent(npc, index, npcDelta)", app)
+        self.assertIn("notifySmartNpcTownEvent(event)", app)
+        self.assertIn("if (npc.smartAgent) return buildSmartNpcConversation(npc)", app)
+        self.assertIn("if (proposal.unsafeResident)", app)
+        self.assertIn("proposal.unsafeResident.currentReason = \"依警察引導回到安全步道，避開河道、海域與山區\"", app)
+        self.assertIn("涉及真實公職身分的內容只採既有公開來源", app)
+        self.assertIn("不代表本人引言、背書或政見", app)
+        self.assertNotIn("localStorage.setItem(\"smart", app)
+
+        for source in (
+            "智慧角色", "聽取居民意見並核對公開資料", "公共安全應變",
+            "這段記憶只保留在這次小鎮遊玩，用來延續剛才的事件與對話。",
+            "涉及真實公職身分的內容只採既有公開來源，不用遊戲對話補寫政策或承諾。",
+        ):
+            self.assertIn(f'"{source}":', english)
+        for template in (
+            "我目前在{0}，正在{1}。",
+            "我記得先前在{0}完成過{1}；這次會接著已記錄的進度處理。",
+            "前往{0}事件現場，依通報確認方向與安全動線",
+        ):
+            self.assertIn(f'"{template}"', english)
+            self.assertIn(f'"{template}":', i18n)
+        for asset in ("app.js", "styles.css"):
+            self.assertIn(f'{asset}?v=20261107-living-npcs', html)
+        for asset in ("/locales/en.js", "/i18n.js"):
+            self.assertIn(f'{asset}?v=20261107-living-npcs', html)
 
     def test_framework_route_serves_the_town_page(self) -> None:
         route = self.read("app/lunch-town/route.ts")

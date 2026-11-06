@@ -134,6 +134,12 @@ let riverbankLeisureSiteCache = null;
 const boundaryRiverPathCache = new Map();
 const coastlinePathCache = new Map();
 const neighborPaddyParcelCache = new Map();
+const npcSegmentRouteCache = new WeakMap();
+const NPC_LOAD_SPAWN_SEED = (() => {
+  const values = new Uint32Array(1);
+  globalThis.crypto?.getRandomValues?.(values);
+  return values[0] || ((Date.now() ^ Math.round(performance.now() * 1_000)) >>> 0);
+})();
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const PLAYER_AVATAR_STORAGE_KEY = "lunchTownPlayerAvatar";
 const LEGACY_PLAYER_STYLE_STORAGE_KEY = "lunchTownPlayerStyle";
@@ -149,6 +155,26 @@ const NPC_OFFSCREEN_VENUE_ID = "__candidate_offscreen__";
 const CANDIDATE_APPEARANCE_RULES = Object.freeze({
   "何欣純": { cycleSeconds: 120, visibleSeconds: 120, initialDelaySeconds: 0 },
   "江啟臣": { cycleSeconds: 120, visibleSeconds: 18, initialDelaySeconds: 45 },
+});
+const SMART_NPC_MEMORY_LIMIT = 6;
+const SMART_NPC_PROACTIVE_COOLDOWN_MS = 75_000;
+const SMART_NPC_NAME_PROFILES = Object.freeze({
+  "何欣純": {
+    id: "ho-hsin-chun-listener", kind: "candidate", jurisdiction: "臺中市",
+    defaultIntent: "聽取居民意見並核對公開資料", verifiedFactsOnly: true,
+  },
+  "盧秀燕": {
+    id: "taichung-civic-leader", kind: "civic-leader", jurisdiction: "臺中市",
+    defaultIntent: "觀察縣市服務與街區狀況", verifiedFactsOnly: true,
+  },
+  "鍾東錦": {
+    id: "miaoli-civic-leader", kind: "civic-leader", jurisdiction: "苗栗縣",
+    defaultIntent: "觀察縣市服務與街區狀況", verifiedFactsOnly: true,
+  },
+  "王惠美": {
+    id: "changhua-civic-leader", kind: "civic-leader", jurisdiction: "彰化縣",
+    defaultIntent: "觀察縣市服務與街區狀況", verifiedFactsOnly: true,
+  },
 });
 const CROP_GROWTH_DURATION_MS = Object.freeze({
   rice: 80_000,
@@ -364,6 +390,18 @@ const DAILY_TOPIC_IDS = [
 ];
 const CONVERSATION_MEMORY_LIMIT = 8;
 const CONVERSATION_MEMORY_WINDOW_MS = 10 * 60 * 1000;
+const AMBIENT_CONVERSATION_INITIAL_DELAY_MS = 2_500;
+const AMBIENT_CONVERSATION_RETRY_MS = 2_000;
+const AMBIENT_CONVERSATION_MIN_GAP_MS = 4_000;
+const AMBIENT_PAIR_COOLDOWN_MS = 45_000;
+const AMBIENT_TURN_MIN_MS = 6_000;
+const AMBIENT_TURN_MAX_MS = 11_000;
+const AMBIENT_PLAYER_GRACE_MS = 8_000;
+const AMBIENT_PLAYER_DISMISS_DISTANCE = 560;
+const NPC_LIFE_MEMORY_LIMIT = 8;
+const NPC_LIFE_MEMORY_WINDOW_MS = 30 * 60 * 1000;
+const NPC_LIFE_UPDATE_SECONDS = 1;
+const NPC_LIFE_FOLLOW_UP_COOLDOWN_MS = 60_000;
 const MOBILE_COARSE_UPDATE_SECONDS = 1;
 const PLAYER_WALK_SPEED = 116;
 const PLAYER_BIKE_SPEED = 272;
@@ -1320,7 +1358,7 @@ const state = {
   ambientConversation: null,
   comicBubbleFadeTimer: null,
   conversationMemory: [],
-  nextConversationAt: performance.now() + 4_000,
+  nextConversationAt: performance.now() + AMBIENT_CONVERSATION_INITIAL_DELAY_MS,
   townRumors: [],
   townMoment: null,
   nextTownMomentAt: performance.now() + 12_000,
@@ -3254,13 +3292,14 @@ function createNeighborNpcCharacter(identity, index, lookIndex) {
     .find((stop) => (stop.workZoneId || stop.venueId) && !stop.virtualResidence);
   const afterHours = NEIGHBOR_CIVIC_ROLES.has(identity.role) && civicAfterHoursPeriod(state.environment) !== "daytime";
   const schedule = afterHours ? createNeighborCivicAfterHoursSchedule(identity, index) : daytimeSchedule;
-  const start = schedule[0];
+  const spawn = chooseNpcInitialSpawn(identity, schedule, lookIndex);
+  const start = spawn.stop;
   return {
     ...profile,
     ...identity,
     lookIndex,
     schedule,
-    segment: 0,
+    segment: spawn.segment,
     progress: 0,
     dwellRemaining: reducedMotion ? Number.POSITIVE_INFINITY : afterHours ? start.dwellSeconds : index % 3 * 0.8,
     currentReason: start.reason,
@@ -3272,6 +3311,7 @@ function createNeighborNpcCharacter(identity, index, lookIndex) {
     isMoving: false,
     personality: NPC_PERSONALITIES[hashText(`${identity.name}-personality`) % NPC_PERSONALITIES.length],
     mood: ["平靜", "有精神", "有點忙", "放鬆"][hashText(`${identity.name}-mood`) % 4],
+    life: createNpcLifeState(identity, lookIndex),
     activity: start.activity || "waiting",
     riverbankSiteId: "",
     relationships: new Map(),
@@ -3301,6 +3341,7 @@ function createNeighborNpcCharacter(identity, index, lookIndex) {
     residenceVenueId: home.venueId,
     residenceUnitId: identity.residenceUnitId || "",
     residenceLabel: identity.residenceLabel || home.label,
+    smartAgent: createSmartNpcState(identity),
     dialogues: ROLE_DIALOGUES[identity.role] || ["今天的小鎮很熱鬧，慢慢走、仔細看看吧。"],
     dialogueCursor: 0,
   };
@@ -3376,7 +3417,8 @@ function createTownCharacters() {
       ? createCivicAfterHoursSchedule(identity, districtIndex, state.environment)
       : [];
     const schedule = initialAfterHoursSchedule.length ? initialAfterHoursSchedule : daytimeSchedule;
-    const segment = identity.role === "candidate" || startsAtAssignedCivicPost ? 0 : (index + districtIndex) % schedule.length;
+    const spawn = chooseNpcInitialSpawn(identity, schedule, index);
+    const segment = identity.role === "candidate" ? 0 : spawn.segment;
     const start = schedule[segment];
     const appearanceRule = CANDIDATE_APPEARANCE_RULES[identity.name] || null;
     const appearanceElapsed = appearanceRule
@@ -3402,6 +3444,7 @@ function createTownCharacters() {
       isMoving: false,
       personality: NPC_PERSONALITIES[hashText(`${identity.name}-personality`) % NPC_PERSONALITIES.length],
       mood: ["平靜", "有精神", "有點忙", "放鬆"][hashText(`${identity.name}-mood`) % 4],
+      life: createNpcLifeState(identity, index),
       activity: start.activity || "waiting",
       riverbankSiteId: start.riverbankSiteId || "",
       relationships: new Map(),
@@ -3424,6 +3467,7 @@ function createTownCharacters() {
         ? NPC_OFFSCREEN_VENUE_ID
         : (identity.role === "candidate" ? "" : (reducedMotion || start.outdoorVenue ? "" : (start.venueId || ""))),
       mobilityMode: mobilityModeFor(identity, districtIndex),
+      smartAgent: createSmartNpcState(identity),
       dialogues: [
         identity.campaignAppeal,
         state.districtThemes.get(identity.district)?.dialogue,
@@ -3545,6 +3589,7 @@ function shareWorkplace(firstRole, secondRole) {
 function setNpcRelationship(first, second, relationship) {
   first.relationships.set(second.name, relationship);
   second.relationships.set(first.name, relationship);
+  seedNpcLifeBond(first, second, relationship);
 }
 
 function relationshipBetween(first, second) {
@@ -3563,6 +3608,288 @@ function relationshipLabel(relationship) {
     "new-acquaintances": "剛認識",
     visitor: "第一次見面",
   }[relationship] || "居民";
+}
+
+function clampNpcNeed(value) {
+  return Math.max(0, Math.min(100, Number(value) || 0));
+}
+
+function createNpcLifeState(identity, index) {
+  const seed = hashText(`${identity.name}:${identity.role}:${identity.district}:${index}:life`);
+  return {
+    needs: {
+      energy: 58 + seed % 31,
+      hunger: 54 + Math.floor(seed / 7) % 33,
+      social: 48 + Math.floor(seed / 13) % 39,
+      purpose: 60 + Math.floor(seed / 19) % 31,
+    },
+    memory: [],
+    bonds: new Map(),
+    goal: "routine",
+    goalLabel: "照著今天的行程生活",
+    updateElapsed: (seed % 10) / 10,
+    nextFollowUpAt: performance.now() + 20_000 + seed % 35_000,
+    followUpPlan: null,
+    playerFamiliarity: 0,
+    dayKey: state.environment?.dateKey || "",
+  };
+}
+
+function seedNpcLifeBond(first, second, relationship) {
+  if (!first?.life?.bonds || !second?.life?.bonds) return;
+  const startingStrength = {
+    "parent-child": 5,
+    classmates: 4,
+    coworkers: 3,
+    neighbors: 2,
+    "new-acquaintances": 1,
+  }[relationship] || 0;
+  first.life.bonds.set(second.name, Math.max(first.life.bonds.get(second.name) || 0, startingStrength));
+  second.life.bonds.set(first.name, Math.max(second.life.bonds.get(first.name) || 0, startingStrength));
+}
+
+function strengthenNpcLifeBond(first, second, amount = 1) {
+  if (!first?.life?.bonds || !second?.life?.bonds) return;
+  first.life.bonds.set(second.name, Math.min(12, (first.life.bonds.get(second.name) || 0) + amount));
+  second.life.bonds.set(first.name, Math.min(12, (second.life.bonds.get(first.name) || 0) + amount));
+}
+
+function rememberNpcLifeEvent(npc, type, topicId, summary, withName = "", now = performance.now()) {
+  const life = npc?.life;
+  if (!life || !type || !summary) return;
+  life.memory = life.memory.filter((memory) => now - memory.at < NPC_LIFE_MEMORY_WINDOW_MS);
+  const previous = life.memory.at(-1);
+  if (previous && previous.type === type && previous.topicId === topicId && previous.withName === withName) {
+    previous.summary = summary;
+    previous.at = now;
+    return;
+  }
+  life.memory.push({ type, topicId, summary, withName, at: now });
+  if (life.memory.length > NPC_LIFE_MEMORY_LIMIT) {
+    life.memory.splice(0, life.memory.length - NPC_LIFE_MEMORY_LIMIT);
+  }
+}
+
+function latestSharedNpcLifeMemory(first, second, now = performance.now()) {
+  if (!first?.life || !second?.life) return null;
+  const memory = [...first.life.memory].reverse().find((item) => (
+    item.withName === second.name && now - item.at < NPC_LIFE_MEMORY_WINDOW_MS
+  ));
+  if (!memory) return null;
+  const reciprocal = second.life.memory.some((item) => (
+    item.withName === first.name && item.topicId === memory.topicId
+      && now - item.at < NPC_LIFE_MEMORY_WINDOW_MS
+  ));
+  return reciprocal ? memory : null;
+}
+
+function npcPlayerMemoryLines(npc, lines, now = performance.now()) {
+  if (!npc?.life?.playerFamiliarity) return lines;
+  const prior = [...npc.life.memory].reverse().find((memory) => (
+    memory.withName === "玩家" && now - memory.at < NPC_LIFE_MEMORY_WINDOW_MS
+  ));
+  if (!prior) return lines;
+  return [`我記得你上次和我聊過${prior.summary}，今天又見面了。`, ...lines].slice(0, 4);
+}
+
+function npcLifeTopicSummary(topicId) {
+  return {
+    weather: "天氣與出門準備",
+    errands: "要辦的小事",
+    "work-school": "工作與學校",
+    family: "回家與家人",
+    shopping: "採買清單",
+    cooking: "晚餐準備",
+    lunch: "今天的午餐",
+    neighborhood: "街區變化",
+    transport: "交通安全",
+    rest: "找地方休息",
+    animals: "街角的鳥",
+    seasonal: "換季生活",
+    "town-news": "小鎮剛發生的事",
+    "civic-campaign": "公開資料與選舉資訊",
+  }[topicId] || "今天在小鎮遇到的事";
+}
+
+function npcLifeMood(npc) {
+  const needs = npc?.life?.needs;
+  if (!needs) return npc?.mood || "平靜";
+  if (needs.energy < 26) return "疲倦";
+  if (needs.hunger < 28) return "有點餓";
+  if (needs.social < 26) return "想找人聊聊";
+  if (npc.isMoving || ["patrolling", "delivery", "sweeping", "guiding"].includes(npc.activity)) return "專心";
+  if (needs.purpose > 78) return "有精神";
+  return needs.energy > 68 ? "放鬆" : "平靜";
+}
+
+function npcLifeGoalLabel(npc) {
+  const life = npc?.life;
+  if (!life) return "照著今天的行程生活";
+  if (life.followUpPlan) return life.followUpPlan.goalLabel;
+  const hour = Number(state.environment?.clock?.hour ?? 12);
+  if ((hour >= 23 || hour < 7) && npc.insideVenueId === npc.residenceVenueId) return "在家休息";
+  if (life.needs.energy < 30) return "找個地方坐下休息";
+  if (life.needs.hunger < 30) return "找點東西吃";
+  if (life.needs.social < 32) return "找熟人聊聊";
+  if (life.needs.purpose < 34) return "完成今天的工作";
+  return "照著今天的行程生活";
+}
+
+function updateNpcLifeState(npc, delta, now = performance.now()) {
+  const life = npc?.life;
+  if (!life) return;
+  life.updateElapsed += Math.max(0, delta);
+  if (life.updateElapsed < NPC_LIFE_UPDATE_SECONDS) return;
+  const elapsed = Math.min(12, life.updateElapsed);
+  life.updateElapsed = 0;
+  const needs = life.needs;
+  const atHome = Boolean(npc.residenceVenueId && npc.insideVenueId === npc.residenceVenueId);
+  const resting = atHome || npc.activity === "resting";
+  const eatingOrPreparing = atHome || ["shopping", "cooking", "serving-food"].includes(npc.activity);
+  const purposeful = npc.isMoving || !["waiting", "resting", "walking", "cycling", "greeting"].includes(npc.activity);
+  needs.energy = clampNpcNeed(needs.energy + elapsed * (resting ? 0.62 : npc.isMoving ? -0.055 : -0.018));
+  needs.hunger = clampNpcNeed(needs.hunger + elapsed * (eatingOrPreparing ? 0.38 : -0.026));
+  needs.social = clampNpcNeed(needs.social + elapsed * (npc.isSocializing || state.dialogueNpc === npc ? 1.15 : -0.032));
+  needs.purpose = clampNpcNeed(needs.purpose + elapsed * (purposeful ? 0.055 : -0.024));
+  const dayKey = state.environment?.dateKey || "";
+  if (life.dayKey !== dayKey) {
+    life.dayKey = dayKey;
+    needs.energy = clampNpcNeed(needs.energy + 18);
+    needs.hunger = clampNpcNeed(needs.hunger + 14);
+    needs.purpose = clampNpcNeed(needs.purpose + 12);
+  }
+  life.goalLabel = npcLifeGoalLabel(npc);
+  npc.mood = npcLifeMood(npc);
+  life.lastUpdatedAt = now;
+}
+
+function npcLifeFollowUpConfig(topicId) {
+  return {
+    weather: { types: ["convenience-store"], goalLabel: "補齊出門需要的東西", activity: "shopping" },
+    errands: { types: ["convenience-store", "grocery-store"], goalLabel: "把剛才提到的小事辦完", activity: "shopping" },
+    family: { types: ["townhouse", "apartment"], goalLabel: "回家看看家人", activity: "at-home", useResidence: true },
+    shopping: { types: ["grocery-store", "convenience-store", "department-store"], goalLabel: "照著採買清單買東西", activity: "shopping" },
+    cooking: { types: ["grocery-store", "convenience-store"], goalLabel: "準備下一餐需要的東西", activity: "shopping" },
+    lunch: { types: ["restaurant", "snack-shop", "grocery-store"], goalLabel: "看看下一餐可以怎麼搭配", activity: "shopping" },
+    neighborhood: { types: ["park", "landmark"], goalLabel: "到附近看看剛才聊到的變化", activity: "walking" },
+    rest: { types: ["park"], goalLabel: "找個地方坐下休息", activity: "resting" },
+    animals: { types: ["park"], goalLabel: "到公園安靜看看鳥", activity: "walking" },
+    seasonal: { types: ["grocery-store", "park"], goalLabel: "看看季節變化", activity: "walking" },
+    "town-news": { types: ["park", "convenience-store", "township-office"], goalLabel: "確認小鎮剛發生的事", activity: "listening" },
+  }[topicId] || null;
+}
+
+function npcLifeFollowUpTarget(npc, topicId, now = performance.now()) {
+  const config = npcLifeFollowUpConfig(topicId);
+  if (!config) return null;
+  if (config.useResidence && npc.residenceVenueId) {
+    const residence = state.venues.find((venue) => venue.id === npc.residenceVenueId);
+    if (residence) return { config, venue: residence };
+  }
+  const currentDistrict = districtAtPoint(npc) || npc.homeDistrict || npc.district;
+  const localVenues = state.venues.filter((venue) => venue.district === currentDistrict && config.types.includes(venue.type));
+  const homeVenues = state.venues.filter((venue) => venue.district === (npc.homeDistrict || npc.district)
+    && config.types.includes(venue.type));
+  const candidates = localVenues.length ? localVenues : homeVenues;
+  if (!candidates.length) return null;
+  const index = hashText(`${npc.name}:${topicId}:${Math.floor(now / 60_000)}`) % candidates.length;
+  return { config, venue: candidates[index] };
+}
+
+function beginNpcLifeFollowUp(npc, topicId, now = performance.now()) {
+  const life = npc?.life;
+  if (!life || life.followUpPlan || npc.smartAgent || npc.eveningExcursion || !npc.schedule?.length) return false;
+  if (npc.isCollapsed || npc.isInTownMoment || npc.storyVenueId || reducedMotion || now < life.nextFollowUpAt) return false;
+  if ((CIVIC_AFTER_HOURS_ROLES.has(npc.role) || NEIGHBOR_CIVIC_ROLES.has(npc.role))
+    && civicAfterHoursPeriod(state.environment) !== "daytime") return false;
+  const followUp = npcLifeFollowUpTarget(npc, topicId, now);
+  if (!followUp) return false;
+  const currentDistrict = districtAtPoint(npc) || npc.district;
+  const origin = {
+    x: npc.x,
+    y: npc.y,
+    district: currentDistrict,
+    label: `${currentDistrict}原行程`,
+    reason: "完成剛才聊到的事情後回到原本行程",
+    activity: "waiting",
+    dwellSeconds: 1,
+    outdoorVenue: true,
+  };
+  const target = {
+    ...venueScheduleStop(followUp.venue, npc.role, hashText(`${npc.name}:${topicId}`) % 41),
+    reason: `${followUp.config.goalLabel}，讓剛才的對話接著發生`,
+    activity: followUp.config.activity,
+    dwellSeconds: 8,
+  };
+  life.followUpPlan = {
+    topicId,
+    goalLabel: followUp.config.goalLabel,
+    targetLabel: followUp.venue.label,
+    routineSchedule: npc.schedule,
+    routineSegment: npc.segment,
+    routineProgress: npc.progress,
+    routineDwellRemaining: npc.dwellRemaining,
+    returnIndex: 2,
+  };
+  life.goal = `follow-up:${topicId}`;
+  life.goalLabel = followUp.config.goalLabel;
+  life.nextFollowUpAt = now + NPC_LIFE_FOLLOW_UP_COOLDOWN_MS;
+  npc.schedule = [origin, target, origin];
+  npc.segment = 0;
+  npc.progress = 0;
+  npc.dwellRemaining = 0;
+  npc.insideVenueId = "";
+  npc.ridingBike = false;
+  npc.currentReason = `聊完後前往${followUp.venue.label}，${followUp.config.goalLabel}`;
+  rememberNpcLifeEvent(npc, "follow-up-started", topicId, followUp.config.goalLabel, "", now);
+  return true;
+}
+
+function finishNpcLifeFollowUp(npc, now = performance.now()) {
+  const life = npc?.life;
+  const plan = life?.followUpPlan;
+  if (!plan) return;
+  npc.schedule = plan.routineSchedule;
+  npc.segment = plan.routineSegment;
+  npc.progress = plan.routineProgress;
+  npc.dwellRemaining = Math.max(1.5, plan.routineDwellRemaining || 0);
+  npc.insideVenueId = "";
+  npc.ridingBike = false;
+  npc.activity = "waiting";
+  npc.currentReason = `已完成${plan.goalLabel}，回到原本行程`;
+  if (plan.topicId === "rest") life.needs.energy = clampNpcNeed(life.needs.energy + 14);
+  if (["shopping", "cooking", "lunch"].includes(plan.topicId)) {
+    life.needs.hunger = clampNpcNeed(life.needs.hunger + 16);
+  }
+  life.needs.purpose = clampNpcNeed(life.needs.purpose + 12);
+  rememberNpcLifeEvent(npc, "follow-up-completed", plan.topicId, plan.goalLabel, "", now);
+  life.followUpPlan = null;
+  life.goal = "routine";
+  life.goalLabel = "照著今天的行程生活";
+}
+
+function maybeStartNpcNeedPlan(npc, now = performance.now()) {
+  const life = npc?.life;
+  if (!life || life.followUpPlan || npc.backgroundSimulated || npc.isSocializing) return false;
+  if (life.needs.energy < 22) return beginNpcLifeFollowUp(npc, "rest", now);
+  if (life.needs.hunger < 22) return beginNpcLifeFollowUp(npc, "shopping", now);
+  return false;
+}
+
+function applyNpcConversationOutcome(first, second, context, now = performance.now()) {
+  if (!first?.life || !second?.life || !context?.topicId) return;
+  const summary = npcLifeTopicSummary(context.topicId);
+  rememberNpcLifeEvent(first, "conversation", context.topicId, summary, second.name, now);
+  rememberNpcLifeEvent(second, "conversation", context.topicId, summary, first.name, now);
+  first.life.needs.social = clampNpcNeed(first.life.needs.social + 22);
+  second.life.needs.social = clampNpcNeed(second.life.needs.social + 22);
+  first.life.needs.purpose = clampNpcNeed(first.life.needs.purpose + 4);
+  second.life.needs.purpose = clampNpcNeed(second.life.needs.purpose + 4);
+  strengthenNpcLifeBond(first, second, 1);
+  const candidates = hashText(`${first.name}:${second.name}:${context.topicId}`) % 2
+    ? [first, second]
+    : [second, first];
+  candidates.some((npc) => beginNpcLifeFollowUp(npc, context.topicId, now));
 }
 
 function createTownBirds() {
@@ -3624,6 +3951,31 @@ function varyOutfitColors(profile, identity, index) {
 
 function hashText(value) {
   return [...String(value)].reduce((hash, character) => (hash * 31 + character.codePointAt(0)) >>> 0, 2166136261);
+}
+
+function chooseNpcInitialSpawn(identity, schedule, index) {
+  const homeDistrict = identity.homeDistrict || identity.district;
+  const homeZone = districtZoneForName(homeDistrict);
+  const padding = 48;
+  const localStops = schedule.map((stop, segment) => ({ stop, segment })).filter(({ stop }) => (
+    stop
+    && !stop.waypoint
+    && stop.district === homeDistrict
+    && (!homeZone || (
+      stop.x >= homeZone.x - padding
+      && stop.x <= homeZone.x + homeZone.w + padding
+      && stop.y >= homeZone.y - padding
+      && stop.y <= homeZone.y + homeZone.h + padding
+    ))
+    && naturalTerrainCollisionDepth(stop) <= 0
+  ));
+  const outdoorStops = localStops.filter(({ stop }) => stop.outdoorVenue || !stop.venueId);
+  const candidates = outdoorStops.length ? outdoorStops : localStops;
+  if (!candidates.length) {
+    const fallbackPoint = npcSafeNaturalTerrainPoint(schedule[0]);
+    return { stop: { ...schedule[0], ...fallbackPoint }, segment: 0 };
+  }
+  return candidates[hashText(`${NPC_LOAD_SPAWN_SEED}:${identity.name}:${identity.role}:${index}`) % candidates.length];
 }
 
 function lotsIntersect(first, second, padding = 0) {
@@ -4503,7 +4855,7 @@ function mobilityModeFor(identity, districtIndex) {
   if (identity.featuredResident) return "neighborhood";
   if (["candidate", "mayor", "city-councilor", "police-officer", "firefighter", "doctor"].includes(identity.role)) return "citywide";
   if (identity.role === "student") return districtIndex % 2 ? "nearby" : "neighborhood";
-  return ["neighborhood", "nearby", "citywide"][(hashText(identity.name) + districtIndex) % 3];
+  return ["neighborhood", "nearby", "nearby"][(hashText(identity.name) + districtIndex) % 3];
 }
 
 function chooseNpcDistrictRoute(identity, mode, seed) {
@@ -5236,6 +5588,134 @@ function naturalTerrainCollisionDepth(point) {
   return Math.max(...depths);
 }
 
+function boundaryRiverCollisionDepth(point, bridge) {
+  if (pointIsOnRiverBridge(point, bridge)) return 0;
+  return Math.max(
+    0,
+    BORDER_RIVER_WIDTH / 2 + NATURAL_TERRAIN_MARGIN
+      - Math.abs(point.y - boundaryRiverYAt(point.x, bridge)),
+  );
+}
+
+function npcSafeNaturalTerrainPoint(point) {
+  if (naturalTerrainCollisionDepth(point) <= 0) return point;
+  for (let radius = 8; radius <= 640; radius += 8) {
+    for (let direction = 0; direction < 16; direction += 1) {
+      const angle = direction * Math.PI / 8;
+      const candidate = clampTownPoint({
+        x: point.x + Math.cos(angle) * radius,
+        y: point.y + Math.sin(angle) * radius,
+      });
+      if (naturalTerrainCollisionDepth(candidate) <= 0) return candidate;
+    }
+  }
+  return point;
+}
+
+function npcSegmentIntersectsBoundaryRiver(from, to, bridge) {
+  const distance = Math.hypot(to.x - from.x, to.y - from.y);
+  const sampleCount = Math.max(1, Math.ceil(distance / 12));
+  for (let index = 0; index <= sampleCount; index += 1) {
+    const progress = index / sampleCount;
+    const point = {
+      x: from.x + (to.x - from.x) * progress,
+      y: from.y + (to.y - from.y) * progress,
+    };
+    if (boundaryRiverCollisionDepth(point, bridge) > 0) return true;
+  }
+  return false;
+}
+
+function npcRiverbankWaypoints(startX, endX, bridge, side) {
+  const clearance = BORDER_RIVER_WIDTH / 2 + NATURAL_TERRAIN_MARGIN + 18;
+  const distance = Math.abs(endX - startX);
+  const sampleCount = Math.max(1, Math.ceil(distance / 72));
+  return Array.from({ length: sampleCount + 1 }, (_, index) => {
+    const x = startX + (endX - startX) * (index / sampleCount);
+    return { x, y: boundaryRiverYAt(x, bridge) + side * clearance, waypoint: true };
+  });
+}
+
+function npcBoundaryRiverDetour(from, to, bridge) {
+  const fromOffset = from.y - boundaryRiverYAt(from.x, bridge);
+  const toOffset = to.y - boundaryRiverYAt(to.x, bridge);
+  const fromSide = Math.sign(fromOffset) || Math.sign(toOffset) || 1;
+  const toSide = Math.sign(toOffset) || fromSide;
+  if (fromSide === toSide) {
+    return [from, ...npcRiverbankWaypoints(from.x, to.x, bridge, fromSide), to];
+  }
+  return [
+    from,
+    ...npcRiverbankWaypoints(from.x, bridge.x, bridge, fromSide),
+    { x: bridge.x, y: boundaryRiverYAt(bridge.x, bridge), waypoint: true },
+    ...npcRiverbankWaypoints(bridge.x, to.x, bridge, toSide),
+    to,
+  ];
+}
+
+function npcSegmentRoute(from, to) {
+  let route = [npcSafeNaturalTerrainPoint(from), npcSafeNaturalTerrainPoint(to)];
+  BOUNDARY_BRIDGES.forEach((bridge) => {
+    const nextRoute = [route[0]];
+    for (let index = 0; index < route.length - 1; index += 1) {
+      const start = route[index];
+      const end = route[index + 1];
+      const segment = npcSegmentIntersectsBoundaryRiver(start, end, bridge)
+        ? npcBoundaryRiverDetour(start, end, bridge)
+        : [start, end];
+      nextRoute.push(...segment.slice(1));
+    }
+    route = nextRoute;
+  });
+  return route.filter((point, index) => index === 0 || point.x !== route[index - 1].x || point.y !== route[index - 1].y);
+}
+
+function cachedNpcSegmentRoute(from, to) {
+  let destinations = npcSegmentRouteCache.get(from);
+  if (!destinations) {
+    destinations = new WeakMap();
+    npcSegmentRouteCache.set(from, destinations);
+  }
+  let route = destinations.get(to);
+  if (!route) {
+    route = npcSegmentRoute(from, to);
+    destinations.set(to, route);
+  }
+  return route;
+}
+
+function npcRouteLength(route) {
+  return route.slice(1).reduce((total, point, index) => (
+    total + Math.hypot(point.x - route[index].x, point.y - route[index].y)
+  ), 0) || 1;
+}
+
+function npcPointAlongRoute(route, progress) {
+  const targetDistance = npcRouteLength(route) * Math.max(0, Math.min(1, progress));
+  let travelled = 0;
+  for (let index = 0; index < route.length - 1; index += 1) {
+    const from = route[index];
+    const to = route[index + 1];
+    const segmentLength = Math.hypot(to.x - from.x, to.y - from.y);
+    if (travelled + segmentLength >= targetDistance) {
+      const segmentProgress = segmentLength ? (targetDistance - travelled) / segmentLength : 1;
+      return {
+        x: from.x + (to.x - from.x) * segmentProgress,
+        y: from.y + (to.y - from.y) * segmentProgress,
+      };
+    }
+    travelled += segmentLength;
+  }
+  return { x: route.at(-1).x, y: route.at(-1).y };
+}
+
+function npcNaturalTerrainMoveAllowed(current, next) {
+  const nextDepth = naturalTerrainCollisionDepth(next);
+  if (nextDepth <= 0) return true;
+  const currentDepth = naturalTerrainCollisionDepth(current);
+  return currentDepth > 0 && nextDepth <= currentDepth + 0.001;
+}
+
 function updateCamera(snap = false, delta = 0) {
   const targetX = Math.max(0, Math.min(WORLD_WIDTH - WIDTH, state.player.x - WIDTH / 2));
   const targetY = Math.max(0, Math.min(WORLD_HEIGHT - HEIGHT, state.player.y - HEIGHT / 2));
@@ -5458,6 +5938,266 @@ function finishEveningShoppingTrip(npc) {
   npc.eveningExcursion = null;
 }
 
+function smartNpcProfileFor(identity) {
+  const named = SMART_NPC_NAME_PROFILES[identity.name];
+  if (named) return named;
+  if (identity.role === "police-officer" && ["miaoli", "changhua"].includes(identity.countyId)) {
+    return {
+      id: `${identity.countyId}-public-safety-agent`,
+      kind: "police",
+      jurisdiction: identity.countyName,
+      defaultIntent: "巡查公共安全與危險地形",
+      verifiedFactsOnly: false,
+    };
+  }
+  return null;
+}
+
+function createSmartNpcState(identity) {
+  const profile = smartNpcProfileFor(identity);
+  if (!profile) return null;
+  const seed = hashText(`${profile.id}:${identity.name}`);
+  return {
+    ...profile,
+    memory: [],
+    decisionElapsed: (seed % 5) * 0.12,
+    decisionInterval: 0.9 + seed % 4 * 0.15,
+    intent: "observing",
+    intentLabel: profile.defaultIntent,
+    plan: null,
+    pendingFollowUp: false,
+    conversationCount: 0,
+    nextProactiveAt: performance.now() + 20_000 + seed % 20_000,
+    lastEventKey: "",
+  };
+}
+
+function rememberSmartNpc(npc, type, district, summary, now = performance.now()) {
+  const agent = npc.smartAgent;
+  if (!agent) return;
+  const memory = { type, district: district || npc.district, summary, at: now };
+  const previous = agent.memory.at(-1);
+  if (previous && previous.type === memory.type && previous.district === memory.district && previous.summary === memory.summary) {
+    previous.at = now;
+    return;
+  }
+  agent.memory.push(memory);
+  if (agent.memory.length > SMART_NPC_MEMORY_LIMIT) agent.memory.splice(0, agent.memory.length - SMART_NPC_MEMORY_LIMIT);
+}
+
+function smartNpcDistrictInJurisdiction(agent, district) {
+  if (!agent || !district) return false;
+  if (agent.jurisdiction === SHOWCASE_CITY) return Boolean(DISTRICT_ZONES[district]);
+  return state.neighborDistrictThemes.get(district)?.county?.name === agent.jurisdiction;
+}
+
+function smartNpcPerception(npc) {
+  const agent = npc.smartAgent;
+  const district = districtAtPoint(npc) || npc.district;
+  const event = state.townEvent && !state.townEvent.resolved
+    && smartNpcDistrictInJurisdiction(agent, state.townEvent.district)
+    ? state.townEvent
+    : null;
+  const unsafeResident = agent?.kind === "police"
+    ? state.npcs.filter((resident) => resident !== npc
+      && !resident.eventActor
+      && smartNpcDistrictInJurisdiction(agent, districtAtPoint(resident) || resident.district)
+      && naturalTerrainCollisionDepth(resident) > 0)
+      .map((resident) => ({ resident, distance: Math.hypot(resident.x - npc.x, resident.y - npc.y) }))
+      .filter((item) => item.distance <= 320)
+      .sort((first, second) => first.distance - second.distance)[0]?.resident || null
+    : null;
+  return {
+    district,
+    event,
+    unsafeResident,
+    playerNearby: Math.hypot(state.player.x - npc.x, state.player.y - npc.y) <= 180,
+    isRaining: Boolean(state.environment?.isRaining),
+    hour: Number(state.environment?.clock?.hour ?? 12),
+  };
+}
+
+function smartNpcPublicStop(npc, seed = 0) {
+  const district = npc.homeDistrict || npc.district;
+  const schools = [...state.schools, ...state.neighborSchools].filter((school) => school.district === district);
+  if (schools.length) {
+    const school = schools[(hashText(`${npc.name}:school`) + seed) % schools.length];
+    return {
+      ...schoolGatePoint(school), district, label: school.name,
+      reason: `到${school.name}附近確認通學動線與現場需求`,
+      activity: npc.smartAgent.kind === "police" ? "patrolling" : "listening",
+      dwellSeconds: 7, outdoorVenue: true,
+    };
+  }
+  const venues = state.venues.filter((venue) => venue.district === district
+    && !RESIDENTIAL_VENUE_TYPES.has(venue.type));
+  if (venues.length) {
+    const venue = venues[(hashText(`${npc.name}:venue`) + seed) % venues.length];
+    return {
+      x: venue.x + venue.w / 2, y: venue.y + venue.h + 12, district, label: venue.label,
+      reason: `到${venue.label}走訪並確認現場狀況`,
+      activity: npc.smartAgent.kind === "police" ? "patrolling" : "listening",
+      dwellSeconds: 7, outdoorVenue: true,
+    };
+  }
+  const zone = districtZoneForName(district);
+  if (!zone) return null;
+  const point = npcSafeNaturalTerrainPoint({ x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 });
+  return {
+    ...point, district, label: district,
+    reason: `到${district}公共空間走訪並確認現場狀況`,
+    activity: npc.smartAgent.kind === "police" ? "patrolling" : "listening",
+    dwellSeconds: 7, outdoorVenue: true,
+  };
+}
+
+function smartNpcProposal(npc, perception, now = performance.now()) {
+  const agent = npc.smartAgent;
+  if (!agent || agent.plan || state.dialogueNpc === npc) return null;
+  if (agent.kind === "civic-leader" && (perception.hour >= 18 || perception.hour < 7)) return null;
+  if (agent.kind === "candidate" && (perception.hour >= 22 || perception.hour < 7)) return null;
+  if (agent.kind === "police" && perception.unsafeResident) {
+    const target = npcSafeNaturalTerrainPoint(perception.unsafeResident);
+    return {
+      intent: "safety-guidance", intentLabel: "引導居民離開危險地形",
+      target: {
+        ...target, district: perception.unsafeResident.district, label: "安全步道",
+        reason: "前往安全位置引導居民離開河道、海域或山區遮罩",
+        activity: "guiding", dwellSeconds: 6, outdoorVenue: true,
+      },
+      memoryType: "safety", memorySummary: "危險地形安全引導", unsafeResident: perception.unsafeResident,
+    };
+  }
+  if (perception.event) {
+    const eventKey = `${perception.event.type}:${perception.event.district}:${perception.event.startedAt}`;
+    if (agent.lastEventKey === eventKey) return null;
+    const subject = perception.event.victim || perception.event.actor || state.player;
+    if (agent.kind === "police" && perception.event.type === "theft") {
+      const target = npcSafeNaturalTerrainPoint(subject);
+      return {
+        intent: "public-safety-response", intentLabel: "前往事件現場執行安全處置", eventKey,
+        target: {
+          ...target, district: perception.event.district, label: perception.event.title,
+          reason: `前往${perception.event.district}事件現場，依通報確認方向與安全動線`,
+          activity: "patrolling", dwellSeconds: 6, outdoorVenue: true,
+        },
+        memoryType: "coordination", memorySummary: "公共安全應變",
+      };
+    }
+    if (agent.kind === "civic-leader") {
+      const target = npcSafeNaturalTerrainPoint(subject);
+      return {
+        intent: "civic-response", intentLabel: "前往街區事件現場協調處理", eventKey,
+        target: {
+          ...target, district: perception.event.district, label: perception.event.title,
+          reason: `前往${perception.event.district}了解事件並確認權責單位已接手`,
+          activity: "listening", dwellSeconds: 6, outdoorVenue: true,
+        },
+        memoryType: "coordination", memorySummary: "街區事件協調",
+      };
+    }
+  }
+  if (agent.kind === "candidate" && agent.pendingFollowUp) {
+    const target = smartNpcPublicStop(npc, agent.conversationCount);
+    return target ? {
+      intent: "local-follow-up", intentLabel: "整理剛才聽到的在地意見", target,
+      memoryType: "follow-up", memorySummary: "居民意見後續走訪",
+    } : null;
+  }
+  if (now < agent.nextProactiveAt || reducedMotion) return null;
+  const target = smartNpcPublicStop(npc, agent.memory.length);
+  if (!target) return null;
+  return {
+    intent: agent.kind === "police" ? "proactive-patrol" : "proactive-visit",
+    intentLabel: agent.kind === "police" ? "依轄區安排安全巡查" : "走訪公共場所並整理現場需求",
+    target,
+    memoryType: "routine",
+    memorySummary: agent.kind === "police" ? "轄區安全巡查" : "公共場所需求走訪",
+  };
+}
+
+function beginSmartNpcPlan(npc, proposal, now = performance.now()) {
+  const agent = npc.smartAgent;
+  if (!agent || agent.plan || !proposal?.target) return false;
+  const routineSchedule = npc.schedule;
+  const origin = {
+    x: npc.x, y: npc.y, district: districtAtPoint(npc) || npc.district,
+    label: "原行程位置", reason: "完成判斷任務後回到原本行程",
+    activity: "waiting", dwellSeconds: 1, outdoorVenue: true,
+  };
+  agent.plan = {
+    routineSchedule,
+    routineSegment: npc.segment,
+    routineProgress: npc.progress,
+    routineDwellRemaining: npc.dwellRemaining,
+    returnIndex: 2,
+  };
+  agent.intent = proposal.intent;
+  agent.intentLabel = proposal.intentLabel;
+  agent.lastEventKey = proposal.eventKey || agent.lastEventKey;
+  agent.pendingFollowUp = false;
+  agent.nextProactiveAt = now + SMART_NPC_PROACTIVE_COOLDOWN_MS;
+  rememberSmartNpc(npc, proposal.memoryType, proposal.target.district, proposal.memorySummary, now);
+  if (proposal.unsafeResident) {
+    proposal.unsafeResident.x = proposal.target.x;
+    proposal.unsafeResident.y = proposal.target.y;
+    proposal.unsafeResident.currentReason = "依警察引導回到安全步道，避開河道、海域與山區";
+  }
+  npc.schedule = [origin, proposal.target, origin];
+  npc.segment = 0;
+  npc.progress = 0;
+  npc.dwellRemaining = 0;
+  npc.insideVenueId = "";
+  npc.ridingBike = false;
+  npc.currentReason = proposal.target.reason;
+  return true;
+}
+
+function finishSmartNpcPlan(npc) {
+  const agent = npc.smartAgent;
+  const plan = agent?.plan;
+  if (!plan) return;
+  npc.schedule = plan.routineSchedule;
+  npc.segment = plan.routineSegment;
+  npc.progress = plan.routineProgress;
+  npc.dwellRemaining = Math.max(1.5, plan.routineDwellRemaining || 0);
+  npc.insideVenueId = "";
+  npc.ridingBike = false;
+  npc.activity = "waiting";
+  agent.plan = null;
+  agent.intent = "observing";
+  agent.intentLabel = "完成任務並回到原行程";
+  npc.currentReason = agent.intentLabel;
+}
+
+function updateSmartNpcAgent(npc, index, delta) {
+  const agent = npc.smartAgent;
+  if (!agent) return false;
+  const hour = Number(state.environment?.clock?.hour ?? 12);
+  if (agent.plan && agent.kind === "civic-leader" && (hour >= 23 || hour < 7)) finishSmartNpcPlan(npc);
+  if (agent.plan) return true;
+  agent.decisionElapsed += delta;
+  if (agent.decisionElapsed < agent.decisionInterval) return false;
+  agent.decisionElapsed = 0;
+  const perception = smartNpcPerception(npc);
+  const proposal = smartNpcProposal(npc, perception, performance.now() + index);
+  if (proposal) beginSmartNpcPlan(npc, proposal);
+  return Boolean(agent.plan);
+}
+
+function notifySmartNpcTownEvent(event, now = performance.now()) {
+  if (!event) return;
+  state.npcs.filter((npc) => npc.smartAgent
+    && smartNpcDistrictInJurisdiction(npc.smartAgent, event.district))
+    .forEach((npc) => {
+      if (npc.smartAgent.kind === "civic-leader") {
+        rememberSmartNpc(npc, "event-outcome", event.district, "街區事件追蹤", now);
+      } else if (npc.smartAgent.kind === "police" && event.type === "theft") {
+        rememberSmartNpc(npc, "event-outcome", event.district, "公共安全應變", now);
+      }
+    });
+}
+
 function updateNpcs(delta) {
   refreshActiveNpcSimulationSet(delta);
   state.npcs.forEach((npc, index) => {
@@ -5472,6 +6212,7 @@ function updateNpcs(delta) {
       // 畫面內角色必須逐影格移動；捨棄離鏡期間不足一個粗更新週期的餘量，避免重新入鏡時跳位。
       npc.coarseElapsed = 0;
     }
+    updateNpcLifeState(npc, npcDelta, performance.now());
     if (updateNpcAppearance(npc, npcDelta)) return;
     if (npc.isCollapsed || npc.isSocializing || npc.isInTownMoment) {
       npc.isMoving = false;
@@ -5487,13 +6228,18 @@ function updateNpcs(delta) {
       npc.ridingBike = false;
       return;
     }
-    transitionNeighborTimeRoutine(npc);
-    const civicAfterHours = transitionNeighborCivicAfterHoursRoutine(npc, index)
-      || transitionCivicAfterHoursRoutine(npc, index);
-    if (!civicAfterHours && !CIVIC_AFTER_HOURS_ROLES.has(npc.role) && !NEIGHBOR_CIVIC_ROLES.has(npc.role)) {
-      maybeStartEveningShoppingTrip(npc, index);
+    const lifePlanActive = Boolean(npc.life?.followUpPlan) || maybeStartNpcNeedPlan(npc, performance.now());
+    const smartPlanActive = !lifePlanActive && updateSmartNpcAgent(npc, index, npcDelta);
+    let civicAfterHours = false;
+    if (!smartPlanActive && !lifePlanActive) {
+      transitionNeighborTimeRoutine(npc);
+      civicAfterHours = transitionNeighborCivicAfterHoursRoutine(npc, index)
+        || transitionCivicAfterHoursRoutine(npc, index);
+      if (!civicAfterHours && !CIVIC_AFTER_HOURS_ROLES.has(npc.role) && !NEIGHBOR_CIVIC_ROLES.has(npc.role)) {
+        maybeStartEveningShoppingTrip(npc, index);
+      }
     }
-    if (!civicAfterHours && state.environment?.isRaining && !npc.hasUmbrella && !RAIN_DUTY_ROLES.has(npc.role) && index % 3 !== 0) {
+    if (!smartPlanActive && !lifePlanActive && !civicAfterHours && state.environment?.isRaining && !npc.hasUmbrella && !RAIN_DUTY_ROLES.has(npc.role) && index % 3 !== 0) {
       const shelter = rainShelterForNpc(npc, index);
       if (shelter) {
         npc.x = shelter.x + shelter.w / 2 + index % 3 * 10 - 10;
@@ -5521,8 +6267,12 @@ function updateNpcs(delta) {
       npc.riverbankSiteId = stop?.riverbankSiteId || "";
       npc.insideVenueId = stop?.outdoorVenue || OUTDOOR_ACTIVITIES.has(npc.activity) ? "" : (stop?.venueId || "");
       if (stop && OUTDOOR_ACTIVITIES.has(npc.activity)) {
-        npc.x = stop.x + (index % 3 - 1) * 12;
-        npc.y = stop.y + (npc.activity === "queuing" ? index % 3 * 8 : 0);
+        const safeStop = npcSafeNaturalTerrainPoint({
+          x: stop.x + (index % 3 - 1) * 12,
+          y: stop.y + (npc.activity === "queuing" ? index % 3 * 8 : 0),
+        });
+        npc.x = safeStop.x;
+        npc.y = safeStop.y;
       }
       if (stop?.facing) npc.direction = stop.facing;
       npc.currentReason = activityReason(npc.activity, stop?.label || npc.district, npc.currentReason);
@@ -5535,16 +6285,19 @@ function updateNpcs(delta) {
     npc.insideVenueId = "";
     const from = npc.schedule[npc.segment % npc.schedule.length];
     const to = npc.schedule[(npc.segment + 1) % npc.schedule.length];
-    const distance = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    const route = cachedNpcSegmentRoute(from, to);
+    const distance = npcRouteLength(route);
     const ridingBike = segmentUsesBike(npc, from, to);
     npc.ridingBike = ridingBike;
+    const previousProgress = npc.progress;
     npc.progress += npc.speed * (ridingBike ? BIKE_SPEED_MULTIPLIER : 1) * npcDelta / distance;
     if (npc.progress >= 1) {
       const arrivedByBike = npc.ridingBike;
+      const safeArrival = route.at(-1);
       npc.segment = (npc.segment + 1) % npc.schedule.length;
       npc.progress = 0;
-      npc.x = to.x;
-      npc.y = to.y;
+      npc.x = safeArrival.x;
+      npc.y = safeArrival.y;
       npc.dwellRemaining = to.dwellSeconds;
       npc.currentReason = to.reason;
       npc.activity = contextualActivityForNpc(npc, to, index);
@@ -5555,12 +6308,26 @@ function updateNpcs(delta) {
       if (npc.eveningExcursion && npc.segment === npc.eveningExcursion.returnIndex) {
         finishEveningShoppingTrip(npc);
       }
+      if (npc.smartAgent?.plan && npc.segment === npc.smartAgent.plan.returnIndex) {
+        finishSmartNpcPlan(npc);
+      }
+      if (npc.life?.followUpPlan && npc.segment === npc.life.followUpPlan.returnIndex) {
+        finishNpcLifeFollowUp(npc, performance.now());
+      }
       return;
     }
     const currentFrom = npc.schedule[npc.segment];
     const currentTo = npc.schedule[(npc.segment + 1) % npc.schedule.length];
-    npc.x = currentFrom.x + (currentTo.x - currentFrom.x) * npc.progress;
-    npc.y = currentFrom.y + (currentTo.y - currentFrom.y) * npc.progress;
+    const proposedPoint = npcPointAlongRoute(route, npc.progress);
+    const previousPoint = { x: npc.x, y: npc.y };
+    if (!npcNaturalTerrainMoveAllowed(previousPoint, proposedPoint)) {
+      npc.progress = previousProgress;
+      npc.isMoving = false;
+      npc.ridingBike = false;
+      return;
+    }
+    npc.x = proposedPoint.x;
+    npc.y = proposedPoint.y;
     npc.currentReason = ridingBike
       ? `從 YouBike 站借車，正沿道路騎往${currentTo.label}`
       : npc.hasLeashedDog
@@ -5569,9 +6336,11 @@ function updateNpcs(delta) {
     npc.activity = ridingBike ? "cycling" : "walking";
     npc.riverbankSiteId = "";
     npc.isMoving = true;
-    npc.direction = Math.abs(currentTo.x - currentFrom.x) > Math.abs(currentTo.y - currentFrom.y)
-      ? (currentTo.x > currentFrom.x ? "right" : "left")
-      : (currentTo.y > currentFrom.y ? "down" : "up");
+    const movedX = npc.x - previousPoint.x;
+    const movedY = npc.y - previousPoint.y;
+    npc.direction = Math.abs(movedX) > Math.abs(movedY)
+      ? (movedX > 0 ? "right" : "left")
+      : (movedY > 0 ? "down" : "up");
     npc.step += npcDelta * (ridingBike ? 10 : 6);
     });
   });
@@ -5807,6 +6576,22 @@ function chooseBirdTarget(bird, index) {
   };
 }
 
+function ambientConversationTurnDuration(turn) {
+  const text = String(turn?.text || "").trim();
+  const characterCount = Array.from(text).length;
+  const punctuationCount = text.match(/[，。！？；：,.!?;:]/g)?.length || 0;
+  return Math.round(Math.max(
+    AMBIENT_TURN_MIN_MS,
+    Math.min(AMBIENT_TURN_MAX_MS, 2_200 + characterCount * 145 + punctuationCount * 240),
+  ));
+}
+
+function ambientPairRecentlyTalked(pairKey, now = performance.now()) {
+  return state.conversationMemory.some((memory) => memory.pairKey === pairKey
+    && Number.isFinite(memory.endedAt)
+    && now - memory.endedAt < AMBIENT_PAIR_COOLDOWN_MS);
+}
+
 function updateAmbientConversation(now) {
   if (state.townEvent || state.dialogueNpc || refs.dialog.open) {
     endAmbientConversation(now, 5_000);
@@ -5814,8 +6599,12 @@ function updateAmbientConversation(now) {
   }
   const conversation = state.ambientConversation;
   if (conversation) {
-    if (state.player.isMoving) {
-      endAmbientConversation(now, 6_000);
+    const playerDistance = Math.min(
+      Math.hypot(state.player.x - conversation.first.x, state.player.y - conversation.first.y),
+      Math.hypot(state.player.x - conversation.second.x, state.player.y - conversation.second.y),
+    );
+    if (now >= conversation.playerGraceUntil && playerDistance > AMBIENT_PLAYER_DISMISS_DISTANCE) {
+      endAmbientConversation(now, AMBIENT_CONVERSATION_MIN_GAP_MS);
       return;
     }
     const turn = conversation.turns[conversation.turnIndex];
@@ -5831,10 +6620,12 @@ function updateAmbientConversation(now) {
     if (now >= conversation.nextTurnAt) {
       conversation.turnIndex += 1;
       if (conversation.turnIndex >= conversation.turns.length) {
-        endAmbientConversation(now, 7_000 + conversation.seed % 5_000);
+        endAmbientConversation(now, AMBIENT_CONVERSATION_MIN_GAP_MS + conversation.seed % 3_000);
       } else {
         conversation.visibleAfter = now + (reducedMotion ? 80 : 220);
-        conversation.nextTurnAt = now + 2_700 + conversation.turnIndex % 2 * 350;
+        conversation.nextTurnAt = now + ambientConversationTurnDuration(
+          conversation.turns[conversation.turnIndex],
+        );
       }
     }
     return;
@@ -5842,20 +6633,21 @@ function updateAmbientConversation(now) {
   if (now < state.nextConversationAt || !state.activeDistrict) return;
   const pair = findConversationPair();
   if (!pair) {
-    state.nextConversationAt = now + 4_000;
+    state.nextConversationAt = now + AMBIENT_CONVERSATION_RETRY_MS;
     return;
   }
   startAmbientConversation(pair[0], pair[1], now);
 }
 
 function findConversationPair() {
-  pruneConversationMemory(performance.now());
+  const now = performance.now();
+  pruneConversationMemory(now);
   const nearby = state.npcs.filter((npc) => !npc.insideVenueId
     && !npc.ridingBike
     && !npc.isCollapsed
     && (districtAtPoint(npc) || npc.district) === state.activeDistrict
-    && Math.abs(npc.x - state.player.x) < WIDTH * 0.7
-    && Math.abs(npc.y - state.player.y) < HEIGHT * 0.7);
+    && Math.abs(npc.x - state.player.x) < WIDTH * 0.9
+    && Math.abs(npc.y - state.player.y) < HEIGHT * 0.9);
   const candidates = [];
   for (let firstIndex = 0; firstIndex < nearby.length; firstIndex += 1) {
     for (let secondIndex = firstIndex + 1; secondIndex < nearby.length; secondIndex += 1) {
@@ -5863,14 +6655,27 @@ function findConversationPair() {
       const second = nearby[secondIndex];
       const pairKey = [first.name, second.name].sort().join("|");
       const distance = Math.hypot(first.x - second.x, first.y - second.y);
-      if (distance <= 180 && !state.conversationMemory.some((memory) => memory.pairKey === pairKey)) {
+      if (distance <= 240 && !ambientPairRecentlyTalked(pairKey, now)) {
         const relationship = relationshipBetween(first, second);
         const relationshipPriority = ["parent-child", "classmates", "coworkers", "neighbors"].indexOf(relationship);
-        candidates.push({ first, second, pairKey, distance, relationshipPriority: relationshipPriority < 0 ? 5 : relationshipPriority });
+        const bondStrength = Math.max(first.life?.bonds?.get(second.name) || 0, second.life?.bonds?.get(first.name) || 0);
+        const socialPriority = Math.min(first.life?.needs?.social ?? 100, second.life?.needs?.social ?? 100);
+        candidates.push({
+          first,
+          second,
+          pairKey,
+          distance,
+          bondStrength,
+          socialPriority,
+          relationshipPriority: relationshipPriority < 0 ? 5 : relationshipPriority,
+        });
       }
     }
   }
-  candidates.sort((a, b) => a.relationshipPriority - b.relationshipPriority || a.distance - b.distance);
+  candidates.sort((a, b) => a.relationshipPriority - b.relationshipPriority
+    || a.socialPriority - b.socialPriority
+    || b.bondStrength - a.bondStrength
+    || a.distance - b.distance);
   return candidates.length ? [candidates[0].first, candidates[0].second] : null;
 }
 
@@ -5890,9 +6695,11 @@ function startAmbientConversation(first, second, now) {
     pairKey,
     topicId: context.topicId,
     relationship: context.relationship,
+    lifeContext: context,
     turnIndex: 0,
     visibleAfter: now + (reducedMotion ? 80 : 220),
-    nextTurnAt: now + 2_900,
+    nextTurnAt: now + ambientConversationTurnDuration(turns[0]),
+    playerGraceUntil: now + AMBIENT_PLAYER_GRACE_MS,
     seed,
   };
 }
@@ -5910,6 +6717,14 @@ function endAmbientConversation(now = performance.now(), delay = 7_000) {
       relationship: conversation.relationship,
       endedAt: now,
     });
+    if (conversation.turnIndex >= conversation.turns.length - 1) {
+      applyNpcConversationOutcome(
+        conversation.first,
+        conversation.second,
+        conversation.lifeContext || { topicId: conversation.topicId },
+        now,
+      );
+    }
   }
   state.ambientConversation = null;
   state.nextConversationAt = Math.max(state.nextConversationAt, now + delay);
@@ -5933,18 +6748,26 @@ function buildConversationContext(first, second, now = performance.now()) {
     firstActivity: first.activity || "waiting",
     secondActivity: second.activity || "waiting",
     rumor: latestTownRumor(first.district),
+    sharedMemory: latestSharedNpcLifeMemory(first, second, now),
   };
 }
 
 function selectConversationTopic(first, second, recentTopics, now) {
   if ([first.role, second.role].includes("candidate")) return "civic-campaign";
   const rumor = latestTownRumor(first.district, now);
+  const needs = [first.life?.needs, second.life?.needs].filter(Boolean);
+  const lowEnergy = needs.some((item) => item.energy < 38);
+  const hungry = needs.some((item) => item.hunger < 38);
+  const lonely = needs.some((item) => item.social < 38);
   const pool = [
     ...DAILY_TOPIC_IDS,
     "errands", "family", "shopping", "neighborhood", "rest", "animals",
     "cooking", "lunch",
     ...(state.environment?.isRaining ? ["weather", "weather", "weather"] : []),
     ...(rumor ? ["town-news", "town-news"] : []),
+    ...(lowEnergy ? ["rest", "rest", "rest"] : []),
+    ...(hungry ? ["shopping", "cooking", "lunch", "lunch"] : []),
+    ...(lonely ? ["family", "neighborhood", "neighborhood"] : []),
   ];
   const available = pool.filter((topicId) => !recentTopics.has(topicId));
   const choices = available.length ? available : pool;
@@ -5963,6 +6786,12 @@ function conversationTurns(first, second, context) {
     ];
   }
   const turns = buildDailyTopicTurns(context.topicId, first, second, context);
+  if (context.sharedMemory) {
+    turns.unshift(
+      { speaker: first, text: `我記得我們上次聊過${context.sharedMemory.summary}，後來事情真的有接著往下走。` },
+      { speaker: second, text: "我也記得；不是聊完就消失，今天還能接著說。" },
+    );
+  }
   const familiar = ["parent-child", "classmates", "coworkers", "neighbors"].includes(context.relationship);
   const requestedLength = Math.round((first.personality.turnCount + second.personality.turnCount) / 2);
   const turnCount = Math.max(2, Math.min(familiar ? 4 : 2, requestedLength));
@@ -6424,6 +7253,7 @@ function chooseTownEventAction(choiceId) {
       ? "剛才有人突然失去反應，居民立刻求援、保持通道並由救護人員接手。"
       : "剛才店家通報失竊，居民保持安全距離並把親眼看到的方向提供給警方。",
   );
+  notifySmartNpcTownEvent(event);
   renderTownEvent();
   announce(event.result);
 }
@@ -7734,15 +8564,12 @@ function drawNeighborCountyDetails(now) {
       const landmarks = countyTheme.landmarks.filter((landmark) => landmark.district === districtTheme.name);
       landmarks.forEach((landmark, landmarkIndex) => drawNeighborCountyLandmark(configured, landmark, landmarkIndex));
     });
-    const signLabel = availableCount === schoolCount
-      ? "當日午餐已更新"
-      : "學校午餐查詢";
     drawLunchInfoSign(
       county.bridgeX + (county.side === "north" ? 92 : -258),
       county.side === "north" ? county.y + county.h - 104 : county.y + 8,
       now,
       index,
-      signLabel,
+      `歡迎來到${county.name}`,
     );
   });
 }
@@ -11430,7 +12257,15 @@ function openVenue(venue, method = "nearby_action") {
 }
 
 function npcDialogueExpression(npc) {
-  const baseExpression = npc?.expression || "calm";
+  const moodExpression = {
+    疲倦: "calm",
+    有點餓: "thoughtful",
+    想找人聊聊: "gentle",
+    專心: "focused",
+    有精神: "happy",
+    放鬆: "gentle",
+  }[npc?.mood];
+  const baseExpression = moodExpression || npc?.expression || "calm";
   const line = state.dialogueLines[state.dialogueStep] || npc?.dialogues?.[0] || "";
   if (/(注意|確認|安全|小心|check|confirm|safe|careful)/i.test(line)) return "focused";
   if (/[?？]/.test(line)) return "curious";
@@ -11533,10 +12368,16 @@ function renderNpcDialogue() {
   const expressionLabel = characterExpressionLabel(expression);
   npc.dialogueExpression = expression;
   refs.npcName.textContent = npcDisplayName(npc);
-  refs.npcRole.textContent = townText(`${npc.district}・${ROLE_LABELS[npc.role]}・住家：${npc.residenceLabel || "小鎮住宅"}・${npc.personality.label}・${npc.currentReason}`);
+  const smartContext = npc.smartAgent
+    ? `・${townText("智慧角色")}・${townText(npc.smartAgent.intentLabel)}`
+    : "";
+  const lifeContext = npc.life
+    ? `・${townText("心情")}：${townText(npc.mood)}・${townText("目前想做")}：${townText(npc.life.goalLabel)}`
+    : "";
+  refs.npcRole.textContent = `${townText(`${npc.district}・${ROLE_LABELS[npc.role]}・住家：${npc.residenceLabel || "小鎮住宅"}・${npc.personality.label}・${npc.currentReason}`)}${lifeContext}${smartContext}`;
   const sourceUrl = npc.campaignSourceUrl || npc.sourceUrl;
   refs.npcSource.hidden = !sourceUrl;
-  refs.npcSource.textContent = npc.role === "candidate" ? "候選人公開資料" : "公開身分來源";
+  refs.npcSource.textContent = townText(npc.role === "candidate" ? "候選人公開資料" : "公開身分來源");
   if (sourceUrl) refs.npcSource.href = sourceUrl;
   refs.npcText.textContent = state.dialogueLines[state.dialogueStep] || npc.dialogues[0];
   refs.npcNext.textContent = state.dialogueStep >= state.dialogueLines.length - 1 ? "結束對話" : "再聊一句";
@@ -11564,14 +12405,24 @@ function advanceNpcDialogue() {
 
 function closeNpcDialogue() {
   if (state.dialogueNpc && state.dialogueTopicId) {
+    const npc = state.dialogueNpc;
+    const now = performance.now();
     rememberConversation({
-      pairKey: `player|${state.dialogueNpc.name}`,
+      pairKey: `player|${npc.name}`,
       topicId: state.dialogueTopicId,
       relationship: "visitor",
-      endedAt: performance.now(),
+      endedAt: now,
     });
-    state.dialogueNpc.activity = "waiting";
-    state.dialogueNpc.dialogueExpression = "";
+    if (npc.life) {
+      const summary = npcLifeTopicSummary(state.dialogueTopicId);
+      npc.life.playerFamiliarity += 1;
+      npc.life.needs.social = clampNpcNeed(npc.life.needs.social + 18);
+      npc.life.needs.purpose = clampNpcNeed(npc.life.needs.purpose + 3);
+      rememberNpcLifeEvent(npc, "player-conversation", state.dialogueTopicId, summary, "玩家", now);
+      beginNpcLifeFollowUp(npc, state.dialogueTopicId, now);
+    }
+    npc.activity = "waiting";
+    npc.dialogueExpression = "";
   }
   state.dialogueNpc = null;
   state.dialogueStep = 0;
@@ -11584,13 +12435,17 @@ function closeNpcDialogue() {
 }
 
 function buildPlayerConversation(npc) {
+  if (npc.smartAgent) return buildSmartNpcConversation(npc);
   if (npc.featuredResident && ROLE_DIALOGUES[npc.role]?.length) {
     const dialogue = ROLE_DIALOGUES[npc.role];
     const start = npc.dialogueCursor % dialogue.length;
     npc.dialogueCursor = (start + 1) % dialogue.length;
     return {
       topicId: `resident-${npc.role}`,
-      lines: Array.from({ length: 3 }, (_, index) => dialogue[(start + index) % dialogue.length]),
+      lines: npcPlayerMemoryLines(
+        npc,
+        Array.from({ length: 3 }, (_, index) => dialogue[(start + index) % dialogue.length]),
+      ),
     };
   }
   if (npc.role === "candidate") {
@@ -11628,7 +12483,35 @@ function buildPlayerConversation(npc) {
     lines[lines.length - 1] = ROLE_DIALOGUES[npc.role][npc.dialogueCursor % ROLE_DIALOGUES[npc.role].length];
     npc.dialogueCursor = (npc.dialogueCursor + 1) % ROLE_DIALOGUES[npc.role].length;
   }
-  return { topicId, lines };
+  return { topicId, lines: npcPlayerMemoryLines(npc, lines, now) };
+}
+
+function buildSmartNpcConversation(npc) {
+  const agent = npc.smartAgent;
+  const prior = agent.memory.at(-1);
+  const location = nearestLocationLabel(npc);
+  const lines = [townText(`我目前在${location}，正在${agent.intentLabel}。`)];
+  if (prior) {
+    lines.push(townText(`我記得先前在${prior.district}完成過${prior.summary}；這次會接著已記錄的進度處理。`));
+  } else {
+    lines.push(townText("這段記憶只保留在這次小鎮遊玩，用來延續剛才的事件與對話。"));
+  }
+  if (agent.kind === "candidate") {
+    lines.unshift(townText("今天會走訪市場、小吃店與公共空間；你可以比較每位候選人的公開資料再自行判斷。"));
+    lines.push(townText("公職與候選人身分依公開資料；小鎮對話為介面情境，不代表本人引言、背書或政見。"));
+    agent.pendingFollowUp = true;
+  } else if (agent.kind === "civic-leader") {
+    lines.push(townText("我會先確認地點與現場狀況，再安排權責單位接手並留下處理紀錄。"));
+    lines.push(townText("涉及真實公職身分的內容只採既有公開來源，不用遊戲對話補寫政策或承諾。"));
+  } else {
+    lines.push(townText("發現人物進入河道、海域或山區時，我會先引導到安全步道，再記錄地點與狀況。"));
+    lines.push(townText("街區事件以現場安全和官方指引為優先，不自行猜測身分或追逐攔人。"));
+  }
+  agent.conversationCount += 1;
+  agent.intent = "player-conversation";
+  agent.intentLabel = agent.kind === "candidate" ? "聽取居民意見並核對公開資料" : agent.defaultIntent;
+  rememberSmartNpc(npc, "conversation", districtAtPoint(npc) || npc.district, "居民對話", performance.now());
+  return { topicId: `smart-${agent.kind}`, lines };
 }
 
 function drawNearbyNpcMarker() {
@@ -11641,7 +12524,7 @@ function drawNearbyNpcMarker() {
   context.font = "bold 12px ui-monospace, monospace";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText("!", Math.round(npc.x), Math.round(npc.y) - 36);
+  context.fillText(npc.smartAgent ? "◆" : "!", Math.round(npc.x), Math.round(npc.y) - 36);
 }
 
 function openNeighborSchool(school, method = "nearby_action") {

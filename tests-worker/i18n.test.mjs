@@ -144,6 +144,8 @@ test('English localizes Lunch Town dialogue and City Hall after-hours routines',
   assert.equal(api.t('臺中・苗栗・彰化午餐小鎮'), 'Taichung · Miaoli · Changhua Lunch Town');
   assert.equal(api.t('各校當日午餐可查詢'), "Check today's lunch for any school");
   assert.equal(api.t('學校午餐查詢'), 'School lunch lookup');
+  assert.equal(api.t('歡迎來到苗栗縣'), 'Welcome to Miaoli County');
+  assert.equal(api.t('歡迎來到彰化縣'), 'Welcome to Changhua County');
   assert.equal(api.t('午餐資料持續更新'), 'Lunch data update in progress');
   assert.equal(api.t('當日午餐已更新'), "Today's lunch data is ready");
   assert.equal(api.t('回家報到'), 'Check in at home');
@@ -207,6 +209,33 @@ test('English localizes Changhua jobs, work zones, and four-period routines', ()
   );
   assert.equal(api.t('深夜回到田尾鄉住家休息'), 'Returning home in Tianwei Township for the night');
   assert.equal(api.t('彰化縣跨縣橋入口'), 'Changhua County county-bridge entrance');
+});
+
+test('English fully localizes adaptive civic-agent status, memory, and route reasons', () => {
+  const { api } = load();
+  assert.equal(api.t('何欣純'), 'Ho Hsin-chun');
+  assert.equal(api.t('智慧角色'), 'Adaptive role');
+  assert.equal(
+    api.t('我目前在彰化市，正在觀察縣市服務與街區狀況。'),
+    'I am currently at Changhua City, reviewing local services and neighborhood conditions.',
+  );
+  assert.equal(
+    api.t('我記得先前在苗栗市完成過轄區安全巡查；這次會接著已記錄的進度處理。'),
+    'I remember completing assigned-area safety patrol in Miaoli City; I will continue from that recorded progress.',
+  );
+  assert.equal(
+    api.t('到八卦山大佛走訪並確認現場狀況'),
+    'Visiting Bagua Mountain Great Buddha to check conditions on site',
+  );
+  assert.equal(
+    api.t('前往彰化市事件現場，依通報確認方向與安全動線'),
+    'Heading to the incident in Changhua City to verify the reported direction and safe access route',
+  );
+  for (const text of [
+    api.t('我目前在彰化市，正在觀察縣市服務與街區狀況。'),
+    api.t('我記得先前在苗栗市完成過轄區安全巡查；這次會接著已記錄的進度處理。'),
+    api.t('前往彰化市事件現場，依通報確認方向與安全動線'),
+  ]) assert.doesNotMatch(text, /[\u3400-\u9fff]/u);
 });
 
 test('language changes restore Chinese, preserve raw source text and form values, and handle later renders', () => {
