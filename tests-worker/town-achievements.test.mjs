@@ -131,7 +131,7 @@ test("signed-out visitors can preview all Taichung achievements without saved pr
   assert.equal(response.headers.get("cache-control"), "private, no-store");
   assert.equal(payload.authenticated, false);
   assert.equal(payload.city.id, "taichung");
-  assert.equal(payload.achievements.length, 19);
+  assert.equal(payload.achievements.length, 20);
   assert.equal(payload.summary.unlocked, 0);
   assert.equal(payload.futureCities.available, false);
 });
@@ -192,6 +192,25 @@ test("three distinct medical assists unlock the account-bound lifesaver achievem
   assert.equal(lifesaver.progress, 3);
   assert.equal(lifesaver.unlocked, true);
   assert.ok(lifesaver.unlockedAt);
+});
+
+test("six distinct flower festival stamps unlock once and duplicate stamps stay idempotent", async () => {
+  const { db, route } = routeFixture();
+  const stampIds = ["welcome", "castle", "pastel-field", "sunset-field", "market", "overlook"];
+  for (const id of [...stampIds, "welcome"]) {
+    const response = await route.POST(request("POST", {
+      city: "taichung",
+      eventType: "flower_festival_stamp",
+      subjectId: `xinshe-flower-season:${id}`,
+    }));
+    assert.equal(response.status, 200);
+  }
+  assert.equal(db.events.filter((item) => item.event_type === "flower_festival_stamp").length, 6);
+  assert.equal(db.unlocks.filter((item) => item.achievement_id === "taichung:flower-festival-six").length, 1);
+  const payload = await (await route.GET(request())).json();
+  const flowerAchievement = payload.achievements.find((item) => item.id === "taichung:flower-festival-six");
+  assert.equal(flowerAchievement.progress, 6);
+  assert.equal(flowerAchievement.unlocked, true);
 });
 
 test("progress is isolated per family account and distinct calendar day", async () => {

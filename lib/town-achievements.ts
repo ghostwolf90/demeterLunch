@@ -11,6 +11,7 @@ export const TOWN_ACHIEVEMENT_EVENT_TYPES = [
   "town_moment",
   "bike_rental",
   "daily_story",
+  "flower_festival_stamp",
 ] as const;
 
 export type TownAchievementEventType = typeof TOWN_ACHIEVEMENT_EVENT_TYPES[number];
@@ -18,7 +19,7 @@ export type TownAchievementEventType = typeof TOWN_ACHIEVEMENT_EVENT_TYPES[numbe
 export type TownAchievementDefinition = {
   id: string;
   city: typeof TOWN_ACHIEVEMENT_CITY;
-  category: "return" | "explore" | "civic" | "community";
+  category: "return" | "explore" | "civic" | "community" | "seasonal";
   categoryLabel: string;
   icon: string;
   title: string;
@@ -71,6 +72,7 @@ export const TOWN_ACHIEVEMENTS: TownAchievementDefinition[] = [
   achievement("moments-five", "community", "守護街坊", "手", "熱心好鄰居", "完成 5 次低衝突的日常幫忙。", "town_moment", 5),
   achievement("bike-five", "community", "守護街坊", "輪", "單車小鎮通", "從 YouBike 站租車 5 次。", "bike_rental", 5),
   achievement("story-five", "return", "小鎮生活", "書", "街角故事收藏家", "參與 5 個不同日期的今日故事。", "daily_story", 5),
+  achievement("flower-festival-six", "seasonal", "季節活動", "花", "花海散步家", "走訪新社花海季六區並完成全部集章。", "flower_festival_stamp", 6),
 ];
 
 export type TownAchievementEventRow = {
@@ -129,6 +131,15 @@ const taichungDistricts = new Set([
   "烏日區", "大肚區", "龍井區", "霧峰區", "太平區", "大里區", "和平區",
 ]);
 
+const flowerFestivalStampIds = new Set([
+  "xinshe-flower-season:welcome",
+  "xinshe-flower-season:castle",
+  "xinshe-flower-season:pastel-field",
+  "xinshe-flower-season:sunset-field",
+  "xinshe-flower-season:market",
+  "xinshe-flower-season:overlook",
+]);
+
 export function validateTownAchievementEvent(value: unknown): {
   city: typeof TOWN_ACHIEVEMENT_CITY;
   eventType: TownAchievementEventType;
@@ -145,5 +156,6 @@ export function validateTownAchievementEvent(value: unknown): {
   if ((eventType === "town_visit" || eventType === "daily_story") && !/^\d{4}-\d{2}-\d{2}$/.test(subjectId)) return null;
   if (eventType === "district_visit" && !taichungDistricts.has(subjectId)) return null;
   if (eventType === "school_visit" && !/^\d{1,12}$/.test(subjectId)) return null;
+  if (eventType === "flower_festival_stamp" && !flowerFestivalStampIds.has(subjectId)) return null;
   return { city, eventType: eventType as TownAchievementEventType, subjectId };
 }

@@ -1,3 +1,27 @@
+import {
+  FLOWER_FESTIVAL_ENTRY,
+  FLOWER_FESTIVAL_END_DATE,
+  FLOWER_FESTIVAL_HEIGHT,
+  FLOWER_FESTIVAL_ID,
+  FLOWER_FESTIVAL_LOCAL_NPCS,
+  FLOWER_FESTIVAL_OBJECTS,
+  FLOWER_FESTIVAL_PATHS,
+  FLOWER_FESTIVAL_PROMOTERS,
+  FLOWER_FESTIVAL_SHUTTLES,
+  FLOWER_FESTIVAL_START_DATE,
+  FLOWER_FESTIVAL_STAMPS,
+  FLOWER_FESTIVAL_WIDTH,
+  captureFlowerFestivalReturnState,
+  clampFlowerFestivalPoint,
+  drawFlowerFestivalScene,
+  flowerFestivalNearbyObject,
+  flowerFestivalPointWalkable,
+  flowerFestivalPhaseForDate,
+  flowerFestivalVisibleChunks,
+  flowerFestivalWalkingRoute,
+  nextFlowerFestivalShuttle,
+} from "./flower-festival.js?v=20261107-flower-festival-approach";
+
 const DESKTOP_VIEWPORT = { width: 960, height: 640 };
 const MOBILE_VIEWPORT = { width: 480, height: 600 };
 const mobileLayoutQuery = window.matchMedia("(max-width: 680px)");
@@ -47,6 +71,13 @@ const DISTRICT_GRID_WIDTH = DISTRICT_GRID_COLUMNS * DISTRICT_ZONE_WIDTH
   + (DISTRICT_GRID_COLUMNS - 1) * DISTRICT_ZONE_GAP_X;
 const DISTRICT_GRID_HEIGHT = DISTRICT_GRID_ROWS * DISTRICT_ZONE_HEIGHT
   + (DISTRICT_GRID_ROWS - 1) * DISTRICT_ZONE_GAP_Y;
+const FLOWER_FESTIVAL_APPROACH_GRID = Object.freeze([5, 2]);
+const FLOWER_FESTIVAL_APPROACH_AREA = Object.freeze({
+  x: DISTRICT_ZONE_ORIGIN_X + FLOWER_FESTIVAL_APPROACH_GRID[0] * (DISTRICT_ZONE_WIDTH + DISTRICT_ZONE_GAP_X),
+  y: DISTRICT_ZONE_ORIGIN_Y + FLOWER_FESTIVAL_APPROACH_GRID[1] * (DISTRICT_ZONE_HEIGHT + DISTRICT_ZONE_GAP_Y),
+  w: DISTRICT_ZONE_WIDTH,
+  h: DISTRICT_ZONE_HEIGHT,
+});
 const EAST_MOUNTAIN_START_X = DISTRICT_ZONE_ORIGIN_X + DISTRICT_GRID_WIDTH;
 const WORLD_WIDTH = EAST_MOUNTAIN_START_X + EAST_MOUNTAIN_WIDTH;
 const TAICHUNG_SOUTH_EDGE_Y = DISTRICT_ZONE_ORIGIN_Y + DISTRICT_GRID_HEIGHT;
@@ -144,6 +175,7 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matc
 const PLAYER_AVATAR_STORAGE_KEY = "lunchTownPlayerAvatar";
 const LEGACY_PLAYER_STYLE_STORAGE_KEY = "lunchTownPlayerStyle";
 const TAICHUNG_TIME_ZONE = "Asia/Taipei";
+const FLOWER_FESTIVAL_DATE_LABEL = "2026/10/31–11/22・共 23 天";
 const ENVIRONMENT_REFRESH_MS = 15_000;
 const RAIN_BLOCK_MINUTES = 180;
 const TOWN_EVENT_INITIAL_DELAY_MS = 120_000;
@@ -436,6 +468,7 @@ const OUTDOOR_ACTIVITIES = new Set([
   "tending-flowers", "checking-irrigation", "tending-oysters", "repairing-rail", "serving-market",
 ]);
 const ROLE_DESTINATION_PREFERENCES = {
+  "flower-ambassador": ["park", "landmark", "snack-shop", "convenience-store"],
   "coffee-lover": ["snack-shop", "landmark", "convenience-store", "park"],
   "floral-designer": ["park", "museum", "landmark", "grocery-store"],
   "fitness-coach": ["stadium", "park", "convenience-store"],
@@ -488,6 +521,7 @@ const ROLE_DESTINATION_PREFERENCES = {
 };
 
 const ROLE_OUTFIT_STYLES = {
+  "flower-ambassador": ["fashionable"],
   "coffee-lover": ["leather-jacket"],
   "floral-designer": ["ivory-dress"],
   "fitness-coach": ["athletic-set"],
@@ -547,6 +581,10 @@ const ROLE_OUTFIT_STYLES = {
 };
 
 const CHARACTER_PROFILES = [
+  { role: "flower-ambassador", gender: "female", variant: "pink", skin: "#efb792", hair: "#4a2d3b", hairStyle: "long-wavy", outfit: "#d85f8a", outfitDark: "#783e61", accent: "#ffe0a1", expression: "cheerful", accessory: "sash", bodyStyle: "feminine", makeup: true },
+  { role: "flower-ambassador", gender: "female", variant: "white", skin: "#d99472", hair: "#2c2630", hairStyle: "high-ponytail", outfit: "#f5eee5", outfitDark: "#9b7191", accent: "#efb9d2", expression: "happy", accessory: "sash", bodyStyle: "feminine", makeup: true },
+  { role: "flower-ambassador", gender: "female", variant: "orange", skin: "#efb58b", hair: "#60382d", hairStyle: "braid", outfit: "#e47a50", outfitDark: "#8a4749", accent: "#ffd36f", expression: "cheerful", accessory: "sash", bodyStyle: "feminine", makeup: true },
+  { role: "flower-ambassador", gender: "female", variant: "violet", skin: "#c98768", hair: "#28232e", hairStyle: "shoulder-length", outfit: "#9b6bc1", outfitDark: "#55456f", accent: "#f0c4df", expression: "confident", accessory: "sash", bodyStyle: "feminine", makeup: true },
   { role: "student", gender: "male", ageGroup: "child", skin: "#efbd91", hair: "#302623", hairStyle: "crop", outfit: "#447ea0", outfitDark: "#294f6d", accent: "#f2c657", expression: "cheerful", accessory: "backpack" },
   { role: "student", gender: "female", ageGroup: "child", skin: "#d99a70", hair: "#241f20", hairStyle: "twin-tail", outfit: "#d76248", outfitDark: "#873f3b", accent: "#f2cf6e", expression: "curious", accessory: "book", bodyStyle: "feminine" },
   { role: "student", gender: "female", ageGroup: "child", skin: "#f0c6a0", hair: "#6f4633", hairStyle: "braid", hairAccent: "#a36a4d", outfit: "#648b58", outfitDark: "#365c48", accent: "#f5d66e", expression: "cheerful", accessory: "backpack", bodyStyle: "feminine" },
@@ -856,6 +894,7 @@ const LANDMARK_HUB_DEFINITIONS = [
 ];
 
 const ROLE_LABELS = {
+  "flower-ambassador": "花海女郎",
   "coffee-lover": "咖啡愛好者",
   "floral-designer": "花藝設計師",
   "fitness-coach": "運動教練",
@@ -1385,7 +1424,7 @@ const state = {
     authenticated: false,
     account: null,
     achievements: [],
-    summary: { unlocked: 0, reached: 0, total: 19 },
+    summary: { unlocked: 0, reached: 0, total: 20 },
   },
   achievementLoadPromise: null,
   achievementWriteQueue: Promise.resolve(),
@@ -1408,6 +1447,20 @@ const state = {
   dailyQuestEventSequence: 0,
   dailyWalkPending: 0,
   dailyBridgeSides: new Map(),
+  flowerFestival: {
+    active: false,
+    phase: "",
+    returnState: null,
+    stamps: new Set(),
+    spirits: new Set(),
+    photos: new Set(),
+    visitors: [],
+    localNpcs: [],
+    visibleChunkKeys: new Set(),
+    pendingObjectId: "",
+    moveRoute: [],
+    completed: false,
+  },
 };
 
 const townMusic = {
@@ -1458,6 +1511,7 @@ async function init() {
     updateProgress();
     setLoadingProgress(58, "正在放置公園、地標、醫院與商場…");
     createTownVenues();
+    createFlowerFestivalGateway();
     applyTownMapPlacements();
     createTownCropPlots(performance.now());
     createBikeStations();
@@ -1555,6 +1609,8 @@ function bindEvents() {
       state.keys.add(direction);
       state.moveTarget = null;
       state.pendingBikeStationId = "";
+      state.flowerFestival.pendingObjectId = "";
+      state.flowerFestival.moveRoute = [];
       ensureTownFrameRunning();
     }
     if (["Enter", " "].includes(event.key) && !refs.dialog.open) {
@@ -1576,6 +1632,10 @@ function bindEvents() {
       return;
     }
     const point = canvasPoint(event);
+    if (state.flowerFestival.active) {
+      handleFlowerFestivalPointer(point);
+      return;
+    }
     state.pendingBikeStationId = "";
     const npcRadius = canvasWorldUnitsForCssPixels(mobileLayoutQuery.matches ? 28 : 22);
     const hitPadding = canvasWorldUnitsForCssPixels(mobileLayoutQuery.matches ? 14 : 4);
@@ -1655,6 +1715,8 @@ function bindEvents() {
       state.keys.add(direction);
       state.moveTarget = null;
       state.pendingBikeStationId = "";
+      state.flowerFestival.pendingObjectId = "";
+      state.flowerFestival.moveRoute = [];
       ensureTownFrameRunning();
     };
     const stop = (event) => {
@@ -2440,7 +2502,7 @@ function applyTownAchievementPayload(payload) {
     authenticated: payload?.authenticated === true,
     account: payload?.account || null,
     achievements: Array.isArray(payload?.achievements) ? payload.achievements : [],
-    summary: payload?.summary || { unlocked: 0, reached: 0, total: 19 },
+    summary: payload?.summary || { unlocked: 0, reached: 0, total: 20 },
   };
   syncTownAccountUI({ authenticated: state.achievements.authenticated });
   renderTownAchievements();
@@ -2460,7 +2522,7 @@ function renderTownAchievements() {
   refs.achievementAccountLink.textContent = authenticated ? "家庭帳號設定" : "登入／免費註冊・保存進度";
   refs.achievementAccountLink.setAttribute("aria-haspopup", "dialog");
 
-  const total = Math.max(1, Number(achievementState.summary.total) || achievementState.achievements.length || 19);
+  const total = Math.max(1, Number(achievementState.summary.total) || achievementState.achievements.length || 20);
   const unlocked = Number(achievementState.summary.unlocked) || 0;
   refs.achievementProgress.textContent = `${unlocked} / ${total}`;
   refs.achievementProgressBar.style.width = `${Math.min(100, unlocked / total * 100)}%`;
@@ -2475,7 +2537,7 @@ function renderTownAchievements() {
   const expandedCategories = new Set(
     renderedCategories.filter((category) => category.open).map((category) => category.dataset.achievementCategory),
   );
-  const categoryOrder = ["return", "explore", "civic", "community"];
+  const categoryOrder = ["return", "explore", "civic", "community", "seasonal"];
   refs.achievementList.innerHTML = categoryOrder.map((category) => {
     const items = achievementState.achievements.filter((item) => item.category === category);
     if (!items.length) return "";
@@ -3360,6 +3422,82 @@ function appendNeighborCountyCharacters() {
   });
 }
 
+function createFlowerFestivalPromoterCharacter(definition, index) {
+  const zone = DISTRICT_ZONES[definition.district];
+  if (!zone) throw new Error(`找不到花海女郎的行政區：${definition.district}`);
+  const profile = CHARACTER_PROFILES.find((candidate) => (
+    candidate.role === definition.role && candidate.variant === definition.profileVariant
+  )) || CHARACTER_PROFILES.find((candidate) => candidate.role === definition.role) || CHARACTER_PROFILES[0];
+  const lookIndex = 5_000 + index;
+  const districtEn = {
+    西區: "West District",
+    西屯區: "Xitun District",
+    豐原區: "Fengyuan District",
+    大里區: "Dali District",
+  }[definition.district] || definition.district;
+  const schedule = [
+    { x: zone.x + 96, y: zone.y + zone.h - 26, district: definition.district },
+    { x: zone.x + zone.w / 2, y: zone.y + zone.h - 26, district: definition.district },
+    { x: zone.x + zone.w - 96, y: zone.y + zone.h - 26, district: definition.district },
+  ].map((stop, stopIndex) => ({
+    ...stop,
+    label: `${definition.district}花海宣傳點`,
+    reason: `在${definition.district}提醒居民：2026 新社花海暨臺中國際花毯節 10 月 31 日至 11 月 22 日開放`,
+    reasonEn: `Reminding ${districtEn} residents that the 2026 Xinshe flower event is open from October 31 through November 22`,
+    dwellSeconds: 14 + (index + stopIndex) % 5,
+    activity: "greeting",
+    outdoorVenue: true,
+  }));
+  const start = schedule[index % schedule.length];
+  return {
+    ...profile,
+    ...definition,
+    flowerFestivalPromoter: true,
+    festivalDialogues: [...definition.dialogues],
+    lookIndex,
+    schedule,
+    segment: index % schedule.length,
+    progress: 0,
+    dwellRemaining: reducedMotion ? Number.POSITIVE_INFINITY : index * 0.7,
+    currentReason: start.reason,
+    currentReasonEn: start.reasonEn,
+    speed: reducedMotion ? 0 : npcWalkingSpeed(profile.ageGroup, definition.role, lookIndex),
+    x: start.x,
+    y: start.y,
+    direction: "down",
+    step: lookIndex,
+    isMoving: false,
+    personality: NPC_PERSONALITIES[hashText(`${definition.name}-personality`) % NPC_PERSONALITIES.length],
+    mood: "有精神",
+    life: null,
+    activity: "greeting",
+    riverbankSiteId: "",
+    relationships: new Map(),
+    coarseElapsed: 0,
+    emote: "",
+    emoteUntil: 0,
+    bikePreference: false,
+    ridingBike: false,
+    eveningExcursion: null,
+    eveningVisitedDate: "",
+    civicDaySchedule: null,
+    civicAfterHoursRoutineKey: "",
+    appearanceRule: null,
+    appearanceElapsed: 0,
+    insideVenueId: flowerFestivalIsOpen() ? "" : NPC_OFFSCREEN_VENUE_ID,
+    mobilityMode: "festival-promotion",
+    smartAgent: null,
+    dialogues: [...definition.dialogues],
+    dialogueCursor: 0,
+  };
+}
+
+function appendFlowerFestivalPromoters() {
+  FLOWER_FESTIVAL_PROMOTERS.forEach((definition, index) => {
+    state.npcs.push(createFlowerFestivalPromoterCharacter(definition, index));
+  });
+}
+
 function createTownCharacters() {
   const editorNpcs = state.townMapManifest?.npcs || [];
   const serviceStaff = DISTRICT_DISPLAY_ORDER.map((district, index) => {
@@ -3478,6 +3616,7 @@ function createTownCharacters() {
   });
   appendNeighborCountyCharacters();
   if (editorNpcs.some((npc) => npc.city !== SHOWCASE_CITY)) appendTownMapNeighborCharacters();
+  appendFlowerFestivalPromoters();
   state.pets = DISTRICT_DISPLAY_ORDER.map((district, index) => {
     const zone = DISTRICT_ZONES[district];
     const kind = index % 2 ? "dog" : "cat";
@@ -4433,6 +4572,66 @@ function createTownVenues() {
   state.neighborWorkZones = createNeighborWorkZones();
 }
 
+function createFlowerFestivalGateway() {
+  const approach = FLOWER_FESTIVAL_APPROACH_AREA;
+  if (!DISTRICT_ZONES["新社區"] || state.venues.some((venue) => venue.id === "xinshe-flower-festival-gateway")) return;
+  const gateway = {
+    id: "xinshe-flower-festival-gateway",
+    district: "新社區",
+    type: "flower-festival-gateway",
+    label: "新社花海季入口",
+    labelEn: "Xinshe Flower Season entrance",
+    shortLabel: "花海季入口",
+    shortLabelEn: "Flower Season",
+    description: `2026 年 10 月 31 日至 11 月 22 日開放，共 23 天。前往好好吃飯原創的新社花季大型散步園區；場景參考花田色彩與動線，不代表官方合作。`,
+    descriptionEn: "Open from October 31 through November 22, 2026, for 23 days. Gateway to Hao Hao Food's original large flower-season walking park, inspired by field colors and paths without implying an official partnership.",
+    // 獨立使用新社區北側、四面道路圍起的空地，不再與下方行政區標籤、學校或市集共用位置。
+    x: approach.x + (approach.w - 220) / 2,
+    y: approach.y + (approach.h - 72) / 2,
+    w: 220,
+    h: 72,
+    festivalOpen: flowerFestivalIsOpen(),
+    festivalPhase: flowerFestivalPhase(),
+  };
+  const safelyInsideApproach = gateway.x >= approach.x + 24
+    && gateway.x + gateway.w <= approach.x + approach.w - 24
+    && gateway.y >= approach.y + 24
+    && gateway.y + gateway.h <= approach.y + approach.h - 24;
+  const overlapsExistingContent = [...state.schools.map((school) => school.layout), ...state.venues]
+    .some((item) => gateway.x < item.x + item.w + 12
+      && gateway.x + gateway.w + 12 > item.x
+      && gateway.y < item.y + item.h + 12
+      && gateway.y + gateway.h + 12 > item.y);
+  if (!safelyInsideApproach || overlapsExistingContent) {
+    throw new Error("新社花海季入口未能安全配置於北側花田前庭");
+  }
+  state.venues.push(gateway);
+}
+
+function flowerFestivalPhase() {
+  return flowerFestivalPhaseForDate(state.environment?.dateKey || townMealDateKey());
+}
+
+function flowerFestivalIsOpen() {
+  return flowerFestivalPhase() === "open";
+}
+
+function flowerFestivalClosedMessage(phase = flowerFestivalPhase()) {
+  const status = phase === "upcoming" ? "花海季尚未開園" : "花海季展期已結束";
+  return `${townText(status)}${townUsesEnglish() ? " · " : "｜"}${townText(FLOWER_FESTIVAL_DATE_LABEL)}`;
+}
+
+function syncFlowerFestivalAvailability() {
+  const phase = flowerFestivalPhase();
+  const gateway = state.venues.find((venue) => venue.id === "xinshe-flower-festival-gateway");
+  if (gateway) {
+    gateway.festivalPhase = phase;
+    gateway.festivalOpen = phase === "open";
+  }
+  if (phase !== "open" && state.flowerFestival.active) exitFlowerFestival("event_closed");
+  state.flowerFestival.phase = phase;
+}
+
 function applyTownMapPlacements() {
   const additions = (state.townMapManifest?.placements || []).map((placement) => {
     const zone = districtZoneForName(placement.district);
@@ -5199,6 +5398,7 @@ function updateTownEnvironment(now, force = false) {
   const wasRaining = Boolean(state.environment?.isRaining);
   state.environment = townEnvironmentAt(new Date());
   state.environmentUpdatedAt = now;
+  syncFlowerFestivalAvailability();
   const environment = state.environment;
   syncCurrentMealDate(environment);
   const condition = `${environment.phase}${environment.isRaining ? "・短暫陣雨" : ""}`;
@@ -5311,6 +5511,432 @@ function chooseDailyStory(choiceId) {
   announce(`${story.title}：${outcome}`);
 }
 
+function flowerFestivalProfile(definition, index) {
+  const matching = CHARACTER_PROFILES.filter((profile) => profile.role === definition.role);
+  const profile = varyOutfitColors(matching[index % Math.max(1, matching.length)] || CHARACTER_PROFILES[0], definition, 900 + index);
+  return {
+    ...profile,
+    ...definition,
+    festivalNpc: true,
+    festivalLocal: true,
+    festivalRoleLabel: definition.roleLabel,
+    festivalRoleLabelEn: definition.roleLabelEn,
+    festivalDialogues: [...definition.dialogues],
+    personality: NPC_PERSONALITIES[(index + 2) % NPC_PERSONALITIES.length],
+    currentReason: definition.role === "local-guide"
+      ? "在迎賓廣場介紹園區環線、捷徑與集章方式"
+      : definition.role === "flower-grower"
+        ? "在粉白花海步道旁照看花田並提醒遊客留在步道"
+        : "在菇香市集分享香菇特色與家庭晚餐搭配",
+    currentReasonEn: definition.role === "local-guide"
+      ? "Introducing the loop, shortcuts, and stamp activity at the welcome plaza"
+      : definition.role === "flower-grower"
+        ? "Tending the pastel fields and reminding visitors to stay on the paths"
+        : "Sharing mushroom facts and family dinner ideas at the market",
+    residenceLabel: "新社區住家",
+    residenceLabelEn: "Home in Xinshe",
+    mobilityMode: "festival-local",
+    activity: "greeting",
+    direction: "down",
+    step: index,
+    isMoving: false,
+    ridingBike: false,
+    insideVenueId: "",
+    dialogueCursor: 0,
+    mood: "有精神",
+    life: null,
+    smartAgent: null,
+    lookIndex: 900 + index,
+  };
+}
+
+function flowerFestivalVisitorRoutes() {
+  const mainLoop = FLOWER_FESTIVAL_PATHS.find((path) => path.id === "main-loop")?.points.slice(0, -1) || [];
+  return [mainLoop, [...mainLoop].reverse()];
+}
+
+function createFlowerFestivalVisitors() {
+  if (state.flowerFestival.visitors.length) return;
+  const cityGroups = [SHOWCASE_CITY, "苗栗縣", "彰化縣"];
+  const routes = flowerFestivalVisitorRoutes();
+  const excludedRoles = new Set([
+    "mayor", "candidate", "county-magistrate", "city-councilor", "county-councilor",
+    "civil-servant", "city-supervisor", "county-civil-servant", "county-supervisor",
+  ]);
+  state.flowerFestival.visitors = cityGroups.flatMap((city, cityIndex) => {
+    const candidates = state.npcs
+      .filter((npc) => (npc.countyName || SHOWCASE_CITY) === city && !excludedRoles.has(npc.role))
+      .sort((first, second) => hashText(`${FLOWER_FESTIVAL_ID}:${first.name}`) - hashText(`${FLOWER_FESTIVAL_ID}:${second.name}`))
+      .slice(0, 3);
+    return candidates.map((npc, visitorIndex) => {
+      const route = routes[(cityIndex + visitorIndex) % routes.length];
+      const startIndex = (cityIndex * 2 + visitorIndex) % route.length;
+      const start = route[startIndex];
+      const originLabel = city === SHOWCASE_CITY ? "臺中" : city.replace(/[縣市]$/, "");
+      return {
+        ...npc,
+        festivalNpc: true,
+        festivalVisitor: true,
+        festivalOriginCity: city,
+        festivalRoute: route,
+        festivalRouteIndex: startIndex,
+        festivalDwell: visitorIndex * 0.7,
+        festivalCoarseElapsed: 0,
+        festivalDialogues: [
+          `我從${originLabel}來參加花季散步，先走主環線，再挑一條捷徑去城堡。`,
+          "花田很大，但接駁點和環線把六區串起來，不用原路折返。",
+          "我會留在步道和開放廣場，也想找找藏在路邊的花精靈。",
+        ],
+        x: start.x + (visitorIndex - 1) * 18,
+        y: start.y + 36 + cityIndex * 10,
+        insideVenueId: "",
+        ridingBike: false,
+        activity: "walking",
+        currentReason: `從${originLabel}前來參加新社花海季，沿環線散步與集章`,
+        currentReasonEn: `Visiting from ${city === SHOWCASE_CITY ? "Taichung" : city === "苗栗縣" ? "Miaoli" : "Changhua"} to walk the loop and collect stamps`,
+        mobilityMode: "festival-visitor",
+        life: null,
+        smartAgent: null,
+        isMoving: false,
+        direction: "down",
+        step: visitorIndex,
+      };
+    });
+  });
+  state.flowerFestival.localNpcs = FLOWER_FESTIVAL_LOCAL_NPCS.map(flowerFestivalProfile);
+}
+
+function flowerFestivalNpcs() {
+  return [...state.flowerFestival.localNpcs, ...state.flowerFestival.visitors];
+}
+
+function activeFlowerFestivalNpcs() {
+  const ranked = flowerFestivalNpcs()
+    .map((npc) => ({ npc, distance: Math.hypot(state.player.x - npc.x, state.player.y - npc.y) }))
+    .sort((first, second) => first.distance - second.distance);
+  const selected = ranked
+    .filter((entry) => entry.distance < Math.max(WIDTH, HEIGHT) * 1.15)
+    .slice(0, MAX_ACTIVE_TOWN_NPCS);
+  const selectedNpcs = new Set(selected.map((entry) => entry.npc));
+  for (const entry of ranked) {
+    if (selected.length >= MIN_ACTIVE_TOWN_NPCS) break;
+    if (!selectedNpcs.has(entry.npc)) {
+      selected.push(entry);
+      selectedNpcs.add(entry.npc);
+    }
+  }
+  return selected.map((entry) => entry.npc);
+}
+
+function enterFlowerFestival(method = "nearby_action") {
+  if (state.flowerFestival.active) return;
+  setQuestPanelOpen(false);
+  if (state.dialogueNpc) closeNpcDialogue();
+  if (state.townEvent) finishTownEvent();
+  createFlowerFestivalVisitors();
+  state.flowerFestival.returnState = captureFlowerFestivalReturnState(state.player, state.camera);
+  state.flowerFestival.active = true;
+  state.flowerFestival.pendingObjectId = "";
+  state.flowerFestival.moveRoute = [];
+  state.keys.clear();
+  state.moveTarget = null;
+  state.pendingBikeStationId = "";
+  state.player.x = FLOWER_FESTIVAL_ENTRY.x;
+  state.player.y = FLOWER_FESTIVAL_ENTRY.y;
+  state.player.ridingBike = false;
+  state.activeDistrict = "";
+  updateFlowerFestivalCamera(true);
+  syncFlowerFestivalDistrictCard();
+  trackTownEvent("lunch_town_flower_festival_entered", { district: "新社區", method });
+  showTownToast("花海季開園", "沿主環線探索六區，走近花章即可自由集章");
+  announce("已從新社區進入新社花海季園區；入口出口可回到原本位置。");
+}
+
+function exitFlowerFestival(method = "nearby_action") {
+  if (!state.flowerFestival.active) return;
+  if (state.dialogueNpc) closeNpcDialogue();
+  const returnState = state.flowerFestival.returnState;
+  state.flowerFestival.active = false;
+  state.flowerFestival.pendingObjectId = "";
+  state.flowerFestival.moveRoute = [];
+  state.keys.clear();
+  state.moveTarget = null;
+  if (returnState) {
+    state.player.x = returnState.x;
+    state.player.y = returnState.y;
+    state.player.ridingBike = returnState.ridingBike;
+    state.camera.x = returnState.cameraX;
+    state.camera.y = returnState.cameraY;
+  }
+  state.flowerFestival.returnState = null;
+  state.activeDistrict = "";
+  updateCamera(true);
+  trackTownEvent("lunch_town_flower_festival_exited", { district: "新社區", method });
+  if (method === "event_closed") {
+    showTownToast("花海季自動休園", "2026 展期已於 11 月 22 日結束，已返回新社區");
+    announce("2026 新社花海季展期已結束，園區已自動關閉並返回新社區原本位置。");
+  } else {
+    showTownToast("回到午餐小鎮", "已回到進入活動前的新社區位置");
+    announce("已離開新社花海季，並回到新社區原本位置。");
+  }
+}
+
+function syncFlowerFestivalDistrictCard() {
+  refs.districtBadge.textContent = townText("新社花海季");
+  refs.districtFeature.textContent = townText("10/31–11/22・23 天｜大型獨立花田園區・主環線・兩條捷徑・接駁");
+  refs.districtSource.hidden = true;
+}
+
+function updateFlowerFestivalCamera(snap = false, delta = 0) {
+  const targetX = Math.max(0, Math.min(FLOWER_FESTIVAL_WIDTH - WIDTH, state.player.x - WIDTH / 2));
+  const targetY = Math.max(0, Math.min(FLOWER_FESTIVAL_HEIGHT - HEIGHT, state.player.y - HEIGHT / 2));
+  const amount = snap || reducedMotion ? 1 : Math.min(1, delta * 8);
+  state.camera.x += (targetX - state.camera.x) * amount;
+  state.camera.y += (targetY - state.camera.y) * amount;
+  const visibleChunks = flowerFestivalVisibleChunks(state.camera, { width: WIDTH, height: HEIGHT });
+  state.flowerFestival.visibleChunkKeys = new Set(visibleChunks);
+}
+
+function tryMoveFlowerFestivalPlayer(dx, dy) {
+  const current = { x: state.player.x, y: state.player.y };
+  const next = clampFlowerFestivalPoint({ x: current.x + dx, y: current.y + dy });
+  if (!flowerFestivalPointWalkable(next)) return false;
+  state.player.x = next.x;
+  state.player.y = next.y;
+  return true;
+}
+
+function updateFlowerFestivalPlayer(delta) {
+  const previousX = state.player.x;
+  const previousY = state.player.y;
+  let dx = (state.keys.has("right") ? 1 : 0) - (state.keys.has("left") ? 1 : 0);
+  let dy = (state.keys.has("down") ? 1 : 0) - (state.keys.has("up") ? 1 : 0);
+  if (!dx && !dy && state.moveTarget) {
+    let targetDx = state.moveTarget.x - state.player.x;
+    let targetDy = state.moveTarget.y - state.player.y;
+    let distance = Math.hypot(targetDx, targetDy);
+    if (distance < 8) {
+      if (state.flowerFestival.moveRoute[0] === state.moveTarget) state.flowerFestival.moveRoute.shift();
+      state.moveTarget = state.flowerFestival.moveRoute[0] || null;
+      if (state.moveTarget) {
+        targetDx = state.moveTarget.x - state.player.x;
+        targetDy = state.moveTarget.y - state.player.y;
+        distance = Math.hypot(targetDx, targetDy);
+      }
+    }
+    if (state.moveTarget && distance > 0) {
+      dx = targetDx / distance;
+      dy = targetDy / distance;
+    }
+  }
+  const requestedMovement = Boolean(dx || dy);
+  state.player.isMoving = requestedMovement;
+  if (requestedMovement) {
+    const length = Math.hypot(dx, dy) || 1;
+    dx /= length;
+    dy /= length;
+    const movedX = tryMoveFlowerFestivalPlayer(dx * PLAYER_WALK_SPEED * delta, 0);
+    const movedY = tryMoveFlowerFestivalPlayer(0, dy * PLAYER_WALK_SPEED * delta);
+    state.player.isMoving = movedX || movedY;
+    if (state.moveTarget && !state.player.isMoving) {
+      state.moveTarget = null;
+      state.flowerFestival.pendingObjectId = "";
+      state.flowerFestival.moveRoute = [];
+    }
+    if (state.player.isMoving) {
+      state.player.direction = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
+      state.player.step += delta * 10;
+    }
+  }
+  recordFlowerFestivalWalkDistance(Math.hypot(state.player.x - previousX, state.player.y - previousY));
+  if (state.flowerFestival.pendingObjectId) {
+    const object = FLOWER_FESTIVAL_OBJECTS.find((item) => item.id === state.flowerFestival.pendingObjectId);
+    if (!object) state.flowerFestival.pendingObjectId = "";
+    else if (Math.hypot(state.player.x - object.x, state.player.y - object.y) < 58) {
+      state.flowerFestival.pendingObjectId = "";
+      state.moveTarget = null;
+      state.flowerFestival.moveRoute = [];
+      interactWithFlowerFestivalObject(object, "map_arrival");
+    }
+  }
+  updateNearbyPrompt();
+}
+
+function recordFlowerFestivalWalkDistance(distance) {
+  accumulateDailyWalkDistance(distance);
+}
+
+function updateFlowerFestivalVisitors(delta) {
+  const active = new Set(activeFlowerFestivalNpcs());
+  state.flowerFestival.visitors.forEach((visitor) => {
+    let visitorDelta = delta;
+    if (!active.has(visitor)) {
+      visitor.festivalCoarseElapsed += delta;
+      if (visitor.festivalCoarseElapsed < BACKGROUND_NPC_UPDATE_SECONDS) return;
+      visitorDelta = visitor.festivalCoarseElapsed;
+      visitor.festivalCoarseElapsed = 0;
+    } else visitor.festivalCoarseElapsed = 0;
+    if (visitor.festivalDwell > 0) {
+      visitor.festivalDwell = Math.max(0, visitor.festivalDwell - visitorDelta);
+      visitor.isMoving = false;
+      return;
+    }
+    const route = visitor.festivalRoute;
+    const targetIndex = (visitor.festivalRouteIndex + 1) % route.length;
+    const target = route[targetIndex];
+    const dx = target.x - visitor.x;
+    const dy = target.y - visitor.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < 10) {
+      visitor.festivalRouteIndex = targetIndex;
+      visitor.festivalDwell = 2.5 + (visitor.lookIndex % 4);
+      visitor.isMoving = false;
+      return;
+    }
+    const speed = Math.min(58, visitor.speed || 38);
+    const amount = Math.min(distance, speed * visitorDelta);
+    visitor.x += dx / distance * amount;
+    visitor.y += dy / distance * amount;
+    visitor.direction = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
+    visitor.step += visitorDelta * 8;
+    visitor.isMoving = true;
+  });
+}
+
+function nearbyFlowerFestivalNpc() {
+  if (!state.flowerFestival.active) return null;
+  return activeFlowerFestivalNpcs()
+    .map((npc) => ({ npc, distance: Math.hypot(state.player.x - npc.x, state.player.y - npc.y) }))
+    .filter((entry) => entry.distance < 44)
+    .sort((first, second) => first.distance - second.distance)[0]?.npc || null;
+}
+
+function nearbyFlowerFestivalObject() {
+  return state.flowerFestival.active ? flowerFestivalNearbyObject(state.player, 62) : null;
+}
+
+function interactWithFlowerFestivalObject(object, method = "nearby_action") {
+  if (!object || !state.flowerFestival.active) return;
+  if (object.kind === "exit") {
+    exitFlowerFestival(method);
+    return;
+  }
+  if (object.kind === "stamp") {
+    const alreadyCollected = state.flowerFestival.stamps.has(object.id);
+    if (!alreadyCollected) {
+      state.flowerFestival.stamps.add(object.id);
+      void recordAchievementEvent("flower_festival_stamp", `${FLOWER_FESTIVAL_ID}:${object.id}`);
+      trackTownEvent("lunch_town_flower_festival_stamp", { zone: object.id, method });
+    }
+    const completed = state.flowerFestival.stamps.size === FLOWER_FESTIVAL_STAMPS.length;
+    if (completed && !state.flowerFestival.completed) {
+      state.flowerFestival.completed = true;
+      showTownToast("六區集章完成", "花海散步家成就已達成；登入者會同步到家庭帳號");
+    } else {
+      const progressTitle = `${townText(object.label)}${townUsesEnglish() ? " · " : "・"}${state.flowerFestival.stamps.size}/6`;
+      showTownToast(alreadyCollected ? "已收集過" : "花章入手", progressTitle);
+    }
+    return;
+  }
+  if (object.kind === "photo") {
+    const isNew = !state.flowerFestival.photos.has(object.id);
+    state.flowerFestival.photos.add(object.id);
+    if (isNew) trackTownEvent("lunch_town_flower_festival_photo", { photo_point: object.id, method });
+    showTownToast(isNew ? "拍照點到訪" : "再次取景", townText(object.label));
+    return;
+  }
+  if (object.kind === "spirit") {
+    const isNew = !state.flowerFestival.spirits.has(object.id);
+    state.flowerFestival.spirits.add(object.id);
+    if (isNew) trackTownEvent("lunch_town_flower_spirit_found", { spirit: object.id, method });
+    showTownToast(
+      isNew ? "找到花精靈" : "花精靈已同行",
+      `${townText(object.label)}${townUsesEnglish() ? " · " : "・"}${state.flowerFestival.spirits.size}/5`,
+    );
+    return;
+  }
+  if (object.kind === "shuttle") {
+    const destination = nextFlowerFestivalShuttle(object.id);
+    state.player.x = destination.x;
+    state.player.y = destination.y + 34;
+    state.moveTarget = null;
+    state.flowerFestival.moveRoute = [];
+    updateFlowerFestivalCamera(true);
+    trackTownEvent("lunch_town_flower_festival_shuttle", { from: object.id, to: destination.id });
+    showTownToast("園區接駁", townUsesEnglish() ? `Arrived at ${townText(destination.label)}` : `已抵達${destination.label}`);
+  }
+}
+
+function handleFlowerFestivalPointer(point) {
+  const object = flowerFestivalNearbyObject(point, canvasWorldUnitsForCssPixels(mobileLayoutQuery.matches ? 34 : 24));
+  if (object) {
+    if (Math.hypot(state.player.x - object.x, state.player.y - object.y) < 64) {
+      interactWithFlowerFestivalObject(object, "map_click");
+    } else {
+      const route = flowerFestivalWalkingRoute(state.player, object);
+      if (!route.length) {
+        announce(townText("目前找不到通往這個標記的開放步道，請從較近的環線入口再試一次。"));
+        return;
+      }
+      state.flowerFestival.pendingObjectId = object.id;
+      state.flowerFestival.moveRoute = route;
+      state.moveTarget = route[0];
+      announce(townUsesEnglish() ? `Following the path to ${townText(object.label)}.` : `正沿步道前往${object.label}。`);
+    }
+    return;
+  }
+  const npc = activeFlowerFestivalNpcs()
+    .map((candidate) => ({ candidate, distance: Math.hypot(point.x - candidate.x, point.y - candidate.y) }))
+    .filter((entry) => entry.distance < canvasWorldUnitsForCssPixels(mobileLayoutQuery.matches ? 30 : 22))
+    .sort((first, second) => first.distance - second.distance)[0]?.candidate;
+  if (npc) {
+    openNpcDialogue(npc, "map_click");
+    return;
+  }
+  state.flowerFestival.pendingObjectId = "";
+  state.flowerFestival.moveRoute = flowerFestivalPointWalkable(point)
+    ? flowerFestivalWalkingRoute(state.player, point)
+    : [];
+  state.moveTarget = state.flowerFestival.moveRoute[0] || null;
+  if (!state.moveTarget) announce("花田僅供觀賞，請點選寬步道、廣場或互動標記移動。");
+}
+
+function drawFlowerFestivalActors(now) {
+  const people = activeFlowerFestivalNpcs()
+    .filter((person) => isVisibleRect({ x: person.x - 30, y: person.y - 45, w: 60, h: 70 }, 40));
+  const actors = [
+    ...people,
+    { ...PLAYER_AVATARS[state.playerAvatarId], ...state.player, player: true },
+  ].sort((first, second) => first.y - second.y);
+  actors.forEach((person, index) => drawTownLayer(`festival-actor:${person.name || "player"}:${index}`, () => drawPerson(person, now)));
+  const nearbyNpc = nearbyFlowerFestivalNpc();
+  if (nearbyNpc && !state.dialogueNpc) {
+    context.fillStyle = COLORS.paper;
+    context.fillRect(Math.round(nearbyNpc.x) - 7, Math.round(nearbyNpc.y) - 43, 14, 14);
+    context.fillStyle = COLORS.ink;
+    context.font = "bold 12px ui-monospace, monospace";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText("!", Math.round(nearbyNpc.x), Math.round(nearbyNpc.y) - 36);
+  }
+}
+
+function drawFlowerFestival(now) {
+  state.flowerFestival.visibleChunkKeys = new Set(flowerFestivalVisibleChunks(state.camera, { width: WIDTH, height: HEIGHT }));
+  drawFlowerFestivalScene({
+    context,
+    camera: state.camera,
+    viewport: { width: WIDTH, height: HEIGHT },
+    now,
+    reducedDetail: townUsesReducedDetail() || mobileLayoutQuery.matches,
+    collectedStamps: state.flowerFestival.stamps,
+    foundSpirits: state.flowerFestival.spirits,
+    visitedPhotos: state.flowerFestival.photos,
+    drawActors: () => drawFlowerFestivalActors(now),
+    translate: townText,
+  });
+}
+
 function scheduleTownFrame() {
   if (!state.frameRequestId) state.frameRequestId = requestAnimationFrame(frame);
 }
@@ -5365,12 +5991,16 @@ function frame(now) {
     runTownFrameStage("environment", () => updateTownEnvironment(now));
     if (state.ready && !refs.dialog.open && !state.dialogueNpc) {
       runTownFrameStage("player", () => updatePlayer(delta), { critical: true });
-      runTownFrameStage("npcs", () => updateNpcs(delta));
-      runTownFrameStage("pets", () => updatePets(delta));
-      runTownFrameStage("birds", () => updateBirds(delta));
-      runTownFrameStage("town-moment", () => updateTownMoment(now));
-      runTownFrameStage("town-event", () => updateTownEvent(now, delta));
-      runTownFrameStage("ambient-conversation", () => updateAmbientConversation(now));
+      if (state.flowerFestival.active) {
+        runTownFrameStage("festival-visitors", () => updateFlowerFestivalVisitors(delta));
+      } else {
+        runTownFrameStage("npcs", () => updateNpcs(delta));
+        runTownFrameStage("pets", () => updatePets(delta));
+        runTownFrameStage("birds", () => updateBirds(delta));
+        runTownFrameStage("town-moment", () => updateTownMoment(now));
+        runTownFrameStage("town-event", () => updateTownEvent(now, delta));
+        runTownFrameStage("ambient-conversation", () => updateAmbientConversation(now));
+      }
     }
     if (state.ready) runTownFrameStage("camera", () => updateCamera(false, delta), { critical: true });
     runTownFrameStage("town-drawing", () => drawTown(now, state.environment), { critical: true });
@@ -5417,6 +6047,10 @@ function townUsesReducedDetail() {
 }
 
 function updatePlayer(delta) {
+  if (state.flowerFestival.active) {
+    updateFlowerFestivalPlayer(delta);
+    return;
+  }
   const previousX = state.player.x;
   const previousY = state.player.y;
   let dx = (state.keys.has("right") ? 1 : 0) - (state.keys.has("left") ? 1 : 0);
@@ -5717,6 +6351,11 @@ function npcNaturalTerrainMoveAllowed(current, next) {
 }
 
 function updateCamera(snap = false, delta = 0) {
+  if (state.flowerFestival.active) {
+    updateFlowerFestivalCamera(snap, delta);
+    syncFlowerFestivalDistrictCard();
+    return;
+  }
   const targetX = Math.max(0, Math.min(WORLD_WIDTH - WIDTH, state.player.x - WIDTH / 2));
   const targetY = Math.max(0, Math.min(WORLD_HEIGHT - HEIGHT, state.player.y - HEIGHT / 2));
   const amount = snap || reducedMotion ? 1 : Math.min(1, delta * 8);
@@ -5766,6 +6405,7 @@ function updateCamera(snap = false, delta = 0) {
 
 function districtAtPoint(point) {
   return DISTRICT_DISPLAY_ORDER.find((district) => pointInRect(point, DISTRICT_ZONES[district]))
+    || (pointInRect(point, FLOWER_FESTIVAL_APPROACH_AREA) ? "新社區" : "")
     || state.venues.find((venue) => venue.hubKind && pointInRect(point, venue))?.district
     || neighborCountyDistrictAtPoint(point)?.name
     || neighborCountyAtPoint(point)?.name
@@ -6202,6 +6842,19 @@ function updateNpcs(delta) {
   refreshActiveNpcSimulationSet(delta);
   state.npcs.forEach((npc, index) => {
     runTownFrameStage(`npc:${index}:${npc.name || "resident"}`, () => {
+    if (npc.flowerFestivalPromoter && !flowerFestivalIsOpen()) {
+      npc.insideVenueId = NPC_OFFSCREEN_VENUE_ID;
+      npc.isMoving = false;
+      npc.ridingBike = false;
+      return;
+    }
+    if (npc.flowerFestivalPromoter && npc.insideVenueId === NPC_OFFSCREEN_VENUE_ID) {
+      const stop = npc.schedule[npc.segment % npc.schedule.length] || npc.schedule[0];
+      npc.x = stop.x;
+      npc.y = stop.y;
+      npc.insideVenueId = "";
+      npc.dwellRemaining = stop.dwellSeconds;
+    }
     let npcDelta = delta;
     if (npc.backgroundSimulated) {
       npc.coarseElapsed = (npc.coarseElapsed || 0) + delta;
@@ -6276,6 +6929,10 @@ function updateNpcs(delta) {
       }
       if (stop?.facing) npc.direction = stop.facing;
       npc.currentReason = activityReason(npc.activity, stop?.label || npc.district, npc.currentReason);
+      if (npc.flowerFestivalPromoter) {
+        npc.currentReason = stop?.reason || npc.currentReason;
+        npc.currentReasonEn = stop?.reasonEn || npc.currentReasonEn;
+      }
       if (npc.hasLeashedDog && !npc.insideVenueId) {
         npc.currentReason = `牽著狗在${stop?.label || npc.district}散步並短暫停留`;
       }
@@ -7344,6 +8001,10 @@ function showComicBubble() {
 }
 
 function drawTown(now, environment = townEnvironmentAt()) {
+  if (state.flowerFestival.active) {
+    drawFlowerFestival(now);
+    return;
+  }
   context.imageSmoothingEnabled = false;
   context.setTransform(1, 0, 0, 1, 0, 0);
   context.fillStyle = COLORS.water;
@@ -7361,6 +8022,7 @@ function drawTown(now, environment = townEnvironmentAt()) {
     drawTownLayer("river-labels", drawBoundaryRiverLabels);
     drawTownLayer("map-edges", () => drawMapEdges(now));
     drawTownLayer("roads", () => drawRoads(now));
+    drawTownLayer("flower-festival-approach", () => drawFlowerFestivalApproach(now));
     drawTownLayer("bridges", drawBoundaryBridges);
     drawTownLayer("neighbor-work-zones", () => drawNeighborWorkZones(now, environment));
     drawTownLayer("neighbor-details", () => drawNeighborCountyDetails(now));
@@ -9226,6 +9888,140 @@ function drawRoads(now) {
   });
 }
 
+function drawFlowerFestivalApproach(now) {
+  const area = FLOWER_FESTIVAL_APPROACH_AREA;
+  if (!isVisibleRect(area, 60)) return;
+  const reducedDetail = townUsesReducedDetail();
+  const flowerSpacing = mobileLayoutQuery.matches || reducedDetail ? 34 : 24;
+  const gateway = {
+    x: area.x + (area.w - 220) / 2,
+    y: area.y + (area.h - 72) / 2,
+    w: 220,
+    h: 72,
+  };
+  const pathCenterAt = (y) => {
+    const progress = Math.max(0, Math.min(1, (y - area.y) / area.h));
+    return area.x + area.w / 2 + Math.sin(progress * Math.PI * 1.55) * 38;
+  };
+
+  context.save();
+  context.beginPath();
+  context.rect(area.x, area.y, area.w, area.h);
+  context.clip();
+
+  context.fillStyle = "#78a96c";
+  context.fillRect(area.x, area.y, area.w, area.h);
+  context.fillStyle = "#6f9f68";
+  for (let y = area.y + 8; y < area.y + area.h; y += 32) {
+    context.fillRect(area.x, y, area.w, 4);
+  }
+
+  // 遠山與甜點城堡讓玩家從空地南側就能辨認花海入口方向。
+  context.fillStyle = "#547f62";
+  context.beginPath();
+  context.moveTo(area.x, area.y + 82);
+  context.lineTo(area.x + 76, area.y + 30);
+  context.lineTo(area.x + 144, area.y + 70);
+  context.lineTo(area.x + 228, area.y + 22);
+  context.lineTo(area.x + 306, area.y + 68);
+  context.lineTo(area.x + 402, area.y + 26);
+  context.lineTo(area.x + area.w, area.y + 76);
+  context.lineTo(area.x + area.w, area.y + 104);
+  context.lineTo(area.x, area.y + 104);
+  context.closePath();
+  context.fill();
+
+  const castleX = area.x + area.w / 2;
+  const castleY = area.y + 44;
+  const castleBounds = { x: castleX - 80, y: castleY - 4, w: 160, h: 96 };
+  context.fillStyle = "#f4c5d8";
+  context.fillRect(castleX - 50, castleY + 22, 100, 62);
+  context.fillRect(castleX - 70, castleY + 38, 30, 46);
+  context.fillRect(castleX + 40, castleY + 38, 30, 46);
+  context.fillRect(castleX - 16, castleY, 32, 84);
+  context.fillStyle = "#fff0d9";
+  context.fillRect(castleX - 42, castleY + 32, 84, 11);
+  context.fillRect(castleX - 11, castleY + 10, 22, 12);
+  context.fillStyle = "#de6f9a";
+  context.beginPath();
+  context.moveTo(castleX - 77, castleY + 38);
+  context.lineTo(castleX - 55, castleY + 16);
+  context.lineTo(castleX - 33, castleY + 38);
+  context.closePath();
+  context.fill();
+  context.beginPath();
+  context.moveTo(castleX + 33, castleY + 38);
+  context.lineTo(castleX + 55, castleY + 16);
+  context.lineTo(castleX + 77, castleY + 38);
+  context.closePath();
+  context.fill();
+  context.fillStyle = "#8c5570";
+  context.fillRect(castleX - 8, castleY + 57, 16, 27);
+
+  const pastelFlowers = ["#fff8e8", "#f4b7d0", "#ddc9f2", "#f7d9e8"];
+  const warmFlowers = ["#f58a62", "#e85f55", "#f5aa4f", "#e86f91"];
+  for (let y = area.y + 18; y <= area.y + area.h - 18; y += flowerSpacing) {
+    const rowOffset = hashText(`flower-approach-row:${Math.round(y)}`) % Math.max(1, flowerSpacing - 5);
+    for (let x = area.x + 16 + rowOffset; x <= area.x + area.w - 16; x += flowerSpacing) {
+      if (Math.abs(x - pathCenterAt(y)) < 48
+        || pointInExpandedRect({ x, y }, gateway, 18)
+        || pointInExpandedRect({ x, y }, castleBounds, 8)) continue;
+      const seed = hashText(`flower-approach:${Math.round(x)}:${Math.round(y)}`);
+      const palette = x < area.x + area.w * 0.53 ? pastelFlowers : warmFlowers;
+      const color = palette[seed % palette.length];
+      const flowerX = x + (seed % 7) - 3;
+      const flowerY = y + (Math.floor(seed / 7) % 7) - 3;
+      context.fillStyle = "#3d744e";
+      context.fillRect(flowerX - 1, flowerY + 2, 2, 6);
+      context.fillStyle = color;
+      context.fillRect(flowerX - 3, flowerY - 1, 3, 3);
+      context.fillRect(flowerX + 1, flowerY - 1, 3, 3);
+      context.fillRect(flowerX - 1, flowerY - 3, 3, 3);
+      context.fillRect(flowerX - 1, flowerY + 1, 3, 3);
+      context.fillStyle = "#f2c94c";
+      context.fillRect(flowerX, flowerY, 1, 1);
+    }
+  }
+
+  // 一條主曲線由南側道路通往入口與城堡，兩側短徑讓花田看起來可散步探索。
+  const mainPath = new Path2D();
+  mainPath.moveTo(area.x + area.w / 2 + 34, area.y + area.h + 12);
+  mainPath.bezierCurveTo(
+    area.x + area.w / 2 + 70, area.y + area.h * 0.76,
+    area.x + area.w / 2 - 54, area.y + area.h * 0.48,
+    castleX, castleY + 82,
+  );
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.strokeStyle = "#6b8c61";
+  context.lineWidth = 70;
+  context.stroke(mainPath);
+  context.strokeStyle = "#e0cfab";
+  context.lineWidth = 56;
+  context.stroke(mainPath);
+  context.strokeStyle = "#f4e8cc";
+  context.lineWidth = 4;
+  context.setLineDash([16, 14]);
+  context.lineDashOffset = reducedMotion ? 0 : -(Math.floor(now / 500) % 30);
+  context.stroke(mainPath);
+  context.setLineDash([]);
+
+  const sidePaths = new Path2D();
+  sidePaths.moveTo(castleX + 5, area.y + area.h * 0.62);
+  sidePaths.quadraticCurveTo(area.x + 150, area.y + 222, area.x + 78, area.y + 132);
+  sidePaths.moveTo(castleX + 22, area.y + area.h * 0.67);
+  sidePaths.quadraticCurveTo(area.x + 430, area.y + 244, area.x + 488, area.y + 148);
+  context.strokeStyle = "#eadab9";
+  context.lineWidth = 16;
+  context.stroke(sidePaths);
+
+  const shimmer = reducedMotion ? 0 : Math.floor(now / 650) % 2;
+  context.fillStyle = "#fff6d3";
+  context.fillRect(castleX - 92, castleY + 12 + shimmer, 4, 4);
+  context.fillRect(castleX + 88, castleY + 30 - shimmer, 4, 4);
+  context.restore();
+}
+
 function strokeRoadPath(path) {
   context.save();
   context.lineCap = "round";
@@ -9555,7 +10351,27 @@ function drawVenue(venue, now, index) {
   }
   context.fillStyle = "rgba(20, 45, 55, 0.18)";
   context.fillRect(x + 5, y + h, w, 5);
-  if (type === "player-home") {
+  if (type === "flower-festival-gateway") {
+    const isOpen = venue.festivalOpen;
+    context.fillStyle = isOpen ? "#75a76c" : "#8b8a79";
+    context.fillRect(x - 8, y + 10, w + 16, h - 4);
+    context.fillStyle = isOpen ? "#d96388" : "#78636b";
+    context.fillRect(x + 8, y, 24, h);
+    context.fillRect(x + w - 32, y, 24, h);
+    context.fillRect(x + 8, y, w - 16, 18);
+    context.fillStyle = isOpen ? "#fff2df" : "#e8e1d8";
+    context.fillRect(x + 40, y + 23, w - 80, 28);
+    context.fillStyle = isOpen ? "#704b5c" : "#575056";
+    context.font = "bold 11px ui-monospace, monospace";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(townText(isOpen ? "新社花海季" : "花海季休園"), x + w / 2, y + 32);
+    context.font = "bold 8px ui-monospace, monospace";
+    context.fillText("2026・10/31–11/22", x + w / 2, y + 45);
+    drawTinyFlower(x + 20, y - 3, "#fff7e8");
+    drawTinyFlower(x + w - 20, y - 3, isOpen ? "#f7b0cf" : "#d6cbc2");
+    drawTinyFlower(x + w - 18, y - 3, "#f1adca");
+  } else if (type === "player-home") {
     drawPlayerHome(venue);
   } else if (type === "townhouse") {
     drawTownhouse(venue);
@@ -11248,6 +12064,30 @@ function drawPerson(person, now) {
   context.restore();
   drawNpcRiverbankActivity(person, now);
   drawPersonEmote(person, now);
+  drawFlowerFestivalPromoterBubble(person, now);
+}
+
+function drawFlowerFestivalPromoterBubble(person, now) {
+  if (!person.flowerFestivalPromoter || !flowerFestivalIsOpen() || person.insideVenueId) return;
+  if (!reducedMotion && Math.floor((now + (person.lookIndex || 0) * 173) / 4_200) % 3 === 2) return;
+  const label = townText("10/31–11/22 去新社花海");
+  const width = townUsesEnglish() ? 150 : 132;
+  const x = Math.round(person.x - width / 2);
+  const y = Math.round(person.y - 64);
+  context.save();
+  context.fillStyle = "rgba(255, 248, 235, 0.96)";
+  context.strokeStyle = "#8b4765";
+  context.lineWidth = 2;
+  context.fillRect(x, y, width, 22);
+  context.strokeRect(x, y, width, 22);
+  context.fillRect(Math.round(person.x) - 4, y + 20, 9, 6);
+  context.strokeRect(Math.round(person.x) - 4, y + 20, 9, 6);
+  context.fillStyle = "#6d3d58";
+  context.font = "bold 9px ui-monospace, monospace";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(label, Math.round(person.x), y + 11, width - 10);
+  context.restore();
 }
 
 function drawNpcRiverbankActivity(person, now) {
@@ -12038,6 +12878,31 @@ function drawBird(bird, now) {
 
 function updateNearbyPrompt() {
   if (state.dialogueNpc) return;
+  if (state.flowerFestival.active) {
+    const object = nearbyFlowerFestivalObject();
+    const npc = nearbyFlowerFestivalNpc();
+    const target = object ? `festival:${object.kind}:${object.id}` : npc ? `festival-npc:${npc.name}` : "";
+    if (target === state.lastPromptTarget) return;
+    state.lastPromptTarget = target;
+    refs.prompt.hidden = !target;
+    const actionLead = townUsesEnglish()
+      ? (mobileLayoutQuery.matches ? "Tap A" : "Press Enter")
+      : (mobileLayoutQuery.matches ? "點 A" : "按 Enter");
+    if (object) {
+      const action = object.kind === "stamp" ? "集章"
+        : object.kind === "photo" ? "在拍照點取景"
+          : object.kind === "spirit" ? "和花精靈打招呼"
+            : object.kind === "shuttle" ? "搭接駁前往下一站"
+              : "返回新社區原本位置";
+      refs.prompt.textContent = `${actionLead} ${townText(action)}${townUsesEnglish() ? " · " : "｜"}${townText(object.label)}`;
+    } else if (npc) {
+      const role = townUsesEnglish() ? npc.festivalRoleLabelEn : npc.festivalRoleLabel;
+      refs.prompt.textContent = townUsesEnglish()
+        ? `${actionLead} talk with ${npcDisplayName(npc)} (${role || npcRoleLabel(npc)})`
+        : `${actionLead} 與 ${npcDisplayName(npc)}（${role || npcRoleLabel(npc)}）對話`;
+    }
+    return;
+  }
   const moment = nearbyTownMoment();
   const bikeStation = nearbyBikeStation();
   const npc = nearbyNpc();
@@ -12066,15 +12931,23 @@ function updateNearbyPrompt() {
     : bikeStation
       ? `${actionLead} 在 ${bikeStation.label}${state.player.ridingBike ? "歸還 YouBike" : "租借 YouBike｜騎乘速度更快"}`
       : npc
-        ? townText(`${actionLead} 與 ${npcDisplayName(npc)}（${ROLE_LABELS[npc.role]}）對話｜${npc.currentReason}`)
+        ? npc.flowerFestivalPromoter
+          ? townUsesEnglish()
+            ? `${mobileLayoutQuery.matches ? "Tap A" : "Press Enter"} talk with ${npcDisplayName(npc)} (Flower festival ambassador) · ${npc.currentReasonEn}`
+            : `${actionLead} 與 ${npcDisplayName(npc)}（${ROLE_LABELS[npc.role]}）對話｜${npc.currentReason}`
+          : townText(`${actionLead} 與 ${npcDisplayName(npc)}（${ROLE_LABELS[npc.role]}）對話｜${npc.currentReason}`)
         : school
           ? `${actionLead} 查看 ${school.name} ${formatDate(state.date)} 午餐`
           : neighborSchool
             ? `${actionLead} 查看 ${neighborSchool.name} ${formatDate(state.date)} 午餐`
           : venue
-            ? townUsesEnglish()
-              ? `${actionLead} enter ${venueDisplayLabel(venue)}`
-              : `${actionLead} 進入 ${venueDisplayLabel(venue)}`
+            ? venue.type === "flower-festival-gateway" && !venue.festivalOpen
+              ? townUsesEnglish()
+                ? `${actionLead} view Flower Season closure information`
+                : `${actionLead} 查看花海季休園資訊`
+              : townUsesEnglish()
+                ? `${actionLead} enter ${venueDisplayLabel(venue)}`
+                : `${actionLead} 進入 ${venueDisplayLabel(venue)}`
             : "";
 }
 
@@ -12090,6 +12963,7 @@ function nearbyBikeStation() {
 }
 
 function nearbyNpc() {
+  if (state.flowerFestival.active) return nearbyFlowerFestivalNpc();
   return state.npcs
     .filter((npc) => !npc.insideVenueId && !npc.ridingBike)
     .map((npc) => ({ npc, distance: Math.hypot(state.player.x - npc.x, state.player.y - npc.y) }))
@@ -12142,6 +13016,20 @@ function nearbyNeighborSchool() {
 }
 
 function interactWithNearbyTarget() {
+  if (state.flowerFestival.active) {
+    const object = nearbyFlowerFestivalObject();
+    if (object) {
+      interactWithFlowerFestivalObject(object, "nearby_action");
+      return;
+    }
+    const festivalNpc = nearbyFlowerFestivalNpc();
+    if (festivalNpc) {
+      openNpcDialogue(festivalNpc, "nearby_action");
+      return;
+    }
+    announce("請走近花章、拍照點、接駁站、花精靈或園區人物，也可以直接點選標記。");
+    return;
+  }
   if (state.townEvent) {
     announce("請先在街區事件面板選擇如何回應。 ");
     return;
@@ -12207,6 +13095,16 @@ function interactWithBikeStation(station, method = "nearby_action") {
 function openVenue(venue, method = "nearby_action") {
   if (state.townEvent) {
     announce("請先完成目前的街區事件。 ");
+    return;
+  }
+  if (venue.type === "flower-festival-gateway") {
+    if (!flowerFestivalIsOpen()) {
+      const phase = flowerFestivalPhase();
+      showTownToast(phase === "upcoming" ? "花海季尚未開園" : "花海季展期已結束", FLOWER_FESTIVAL_DATE_LABEL);
+      announce(townText(flowerFestivalClosedMessage(phase)));
+      return;
+    }
+    enterFlowerFestival(method);
     return;
   }
   setQuestPanelOpen(false);
@@ -12351,14 +13249,15 @@ function openNpcDialogue(npc, method = "nearby_action") {
   refs.prompt.hidden = true;
   refs.npcDialogue.hidden = false;
   trackTownEvent("lunch_town_npc_talked", {
-    district: districtAtPoint(npc) || npc.district,
+    district: npc.festivalNpc ? "新社花海季" : districtAtPoint(npc) || npc.district,
     npc_role: npc.role,
     mobility_mode: npc.mobilityMode,
     method,
   });
   void recordAchievementEvent("npc_talk", `${npc.district}:${npc.name}`);
   renderNpcDialogue();
-  announce(townText(`${npc.name}（${ROLE_LABELS[npc.role]}）開始對話。`));
+  const roleLabel = townUsesEnglish() ? npc.festivalRoleLabelEn : npc.festivalRoleLabel;
+  announce(townText(`${npc.name}（${roleLabel || ROLE_LABELS[npc.role]}）開始對話。`));
 }
 
 function renderNpcDialogue() {
@@ -12374,7 +13273,16 @@ function renderNpcDialogue() {
   const lifeContext = npc.life
     ? `・${townText("心情")}：${townText(npc.mood)}・${townText("目前想做")}：${townText(npc.life.goalLabel)}`
     : "";
-  refs.npcRole.textContent = `${townText(`${npc.district}・${ROLE_LABELS[npc.role]}・住家：${npc.residenceLabel || "小鎮住宅"}・${npc.personality.label}・${npc.currentReason}`)}${lifeContext}${smartContext}`;
+  if (npc.festivalNpc) {
+    const origin = npc.festivalVisitor ? npc.festivalOriginCity : npc.district;
+    const role = townUsesEnglish() ? npc.festivalRoleLabelEn || npcRoleLabel(npc) : npc.festivalRoleLabel || ROLE_LABELS[npc.role];
+    const reason = townUsesEnglish() ? npc.currentReasonEn || npc.currentReason : npc.currentReason;
+    refs.npcRole.textContent = `${townText(origin)}・${role}・${townText(reason)}`;
+  } else if (npc.flowerFestivalPromoter) {
+    refs.npcRole.textContent = `${townText(npc.district)}・${townText("花海女郎")}・${townUsesEnglish() ? npc.currentReasonEn : npc.currentReason}`;
+  } else {
+    refs.npcRole.textContent = `${townText(`${npc.district}・${ROLE_LABELS[npc.role]}・住家：${npc.residenceLabel || "小鎮住宅"}・${npc.personality.label}・${npc.currentReason}`)}${lifeContext}${smartContext}`;
+  }
   const sourceUrl = npc.campaignSourceUrl || npc.sourceUrl;
   refs.npcSource.hidden = !sourceUrl;
   refs.npcSource.textContent = townText(npc.role === "candidate" ? "候選人公開資料" : "公開身分來源");
@@ -12435,6 +13343,18 @@ function closeNpcDialogue() {
 }
 
 function buildPlayerConversation(npc) {
+  if (npc.flowerFestivalPromoter && Array.isArray(npc.festivalDialogues)) {
+    return {
+      topicId: `flower-promoter-${npc.id || npc.name}`,
+      lines: npc.festivalDialogues.map(townText),
+    };
+  }
+  if (npc.festivalNpc && Array.isArray(npc.festivalDialogues)) {
+    return {
+      topicId: `flower-festival-${npc.id || npc.name}`,
+      lines: npc.festivalDialogues.map(townText),
+    };
+  }
   if (npc.smartAgent) return buildSmartNpcConversation(npc);
   if (npc.featuredResident && ROLE_DIALOGUES[npc.role]?.length) {
     const dialogue = ROLE_DIALOGUES[npc.role];

@@ -238,6 +238,39 @@ test('English fully localizes adaptive civic-agent status, memory, and route rea
   ]) assert.doesNotMatch(text, /[\u3400-\u9fff]/u);
 });
 
+test('English fully localizes flower festival prompts, roles, and food-learning dialogue', () => {
+  const { api } = load();
+  assert.equal(api.t('新社花海季'), 'Xinshe Flower Season');
+  assert.equal(api.t('大型獨立花田園區｜主環線・兩條捷徑・遠端接駁'), 'Large standalone flower park · Main loop · Two shortcuts · Shuttle stops');
+  assert.equal(api.t('花海女郎'), 'Flower festival ambassador');
+  assert.equal(api.t('花舞'), 'Blossom');
+  assert.equal(api.t('花海季展期已結束'), 'Flower Season has ended');
+  assert.equal(api.t('2026/10/31–11/22・共 23 天'), 'Oct 31–Nov 22, 2026 · 23 days');
+  assert.equal(api.t('花海導覽員'), 'Flower field guide');
+  assert.equal(api.t('新社花農'), 'Xinshe flower grower');
+  assert.equal(api.t('新社菇農'), 'Xinshe mushroom grower');
+  assert.equal(api.t('集章'), 'collect a stamp');
+  assert.equal(api.t('搭接駁前往下一站'), 'take the shuttle to the next stop');
+  assert.equal(api.t('粉白花徑拍照點'), 'Pastel flower path photo spot');
+  assert.equal(
+    api.t('歡迎來散步！主環線會走過六區，兩條捷徑都能回到城堡廣場，不必一直走回頭路。'),
+    'Welcome! The main loop reaches all six zones, and both shortcuts reconnect at the castle plaza, so you do not need to retrace your steps.',
+  );
+  assert.equal(
+    api.t('晚餐可以把菇類和豆腐、雞肉或當季蔬菜搭成湯、燴菜或炊飯，再依家人的飲食需求調整。'),
+    "For dinner, pair mushrooms with tofu, chicken, or seasonal vegetables in soup, a braise, or mixed rice, adjusting for your family's dietary needs.",
+  );
+  for (const text of [
+    api.t('新社花海季'),
+    api.t('花海導覽員'),
+    api.t('搭接駁前往下一站'),
+    api.t('粉白花徑拍照點'),
+    api.t('花海女郎'),
+    api.t('2026 新社花海暨臺中國際花毯節從 10 月 31 日到 11 月 22 日，一共 23 天，記得在展期內到新社走走。'),
+    api.t('午餐小鎮的入口已搬到新社區北側空地，看到粉色花門就能進入大型花海園區。'),
+  ]) assert.doesNotMatch(text, /[\u3400-\u9fff]/u);
+});
+
 test('language changes restore Chinese, preserve raw source text and form values, and handle later renders', () => {
   const env = load({ dom: true });
   const heading = element('設定');

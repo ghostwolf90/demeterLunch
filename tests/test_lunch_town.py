@@ -195,9 +195,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertNotIn("彰化縣", json.dumps(themes, ensure_ascii=False))
         self.assertIn('"苗栗縣": "Miaoli County"', english)
         self.assertIn('"彰化縣": "Changhua County"', english)
-        self.assertIn("app.js?v=20261107-living-npcs", html)
-        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
-        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
 
     def test_miaoli_and_changhua_map_every_reviewed_primary_school_by_realistic_district_position(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -263,9 +263,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('"當日午餐已更新": "Today\'s lunch data is ready"', english)
         self.assertIn('"到{0}散步，看看當地學校與景觀": [0]', i18n)
         self.assertIn('neighbor-county-themes.json?v=20261105-outer-rivers', app)
-        self.assertIn("app.js?v=20261107-living-npcs", html)
-        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
-        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
 
     def test_neighbor_counties_follow_taichung_district_block_layout(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -310,7 +310,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("context.lineTo(2, 0)", river)
         self.assertIn("context.createLinearGradient", app)
         self.assertLess(app.index('drawTownLayer("boundary-rivers"'), app.index('drawTownLayer("bridges"'))
-        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-flower-festival-approach", html)
 
     def test_miaoli_north_and_changhua_south_have_named_boundary_rivers(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -361,9 +361,9 @@ class LunchTownTests(unittest.TestCase):
             self.assertIn(translated, english)
         self.assertIn('"在{0}的安全平台釣魚，釣線朝向河道但人留在護欄內": [0]', i18n)
         self.assertIn('"在{0}使用指定烤肉台休憩，並把垃圾與火源收拾好": [0]', i18n)
-        self.assertIn("app.js?v=20261107-living-npcs", html)
-        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
-        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
 
     def test_town_map_labels_every_school_with_a_readable_primary_school_name(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -375,7 +375,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("splitSchoolMapLabel", app)
         self.assertNotIn("String(school.name).slice(0, 6)", app)
         self.assertIn("styles.css?v=20261107-living-npcs", html)
-        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-flower-festival-approach", html)
 
     def test_player_movement_blocks_only_sea_mountains_and_rivers(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -653,10 +653,10 @@ class LunchTownTests(unittest.TestCase):
             '"驚訝": "Surprised"', '"平靜": "Calm"',
         ):
             self.assertIn(translation, english)
-        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-flower-festival-approach", html)
         self.assertIn("styles.css?v=20261107-living-npcs", html)
-        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
-        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
+        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
 
     def test_town_has_age_gender_and_workplace_diversity(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -739,7 +739,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("state.nextConversationAt = now + AMBIENT_CONVERSATION_RETRY_MS", update)
         self.assertIn("max-width: min(300px, 48%)", self.read("web/lunch-town/styles.css"))
         self.assertIn("max-width: min(260px, 78%)", self.read("web/lunch-town/styles.css"))
-        self.assertIn("app.js?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-flower-festival-approach", html)
 
     def test_npcs_have_needs_memory_relationship_growth_and_conversation_consequences(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -772,9 +772,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('townText("心情")', app)
         self.assertIn('"疲倦": "Tired"', english)
         self.assertIn('"我記得我們上次聊過{0}，後來事情真的有接著往下走。": [0]', i18n)
-        self.assertIn("app.js?v=20261107-living-npcs", html)
-        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
-        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
 
     def test_npc_conversations_use_identity_context_relationship_and_memory(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -913,7 +913,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("drawTree(tree.x, tree.y, now, tree.phase, tree.scale)", street_details)
         self.assertIn("drawLamp(lamp.x, lamp.y, environment)", street_details)
         self.assertIn("neighborStreetDecorationsForTheme(theme).lamps", visible_lamps)
-        self.assertIn("app.js?v=20261107-living-npcs", self.read("web/lunch-town/index.html"))
+        self.assertIn("app.js?v=20261107-flower-festival-approach", self.read("web/lunch-town/index.html"))
 
     def test_frame_failures_cannot_freeze_players_or_npcs_when_entering_changhua(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1407,7 +1407,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("npc.hasLeashedDog", app)
         self.assertIn("牽著狗散步", app)
         self.assertIn("!pet.hidden", app)
-        self.assertIn("app.js?v=20261107-living-npcs", self.read("web/lunch-town/index.html"))
+        self.assertIn("app.js?v=20261107-flower-festival-approach", self.read("web/lunch-town/index.html"))
 
     def test_town_has_visible_youbike_stations_and_rental_trips(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1521,8 +1521,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('venue.id === "civic-south-night-convenience"', app)
         self.assertIn('!CIVIC_AFTER_HOURS_ROLES.has(npc.role) && !NEIGHBOR_CIVIC_ROLES.has(npc.role)', app)
         self.assertIn("civicAfterHours = transitionNeighborCivicAfterHoursRoutine(npc, index)", app)
-        self.assertIn('/locales/en.js?v=20261107-living-npcs', html)
-        self.assertIn('/i18n.js?v=20261107-living-npcs', html)
+        self.assertIn('/locales/en.js?v=20261107-flower-festival-approach', html)
+        self.assertIn('/i18n.js?v=20261107-flower-festival-approach', html)
 
     def test_npcs_take_evening_trips_to_department_stores_and_lalaport(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1640,7 +1640,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("townAchievementUnlocks", schema)
         self.assertIn('achievement("medical-three"', achievements)
         self.assertIn('achievement("district-all"', achievements)
-        self.assertEqual(achievements.count("  achievement("), 19)
+        self.assertEqual(achievements.count("  achievement("), 20)
         self.assertIn('achievement("mayor-meeting"', achievements)
         self.assertIn('achievement("candidate-ho"', achievements)
         self.assertIn('achievement("candidate-chiang"', achievements)
@@ -1712,9 +1712,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn("taipeiDateKey", route)
         self.assertIn('"回家報到": "Check in at home"', english)
         self.assertIn('"每日任務完成": "Daily quest complete"', english)
-        self.assertIn("app.js?v=20261107-living-npcs", html)
-        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
-        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
 
     def test_lunch_town_line_login_icon_stays_inside_pixel_button(self) -> None:
         html = self.read("web/lunch-town/index.html")
@@ -1755,9 +1755,9 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('harvesting: `在${location}採收成熟作物，採收後田區暫時留空`', app)
         self.assertIn('"在{0}採收成熟作物，採收後田區暫時留空": [0]', i18n)
         self.assertIn('"Harvesting mature crops at {0}; the plot stays briefly empty afterward."', english)
-        self.assertIn("app.js?v=20261107-living-npcs", html)
-        self.assertIn("/locales/en.js?v=20261107-living-npcs", html)
-        self.assertIn("/i18n.js?v=20261107-living-npcs", html)
+        self.assertIn("app.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
 
     def test_six_adaptive_civic_agents_use_bounded_session_memory_and_safe_local_plans(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1795,15 +1795,85 @@ class LunchTownTests(unittest.TestCase):
         ):
             self.assertIn(f'"{template}"', english)
             self.assertIn(f'"{template}":', i18n)
-        for asset in ("app.js", "styles.css"):
-            self.assertIn(f'{asset}?v=20261107-living-npcs', html)
+        self.assertIn('app.js?v=20261107-flower-festival-approach', html)
+        self.assertIn('styles.css?v=20261107-living-npcs', html)
         for asset in ("/locales/en.js", "/i18n.js"):
-            self.assertIn(f'{asset}?v=20261107-living-npcs', html)
+            self.assertIn(f'{asset}?v=20261107-flower-festival-approach', html)
 
     def test_framework_route_serves_the_town_page(self) -> None:
         route = self.read("app/lunch-town/route.ts")
         self.assertIn('import lunchTownHtml from "@/web/lunch-town/index.html?raw";', route)
         self.assertIn("new Response(lunchTownHtml", route)
+
+    def test_xinshe_flower_festival_is_an_independent_walkable_event_scene(self) -> None:
+        app = self.read("web/lunch-town/app.js")
+        festival = self.read("web/lunch-town/flower-festival.js")
+        html = self.read("web/lunch-town/index.html")
+        english_source = self.read("web/locales/en.js")
+        english, _ = json.JSONDecoder().raw_decode(english_source.split("window.LunchEnglish = ", 1)[1])
+        achievements = self.read("lib/town-achievements.ts")
+        gateway_source = app.split("function createFlowerFestivalGateway() {", 1)[1].split(
+            "\n}\n\nfunction flowerFestivalPhase", 1
+        )[0]
+
+        self.assertIn("FLOWER_FESTIVAL_SCALE = 0.8", festival)
+        self.assertIn("FLOWER_FESTIVAL_CHUNK_SIZE = 320", festival)
+        self.assertIn('FLOWER_FESTIVAL_START_DATE = "2026-10-31"', festival)
+        self.assertIn('FLOWER_FESTIVAL_END_DATE = "2026-11-22"', festival)
+        self.assertEqual(festival.count('kind: "stamp"'), 6)
+        self.assertEqual(festival.count('kind: "photo"'), 3)
+        self.assertEqual(festival.count('kind: "shuttle"'), 4)
+        self.assertEqual(festival.count('kind: "shortcut"'), 2)
+        self.assertIn('id: "main-loop"', festival)
+        self.assertIn("flowerFestivalVisibleChunks", festival)
+        self.assertIn("flowerFestivalPointWalkable", festival)
+        self.assertIn("drawFlowerFestivalScene", festival)
+        self.assertIn("新社花海季｜原創遊戲活動", festival)
+        self.assertIn("不代表任何官方合作", festival)
+        self.assertNotIn("IMG_7631", festival)
+
+        self.assertIn("createFlowerFestivalGateway", app)
+        self.assertIn("FLOWER_FESTIVAL_APPROACH_GRID = Object.freeze([5, 2])", app)
+        self.assertIn("x: approach.x + (approach.w - 220) / 2", app)
+        self.assertIn("y: approach.y + (approach.h - 72) / 2", app)
+        self.assertIn("新社花海季入口未能安全配置於北側花田前庭", app)
+        self.assertNotIn("x: zone.x + 164", gateway_source)
+        self.assertNotIn("y: zone.y + 12", gateway_source)
+        self.assertIn("function drawFlowerFestivalApproach(now)", app)
+        self.assertIn('drawTownLayer("flower-festival-approach", () => drawFlowerFestivalApproach(now))', app)
+        self.assertIn("mobileLayoutQuery.matches || reducedDetail ? 34 : 24", app)
+        self.assertIn('hashText(`flower-approach:${Math.round(x)}:${Math.round(y)}`)', app)
+        self.assertIn('pointInRect(point, FLOWER_FESTIVAL_APPROACH_AREA) ? "新社區" : ""', app)
+        self.assertIn("enterFlowerFestival", app)
+        self.assertIn("exitFlowerFestival", app)
+        self.assertIn("syncFlowerFestivalAvailability", app)
+        self.assertIn('exitFlowerFestival("event_closed")', app)
+        self.assertIn("appendFlowerFestivalPromoters", app)
+        self.assertIn('flowerFestivalPromoter: true', app)
+        self.assertIn("state.flowerFestival.returnState", app)
+        self.assertIn("updateFlowerFestivalVisitors", app)
+        self.assertIn("activeFlowerFestivalNpcs", app)
+        self.assertIn('[SHOWCASE_CITY, "苗栗縣", "彰化縣"]', app)
+        self.assertIn('recordAchievementEvent("flower_festival_stamp"', app)
+        self.assertIn('trackTownEvent("lunch_town_flower_festival_photo"', app)
+        self.assertNotIn('trackTownEvent("lunch_town_school_viewed"', festival)
+        self.assertNotIn("localStorage", festival)
+
+        self.assertIn('"flower_festival_stamp"', achievements)
+        self.assertIn('achievement("flower-festival-six"', achievements)
+        self.assertEqual(achievements.count("  achievement("), 20)
+        for source in (
+            "新社花海季", "花海導覽員", "新社花農", "新社菇農", "花海女郎",
+            "花舞", "雲朵", "橘陽", "紫風",
+            "歡迎來散步！主環線會走過六區，兩條捷徑都能回到城堡廣場，不必一直走回頭路。",
+            "晚餐可以把菇類和豆腐、雞肉或當季蔬菜搭成湯、燴菜或炊飯，再依家人的飲食需求調整。",
+            "2026 新社花海暨臺中國際花毯節從 10 月 31 日到 11 月 22 日，一共 23 天，記得在展期內到新社走走。",
+            "午餐小鎮的入口已搬到新社區北側空地，看到粉色花門就能進入大型花海園區。",
+        ):
+            self.assertIn(source, english)
+            self.assertIsNone(re.search(r"[\u3400-\u9fff]", english[source]), source)
+        for asset in ("app.js", "/locales/en.js", "/i18n.js"):
+            self.assertIn(f'{asset}?v=20261107-flower-festival-approach', html)
 
     def test_published_map_editor_content_uses_a_safe_district_lane(self) -> None:
         app = self.read("web/lunch-town/app.js")

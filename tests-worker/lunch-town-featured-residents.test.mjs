@@ -57,6 +57,8 @@ function load() {
     TOWN_SERVICE_NPCS: [], CITY_HALL_NPCS: [], CIVIC_TOWN_NPCS: [], CANDIDATE_APPEARANCE_RULES: {},
     // Isolate the resident integration from unrelated county population and DOM bootstrap.
     appendNeighborCountyCharacters() {},
+    appendFlowerFestivalPromoters() {},
+    drawFlowerFestivalPromoterBubble() {},
     createSmartNpcState() { return null; },
     chooseNpcInitialSpawn(identity, schedule) { return { stop: schedule[0], segment: 0 }; },
     assignNpcResidences(identities) { identities.forEach(n => { n.residenceVenueId = `${n.district}-home`; n.residenceLabel = '住家'; }); },
