@@ -8,6 +8,9 @@ const registry = JSON.parse(
 const plan = JSON.parse(
   await readFile(new URL("../data/reference/school-refresh-groups.json", import.meta.url)),
 );
+const regionOrder = JSON.parse(
+  await readFile(new URL("../data/reference/taiwan-region-order.json", import.meta.url)),
+);
 
 test("refresh groups contain every school exactly once and keep configured city order", () => {
   const seen = new Set();
@@ -42,12 +45,13 @@ test("refresh plan does not invent districts", () => {
   assert.deepEqual([...plannedDistricts].sort(), [...registryDistricts].sort());
 });
 
-test("refresh plan visits shorter district names before longer names", () => {
-  for (const city of plan.cityOrder) {
-    const districts = plan.groups
-      .filter((group) => group.city === city)
-      .flatMap((group) => group.districts);
-    const lengths = districts.map((district) => [...district].length);
-    assert.deepEqual(lengths, [...lengths].sort((left, right) => left - right), city);
+test("refresh plan follows common postal order within each configured batch", () => {
+  for (const group of plan.groups) {
+    const districtRanks = new Map(
+      regionOrder.districtOrder[group.city].map(({ name }, index) => [name, index]),
+    );
+    const ranks = group.districts.map((district) => districtRanks.get(district));
+    assert.equal(ranks.every(Number.isInteger), true, group.city);
+    assert.deepEqual(ranks, [...ranks].sort((left, right) => left - right), group.city);
   }
 });

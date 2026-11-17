@@ -5,6 +5,7 @@ from pathlib import Path
 from scripts.build_city_service_catalog import (
     TAIWAN_CITY_ORDER,
     TAIWAN_DISTRICT_ORDER,
+    TAIWAN_DISTRICT_POSTAL_CODES,
     district_order_key,
 )
 
@@ -32,17 +33,47 @@ class DistrictOrderingTests(unittest.TestCase):
             ),
         )
 
-    def test_district_key_prioritizes_short_names_then_geographic_order(self) -> None:
-        self.assertLess(
-            district_order_key("臺中市", "北區"),
-            district_order_key("臺中市", "大甲區"),
+    def test_district_key_follows_common_postal_order(self) -> None:
+        self.assertEqual(
+            TAIWAN_DISTRICT_ORDER["臺中市"][:8],
+            (
+                "中區",
+                "東區",
+                "南區",
+                "西區",
+                "北區",
+                "北屯區",
+                "西屯區",
+                "南屯區",
+            ),
         )
         self.assertLess(
-            district_order_key("臺中市", "大甲區"),
-            district_order_key("臺中市", "大安區"),
+            district_order_key("臺中市", "南屯區"),
+            district_order_key("臺中市", "太平區"),
         )
 
-    def test_active_registry_follows_city_and_district_name_length_order(self) -> None:
+    def test_every_city_is_in_non_decreasing_postal_code_order(self) -> None:
+        for city, districts in TAIWAN_DISTRICT_ORDER.items():
+            postal_codes = [
+                TAIWAN_DISTRICT_POSTAL_CODES[city][district]
+                for district in districts
+            ]
+            self.assertEqual(postal_codes, sorted(postal_codes), city)
+
+    def test_other_cities_follow_familiar_postal_sequences(self) -> None:
+        expected_prefixes = {
+            "臺北市": ("中正區", "大同區", "中山區", "松山區"),
+            "新北市": ("萬里區", "金山區", "板橋區", "汐止區"),
+            "桃園市": ("中壢區", "平鎮區", "龍潭區", "楊梅區"),
+            "苗栗縣": ("竹南鎮", "頭份市", "三灣鄉", "南庄鄉"),
+            "彰化縣": ("彰化市", "芬園鄉", "花壇鄉", "秀水鄉"),
+            "臺南市": ("中西區", "東區", "南區", "北區"),
+            "高雄市": ("新興區", "前金區", "苓雅區", "鹽埕區"),
+        }
+        for city, prefix in expected_prefixes.items():
+            self.assertEqual(TAIWAN_DISTRICT_ORDER[city][: len(prefix)], prefix)
+
+    def test_active_registry_follows_city_and_postal_district_order(self) -> None:
         registry = json.loads(
             (PROJECT_ROOT / "data/reference/active-elementary-schools.json").read_text(
                 encoding="utf-8"

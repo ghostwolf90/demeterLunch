@@ -10,17 +10,21 @@ from typing import Any
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-GEOGRAPHIC_ORDER_PATH = (
-    PROJECT_ROOT / "data/reference/taiwan-geographic-order.json"
+REGION_ORDER_PATH = (
+    PROJECT_ROOT / "data/reference/taiwan-region-order.json"
 )
 
 
-def load_geographic_order(
-    path: Path = GEOGRAPHIC_ORDER_PATH,
-) -> tuple[tuple[str, ...], dict[str, tuple[str, ...]]]:
+def load_region_order(
+    path: Path = REGION_ORDER_PATH,
+) -> tuple[
+    tuple[str, ...],
+    dict[str, tuple[str, ...]],
+    dict[str, dict[str, int]],
+]:
     payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict) or payload.get("schemaVersion") != 1:
-        raise ValueError("臺灣地理順序資料格式無效")
+    if not isinstance(payload, dict) or payload.get("schemaVersion") != 2:
+        raise ValueError("臺灣區域順序資料格式無效")
     city_order = payload.get("cityOrder")
     district_order = payload.get("districtOrder")
     if (
@@ -31,34 +35,56 @@ def load_geographic_order(
         or not isinstance(district_order, dict)
         or set(district_order) != set(city_order)
     ):
-        raise ValueError("臺灣地理順序缺少完整縣市")
+        raise ValueError("臺灣區域順序缺少完整縣市")
     normalized: dict[str, tuple[str, ...]] = {}
+    postal_codes: dict[str, dict[str, int]] = {}
     for city in city_order:
         districts = district_order.get(city)
         if (
             not isinstance(districts, list)
             or not districts
-            or not all(isinstance(district, str) and district for district in districts)
-            or len(districts) != len(set(districts))
+            or not all(
+                isinstance(district, dict)
+                and isinstance(district.get("name"), str)
+                and district["name"]
+                and isinstance(district.get("postalCode"), int)
+                and 100 <= district["postalCode"] <= 999
+                for district in districts
+            )
         ):
-            raise ValueError(f"{city}地理順序缺少完整行政區")
-        normalized[city] = tuple(districts)
-    return tuple(city_order), normalized
+            raise ValueError(f"{city}區域順序缺少完整行政區")
+        names = tuple(district["name"] for district in districts)
+        codes = tuple(district["postalCode"] for district in districts)
+        if len(names) != len(set(names)) or codes != tuple(sorted(codes)):
+            raise ValueError(f"{city}行政區未依三碼郵遞區號排列")
+        normalized[city] = names
+        postal_codes[city] = {
+            district["name"]: district["postalCode"] for district in districts
+        }
+    return tuple(city_order), normalized, postal_codes
 
 
-TAIWAN_CITY_ORDER, TAIWAN_DISTRICT_ORDER = load_geographic_order()
+(
+    TAIWAN_CITY_ORDER,
+    TAIWAN_DISTRICT_ORDER,
+    TAIWAN_DISTRICT_POSTAL_CODES,
+) = load_region_order()
 
 
 def district_order_index(city: str, district: str) -> int:
     districts = TAIWAN_DISTRICT_ORDER.get(city)
     if districts is None or district not in districts:
-        raise ValueError(f"臺灣地理順序沒有{city}{district}")
+        raise ValueError(f"臺灣區域順序沒有{city}{district}")
     return districts.index(district)
 
 
 def district_order_key(city: str, district: str) -> tuple[int, int]:
-    """Order shorter district names first, then retain geographic order."""
-    return (len(district), district_order_index(city, district))
+    """Order districts by the common three-digit postal-code sequence."""
+    try:
+        postal_code = TAIWAN_DISTRICT_POSTAL_CODES[city][district]
+    except KeyError as error:
+        raise ValueError(f"臺灣區域順序沒有{city}{district}") from error
+    return (postal_code, district_order_index(city, district))
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -116,7 +142,7 @@ def build_catalog_payload(
         city for city in TAIWAN_CITY_ORDER if city in collection_cities
     ]
     if configured_order != expected_collection_order:
-        raise ValueError("午餐啟用名冊的 cityOrder 必須依臺灣地理順序排列")
+        raise ValueError("午餐啟用名冊的 cityOrder 必須依臺灣區域順序排列")
 
     return {
         "schemaVersion": 1,

@@ -42,14 +42,14 @@ class CityServiceCatalogTests(unittest.TestCase):
         self.assertEqual(taipei["schoolCount"], 1)
         self.assertEqual(taipei["mealUnitCount"], 1)
 
-    def test_rejects_collection_city_order_that_is_not_geographic(self) -> None:
+    def test_rejects_collection_city_order_that_is_not_configured(self) -> None:
         national = {
             "schools": [
                 {"city": city, "level": "國小"}
                 for city in TAIWAN_CITY_ORDER
             ],
         }
-        with self.assertRaisesRegex(ValueError, "地理順序"):
+        with self.assertRaisesRegex(ValueError, "區域順序"):
             build_catalog_payload(
                 national,
                 {

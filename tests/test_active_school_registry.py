@@ -62,7 +62,7 @@ class ActiveSchoolRegistryTests(unittest.TestCase):
                 registry("桃園市"),
             ])
 
-    def test_merge_prioritizes_two_character_districts(self):
+    def test_merge_follows_common_postal_district_order(self):
         merged = merge_registries([
             registry("臺北市"),
             registry("桃園市"),
@@ -78,7 +78,7 @@ class ActiveSchoolRegistryTests(unittest.TestCase):
         ])
         self.assertEqual(
             [item["district"] for item in merged],
-            ["北區", "西區", "大甲區", "大安區"],
+            ["西區", "北區", "大甲區", "大安區"],
         )
 
     def test_partition_keeps_districts_whole(self):
