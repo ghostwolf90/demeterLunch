@@ -185,11 +185,10 @@ const ids = [
   "educationCategory", "educationIngredient", "educationTitle", "educationFact", "educationPrompt", "educationSource",
   "recipeInspired", "recipeTitle", "recipeMeta", "recipePreview", "recipeDetails",
   "recipeIngredients", "recipeSteps", "recipeAllergens", "recipeNote",
-  "latestNews", "newsUpdated", "traceabilityStatus", "traceabilityNotice",
-  "traceabilitySummary", "traceabilityDishes", "traceabilitySource",
+  "latestNews", "newsUpdated",
   "mealTypeMeat", "mealTypeVegetarian", "mealTypeNote", "openDetail",
   "dishCount", "dishPhotoDateButton", "mainDishButton", "dishDetailDialog", "closeDishDetail",
-  "dishDetailRole", "dishDetailTitle", "dishDetailCount", "dishDetailIngredients",
+  "dishDetailRole", "dishDetailTitle", "dishDetailCount", "dishDetailSourceStatus", "dishDetailIngredients",
   "dishDetailNote", "dishDetailPhoto", "previousDish", "nextDish",
   "gradeLower", "gradeUpper", "standardTarget", "standardTransitional",
   "standardPeriod", "standardBasis", "standardDescription", "standardSummary",
@@ -203,7 +202,7 @@ const ids = [
   "desktopMealTypeSlot", "mealTypeSwitch", "mobileMealTypeControl", "mobileMealTypeLabel", "mobileMealTypeSlot", "mobileMealTypeHelp",
   "menuBoard", "menuKicker", "menuHeading", "reviewBadge",
   "officialSourceLink", "schoolMenuSourceButton", "schoolMenuNutritionButton", "nutritionCard", "dinnerCard", "standard", "learn",
-  "week", "todayGrid", "traceability", "news", "insights", "source", "traceabilityKicker", "traceabilityHeading",
+  "week", "todayGrid", "news", "insights", "source",
   "passport", "passportLocked", "passportUnlock", "passportSetup", "openChildSettings", "childForm", "childNickname",
   "childAvatarPreview", "childAvatarInput", "removeChildAvatar",
   "childGradeGroup", "childSchool", "childFormSubmit", "cancelChildEdit", "childSetupKicker", "childSetupTitle",
@@ -222,9 +221,9 @@ const ids = [
   "parentNickname", "saveParentProfile", "parentProfileStatus", "accountChildList", "accountAddChild",
   "accountFamilyStatus", "accountChildEditor", "accountChildBack",
   "emailLinkSettings", "emailLinkForm", "linkEmail", "requestLinkEmailCode", "emailLinkCodeForm", "linkEmailCode", "verifyLinkEmailCode", "cancelEmailLink", "emailLinkStatus",
-  "settingsSignOutSection", "settingsSignOutStatus", "lineLoginOptions",
+  "settingsSignOutSection", "settingsSignOutStatus", "emailEntryFields", "authEligibilityGate", "continueLineAuth", "backAuthMethod", "lineLoginOptions",
   "lineSignIn", "lineLoginNote", "lineAccountSettings", "linkLineAccount", "lineLinkNote", "lineLinkStatus",
-  "emailAuthForm", "authEmail", "authBirthDate", "authCaregiverConfirmed", "requestAuthCode", "authRequestStatus",
+  "emailAuthNote", "lineAuthNote", "emailAuthForm", "authEmail", "authBirthDate", "authCaregiverConfirmed", "requestAuthCode", "authRequestStatus",
   "emailCodeStep", "authMaskedEmail", "emailCodeForm", "authCode", "verifyAuthCode", "authVerifyStatus",
   "changeAuthEmail", "accountSignOut",
 ];
@@ -1398,7 +1397,11 @@ function renderAccount() {
 
 function renderEmailAuthStep() {
   const awaitingCode = EMAIL_REGISTRATION_ENABLED && Boolean(state.authChallengeId);
-  refs.lineLoginOptions.hidden = !state.account.lineLoginEnabled || awaitingCode;
+  refs.lineLoginOptions.hidden = !state.account.lineLoginEnabled || awaitingCode || !refs.authEligibilityGate.hidden;
+  const lineSelected = !refs.authEligibilityGate.hidden && !refs.continueLineAuth.hidden;
+  refs.emailAuthNote.hidden = lineSelected;
+  refs.lineAuthNote.hidden = !lineSelected;
+  refs.requestAuthCode.textContent = refs.authEligibilityGate.hidden ? "使用 Email 繼續" : "寄送登入驗證碼";
   refs.emailAuthForm.hidden = awaitingCode;
   refs.emailCodeStep.hidden = !awaitingCode;
   refs.requestAuthCode.disabled = !EMAIL_REGISTRATION_ENABLED;
@@ -1472,6 +1475,10 @@ async function startLineAuth(mode) {
   const linking = mode === "link";
   const status = linking ? refs.lineLinkStatus : refs.authRequestStatus;
   const button = linking ? refs.linkLineAccount : refs.lineSignIn;
+  if (!linking && refs.authEligibilityGate.hidden) {
+    chooseAuthMethod("line");
+    return;
+  }
   if (!linking && (!refs.authBirthDate.reportValidity() || !refs.authCaregiverConfirmed.reportValidity())) return;
   button.disabled = true;
   setFormStatus(status, "正在前往 LINE…", "loading");
@@ -1523,8 +1530,14 @@ async function startLineAuth(mode) {
 
 
 async function requestEmailAuthCode() {
+  if (!refs.authEligibilityGate.hidden && !refs.continueLineAuth.hidden) return startLineAuth("login");
   if (!EMAIL_REGISTRATION_ENABLED) {
     setFormStatus(refs.authRequestStatus, "免費註冊準備中，目前尚未開放。", "error");
+    return;
+  }
+  if (refs.authEligibilityGate.hidden) {
+    if (!refs.authEmail.reportValidity()) return;
+    chooseAuthMethod("email");
     return;
   }
   if (!refs.emailAuthForm.reportValidity()) return;
@@ -1612,7 +1625,31 @@ async function verifyEmailAuthCode() {
   }
 }
 
+function chooseAuthMethod(method) {
+  refs.authEligibilityGate.hidden = false;
+  refs.authBirthDate.disabled = false;
+  refs.authCaregiverConfirmed.disabled = false;
+  refs.emailEntryFields.hidden = method === "line";
+  refs.authEmail.disabled = method === "line";
+  refs.requestAuthCode.hidden = method === "line";
+  refs.continueLineAuth.hidden = method !== "line";
+  setFormStatus(refs.authRequestStatus);
+  renderEmailAuthStep();
+  refs.authBirthDate.focus();
+}
+
+function resetAuthMethod() {
+  refs.authEligibilityGate.hidden = true;
+  refs.authBirthDate.disabled = true;
+  refs.authCaregiverConfirmed.disabled = true;
+  refs.emailEntryFields.hidden = false;
+  refs.authEmail.disabled = false;
+  refs.requestAuthCode.hidden = false;
+  refs.continueLineAuth.hidden = true;
+}
+
 function resetEmailAuthForm() {
+  resetAuthMethod();
   state.authChallengeId = null;
   state.authEmail = null;
   refs.emailAuthForm.reset();
@@ -2078,7 +2115,56 @@ async function loadNewsPreview() {
   }
 }
 
-function renderMeal(day, { personalizeAllergens = true, photoRecord = null } = {}) {
+function normalizedDishKey(value) {
+  return String(value || "").trim().replace(/\s+/g, "").replace(/[（(][^）)]*[）)]/g, "");
+}
+
+function traceabilityDishRole(category) {
+  return {
+    "主食": "staple", "主菜": "main", "副菜一": "side_1", "副菜二": "side_2",
+    "副菜三": "side_3", "配菜": "side_1", "青菜": "vegetable", "蔬菜": "vegetable",
+    "湯品": "soup", "水果": "fruit", "飲品": "drink",
+  }[category] || "side_1";
+}
+
+function attachDishTraceability(dishes, traceability) {
+  if (!traceability) return;
+  const context = {
+    status: traceability.status || "unavailable",
+    selectedDate: traceability.selectedDate || state.dashboard?.selectedDate || null,
+    dataDate: traceability.dataDate || null,
+    referenceDates: traceability.referenceDates || [],
+    sourceName: traceability.sourceName || "教育部校園食材登錄平臺",
+    reviewedAt: traceability.reviewedAt || null,
+    notice: traceability.notice || "",
+  };
+  const records = Array.isArray(traceability.dishes) ? traceability.dishes : [];
+  const used = new Set();
+  for (const dish of dishes) {
+    const key = normalizedDishKey(dish.name);
+    const index = records.findIndex((record, recordIndex) => !used.has(recordIndex)
+      && [record.name, record.officialName].some((name) => normalizedDishKey(name) === key));
+    if (index >= 0) used.add(index);
+    dish.officialTraceability = {
+      ...context,
+      matched: index >= 0,
+      dish: index >= 0 ? records[index] : null,
+    };
+  }
+  records.forEach((record, index) => {
+    if (used.has(index)) return;
+    dishes.push({
+      name: record.name,
+      category: record.category || "官方菜色",
+      role: traceabilityDishRole(record.category),
+      ingredients: [],
+      supplementalOfficialRecord: true,
+      officialTraceability: { ...context, matched: true, dish: record },
+    });
+  });
+}
+
+function renderMeal(day, { personalizeAllergens = true, photoRecord = null, traceability = null } = {}) {
   if (refs.dishDetailDialog.open) {
     state.lastDishTrigger = null;
     closeDishDetail({ immediate: true });
@@ -2108,6 +2194,7 @@ function renderMeal(day, { personalizeAllergens = true, photoRecord = null } = {
       ingredients: (match.ingredients || []).map((ingredient) => ({ ...ingredient, officialRecord: true })),
     });
   }
+  attachDishTraceability(sourceDishes, traceability);
   const detailedRoles = new Set(sourceDishes.map((dish) => dish.role));
   const supplementalItems = [
     !detailedRoles.has("fruit") && day.meal.fruit
@@ -2124,7 +2211,7 @@ function renderMeal(day, { personalizeAllergens = true, photoRecord = null } = {
       ? `菜單共 ${sourceDishes.length + supplementalItems.length} 道 · 其中 ${sourceDishes.length} 道可查看食材與設計用量`
       : `本餐共 ${sourceDishes.length} 道 · 點選菜色查看食材與設計用量`
     : "菜色依午餐總表校讀";
-  if (sourceDishes.some((dish) => dish.officialRecord)) {
+  if (sourceDishes.some((dish) => dish.officialRecord || dish.officialTraceability?.matched)) {
     refs.dishCount.textContent = `本餐共 ${sourceDishes.length + supplementalItems.length} 道 · 點選菜色查看食材明細`;
   }
 
@@ -2162,6 +2249,10 @@ function renderMeal(day, { personalizeAllergens = true, photoRecord = null } = {
     }
     if (dish?.officialRecord) item.setAttribute("aria-label", `查看${label}「${value}」的官方食材紀錄`);
     item.append(node("span", "", label), LunchI18n.keep(node("strong", "", value)));
+    const officialCount = dish?.officialRecord
+      ? dish.ingredients?.length || 0
+      : dish?.officialTraceability?.dish?.ingredients?.length || 0;
+    if (officialCount) item.append(node("em", "", `官方食材 ${officialCount} 項`));
     renderMenuPhoto(item, dish);
     refs.mealList.append(item);
   }
@@ -2329,58 +2420,225 @@ function renderDishPhoto(dish) {
   photoLink.photoRelease = MealPhotos.attach(image, url.pathname.split("/").pop());
 }
 
+function appendOfficialRecordFacts(container, ingredient) {
+  if (ingredient.standardName && ingredient.standardName !== ingredient.name) {
+    container.append(traceabilityDetail("標準名稱", ingredient.standardName));
+  }
+  if (ingredient.productName && ingredient.productName !== ingredient.name) {
+    container.append(traceabilityDetail("產品名稱", ingredient.productName));
+  }
+  container.append(
+    traceabilityDetail("原料產地（國）", ingredient.origin || "未提供"),
+    traceabilityDetail("製造／生產者", ingredient.manufacturer || "未提供"),
+    traceabilityDetail("平臺申報供應商", ingredient.supplierName || "未提供"),
+  );
+  if (ingredient.stockDate) {
+    container.append(traceabilityDetail(
+      "進貨日期",
+      formatDate(ingredient.stockDate.slice(0, 10), { year: "numeric" }),
+    ));
+  }
+  for (const certification of ingredient.certifications || []) {
+    container.append(traceabilityDetail(certification.name, certification.id || "未提供編號"));
+  }
+}
+
+function appendReviewedTraceabilityFacts(container, ingredient) {
+  if (ingredient.referenceDate) {
+    container.append(
+      traceabilityDetail("匹配依據", ingredient.matchReason),
+      traceabilityDetail("資料日期", formatDate(ingredient.referenceDate, { year: "numeric" })),
+      traceabilityDetail("原始菜色", ingredient.referenceDishName),
+    );
+  }
+  if (ingredient.producer) container.append(traceabilityDetail("製造／生產者", ingredient.producer.name));
+  if (ingredient.platformMark) container.append(traceabilityDetail("平臺標示", ingredient.platformMark));
+  if (ingredient.originCountry) container.append(traceabilityDetail("原料產地（國）", ingredient.originCountry));
+  const supplier = ingredient.supplier || {};
+  container.append(
+    traceabilityDetail("平臺申報供應商", supplier.name || "未提供"),
+    traceabilityDetail("供應商統編", supplier.taxId || "未提供"),
+  );
+  if (supplier.address) container.append(traceabilityDetail("供應商地址", supplier.address));
+  const certification = ingredient.certification;
+  if (certification) {
+    container.append(traceabilityDetail(
+      "認證／追溯號碼",
+      certification.number || "未提供編號",
+      certification.officialUrl,
+    ));
+    if (certification.operator) {
+      container.append(traceabilityDetail(
+        "認證經營者",
+        certification.operator.name,
+        certification.operator.sourceUrl,
+      ));
+      if (certification.operator.address) {
+        container.append(traceabilityDetail("經營者所在地", certification.operator.address));
+      }
+    }
+    if (certification.verificationBody) {
+      container.append(traceabilityDetail("驗證／管理單位", certification.verificationBody));
+    }
+    if (certification.status || certification.validUntil) {
+      container.append(traceabilityDetail("查核狀態", [
+        certification.status,
+        certification.validUntil ? `效期至 ${formatDate(certification.validUntil, { year: "numeric" })}` : null,
+      ].filter(Boolean).join(" · ")));
+    }
+  } else if (ingredient.platformMark) {
+    container.append(traceabilityDetail("追溯號碼", "本次頁面截圖未顯示可核對的號碼"));
+  } else {
+    container.append(traceabilityDetail("標章資料", "這筆平臺資料未提供認證標章或追溯號碼"));
+  }
+}
+
+function officialIngredientDisclosure(ingredient, { reviewed = false } = {}) {
+  const disclosure = node("details", "dish-detail-ingredient dish-detail-official-ingredient");
+  const summary = node("summary");
+  const heading = node("div", "dish-detail-ingredient-heading");
+  const origin = reviewed ? ingredient.originCountry : ingredient.origin;
+  heading.append(
+    LunchI18n.keep(node("strong", "", ingredient.name)),
+    node("span", "", origin || "產地未提供"),
+  );
+  const badges = node("div", "ingredient-source-badges");
+  const labels = reviewed
+    ? [ingredient.certification?.label || ingredient.platformMark].filter(Boolean)
+    : (ingredient.certifications || []).map((certification) => certification.name);
+  if (labels.length) {
+    for (const label of labels) badges.append(node("span", "ingredient-trace verified", label));
+  } else {
+    badges.append(node("span", "ingredient-trace unavailable", "未提供標章"));
+  }
+  const facts = node("dl", "ingredient-details");
+  if (reviewed) appendReviewedTraceabilityFacts(facts, ingredient);
+  else appendOfficialRecordFacts(facts, ingredient);
+  summary.append(heading, badges);
+  disclosure.append(summary, facts);
+  return disclosure;
+}
+
+function renderDishSourceStatus(dish, officialContext) {
+  refs.dishDetailSourceStatus.className = "dish-detail-source-status";
+  if (dish.officialRecord) {
+    const date = state.dashboard?.record?.mealDate || state.dashboard?.selectedDate;
+    refs.dishDetailSourceStatus.textContent = `同日官方資料${date ? ` · ${date}` : ""}`;
+    refs.dishDetailSourceStatus.classList.add("verified");
+    refs.dishDetailSourceStatus.hidden = false;
+    return;
+  }
+  if (!officialContext) {
+    refs.dishDetailSourceStatus.hidden = true;
+    return;
+  }
+  refs.dishDetailSourceStatus.hidden = false;
+  if (officialContext.matched && officialContext.status === "verified") {
+    refs.dishDetailSourceStatus.textContent = `同日官方資料${officialContext.dataDate ? ` · ${officialContext.dataDate}` : ""}`;
+    refs.dishDetailSourceStatus.classList.add("verified");
+  } else if (officialContext.matched && officialContext.status === "matched_reference") {
+    refs.dishDetailSourceStatus.textContent = `過去餐點參考 · ${(officialContext.referenceDates || []).map(compactDate).join("、")}`;
+    refs.dishDetailSourceStatus.classList.add("reference");
+  } else if (officialContext.status === "unavailable") {
+    refs.dishDetailSourceStatus.textContent = "尚未取得當日官方食材紀錄";
+    refs.dishDetailSourceStatus.classList.add("unavailable");
+  } else if (officialContext.status === "verified") {
+    refs.dishDetailSourceStatus.textContent = "這道菜尚未找到可核對的同日官方食材";
+    refs.dishDetailSourceStatus.classList.add("unavailable");
+  } else {
+    refs.dishDetailSourceStatus.textContent = "這道菜沒有可明確對應的過去餐點紀錄";
+    refs.dishDetailSourceStatus.classList.add("unavailable");
+  }
+}
+
 function renderDishDetail() {
   const dish = state.dishDetails[state.activeDishIndex];
   if (!dish) return;
-  const ingredients = Array.isArray(dish.ingredients) ? dish.ingredients : [];
+  const recipeIngredients = dish.officialRecord ? [] : Array.isArray(dish.ingredients) ? dish.ingredients : [];
+  const officialContext = dish.officialTraceability;
+  const officialIngredients = dish.officialRecord
+    ? Array.isArray(dish.ingredients) ? dish.ingredients : []
+    : officialContext?.matched && Array.isArray(officialContext.dish?.ingredients)
+      ? officialContext.dish.ingredients : [];
   refs.dishDetailRole.textContent = dish.category || roleLabels[dish.role] || "菜色";
   refs.dishDetailTitle.textContent = dish.name; LunchI18n.keep(refs.dishDetailTitle);
   renderDishPhoto(dish);
-  refs.dishDetailCount.textContent = dish.schoolMenu?.servingText
-    ? `校方設計每份 ${dish.schoolMenu.servingText} · 官方食材 ${ingredients.length} 項`
-    : `食譜明細共 ${ingredients.length} 項`;
+  refs.dishDetailCount.textContent = [
+    dish.schoolMenu?.servingText ? `校方設計每份 ${dish.schoolMenu.servingText}` : null,
+    recipeIngredients.length ? `食譜明細 ${recipeIngredients.length} 項` : null,
+    officialIngredients.length ? `官方食材 ${officialIngredients.length} 項` : null,
+  ].filter(Boolean).join(" · ") || "食材明細尚未提供";
+  renderDishSourceStatus(dish, officialContext);
   refs.dishDetailIngredients.replaceChildren();
 
-  if (!ingredients.length) {
-    refs.dishDetailIngredients.append(node("p", "dish-detail-empty", "這道菜的食材明細尚未提供。"));
-  }
-  for (const ingredient of ingredients) {
-    const row = node("article", "dish-detail-ingredient");
-    const heading = node("div", "dish-detail-ingredient-heading");
-    heading.append(
-      LunchI18n.keep(node("strong", "", ingredient.name)),
-      node("span", "", ingredientQuantity(ingredient)),
-    );
-    const badges = node("div", "ingredient-source-badges");
-    if (ingredient.officialRecord) {
-      for (const certification of ingredient.certifications || []) {
-        badges.append(node("span", "ingredient-trace verified", certification.name));
-      }
-      if (!(ingredient.certifications || []).length) {
-        badges.append(node("span", "ingredient-trace unavailable", "未提供標章"));
-      }
-    } else {
+  if (recipeIngredients.length) {
+    refs.dishDetailIngredients.append(node("p", "dish-detail-section-label", "校方食譜明細"));
+    for (const ingredient of recipeIngredients) {
+      const row = node("article", "dish-detail-ingredient");
+      const heading = node("div", "dish-detail-ingredient-heading");
+      heading.append(
+        LunchI18n.keep(node("strong", "", ingredient.name)),
+        node("span", "", ingredientQuantity(ingredient)),
+      );
+      const badges = node("div", "ingredient-source-badges");
       for (const claim of ingredient.claims || []) {
         badges.append(node("span", `source-claim ${claim}`, claimLabels[claim] || claim));
       }
       const status = ingredient.traceabilityStatus || "unavailable";
       badges.append(node(
-        "span",
-        `ingredient-trace ${status}`,
+        "span", `ingredient-trace ${status}`,
         traceabilityStatusLabels[status] || traceabilityStatusLabels.unavailable,
       ));
+      row.append(heading, badges);
+      refs.dishDetailIngredients.append(row);
     }
-    row.append(heading, badges);
-    refs.dishDetailIngredients.append(row);
+  }
+  if (officialIngredients.length) {
+    const label = officialContext?.status === "matched_reference" ? "過去餐點參考" : "教育部同日公開紀錄";
+    refs.dishDetailIngredients.append(node("p", "dish-detail-section-label official", label));
+    if (dish.officialRecord) {
+      const record = state.dashboard?.record;
+      if (record) {
+        refs.dishDetailIngredients.append(node(
+          "p", "dish-detail-source-meta",
+          `資料來源：${record.source.name} · 供餐日期 ${record.mealDate} · 校讀 ${record.review.reviewedAt.slice(0, 10)}`,
+        ));
+      }
+    } else if (officialContext?.status === "matched_reference") {
+      refs.dishDetailIngredients.append(node(
+        "p", "dish-detail-source-meta",
+        `資料來源：${officialContext.sourceName} · 歷史資料日期 ${(officialContext.referenceDates || []).map(compactDate).join("、")} · 不代表本日供應批次`,
+      ));
+    } else if (officialContext) {
+      refs.dishDetailIngredients.append(node(
+        "p", "dish-detail-source-meta",
+        `資料來源：${officialContext.sourceName} · 供餐日期 ${compactDate(officialContext.dataDate)} · 校讀日期 ${officialContext.reviewedAt}`,
+      ));
+    }
+    refs.dishDetailIngredients.append(...officialIngredients.map((ingredient) => officialIngredientDisclosure(
+      ingredient,
+      { reviewed: !dish.officialRecord },
+    )));
+  }
+  if (!recipeIngredients.length && !officialIngredients.length) {
+    refs.dishDetailIngredients.append(node("p", "dish-detail-empty", "這道菜的食材明細尚未提供。"));
   }
 
-  refs.dishDetailNote.textContent = dish.officialRecord
-    ? dish.schoolMenu?.servingText
+  if (dish.officialRecord) {
+    refs.dishDetailNote.textContent = dish.schoolMenu?.servingText
       ? "每份設計重量來自校方週菜單；食材名稱、產地、供應商與標章來自教育部同日公開紀錄。"
-      : "食材名稱、產地、供應商與標章照教育部當日公開紀錄呈現；官方頁面沒有提供每人用量。"
-    : state.mealType === "vegetarian"
-    ? "素食菜單可能含蛋、奶；用量為供餐廠商的食譜設計值，不代表實際攝取量。"
-    : "用量為供餐廠商的食譜設計值，不代表實際攝取量。";
+      : "食材名稱、產地、供應商與標章照教育部當日公開紀錄呈現；官方頁面沒有提供每人用量。";
+  } else if (officialContext?.matched && officialContext.status === "verified") {
+    refs.dishDetailNote.textContent = "用量為供餐廠商的食譜設計值；產地、供應商與標章來自教育部同日公開紀錄，不代表孩子實際攝取量。";
+  } else if (officialContext?.matched && officialContext.status === "matched_reference") {
+    refs.dishDetailNote.textContent = `以上來源來自 ${(officialContext.referenceDates || []).map(compactDate).join("、")} 的歷史食材紀錄，只供過去餐點參考，不代表今日食材、產地、供應商或批次。`;
+  } else if (officialContext?.status === "unavailable" || officialContext) {
+    refs.dishDetailNote.textContent = "當日官方食材紀錄尚未取得；未偵測到資料不代表安全或不含過敏原，嚴重過敏仍應向校方確認實際食材、製程與交叉接觸。";
+  } else {
+    refs.dishDetailNote.textContent = state.mealType === "vegetarian"
+      ? "素食菜單可能含蛋、奶；用量為供餐廠商的食譜設計值，不代表實際攝取量。"
+      : "用量為供餐廠商的食譜設計值，不代表實際攝取量。";
+  }
   refs.previousDish.disabled = state.activeDishIndex === 0;
   refs.nextDish.disabled = state.activeDishIndex === state.dishDetails.length - 1;
   const previous = state.dishDetails[state.activeDishIndex - 1];
@@ -2596,131 +2854,6 @@ function traceabilityDetail(label, value, url = null) {
   }
   row.append(description);
   return row;
-}
-
-function renderIngredient(ingredient) {
-  const card = node("article", "ingredient-card");
-  const heading = node("div", "ingredient-heading");
-  heading.append(LunchI18n.keep(node("strong", "", ingredient.name)));
-  const certification = ingredient.certification;
-  const certificationLabel = certification?.label.includes("CAS")
-    ? "CAS"
-    : certification?.label || ingredient.platformMark;
-  heading.append(node(
-    "span",
-    `certification-badge${certification ? "" : " empty"}`,
-    certificationLabel || "未提供標章",
-  ));
-  card.append(heading);
-
-  const details = node("dl", "ingredient-details");
-  if (ingredient.referenceDate) {
-    details.append(
-      traceabilityDetail("匹配依據", ingredient.matchReason),
-      traceabilityDetail(
-        "資料日期",
-        formatDate(ingredient.referenceDate, { year: "numeric" }),
-      ),
-      traceabilityDetail("原始菜色", ingredient.referenceDishName),
-    );
-  }
-  const supplier = ingredient.supplier;
-  if (ingredient.producer) {
-    details.append(traceabilityDetail("製造／生產者", ingredient.producer.name));
-  }
-  if (ingredient.platformMark) {
-    details.append(traceabilityDetail("平臺標示", ingredient.platformMark));
-  }
-  if (ingredient.originCountry) {
-    details.append(traceabilityDetail("原料產地（國）", ingredient.originCountry));
-  }
-  details.append(
-    traceabilityDetail("平臺申報供應商", supplier.name),
-    traceabilityDetail("供應商統編", supplier.taxId || "未提供"),
-  );
-  if (supplier.address) details.append(traceabilityDetail("供應商地址", supplier.address));
-
-  if (certification) {
-    details.append(traceabilityDetail(
-      "認證／追溯號碼",
-      certification.number,
-      certification.officialUrl,
-    ));
-    if (certification.operator) {
-      details.append(traceabilityDetail(
-        "認證經營者",
-        certification.operator.name,
-        certification.operator.sourceUrl,
-      ));
-      if (certification.operator.address) {
-        details.append(traceabilityDetail("經營者所在地", certification.operator.address));
-      }
-    }
-    if (certification.verificationBody) {
-      details.append(traceabilityDetail("驗證／管理單位", certification.verificationBody));
-    }
-    if (certification.status || certification.validUntil) {
-      const state = [
-        certification.status,
-        certification.validUntil ? `效期至 ${formatDate(certification.validUntil, { year: "numeric" })}` : null,
-      ].filter(Boolean).join(" · ");
-      details.append(traceabilityDetail("查核狀態", state));
-    }
-  } else if (ingredient.platformMark) {
-    details.append(traceabilityDetail("追溯號碼", "本次頁面截圖未顯示可核對的號碼"));
-  } else {
-    details.append(traceabilityDetail("標章資料", "這筆平臺資料未提供認證標章或追溯號碼"));
-  }
-  card.append(details);
-  return card;
-}
-
-function renderTraceability(traceability) {
-  refs.traceabilityDishes.replaceChildren();
-  refs.traceabilityStatus.className = "traceability-status";
-  if (!traceability || traceability.status === "unavailable") {
-    refs.traceabilityStatus.textContent = "等待官方資料";
-    refs.traceabilityStatus.classList.add("unavailable");
-    refs.traceabilityNotice.textContent = traceability?.notice || "目前沒有已校讀的官方食材明細。";
-    refs.traceabilitySummary.textContent = "本日菜單已收錄 · 食材來源待補";
-    const empty = node("div", "traceability-empty");
-    empty.append(
-      node("strong", "", "目前沒有可靠的食材匹配"),
-      node("p", "", "同日資料尚未取得，這套餐別的菜名也沒有可與既有資料明確對應的食材。"),
-    );
-    refs.traceabilityDishes.append(empty);
-    refs.traceabilitySource.textContent = "";
-    return;
-  }
-
-  const isHistoricalMatch = traceability.status === "matched_reference";
-  refs.traceabilityStatus.textContent = isHistoricalMatch
-    ? `歷史匹配 · ${traceability.ingredientCount} 項`
-    : `本餐別已比對 · ${compactDate(traceability.dataDate)}`;
-  refs.traceabilityStatus.classList.add(isHistoricalMatch ? "reference" : "verified");
-  refs.traceabilityNotice.textContent = traceability.notice;
-  refs.traceabilitySummary.textContent = isHistoricalMatch
-    ? `${traceability.dishes.length} 道菜找到匹配 · ${traceability.ingredientCount} 項歷史食材來源`
-    : `${traceability.dishes.length} 道菜 · ${traceability.ingredientCount} 項食材 · ${traceability.markedIngredientCount ?? traceability.certifiedIngredientCount} 項附標章／溯源標示`;
-
-  for (const dish of traceability.dishes) {
-    const details = node("details", "traceability-dish");
-    const summary = node("summary");
-    const title = node("span", "traceability-dish-title");
-    title.append(node("small", "", dish.category || "菜色"), LunchI18n.keep(node("strong", "", dish.name)));
-    if (dish.officialName && dish.officialName !== dish.name) {
-      title.append(node("em", "", `平臺名稱：${dish.officialName}`));
-    }
-    summary.append(title, node("span", "traceability-count", `${dish.ingredients.length} 項食材`));
-    const ingredients = node("div", "ingredient-grid");
-    ingredients.append(...dish.ingredients.map(renderIngredient));
-    details.append(summary, ingredients);
-    refs.traceabilityDishes.append(details);
-  }
-
-  refs.traceabilitySource.textContent = isHistoricalMatch
-    ? `資料來源：${traceability.sourceName} · 歷史資料日期 ${traceability.referenceDates.map(compactDate).join("、")} · 不代表本日供應批次`
-    : `資料來源：${traceability.sourceName} · 供餐日期 ${compactDate(traceability.dataDate)} · 校讀日期 ${traceability.reviewedAt}`;
 }
 
 function dinnerRecipeSearchUrl(dishName) {
@@ -3303,7 +3436,6 @@ function setViewMode(mode, { showOfficialMealTypes = false } = {}) {
   refs.sampleModeBanner.hidden = !sample;
   refs.week.hidden = false;
   refs.todayGrid.hidden = false;
-  refs.traceability.hidden = false;
   refs.news.hidden = false;
   refs.mealTypeSwitch.hidden = !showMealTypes;
   refs.mobileMealTypeControl.hidden = !showMealTypes;
@@ -3332,9 +3464,7 @@ function setViewMode(mode, { showOfficialMealTypes = false } = {}) {
   refs.menuHeading.textContent = official ? "當日供餐紀錄" : sample ? "範例午餐內容" : "午餐內容";
   refs.reviewBadge.textContent = official ? "✓ 官方公開紀錄" : sample ? "功能範例" : "✓ 已校讀";
   refs.mainDishButton.firstElementChild.textContent = official ? "主菜" : "這餐主角";
-  refs.traceabilityKicker.textContent = official ? "官方食材資料" : "食材來源";
-  refs.traceabilityHeading.textContent = official ? "教育部公開食材紀錄" : sample ? "範例供餐食材來源" : "今日供餐食材來源";
-  for (const link of document.querySelectorAll('a[href="#week"], a[href="#traceability"]')) {
+  for (const link of document.querySelectorAll('a[href="#week"]')) {
     link.hidden = false;
   }
   for (const link of document.querySelectorAll('a[href="#standard"], a[href="#insights"]')) {
@@ -3354,7 +3484,6 @@ async function renderNoSchoolSelected() {
   refs.sampleModeBanner.hidden = true;
   refs.week.hidden = true;
   refs.todayGrid.hidden = true;
-  refs.traceability.hidden = true;
   refs.standard.hidden = true;
   refs.learn.hidden = true;
   refs.insights.hidden = true;
@@ -3368,7 +3497,7 @@ async function renderNoSchoolSelected() {
   setSchoolDataScope("尚未選擇學校");
   refs.footerSource.textContent = "選擇學校後，才會讀取對應的公開午餐資料。";
   refs.errorState.hidden = true;
-  for (const link of document.querySelectorAll('a[href="#week"], a[href="#traceability"], a[href="#standard"], a[href="#insights"]')) {
+  for (const link of document.querySelectorAll('a[href="#week"], a[href="#standard"], a[href="#insights"]')) {
     link.hidden = true;
   }
   if (state.account.child) renderPassportFoodChoices();
@@ -3447,7 +3576,10 @@ function renderOfficialMeal(dashboard) {
       node("span", "", dish.schoolMenu?.category || dish.category),
       LunchI18n.keep(node("strong", "", dish.name)),
     );
-    if (dish.schoolMenu?.servingText) item.append(node("em", "", `校方每份 ${dish.schoolMenu.servingText}`));
+    item.append(node("em", "", [
+      dish.schoolMenu?.servingText ? `校方每份 ${dish.schoolMenu.servingText}` : null,
+      `官方食材 ${dish.ingredients.length} 項`,
+    ].filter(Boolean).join(" · ")));
     renderMenuPhoto(item, dish);
     item.addEventListener("click", () => openDishDetail(index, item));
     refs.mealList.append(item);
@@ -3472,90 +3604,6 @@ function renderOfficialMeal(dashboard) {
     : record.schoolMenu
       ? "菜色與設計重量照校方週菜單；食材、產地、供應商與標章照同日教育部公開紀錄。"
       : "食材、產地、供應商與標章照同日官方公開紀錄呈現；不代表孩子實際攝取量。";
-}
-
-function renderOfficialIngredient(ingredient) {
-  const card = node("article", "ingredient-card");
-  const heading = node("div", "ingredient-heading");
-  const certification = ingredient.certifications?.[0];
-  heading.append(
-    LunchI18n.keep(node("strong", "", ingredient.name)),
-    node(
-      "span",
-      `certification-badge${certification ? "" : " empty"}`,
-      certification?.name || "未提供標章",
-    ),
-  );
-  const details = node("dl", "ingredient-details");
-  if (ingredient.standardName && ingredient.standardName !== ingredient.name) {
-    details.append(traceabilityDetail("標準名稱", ingredient.standardName));
-  }
-  if (ingredient.productName && ingredient.productName !== ingredient.name) {
-    details.append(traceabilityDetail("產品名稱", ingredient.productName));
-  }
-  details.append(
-    traceabilityDetail("原料產地（國）", ingredient.origin || "未提供"),
-    traceabilityDetail("製造／生產者", ingredient.manufacturer || "未提供"),
-    traceabilityDetail("平臺申報供應商", ingredient.supplierName || "未提供"),
-  );
-  if (ingredient.stockDate) {
-    details.append(traceabilityDetail(
-      "進貨日期",
-      formatDate(ingredient.stockDate.slice(0, 10), { year: "numeric" }),
-    ));
-  }
-  for (const item of ingredient.certifications || []) {
-    details.append(traceabilityDetail(item.name, item.id || "未提供編號"));
-  }
-  card.append(heading, details);
-  return card;
-}
-
-function renderOfficialTraceability(dashboard) {
-  const record = dashboard.record;
-  refs.traceabilityDishes.replaceChildren();
-  refs.traceabilityStatus.className = "traceability-status";
-  if (!record) {
-    refs.traceabilityStatus.textContent = "尚未收錄";
-    refs.traceabilityStatus.classList.add("unavailable");
-    refs.traceabilityNotice.textContent = `${dashboard.selectedDate} 尚未取得已校讀的同日公開紀錄；本站不會用較早日期代替今天。`;
-    refs.traceabilitySummary.textContent = "指定日期無資料";
-    const empty = node("div", "traceability-empty");
-    empty.append(
-      node("strong", "", "等待官方同日紀錄"),
-      node("p", "", "取得官方同日資料並完成校讀後，才會加入這裡。"),
-    );
-    refs.traceabilityDishes.append(empty);
-    refs.traceabilitySource.textContent = "";
-    return;
-  }
-
-  const profile = OfficialDiet.profile(record);
-  const dishes = officialDishes(record, profile.hasVariants ? state.mealType : null);
-  const summary = OfficialDiet.summary(dishes);
-  refs.traceabilityStatus.textContent = `同日官方資料 · ${summary.ingredientCount} 項`;
-  refs.traceabilityStatus.classList.add("verified");
-  refs.traceabilityNotice.textContent = profile.hasVariants
-    ? `${record.mealDate} 的主食、主菜與副菜依官方菜名的「素」字分組；蔬菜、湯品與附餐共用，食材內容仍以官方明細為準。`
-    : `${record.mealDate} 的菜色與食材直接整理自教育部公開頁；主食或主菜未發現可配對的葷、素菜色，因此不拆分。`;
-  refs.traceabilitySummary.textContent = `${summary.dishCount} 道菜 · ${summary.ingredientCount} 項食材 · ${summary.certifiedIngredientCount} 項附標章／溯源標示`;
-
-  for (const dish of dishes) {
-    const details = node("details", "traceability-dish");
-    const summary = node("summary");
-    const title = node("span", "traceability-dish-title");
-    title.append(node("small", "", dish.category), LunchI18n.keep(node("strong", "", dish.name)));
-    summary.append(title, node("span", "traceability-count", `${dish.ingredients.length} 項食材`));
-    const ingredients = node("div", "ingredient-grid");
-    if (dish.ingredients.length) {
-      ingredients.append(...dish.ingredients.map(renderOfficialIngredient));
-    } else {
-      ingredients.append(node("p", "news-empty", "官方頁面未列出這道菜的食材明細。"));
-    }
-    details.append(summary, ingredients);
-    refs.traceabilityDishes.append(details);
-  }
-  refs.traceabilitySource.textContent = `資料來源：${record.source.name} · 供餐日期 ${record.mealDate} · 校讀 ${record.review.reviewedAt.slice(0, 10)}`;
 }
 
 function renderOfficialWeek(dashboard) {
@@ -3667,7 +3715,6 @@ function renderOfficial(dashboard) {
     refs.disclaimer.textContent = "";
   }
   renderPassportFoodChoices();
-  renderOfficialTraceability(dashboard);
   renderOfficialWeek(dashboard);
   const count = summary.dishCount;
   setDashboardStatus("ready", dashboard.record ? `同日官方紀錄 · ${count} 道菜` : "指定日期尚無資料");
@@ -3776,6 +3823,7 @@ function render(dashboard) {
     personalizeAllergens: !dashboard.isFallback && !dashboard.isSample && dashboard.dataPriority !== "weekly_planned",
     photoRecord: !dashboard.isSample && Number(dashboard.school?.fatraceSchoolId) === DEFAULT_SCHOOL_ID
       ? dashboard.officialRecord : null,
+    traceability: dashboard.traceability,
   });
   if (!dashboard.isSample && !dashboard.officialRecord) {
     const records = state.staticData?.officialSchoolMeals?.records?.[String(DEFAULT_SCHOOL_ID)] || {};
@@ -3797,7 +3845,6 @@ function render(dashboard) {
     refs.nutritionSourceNote.textContent = "功能範例取自已校讀菜單；數值不代表今日或未選學校。";
   }
   renderStandard(dashboard);
-  renderTraceability(dashboard.traceability);
   renderDinner(dashboard.dinnerSuggestion);
   renderFoodEducation(dashboard.foodEducation);
   renderHomeRecipe(dashboard.homeRecipe);
@@ -4342,6 +4389,13 @@ refs.emailLinkCodeForm.addEventListener("submit", async (event) => {
   } finally { refs.verifyLinkEmailCode.disabled = false; }
 });
 
+refs.continueLineAuth.addEventListener("click", () => void startLineAuth("login"));
+refs.backAuthMethod.addEventListener("click", () => {
+  resetAuthMethod();
+  renderEmailAuthStep();
+  setFormStatus(refs.authRequestStatus);
+  refs.authEmail.focus();
+});
 refs.lineSignIn.addEventListener("click", () => void startLineAuth("login"));
 refs.linkLineAccount.addEventListener("click", () => void startLineAuth("link"));
 
@@ -4801,13 +4855,12 @@ function setupMobileNavigation() {
     ["today", "today"],
     ["week", "today"],
     ["todayGrid", "today"],
-    ["traceability", "traceability"],
     ["passport", "passport"],
-    ["standard", "traceability"],
-    ["learn", "traceability"],
-    ["insights", "traceability"],
-    ["news", "traceability"],
-    ["source", "traceability"],
+    ["standard", "today"],
+    ["learn", "today"],
+    ["insights", "today"],
+    ["news", "today"],
+    ["source", "today"],
   ]);
   const sections = [...sectionTargets.keys()]
     .map((id) => document.getElementById(id))
@@ -4892,7 +4945,8 @@ document.addEventListener("visibilitychange", () => {
 
 function sectionIdFromHash(hash) {
   try {
-    return decodeURIComponent(hash.slice(1));
+    const sectionId = decodeURIComponent(hash.slice(1));
+    return sectionId === "traceability" ? "todayGrid" : sectionId;
   } catch {
     return "";
   }
@@ -4902,7 +4956,7 @@ const initialSectionId = sectionIdFromHash(window.location.hash);
 const homepageSectionIds = new Set([
   "today",
   "week",
-  "traceability",
+  "todayGrid",
   "passport",
   "standard",
   "insights",

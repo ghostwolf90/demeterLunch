@@ -196,8 +196,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('"苗栗縣": "Miaoli County"', english)
         self.assertIn('"彰化縣": "Changhua County"', english)
         self.assertIn("app.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261123-inline-ingredient-records", html)
+        self.assertIn("/i18n.js?v=20261123-inline-ingredient-records", html)
 
     def test_miaoli_and_changhua_map_every_reviewed_primary_school_by_realistic_district_position(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -264,8 +264,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('"到{0}散步，看看當地學校與景觀": [0]', i18n)
         self.assertIn('neighbor-county-themes.json?v=20261105-outer-rivers', app)
         self.assertIn("app.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261123-inline-ingredient-records", html)
+        self.assertIn("/i18n.js?v=20261123-inline-ingredient-records", html)
 
     def test_neighbor_counties_follow_taichung_district_block_layout(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -362,8 +362,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('"在{0}的安全平台釣魚，釣線朝向河道但人留在護欄內": [0]', i18n)
         self.assertIn('"在{0}使用指定烤肉台休憩，並把垃圾與火源收拾好": [0]', i18n)
         self.assertIn("app.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261123-inline-ingredient-records", html)
+        self.assertIn("/i18n.js?v=20261123-inline-ingredient-records", html)
 
     def test_town_map_labels_every_school_with_a_readable_primary_school_name(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -655,8 +655,8 @@ class LunchTownTests(unittest.TestCase):
             self.assertIn(translation, english)
         self.assertIn("app.js?v=20261107-flower-festival-approach", html)
         self.assertIn("styles.css?v=20261107-living-npcs", html)
-        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261123-inline-ingredient-records", html)
+        self.assertIn("/i18n.js?v=20261123-inline-ingredient-records", html)
 
     def test_town_has_age_gender_and_workplace_diversity(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -773,8 +773,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('"疲倦": "Tired"', english)
         self.assertIn('"我記得我們上次聊過{0}，後來事情真的有接著往下走。": [0]', i18n)
         self.assertIn("app.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261123-inline-ingredient-records", html)
+        self.assertIn("/i18n.js?v=20261123-inline-ingredient-records", html)
 
     def test_npc_conversations_use_identity_context_relationship_and_memory(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1521,8 +1521,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('venue.id === "civic-south-night-convenience"', app)
         self.assertIn('!CIVIC_AFTER_HOURS_ROLES.has(npc.role) && !NEIGHBOR_CIVIC_ROLES.has(npc.role)', app)
         self.assertIn("civicAfterHours = transitionNeighborCivicAfterHoursRoutine(npc, index)", app)
-        self.assertIn('/locales/en.js?v=20261107-flower-festival-approach', html)
-        self.assertIn('/i18n.js?v=20261107-flower-festival-approach', html)
+        self.assertIn('/locales/en.js?v=20261123-inline-ingredient-records', html)
+        self.assertIn('/i18n.js?v=20261123-inline-ingredient-records', html)
 
     def test_npcs_take_evening_trips_to_department_stores_and_lalaport(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1713,8 +1713,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('"回家報到": "Check in at home"', english)
         self.assertIn('"每日任務完成": "Daily quest complete"', english)
         self.assertIn("app.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261123-inline-ingredient-records", html)
+        self.assertIn("/i18n.js?v=20261123-inline-ingredient-records", html)
 
     def test_lunch_town_line_login_icon_stays_inside_pixel_button(self) -> None:
         html = self.read("web/lunch-town/index.html")
@@ -1756,8 +1756,8 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('"在{0}採收成熟作物，採收後田區暫時留空": [0]', i18n)
         self.assertIn('"Harvesting mature crops at {0}; the plot stays briefly empty afterward."', english)
         self.assertIn("app.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/locales/en.js?v=20261107-flower-festival-approach", html)
-        self.assertIn("/i18n.js?v=20261107-flower-festival-approach", html)
+        self.assertIn("/locales/en.js?v=20261123-inline-ingredient-records", html)
+        self.assertIn("/i18n.js?v=20261123-inline-ingredient-records", html)
 
     def test_six_adaptive_civic_agents_use_bounded_session_memory_and_safe_local_plans(self) -> None:
         app = self.read("web/lunch-town/app.js")
@@ -1798,7 +1798,7 @@ class LunchTownTests(unittest.TestCase):
         self.assertIn('app.js?v=20261107-flower-festival-approach', html)
         self.assertIn('styles.css?v=20261107-living-npcs', html)
         for asset in ("/locales/en.js", "/i18n.js"):
-            self.assertIn(f'{asset}?v=20261107-flower-festival-approach', html)
+            self.assertIn(f'{asset}?v=20261123-inline-ingredient-records', html)
 
     def test_framework_route_serves_the_town_page(self) -> None:
         route = self.read("app/lunch-town/route.ts")
@@ -1872,8 +1872,9 @@ class LunchTownTests(unittest.TestCase):
         ):
             self.assertIn(source, english)
             self.assertIsNone(re.search(r"[\u3400-\u9fff]", english[source]), source)
-        for asset in ("app.js", "/locales/en.js", "/i18n.js"):
-            self.assertIn(f'{asset}?v=20261107-flower-festival-approach', html)
+        self.assertIn('app.js?v=20261107-flower-festival-approach', html)
+        for asset in ("/locales/en.js", "/i18n.js"):
+            self.assertIn(f'{asset}?v=20261123-inline-ingredient-records', html)
 
     def test_published_map_editor_content_uses_a_safe_district_lane(self) -> None:
         app = self.read("web/lunch-town/app.js")

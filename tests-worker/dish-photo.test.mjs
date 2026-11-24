@@ -29,7 +29,7 @@ function ui() {
     renderAllergenNotice() {},
     node(tag, className, text) { const element = new Element(); element.className = className; element.textContent = text; return element; },
   });
-  vm.runInContext(source.slice(source.indexOf("function renderMeal("), source.indexOf("function renderDishDetail(")), context);
+  vm.runInContext(source.slice(source.indexOf("function normalizedDishKey("), source.indexOf("function renderDishDetail(")), context);
   return { refs, state, context };
 }
 const photo = "https://fatraceschool.k12ea.gov.tw/dish/pic/1792636821055976";
@@ -85,6 +85,22 @@ test("different dates, different dish names and ambiguous matches never supply a
     context.renderMeal(day, { photoRecord: r });
     assert.equal(state.dishDetails[0].officialPhotoUrl, null);
   }
+});
+test("reviewed ingredient records move into matching dish details without losing unmatched official dishes", () => {
+  const { state, context } = ui();
+  const traceability = {
+    status: "verified", selectedDate: day.date, dataDate: day.date,
+    sourceName: "教育部校園食材登錄平臺", reviewedAt: "2026-10-23",
+    dishes: [
+      { name: day.meal.mainDish, category: "主菜", ingredients: [{ name: "豬肉" }] },
+      { name: "未配對水果", category: "水果", ingredients: [{ name: "芭樂" }] },
+    ],
+  };
+  context.renderMeal(day, { traceability });
+  assert.equal(state.dishDetails[0].officialTraceability.matched, true);
+  assert.equal(state.dishDetails[0].officialTraceability.dish.ingredients[0].name, "豬肉");
+  assert.equal(state.dishDetails[1].supplementalOfficialRecord, true);
+  assert.equal(state.dishDetails[1].name, "未配對水果");
 });
 test("official daily photos, failures, missing URLs and stale callbacks are handled", () => {
   const { refs, context } = ui();

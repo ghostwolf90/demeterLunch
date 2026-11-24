@@ -67,19 +67,33 @@ class SiteLayoutTests(unittest.TestCase):
         brighter, darker = sorted((luminance(first), luminance(second)), reverse=True)
         return (brighter + 0.05) / (darker + 0.05)
 
-    def test_week_then_traceability_then_standard_sections(self) -> None:
+    def test_week_then_passport_then_standard_sections(self) -> None:
         index_html = (
             Path(__file__).resolve().parents[1] / "web" / "index.html"
         ).read_text(encoding="utf-8")
 
         self.assertLess(
             index_html.index('id="week"'),
-            index_html.index('id="traceability"'),
+            index_html.index('id="passport"'),
         )
         self.assertLess(
-            index_html.index('id="traceability"'),
+            index_html.index('id="passport"'),
             index_html.index('id="standard"'),
         )
+        self.assertNotIn('id="traceability"', index_html)
+
+    def test_official_ingredient_records_are_inside_dish_details(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
+        app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="dishDetailSourceStatus"', index_html)
+        self.assertIn("function attachDishTraceability", app_js)
+        self.assertIn("function officialIngredientDisclosure", app_js)
+        self.assertIn("教育部同日公開紀錄", app_js)
+        self.assertIn("過去餐點參考", app_js)
+        self.assertNotIn("function renderTraceability(", app_js)
+        self.assertNotIn("function renderOfficialTraceability(", app_js)
 
     def test_news_page_keeps_the_consistent_desktop_navigation(self) -> None:
         project_root = Path(__file__).resolve().parents[1]
@@ -110,7 +124,7 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('href="/#news">午餐消息</a>', news_html)
         self.assertIn('id="newsAccountButton" data-account-panel-trigger type="button"', news_html)
         self.assertIn('<strong data-account-label>帳號</strong><small data-account-status hidden></small>', news_html)
-        self.assertIn('/account-panel.js?v=20261023-family-copy', news_html)
+        self.assertIn('/account-panel.js?v=20261104-town-auth', news_html)
 
     def test_static_fragment_links_point_to_existing_sections(self) -> None:
         project_root = Path(__file__).resolve().parents[1]
@@ -170,7 +184,7 @@ class SiteLayoutTests(unittest.TestCase):
         project_root = Path(__file__).resolve().parents[1]
         app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
 
-        for section_id in ("today", "week", "traceability", "passport", "standard", "insights"):
+        for section_id in ("today", "week", "todayGrid", "passport", "standard", "insights"):
             self.assertIn(f'"{section_id}"', app_js)
         self.assertIn("async function restoreInitialSectionPosition()", app_js)
         self.assertIn("const initialSectionId = sectionIdFromHash(window.location.hash);", app_js)
@@ -205,7 +219,7 @@ class SiteLayoutTests(unittest.TestCase):
             self.assertNotIn('href="/?account=1"', html)
             self.assertIn('<span class="account-avatar" data-account-avatar', html)
             self.assertIn('<strong data-account-label>帳號</strong><small data-account-status hidden></small>', html)
-            self.assertIn('/account-panel.js?v=20261023-family-copy', html)
+            self.assertIn('/account-panel.js?v=20261104-town-auth', html)
 
         support_html = pages[0].read_text(encoding="utf-8")
         self.assertNotIn("自動扣款", support_html)
@@ -214,6 +228,7 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('credentials: "same-origin"', account_js)
         self.assertIn('profile?.displayName || profile?.nickname || profile?.name', account_js)
         self.assertIn('image.src = source', account_js)
+        self.assertIn('const authenticatedLabel = trigger.dataset.authenticatedLabel || displayName', account_js)
         self.assertIn('if (label) label.textContent = authenticatedLabel', account_js)
         self.assertIn('status.hidden = true', account_js)
         self.assertIn('dialog.showModal()', account_js)
@@ -325,6 +340,73 @@ class SiteLayoutTests(unittest.TestCase):
             styles,
         )
 
+    def test_mobile_school_picker_uses_a_compact_context_and_bottom_sheet(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
+        app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
+        styles = (project_root / "web" / "styles.css").read_text(encoding="utf-8")
+        mobile_rules = styles[
+            styles.index("@media (max-width: 720px)"):
+            styles.index("@media (max-width: 620px)")
+        ]
+
+        self.assertIn('id="mobileSchoolContext"', index_html)
+        self.assertIn('aria-controls="mobileSchoolPickerDialog"', index_html)
+        self.assertIn('id="mobileSchoolPickerDialog"', index_html)
+        self.assertIn('id="mobileCityChoices"', index_html)
+        self.assertIn('id="mobileDistrictChoices"', index_html)
+        self.assertIn('id="mobileSchoolSearch"', index_html)
+        self.assertIn('id="mobileSchoolResults"', index_html)
+        self.assertIn('id="mobileDefaultSchoolAction"', index_html)
+        self.assertIn('id="mobileSchoolApply"', index_html)
+        self.assertIn("這裡只切換公開午餐菜單，不會更改孩子就讀學校。", index_html)
+        self.assertIn('href="#week">校園菜單</a>', index_html)
+        self.assertIn(".school-picker { display: none; }", mobile_rules)
+        self.assertIn(".mobile-school-context {", mobile_rules)
+        self.assertIn("min-height: 72px", mobile_rules)
+        self.assertIn(".mobile-school-picker-dialog {", mobile_rules)
+        self.assertIn("height: min(88dvh, 760px)", mobile_rules)
+        self.assertIn("overflow-y: auto", styles)
+        self.assertIn("function renderMobileSchoolPicker()", app_js)
+        self.assertIn("function openMobileSchoolPicker(", app_js)
+        self.assertIn("function closeMobileSchoolPicker(", app_js)
+        self.assertIn("state.schoolDirectory.filter((school) =>", app_js)
+        self.assertIn("school.city !== picker.city", app_js)
+        self.assertIn("districtKey(school) === picker.district", app_js)
+        self.assertIn("closeStagedDialog(", app_js)
+        self.assertIn('state.lastMobileSchoolTrigger?.focus({ preventScroll: true })', app_js)
+        self.assertIn(".mobile-school-picker-dialog { transform: none; transition: opacity 160ms ease-out; }", styles)
+
+    def test_mobile_school_picker_owns_vertical_scroll_and_locks_the_page(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
+        app_js = (project_root / "web" / "app.js").read_text(encoding="utf-8")
+        styles = (project_root / "web" / "styles.css").read_text(encoding="utf-8")
+
+        self.assertIn("可上下滑動選擇學校", index_html)
+        self.assertIn("body.mobile-school-picker-open", styles)
+        self.assertIn("position: fixed", styles.split("body.mobile-school-picker-open", 1)[1].split("}", 1)[0])
+        result_section = styles.split(".mobile-school-result-section {", 1)[1].split("}", 1)[0]
+        result_list = styles.split(".mobile-school-results {", 1)[1].split("}", 1)[0]
+        chip_row = styles.split(".mobile-school-chip-row {", 1)[1].split("}", 1)[0]
+        self.assertIn("overflow: hidden", result_section)
+        self.assertIn("flex: 1 1 0", result_list)
+        self.assertIn("overflow-y: auto", result_list)
+        self.assertIn("touch-action: pan-y", result_list)
+        self.assertIn("-webkit-overflow-scrolling: touch", result_list)
+        self.assertIn("touch-action: pan-x", chip_row)
+        self.assertIn("function lockMobileSchoolBackground()", app_js)
+        self.assertIn("function unlockMobileSchoolBackground()", app_js)
+        self.assertIn('document.body.classList.add("mobile-school-picker-open")', app_js)
+        self.assertIn('document.body.classList.remove("mobile-school-picker-open")', app_js)
+        self.assertIn("window.scrollTo(0, scrollY)", app_js)
+        self.assertIn('refs.mobileSchoolPickerDialog.addEventListener("close"', app_js)
+        self.assertIn(
+            "const school = refs.mobileSchoolPickerDialog.open ? mobileDraftSchool() : selectedSchool();",
+            app_js,
+        )
+        self.assertNotIn("const school = draftSchool || selectedSchool();", app_js)
+
     def test_site_exposes_west_district_school_selector_and_official_mode(self) -> None:
         project_root = Path(__file__).resolve().parents[1]
         index_html = (project_root / "web" / "index.html").read_text(encoding="utf-8")
@@ -396,10 +478,6 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('id="passport"', index_html)
         self.assertIn('id="passportLocked"', index_html)
         self.assertLess(
-            index_html.index('id="traceability"'),
-            index_html.index('id="passport"'),
-        )
-        self.assertLess(
             index_html.index('id="passport"'),
             index_html.index('id="standard"'),
         )
@@ -409,12 +487,9 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn('id="authBirthDate"', index_html)
         self.assertIn("只用來確認已滿 18 歲；完整生日不會保存", index_html)
         self.assertIn("此帳號不由孩子自行使用", index_html)
-        self.assertNotIn('id="authEligibilityGate"', index_html)
-        self.assertNotIn('id="continueLineAuth"', index_html)
         self.assertNotIn("signin-with-chatgpt", index_html)
         self.assertNotIn("我已滿 13 歲", index_html)
         self.assertIn('id="requestAuthCode" type="submit" aria-disabled="false"', index_html)
-        self.assertIn(">寄送登入驗證碼</button>", index_html)
         self.assertIn("驗證碼 10 分鐘內有效", index_html)
         self.assertIn("const EMAIL_REGISTRATION_ENABLED = true", app_js)
         self.assertIn('fetch("/api/auth/request-code"', app_js)
@@ -531,7 +606,8 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("Cloudflare Workers、D1、R2 與 CDN", privacy_html)
         self.assertIn("Resend", privacy_html)
         self.assertIn("Sentry", privacy_html)
-        self.assertIn("未使用 Google Analytics", privacy_html)
+        self.assertIn("Google Analytics 4", privacy_html)
+        self.assertIn("不傳送家庭帳號、孩子資料、飲食紀錄、NPC 名稱或對話內容", privacy_html)
         self.assertIn("2026 年 10 月 20 日", privacy_html)
 
         self.assertIn("不代表孩子實際攝取的營養量", terms_html)
@@ -574,7 +650,7 @@ class SiteLayoutTests(unittest.TestCase):
         self.assertIn("登入後，可以保存孩子提過的食物、說過的話", index_html)
         self.assertIn("免費建立 1 位孩子的飲食紀錄", index_html)
         self.assertIn('placeholder="請輸入電子郵件"', index_html)
-        self.assertIn("寄送登入驗證碼", index_html)
+        self.assertIn("使用 Email 繼續", index_html)
         self.assertIn("不需要設定密碼，透過 Email 驗證即可登入。", index_html)
         self.assertIn("只想查看學校午餐嗎？不需要註冊，也能免費使用。", index_html)
         signed_out_view = index_html[

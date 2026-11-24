@@ -1578,10 +1578,20 @@ window.LunchEnglish = {
   "過敏原資訊請仍以校方原始菜單與個人需求核對。": "Check allergen information against the school's original menu and your individual needs.",
   "官方未提供用量": "No quantity provided by the official source",
   "未標示": "Not specified",
+  "食材明細尚未提供": "Ingredient details are not available",
   "這道菜的食材明細尚未提供。": "Ingredient details are not available for this dish.",
+  "校方食譜明細": "School recipe details",
+  "教育部同日公開紀錄": "Same-day Ministry of Education records",
+  "過去餐點參考": "Past meal reference",
+  "產地未提供": "Origin not provided",
+  "尚未取得當日官方食材紀錄": "Same-day official ingredient records are not yet available",
+  "這道菜尚未找到可核對的同日官方食材": "No verifiable same-day official ingredients were found for this dish",
+  "這道菜沒有可明確對應的過去餐點紀錄": "No past meal record can be reliably matched to this dish",
   "未提供標章": "No certification label provided",
   "每份設計重量來自校方週菜單；食材名稱、產地、供應商與標章來自教育部同日公開紀錄。": "Planned serving weights come from the school's weekly menu. Ingredients, origins, suppliers, and labels come from same-day Ministry of Education records.",
   "食材名稱、產地、供應商與標章照教育部當日公開紀錄呈現；官方頁面沒有提供每人用量。": "Ingredients, origins, suppliers, and labels follow same-day Ministry of Education records. Per-person quantities are not provided.",
+  "用量為供餐廠商的食譜設計值；產地、供應商與標章來自教育部同日公開紀錄，不代表孩子實際攝取量。": "Quantities are the provider's recipe plan. Origins, suppliers, and labels come from same-day Ministry of Education records and do not indicate the child's actual intake.",
+  "當日官方食材紀錄尚未取得；未偵測到資料不代表安全或不含過敏原，嚴重過敏仍應向校方確認實際食材、製程與交叉接觸。": "Same-day official ingredient records are not yet available. Missing data does not mean a food is safe or allergen-free; for severe allergies, confirm actual ingredients, preparation, and cross-contact with the school.",
   "素食菜單可能含蛋、奶；用量為供餐廠商的食譜設計值，不代表實際攝取量。": "Vegetarian menus may contain eggs or milk. Quantities are recipe plans from the meal provider, not actual intake.",
   "用量為供餐廠商的食譜設計值，不代表實際攝取量。": "Quantities are recipe plans from the meal provider, not actual intake.",
   "已是第一道菜": "This is the first dish",
@@ -3116,6 +3126,30 @@ window.LunchEnglishTemplates = [
   [
     "食譜明細共 {0} 項",
     "{0} recipe ingredients"
+  ],
+  [
+    "食譜明細 {0} 項",
+    "{0} recipe ingredients"
+  ],
+  [
+    "官方食材 {0} 項",
+    "{0} officially listed ingredients"
+  ],
+  [
+    "食譜明細 {0} 項 · 官方食材 {1} 項",
+    "{0} recipe ingredients · {1} officially listed ingredients"
+  ],
+  [
+    "同日官方資料 · {0}",
+    "Same-day official records · {0}"
+  ],
+  [
+    "過去餐點參考 · {0}",
+    "Past meal reference · {0}"
+  ],
+  [
+    "以上來源來自 {0} 的歷史食材紀錄，只供過去餐點參考，不代表今日食材、產地、供應商或批次。",
+    "These sources come from historical ingredient records dated {0}. They are only a past meal reference and do not represent today's ingredients, origins, suppliers, or batches."
   ],
   [
     "查看上一道：{0}",

@@ -11,8 +11,8 @@
       gtag('config', 'G-EDXYFV1B3L');
     </script>
     <meta charset="utf-8" />
-    <script src="/locales/en.js?v=20261105-mobile-menu-hierarchy"></script>
-    <script src="/i18n.js?v=20261105-mobile-menu-hierarchy"></script>
+    <script src="/locales/en.js?v=20261123-inline-ingredient-records"></script>
+    <script src="/i18n.js?v=20261123-inline-ingredient-records"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="好好吃飯提供臺北市、桃園市、苗栗縣、臺中市、彰化縣、臺南市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
     <meta property="og:type" content="website" />
@@ -56,7 +56,7 @@
     <link rel="manifest" href="/site.webmanifest?v=20261022-child-meals" />
     <link rel="stylesheet" href="./passport-memory.css?v=20261023-single-memory-list" />
     <link rel="stylesheet" href="./legal.css?v=20261020-brand-story" />
-    <link rel="stylesheet" href="./styles.css?v=20261105-mobile-menu-hierarchy" />
+    <link rel="stylesheet" href="./styles.css?v=20261123-inline-ingredient-records" />
       <script src="/maintenance.js" defer></script>
   </head>
   <body>
@@ -185,21 +185,6 @@
           <p class="disclaimer" id="disclaimer"></p>
         </article>
 
-      </section>
-
-      <section class="traceability-section section" id="traceability">
-        <article class="traceability-card card">
-          <div class="card-heading">
-            <div><p class="kicker" id="traceabilityKicker">食材來源</p><h2 id="traceabilityHeading">今日供餐食材來源</h2></div>
-            <span class="traceability-status" id="traceabilityStatus">讀取中</span>
-          </div>
-          <div class="traceability-intro">
-            <p id="traceabilityNotice">正在讀取官方食材資料。</p>
-            <strong id="traceabilitySummary">—</strong>
-          </div>
-          <div class="traceability-dishes" id="traceabilityDishes"></div>
-          <p class="traceability-source" id="traceabilitySource"></p>
-        </article>
       </section>
 
       <section class="passport-section section" id="passport" aria-labelledby="passportTitle">
@@ -464,7 +449,6 @@
 
     <nav class="mobile-nav" aria-label="手機版主要導覽">
       <a class="today-link active" href="#today" aria-label="營養午餐" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 14 0H5Zm7-7v3M4 8h16" /></svg><span>午餐</span></a>
-      <a href="#traceability"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 18V9m7 9V5m7 13v-6M3 20h18" /></svg><span>食材</span></a>
       <a href="#passport"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Zm3 16a3 3 0 0 1 0-6h11" /></svg><span>紀錄</span></a>
       <a href="/lunch-town/" aria-label="午餐小鎮"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9H3v-9Zm6 9v-6h6v6" /></svg><span>小鎮</span></a>
       <button id="mobileSettingsButton" type="button" aria-controls="settingsDialog"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg><span>設定</span></button>
@@ -556,19 +540,24 @@
           <p class="account-intent-notice" id="accountIntentNotice" role="status" hidden></p>
           <p class="account-value-copy">保存孩子資料與一口護照。</p>
           <form class="account-auth-form" id="emailAuthForm">
-            <label>家長 Email
+            <label id="emailEntryFields">家長 Email
               <input id="authEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" maxlength="254" required placeholder="請輸入電子郵件" />
             </label>
+            <div id="authEligibilityGate" class="account-auth-form" hidden>
             <label>家長／成年照顧者出生日期
-              <input id="authBirthDate" name="birthDate" type="date" autocomplete="bday" required />
+              <input id="authBirthDate" name="birthDate" type="date" autocomplete="bday" required disabled />
               <small>只用來確認已滿 18 歲；完整生日不會保存。</small>
             </label>
             <label class="account-consent">
-              <input id="authCaregiverConfirmed" name="caregiverConfirmed" type="checkbox" required />
+              <input id="authCaregiverConfirmed" name="caregiverConfirmed" type="checkbox" required disabled />
               <span>我確認我是年滿 18 歲的家長、法定監護人或獲家長授權的成年照顧者，此帳號不由孩子自行使用。</span>
             </label>
-            <button class="account-sign-in" id="requestAuthCode" type="submit" aria-disabled="false">寄送登入驗證碼</button>
+            <button class="account-sign-in line-sign-in" id="continueLineAuth" type="button" hidden>確認並前往 LINE</button>
+            <button class="account-text-button" id="backAuthMethod" type="button">返回選擇登入方式</button>
+            </div>
+            <button class="account-sign-in" id="requestAuthCode" type="submit" aria-disabled="false">使用 Email 繼續</button>
             <p class="account-login-note" id="emailAuthNote">不需要設定密碼，透過 Email 驗證即可登入。</p>
+            <p class="account-login-note" id="lineAuthNote" hidden>將前往 LINE 完成身分驗證，授權後即可返回好好吃飯。</p>
             <p class="form-status" id="authRequestStatus" role="status" aria-live="polite"></p>
           </form>
           <div class="account-social-login" id="lineLoginOptions" hidden>
@@ -856,6 +845,7 @@
           <p class="dish-detail-role" id="dishDetailRole">菜色明細</p>
           <h2 id="dishDetailTitle">—</h2>
           <p class="dish-detail-count" id="dishDetailCount">—</p>
+          <p class="dish-detail-source-status" id="dishDetailSourceStatus" hidden></p>
         </header>
         <figure class="dish-detail-photo" id="dishDetailPhoto" hidden></figure>
         <div class="dish-detail-ingredients" id="dishDetailIngredients"></div>
@@ -874,6 +864,6 @@
     <script src="./meal-photos.js" defer></script>
     <script src="./line-auth-return.js" defer></script>
     <script src="./product-analytics.js" defer></script>
-    <script src="./app.js?v=20261105-mobile-menu-hierarchy" defer></script>
+    <script src="./app.js?v=20261123-inline-ingredient-records" defer></script>
   </body>
 </html>

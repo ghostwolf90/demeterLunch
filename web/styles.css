@@ -227,43 +227,11 @@ body[data-view-mode="official"] .official-menu-board .main-dish span { margin: 0
   body[data-view-mode="official"] .official-menu-board .main-dish > span { margin-bottom: 4px; padding-right: 0; border-right: 0; }
 }
 
-.traceability-card { padding: 28px; box-shadow: none; }
-.traceability-card .card-heading { align-items: center; }
-.traceability-card .kicker { color: var(--green); }
-.traceability-status { padding: 7px 11px; border-radius: 999px; color: var(--ink-soft); background: var(--paper-deep); font-size: var(--text-xs); font-weight: 750; white-space: nowrap; }
-.traceability-status.verified { color: #306852; background: rgba(93,147,125,.14); }
-.traceability-status.reference { color: #8b3d27; background: rgba(238,117,78,.15); }
-.traceability-status.unavailable { color: var(--ink-soft); background: rgba(82,101,112,.1); }
-.traceability-intro { margin: 22px 0 19px; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; gap: 22px; border: 1px solid var(--line); border-radius: 16px; background: rgba(245,240,231,.54); }
-.traceability-intro p { max-width: 780px; margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
-.traceability-intro strong { flex: 0 0 auto; font-size: 12px; }
-.traceability-dishes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.traceability-empty { grid-column: 1 / -1; padding: 22px; border: 1px dashed var(--line); border-radius: 16px; background: rgba(255,253,248,.72); }
-.traceability-empty strong { display: block; margin-bottom: 7px; font-size: 15px; }
-.traceability-empty p { max-width: 650px; margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
-.traceability-dish { min-width: 0; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,253,248,.72); }
-.traceability-dish[open] { grid-column: 1 / -1; }
-.traceability-dish summary { min-height: 75px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 15px; cursor: pointer; list-style: none; }
-.traceability-dish summary::-webkit-details-marker { display: none; }
-.traceability-dish summary::after { content: "+"; width: 25px; height: 25px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: var(--ink); background: var(--paper-deep); font-size: 17px; }
-.traceability-dish[open] summary::after { content: "−"; }
-.traceability-dish-title { min-width: 0; display: grid; gap: 3px; }
-.traceability-dish-title small { color: var(--ink-soft); font-size: var(--text-xs); font-weight: 650; }
-.traceability-dish-title strong { font-size: 16px; }
-.traceability-dish-title em { color: var(--ink-soft); font-size: var(--text-xs); font-style: normal; font-weight: 500; }
-.traceability-count { margin-left: auto; color: var(--ink-soft); font-size: var(--text-xs); white-space: nowrap; }
-.ingredient-grid { padding: 0 10px 10px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
-.ingredient-card { min-width: 0; padding: 14px; border-radius: 13px; background: var(--paper); }
-.ingredient-heading { margin-bottom: 13px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.ingredient-heading strong { font-size: 15px; }
-.certification-badge { max-width: 145px; overflow: hidden; padding: 5px 8px; border-radius: 999px; color: #306852; background: rgba(93,147,125,.16); text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-xs); font-weight: 750; }
-.certification-badge.empty { color: var(--ink-soft); background: rgba(82,101,112,.1); }
 .ingredient-details { margin: 0; display: grid; gap: 8px; }
 .traceability-detail { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 9px; font-size: var(--text-xs); line-height: 1.55; }
 .traceability-detail dt { color: var(--ink-soft); }
 .traceability-detail dd { min-width: 0; margin: 0; overflow-wrap: anywhere; font-weight: 650; }
 .traceability-detail a { color: var(--orange); border-bottom: 1px solid rgba(238,117,78,.35); }
-.traceability-source { margin: 15px 1px 0; color: var(--ink-soft); font-size: var(--text-xs); line-height: 1.6; }
 
 .nutrition-card { background: var(--ink); color: var(--white); }
 .nutrition-card .kicker { color: var(--yellow); }
@@ -966,6 +934,10 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
 .dish-detail-role { width: fit-content; margin: 26px 0 9px; padding: 6px 10px; border-radius: 999px; color: #8b3d27; background: rgba(238,117,78,.15); font-size: var(--text-xs); font-weight: 800; }
 .dish-detail-header h2 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(35px, 4vw, 48px); line-height: 1.08; letter-spacing: -.035em; }
 .dish-detail-count { margin: 11px 0 0; color: var(--ink-soft); font-size: 12px; }
+.dish-detail-source-status { width: fit-content; margin: 12px 0 0; padding: 7px 10px; border-radius: 999px; color: var(--ink-soft); background: var(--paper-deep); font-size: 14px; font-weight: 750; line-height: 1.4; }
+.dish-detail-source-status.verified { color: #306852; background: rgba(93,147,125,.15); }
+.dish-detail-source-status.reference { color: #8b3d27; background: rgba(238,117,78,.15); }
+.dish-detail-source-status.unavailable { color: var(--ink-soft); background: rgba(82,101,112,.1); }
 .dish-detail-photo { flex: 0 0 auto; margin: 24px 0 0; }
 .dish-detail-photo[hidden] { display: none; }
 .dish-detail-photo img { display: block; width: auto; max-width: 100%; height: auto; max-height: 220px; object-fit: contain; border-radius: 16px; background: rgba(255,253,248,.74); }
@@ -982,10 +954,23 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
 .dish-photo-date-button { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); font: inherit; font-size: var(--text-xs); cursor: pointer; }
 .dish-photo-date-button:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 .dish-detail-ingredients { margin-top: 28px; display: grid; gap: 10px; }
+.dish-detail-section-label { margin: 7px 2px 1px; color: var(--ink-soft); font-size: 13px; font-weight: 850; letter-spacing: .08em; }
+.dish-detail-section-label:first-child { margin-top: 0; }
+.dish-detail-section-label.official { color: var(--green); }
+.dish-detail-source-meta { margin: -2px 2px 2px; color: var(--ink-soft); font-size: 13px; line-height: 1.55; }
 .dish-detail-ingredient { padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,253,248,.74); }
 .dish-detail-ingredient-heading { margin-bottom: 11px; display: flex; justify-content: space-between; align-items: baseline; gap: 18px; }
 .dish-detail-ingredient-heading strong { font-size: 16px; line-height: 1.45; }
 .dish-detail-ingredient-heading span { flex: 0 0 auto; color: var(--ink-soft); font-size: 13px; font-weight: 750; }
+.dish-detail-official-ingredient { padding: 0; overflow: hidden; }
+.dish-detail-official-ingredient summary { min-height: 76px; padding: 15px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; cursor: pointer; list-style: none; }
+.dish-detail-official-ingredient summary::-webkit-details-marker { display: none; }
+.dish-detail-official-ingredient summary::after { content: "+"; grid-column: 2; grid-row: 1 / span 2; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: var(--ink); background: var(--paper-deep); font-size: 18px; }
+.dish-detail-official-ingredient[open] summary::after { content: "−"; }
+.dish-detail-official-ingredient summary:focus-visible { outline: 3px solid rgba(238,117,78,.28); outline-offset: -3px; }
+.dish-detail-official-ingredient .dish-detail-ingredient-heading { margin: 0; }
+.dish-detail-official-ingredient .ingredient-source-badges { grid-column: 1; }
+.dish-detail-official-ingredient .ingredient-details { padding: 15px 16px 17px; border-top: 1px solid var(--line); background: rgba(245,240,231,.45); }
 .dish-detail-empty { margin: 0; padding: 24px; border: 1px dashed var(--line); border-radius: 16px; color: var(--ink-soft); text-align: center; }
 .dish-detail-note { margin: 22px 0 0; color: var(--ink-soft); font-size: var(--text-xs); line-height: 1.65; }
 .dish-detail-nav { margin-top: auto; padding-top: 27px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -1108,11 +1093,6 @@ footer strong { color: var(--ink); letter-spacing: .08em; }
   .meal-list { gap: 8px; }
   .meal-item { min-height: 68px; padding: 11px 12px; }
   .meal-item strong { font-size: 14px; }
-  .traceability-card { padding: 20px; }
-  .traceability-intro { align-items: flex-start; flex-direction: column; gap: 8px; }
-  .traceability-dishes, .ingredient-grid { grid-template-columns: 1fr; }
-  .traceability-dish[open] { grid-column: auto; }
-  .traceability-dish summary { min-height: 69px; padding: 12px 13px; }
   .traceability-detail { grid-template-columns: 78px minmax(0, 1fr); }
   .calorie-orb { min-width: 78px; min-height: 70px; padding: 10px 12px; border-radius: 18px; }
   .calorie-orb strong { font-size: 21px; }
