@@ -20,11 +20,11 @@ class CityServiceCatalogTests(unittest.TestCase):
         }
         active = {
             "generatedAt": "2026-11-05T00:00:00+00:00",
-            "cityOrder": ["臺北市", "桃園市", "苗栗縣", "臺中市", "彰化縣", "臺南市"],
+            "cityOrder": ["臺北市", "桃園市", "臺中市"],
             "schools": [
                 {"city": city, "fatraceSchoolId": index}
                 for index, city in enumerate(
-                    ["臺北市", "桃園市", "苗栗縣", "臺中市", "彰化縣", "臺南市"], start=1
+                    ["臺北市", "桃園市", "臺中市"], start=1
                 )
             ],
         }

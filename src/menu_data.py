@@ -527,6 +527,12 @@ def _insert_official_school_meals(
         school.fatrace_school_id: position
         for position, school in enumerate(registry)
     }
+    if registry_order:
+        records = [
+            record
+            for record in records
+            if int(record["school"]["fatraceSchoolId"]) in registry_order
+        ]
     for position, school in enumerate(registry):
         connection.execute(
             """

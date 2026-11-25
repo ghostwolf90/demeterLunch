@@ -22,9 +22,7 @@ from scripts.build_city_service_catalog import (  # noqa: E402
     district_order_key,
 )
 
-COLLECTION_CITIES = frozenset(
-    {"臺北市", "桃園市", "苗栗縣", "臺中市", "彰化縣", "臺南市"}
-)
+COLLECTION_CITIES = frozenset({"臺北市", "桃園市", "臺中市"})
 CITY_ORDER = tuple(city for city in TAIWAN_CITY_ORDER if city in COLLECTION_CITIES)
 
 

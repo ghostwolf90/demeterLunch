@@ -69,7 +69,7 @@
         <aside class="legal-meta" aria-label="政策日期與聯絡資訊">
           <dl>
             <div><dt>生效日期</dt><dd>2026 年 10 月 20 日</dd></div>
-            <div><dt>最後更新</dt><dd>2026 年 10 月 26 日</dd></div>
+            <div><dt>最後更新</dt><dd>2026 年 11 月 3 日</dd></div>
             <div><dt>隱私聯絡</dt><dd><a href="mailto:support@haohaofood.cc?subject=%E5%A5%BD%E5%A5%BD%E5%90%83%E9%A3%AF%E5%80%8B%E8%B3%87%E8%AB%8B%E6%B1%82">support@haohaofood.cc</a></dd></div>
           </dl>
         </aside>
@@ -78,7 +78,7 @@
       <section class="legal-summary" aria-label="政策重點">
         <article class="card"><strong>公開菜單不用註冊</strong><p>學校午餐查詢不要求建立家庭帳號，也不會因查詢公開菜單而公開家庭紀錄。</p></article>
         <article class="card"><strong>家庭資料分開保管</strong><p>帳號與紀錄存於資料庫；大頭貼另存於物件儲存空間，讀取時會驗證帳號與資料擁有者。</p></article>
-        <article class="card"><strong>不做廣告追蹤或販售</strong><p>目前沒有廣告、行銷像素或一般網站分析工具，也不會把家庭資料出售給資料經紀商。</p></article>
+        <article class="card"><strong>不做廣告追蹤或販售</strong><p>本站使用 GA4 了解頁面與功能使用情形，但不把家庭帳號、孩子資料或飲食紀錄當作事件參數，也不會把家庭資料出售給資料經紀商。</p></article>
       </section>
 
       <div class="legal-layout">
@@ -122,11 +122,12 @@
                   <tr><th>家庭照片</th><td>家長或孩子上傳的大頭貼檔案及其物件鍵。</td><td>檔案存於 R2；程式會先確認登入帳號與資料擁有者，再回傳照片，不提供公開物件網址。</td></tr>
                   <tr><th>裝置顯示偏好</th><td>所選餐別、年級群組、比較模式，以及目前選取孩子的數字代碼。</td><td>只存於瀏覽器的 localStorage，用來保留這台裝置的顯示狀態；不在其中保存姓名、Email、食物注意事項、飲食紀錄或照片。</td></tr>
                   <tr><th>診斷與必要操作資料</th><td>請求 IP 與網路中繼資料可能由主機／CDN 處理；錯誤類型、去除查詢字串的網址、效能追蹤與基本技術資訊可能送到 Sentry。</td><td>Sentry 設定不收 Cookie、HTTP 標頭、請求本文、使用者欄位、查詢參數或資料庫查詢內容，並過濾 Email、姓名、食物與權杖等敏感欄位；效能追蹤抽樣率為 10%。</td></tr>
+                  <tr><th>網站使用分析</th><td>Google Analytics 4 會接收頁面瀏覽與功能事件，以及行政區、公開學校代碼、供餐日期、NPC 職務、建築類型等非家庭身分參數。</td><td>本站不送出家長或孩子姓名、Email、暱稱、飲食紀錄、過敏設定、NPC 名稱或對話內容作為自訂事件參數。</td></tr>
                   <tr><th>客服內容</th><td>你寄給客服的 Email、信件內容、附件與處理紀錄。</td><td>只提供處理問題、維護安全、確認請求與後續聯絡之用。請勿寄送登入驗證碼。</td></tr>
                 </tbody>
               </table>
             </div>
-            <p class="legal-note"><strong>目前沒有：</strong>廣告像素、跨站廣告追蹤、第三方一般流量分析工具或付款資料蒐集。若未來導入，會先更新本政策與必要的使用者選擇。</p>
+            <p class="legal-note"><strong>目前沒有：</strong>廣告像素、跨站廣告追蹤或付款資料蒐集。GA4 僅用於服務使用分析，不使用家庭資料建立廣告受眾。</p>
           </section>
 
           <section class="legal-section card" id="purposes">
@@ -137,6 +138,7 @@
               <li>儲存家長、孩子、學校、需留意食物、大頭貼及飲食紀錄，呈現使用者要求的個人化內容。</li>
               <li>只在孩子本人就讀學校且已取得所選日期的實際資料時，顯示站內食物注意提醒。</li>
               <li>限制大量驗證碼請求、阻擋未授權操作、偵測錯誤並維護服務安全與穩定。</li>
+              <li>以彙總的頁面與功能事件了解公開功能是否被使用，協助改善介面與內容。</li>
               <li>回覆客服、菜單更正、個資權利或帳號刪除等請求。</li>
               <li>依法配合必要義務，或保護使用者、服務與第三人的合法權益。</li>
             </ul>
@@ -185,11 +187,12 @@
                   <tr><th>LINE（LY Corporation）</th><td>選用 LINE 登入或綁定時驗證身分；本站只要求帳號識別權限，不讀取 LINE 姓名、大頭貼或 Email，也不將孩子資料與飲食紀錄傳給 LINE。一次性登入驗證資料保存在 D1，驗證用 Cookie 最長 10 分鐘。</td><td>依 LINE 平台的隱私權政策及基礎設施處理，可能涉及境外處理。</td></tr>
                   <tr><th>Resend</th><td>寄送登入驗證碼；接收收件 Email、信件內容與必要寄送狀態。</td><td>Resend 說明資料可能傳輸至並在美國處理。</td></tr>
                   <tr><th>Sentry</th><td>錯誤監控與抽樣效能追蹤；本站在送出前移除使用者、Cookie、標頭、本文、查詢參數與敏感欄位。</td><td>目前使用美國資料接收端點，屬境外處理。</td></tr>
+                  <tr><th>Google Analytics 4</th><td>統計頁面瀏覽與功能事件；本站限制自訂事件參數，不傳送家庭帳號、孩子資料、飲食紀錄、NPC 名稱或對話內容。</td><td>Google 為全球服務；資料可能依其基礎設施與政策在台灣以外地區處理。</td></tr>
                   <tr><th>學校與政府公開資料網站</th><td>本站整理其公開菜單與供餐資料。當你主動點擊原始資料連結時，外部網站會依其規則接收一般瀏覽請求資料。</td><td>以各來源網站的所在地與政策為準；本站不會把家庭紀錄附加到外部資料連結。</td></tr>
                 </tbody>
               </table>
             </div>
-            <p>你可參考各供應商的公開政策：<a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noreferrer">Cloudflare</a>、<a href="https://terms.line.me/line_rules/" target="_blank" rel="noreferrer">LINE</a>、<a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noreferrer">Resend</a>、<a href="https://sentry.io/privacy/" target="_blank" rel="noreferrer">Sentry</a>、<a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer">OpenAI</a>。</p>
+            <p>你可參考各供應商的公開政策：<a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noreferrer">Cloudflare</a>、<a href="https://terms.line.me/line_rules/" target="_blank" rel="noreferrer">LINE</a>、<a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noreferrer">Resend</a>、<a href="https://sentry.io/privacy/" target="_blank" rel="noreferrer">Sentry</a>、<a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">Google Analytics</a>、<a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer">OpenAI</a>。</p>
           </section>
 
           <section class="legal-section card" id="cookies">
@@ -199,7 +202,7 @@
               <li><strong>登入 Cookie：</strong><code>demeter_family_session</code> 用來維持家庭帳號登入；設定為 HttpOnly、SameSite=Lax，正式 HTTPS 網站也會加上 Secure，最長 30 天。它是必要登入憑證，不作廣告用途。</li>
               <li><strong>localStorage：</strong>保存餐別、年級群組、營養比較模式與目前選取孩子代碼等這台裝置的顯示偏好。清除瀏覽器網站資料即可移除。</li>
               <li><strong>Session storage：</strong>現有前端程式未使用 sessionStorage 保存家庭資料。</li>
-              <li><strong>分析與廣告：</strong>現有程式未使用 Google Analytics、Meta Pixel 或其他一般流量／廣告追蹤碼。Sentry 僅用於伺服器錯誤與抽樣效能診斷，且採前述過濾設定。</li>
+              <li><strong>分析與廣告：</strong>本站使用 Google Analytics 4 統計頁面與功能事件，並限制自訂參數不含家庭或孩子資料；目前不使用 Meta Pixel、跨站廣告追蹤或家庭資料建立廣告受眾。Sentry 僅用於錯誤與抽樣效能診斷。</li>
             </ul>
           </section>
 
@@ -246,6 +249,6 @@
       <nav class="footer-links" aria-label="服務資訊"><a href="/about">品牌故事</a><a aria-current="page" href="/privacy">隱私權政策</a><a href="/terms">服務條款</a><a href="/support">支援中心</a><a href="/">回到首頁</a></nav>
     </footer>
     <script src="/product-analytics.js" defer></script>
-    <script src="/account-panel.js?v=20261023-family-copy" defer></script>
+    <script src="/account-panel.js?v=20261104-town-auth" defer></script>
   </body>
 </html>

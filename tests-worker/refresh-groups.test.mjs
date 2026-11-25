@@ -14,7 +14,7 @@ const regionOrder = JSON.parse(
 
 test("refresh groups contain every school exactly once and keep configured city order", () => {
   const seen = new Set();
-  const expectedCityOrder = ["臺北市", "桃園市", "苗栗縣", "臺中市", "彰化縣", "臺南市"];
+  const expectedCityOrder = ["臺北市", "桃園市", "臺中市"];
   assert.deepEqual(plan.cityOrder, expectedCityOrder);
   let previousCityIndex = -1;
   for (const group of plan.groups) {

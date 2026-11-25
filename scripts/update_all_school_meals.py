@@ -17,7 +17,7 @@ def main(argv: list[str] | None = None) -> int:
     if "--help" in arguments or "-h" in arguments:
         print("""用法：python3 scripts/update_all_school_meals.py [參數]
 
-依啟用名冊由北到南處理臺北、桃園、苗栗、臺中、彰化及臺南；預設只更新本機。
+依啟用名冊由北到南處理臺北、桃園及臺中；預設只更新本機。
   --publish                 每區成功資料先發布；省略時不發布
   --no-publish              只更新本機
   --date YYYY-MM-DD         供餐日期，預設臺北時區今天

@@ -96,7 +96,7 @@ test('city visibility is owner-protected, stored in D1 and applied to the public
   const initial = await (await h.cityRoute.GET(h.request(ownerToken))).json();
   assert.equal(initial.cities.length, 22);
   assert.deepEqual(initial.cities.filter(city => city.enabled).map(city => city.name), [
-    '臺北市', '桃園市', '苗栗縣', '臺中市', '彰化縣', '臺南市',
+    '臺北市', '桃園市', '臺中市',
   ]);
   const taipei = initial.cities.find(city => city.name === '臺北市');
   assert.equal(taipei.canEnable, true);
@@ -104,13 +104,13 @@ test('city visibility is owner-protected, stored in D1 and applied to the public
   assert.equal(taipei.mealUnitCount, 147);
   assert.equal((await h.cityRoute.POST(h.request(ownerToken, { city: '臺北市', enabled: false }))).status, 200);
   assert.equal((await h.cityRoute.POST(h.request(ownerToken, { city: '臺北市', enabled: true }))).status, 200);
-  assert.equal((await h.cityRoute.POST(h.request(ownerToken, { city: '臺南市', enabled: false }, 'https://attacker.test'))).status, 403);
-  const changed = await h.cityRoute.POST(h.request(ownerToken, { city: '臺南市', enabled: false }));
+  assert.equal((await h.cityRoute.POST(h.request(ownerToken, { city: '桃園市', enabled: false }, 'https://attacker.test'))).status, 403);
+  const changed = await h.cityRoute.POST(h.request(ownerToken, { city: '桃園市', enabled: false }));
   assert.equal(changed.status, 200);
-  assert.equal(h.sqlite.prepare('SELECT enabled FROM city_visibility_settings WHERE city = ?').get('臺南市').enabled, 0);
+  assert.equal(h.sqlite.prepare('SELECT enabled FROM city_visibility_settings WHERE city = ?').get('桃園市').enabled, 0);
   const directory = await h.schoolsRoute.GET();
   assert.match(directory.headers.get('cache-control'), /no-store/);
   const schools = (await directory.json()).schools;
   assert.ok(schools.some(school => school.city === '臺中市'));
-  assert.equal(schools.some(school => school.city === '臺南市'), false);
+  assert.equal(schools.some(school => school.city === '桃園市'), false);
 });

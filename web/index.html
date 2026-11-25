@@ -14,12 +14,12 @@
     <script src="/locales/en.js?v=20261123-inline-ingredient-records"></script>
     <script src="/i18n.js?v=20261123-inline-ingredient-records"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="好好吃飯提供臺北市、桃園市、苗栗縣、臺中市、彰化縣、臺南市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
+    <meta name="description" content="好好吃飯提供臺北市、桃園市、臺中市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_TW" />
     <meta property="og:site_name" content="好好吃飯" />
     <meta property="og:title" content="好好吃飯｜國小營養午餐查詢、每日菜單與晚餐搭配" />
-    <meta property="og:description" content="好好吃飯提供臺北市、桃園市、苗栗縣、臺中市、彰化縣、臺南市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
+    <meta property="og:description" content="好好吃飯提供臺北市、桃園市、臺中市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
     <meta property="og:url" content="https://haohaofood.cc/" />
     <meta property="og:image" content="https://haohaofood.cc/og-image.png?v=20261020" />
     <meta property="og:image:type" content="image/png" />
@@ -28,7 +28,7 @@
     <meta property="og:image:alt" content="好好吃飯品牌圖示與標語：讓關心孩子每一餐，變得簡單一點。" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="好好吃飯｜國小營養午餐查詢、每日菜單與晚餐搭配" />
-    <meta name="twitter:description" content="好好吃飯提供臺北市、桃園市、苗栗縣、臺中市、彰化縣、臺南市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
+    <meta name="twitter:description" content="好好吃飯提供臺北市、桃園市、臺中市國小每日營養午餐查詢，了解菜色、營養資訊、食材來源與過敏原注意事項，並提供家庭晚餐搭配參考。公開菜單免費查詢。" />
     <meta name="twitter:image" content="https://haohaofood.cc/og-image.png?v=20261020" />
     <meta name="twitter:image:alt" content="好好吃飯品牌圖示與標語：讓關心孩子每一餐，變得簡單一點。" />
     <meta name="theme-color" content="#f5f0e7" />
@@ -543,21 +543,16 @@
             <label id="emailEntryFields">家長 Email
               <input id="authEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" maxlength="254" required placeholder="請輸入電子郵件" />
             </label>
-            <div id="authEligibilityGate" class="account-auth-form" hidden>
             <label>家長／成年照顧者出生日期
-              <input id="authBirthDate" name="birthDate" type="date" autocomplete="bday" required disabled />
+              <input id="authBirthDate" name="birthDate" type="date" autocomplete="bday" required />
               <small>只用來確認已滿 18 歲；完整生日不會保存。</small>
             </label>
             <label class="account-consent">
-              <input id="authCaregiverConfirmed" name="caregiverConfirmed" type="checkbox" required disabled />
+              <input id="authCaregiverConfirmed" name="caregiverConfirmed" type="checkbox" required />
               <span>我確認我是年滿 18 歲的家長、法定監護人或獲家長授權的成年照顧者，此帳號不由孩子自行使用。</span>
             </label>
-            <button class="account-sign-in line-sign-in" id="continueLineAuth" type="button" hidden>確認並前往 LINE</button>
-            <button class="account-text-button" id="backAuthMethod" type="button">返回選擇登入方式</button>
-            </div>
-            <button class="account-sign-in" id="requestAuthCode" type="submit" aria-disabled="false">使用 Email 繼續</button>
+            <button class="account-sign-in" id="requestAuthCode" type="submit" aria-disabled="false">寄送登入驗證碼</button>
             <p class="account-login-note" id="emailAuthNote">不需要設定密碼，透過 Email 驗證即可登入。</p>
-            <p class="account-login-note" id="lineAuthNote" hidden>將前往 LINE 完成身分驗證，授權後即可返回好好吃飯。</p>
             <p class="form-status" id="authRequestStatus" role="status" aria-live="polite"></p>
           </form>
           <div class="account-social-login" id="lineLoginOptions" hidden>

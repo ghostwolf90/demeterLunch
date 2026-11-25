@@ -2,7 +2,7 @@
 
 本文件說明每日學校午餐的下載、驗證、逐區發布與失敗續跑。公開網站：[好好吃飯](https://haohaofood.cc)。
 
-目前預設由北到南依序處理臺北市、桃園市、苗栗縣、臺中市、彰化縣、臺南市，共 1,058 所已驗證學校（臺北 147 校、桃園 188 校、苗栗 114 校、臺中 243 校、彰化 171 校、臺南 195 校）。來源為教育部校園食材登錄平臺的同日公開供餐紀錄。全臺縣市與行政區的共用順序保存在 `data/reference/taiwan-region-order.json`；縣市依地理順序處理，縣市內行政區依中華郵政三碼郵遞區號由小到大排列，共用同一郵遞區號時保留市內既有順序。
+目前預設由北到南依序處理臺北市、桃園市、臺中市，共 578 所已驗證學校（臺北 147 校、桃園 188 校、臺中 243 校）。來源為教育部校園食材登錄平臺的同日公開供餐紀錄。全臺縣市與行政區的共用順序保存在 `data/reference/taiwan-region-order.json`；縣市依地理順序處理，縣市內行政區依中華郵政三碼郵遞區號由小到大排列，共用同一郵遞區號時保留市內既有順序。苗栗、彰化與臺南的既有名冊及歷史資料保留，但不再加入公開選單或每日午餐抓取。
 
 ## 1. 日常使用：選一個入口即可
 
@@ -18,7 +18,7 @@ python3 scripts/update_all_school_meals.py --publish
 
 未指定日期時，使用**臺北時區當天**。兩個入口共用同一套逐區流程、進度檔與執行鎖。
 
-> **不要用 `scripts/update_all_taichung_schools.py` 更新六縣市。** 這是保留舊操作方式的臺中入口；未指定 `--city` 時，程式會自動限制為 `臺中市`，**不會包含臺北、桃園、苗栗、彰化或臺南**。要更新完整名冊，請使用上面的 `update_school_meals_by_district.py`，或執行 `update_all_school_meals.py --publish`。
+> **不要用 `scripts/update_all_taichung_schools.py` 更新三市。** 這是保留舊操作方式的臺中入口；未指定 `--city` 時，程式會自動限制為 `臺中市`，**不會包含臺北或桃園**。要更新完整名冊，請使用上面的 `update_school_meals_by_district.py`，或執行 `update_all_school_meals.py --publish`。
 
 | 使用方式 | 下載與驗證 | 每區完成後發布 | 結束後重建本機資料 |
 | --- | --- | --- | --- |
@@ -69,7 +69,7 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27
 python3 scripts/update_all_school_meals.py --date 2026-10-27 --publish
 ```
 
-以上兩種寫法都會由北到南依序處理臺北市、桃園市、苗栗縣、臺中市、彰化縣與臺南市。舊指令 `update_all_taichung_schools.py` 預設只處理臺中市，不能作為完整六縣市的等效寫法。
+以上兩種寫法都會由北到南依序處理臺北市、桃園市與臺中市。舊指令 `update_all_taichung_schools.py` 預設只處理臺中市，不能作為完整三市的等效寫法。
 
 ### 中斷、抓取失敗或發布失敗後接續
 
@@ -91,7 +91,7 @@ python3 scripts/update_school_meals_by_district.py \
   --district 北區
 ```
 
-`--city` 與 `--district` 都可重複使用。合併名冊有跨縣市同名行政區，因此指定 `--district` 時必須同時指定一個 `--city`。未指定城市時由北到南依序處理臺北、桃園、苗栗、臺中、彰化、臺南；區域進度仍保存在相同日期的共用進度檔。
+`--city` 與 `--district` 都可重複使用。合併名冊有跨縣市同名行政區，因此指定 `--district` 時必須同時指定一個 `--city`。未指定城市時由北到南依序處理臺北、桃園、臺中；區域進度仍保存在相同日期的共用進度檔。
 
 ### 只下載與驗證，暫不發布
 
@@ -187,14 +187,14 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingr
 
 ```text
 【本次全程總結】
-  學校總數：1058 校
-  有菜單：1058 校
+  學校總數：578 校
+  有菜單：578 校
   官方不供餐：0 校
   尚未公布：0 校
   抓取／驗證失敗：0 校
   尚未檢查：0 校
 
-  已發布：1058 校
+  已發布：578 校
   有效資料待發布：0 校
 
   耗時：78.4 秒
@@ -226,7 +226,7 @@ python3 scripts/update_school_meals_by_district.py --date 2026-10-27 --skip-ingr
 | 參數 | 預設／用途 |
 | --- | --- |
 | `--date YYYY-MM-DD` | 臺北時區當天。 |
-| `--city 縣市` | 不指定時依名冊順序處理臺北、桃園、苗栗、臺中、彰化、臺南；可重複指定。 |
+| `--city 縣市` | 不指定時依名冊順序處理臺北、桃園、臺中；可重複指定。 |
 | `--district 行政區` | 不指定時處理名冊全部行政區，可重複指定。 |
 | `--registry 路徑` | `data/reference/active-elementary-schools.json`。 |
 | `--no-publish` | 只處理本機，不上傳。 |
@@ -265,7 +265,7 @@ data/reference/national-school-directory.json           教育部 115 學年度�
 data/reference/national-fatrace-elementary-schools.json 全臺國小 Fatrace ID 對照（僅備用，不抓取）
 data/reference/city-service-catalog.json                 22 縣市服務狀態與國小數
 data/reference/city-visibility.json                      公開縣市預設開關
-data/reference/active-elementary-schools.json           六縣市合併啟用名冊
+data/reference/active-elementary-schools.json           三市合併啟用名冊
 data/reference/school-refresh-groups.json               多縣市刷新批次
 
 data/raw/fatrace-daily/YYYY-MM-DD/<學校代碼>/
@@ -310,11 +310,11 @@ dist/                                                 本機可部署快照
 
 ### 每校的日期來源網址是什麼？
 
-六縣市共用同一個來源格式：`https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=<School ID>&period=<YYYY-MM-DD>`。抓取器會保存這個公開查詢頁網址，並使用該頁背後的官方公開端點取得結構化菜單。
+三市共用同一個來源格式：`https://fatraceschool.k12ea.gov.tw/frontend/search.html?school=<School ID>&period=<YYYY-MM-DD>`。抓取器會保存這個公開查詢頁網址，並使用該頁背後的官方公開端點取得結構化菜單。
 
 ### 可以再加入其他縣市嗎？
 
-可以，但不能只替換 `--registry`。必須先建立經核對的城市名冊，再同步調整合併名冊、刷新批次、網站後端驗證與前端縣市選單；未驗證的 School ID 不得直接加入。臺北、桃園、苗栗與彰化名冊可用 `python3 scripts/fetch_city_school_registries.py` 重新下載，也可用 `--city` 只更新指定縣市；腳本會完整取得清單、核對教育部 115 學年度代碼與校名，全部完成後才原子更新有效名冊。完成後執行 `python3 scripts/build_active_school_registry.py` 重建六縣市合併名冊與刷新批次。
+可以，但不能只替換 `--registry`。必須先建立經核對的城市名冊，再同步調整合併名冊、刷新批次、網站後端驗證與前端縣市選單；未驗證的 School ID 不得直接加入。臺北、桃園、苗栗與彰化名冊可用 `python3 scripts/fetch_city_school_registries.py` 重新下載，也可用 `--city` 只更新指定縣市；腳本會完整取得清單、核對教育部 115 學年度代碼與校名，全部完成後才原子更新有效名冊。是否加入每日抓取仍由 `scripts/build_active_school_registry.py` 的收集範圍明確控制；目前重建結果只包含臺北、桃園與臺中。
 
 全臺 22 縣市的國小與 Fatrace School ID 備用對照可用下列指令更新：
 
@@ -323,7 +323,7 @@ python3 scripts/fetch_national_fatrace_school_directory.py
 python3 scripts/build_city_service_catalog.py
 ```
 
-第一個指令會封存中央平臺的縣市、行政區與國小清單，逐筆以教育部代碼與校名核對；結果只寫入 `national-fatrace-elementary-schools.json`，絕不加入抓取或公開選單。第二個指令會以教育部全臺名錄及六縣市啟用名冊重建後台使用的 22 縣市服務目錄。公開縣市開關只控制前台顯示，不會改變抓取範圍；未進入 `active-elementary-schools.json` 的縣市不能在後台開啟。
+第一個指令會封存中央平臺的縣市、行政區與國小清單，逐筆以教育部代碼與校名核對；結果只寫入 `national-fatrace-elementary-schools.json`，絕不加入抓取或公開選單。第二個指令會以教育部全臺名錄及三市啟用名冊重建後台使用的 22 縣市服務目錄。公開縣市開關只控制前台顯示，不會改變抓取範圍；未進入 `active-elementary-schools.json` 的縣市不能在後台開啟。
 
 ## 9. 結束碼與開發檢查
 

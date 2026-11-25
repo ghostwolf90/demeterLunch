@@ -59,6 +59,12 @@ class ReviewedSchoolMealTests(unittest.TestCase):
             meal_date: [record for record in records if record["mealDate"] == meal_date]
             for meal_date in {record["mealDate"] for record in records}
         }
+        inactive_records = [
+            record
+            for record in records
+            if record["school"]["fatraceSchoolId"] not in expected_ids
+        ]
+        self.assertTrue(inactive_records)
 
         self.assertEqual(len(records_by_date["2026-10-08"]), len(taichung_ids))
         self.assertEqual(
@@ -69,6 +75,11 @@ class ReviewedSchoolMealTests(unittest.TestCase):
             taichung_ids,
         )
         for meal_date, daily_records in records_by_date.items():
+            daily_records = [
+                record
+                for record in daily_records
+                if record["school"]["fatraceSchoolId"] in expected_ids
+            ]
             actual_ids = {
                 record["school"]["fatraceSchoolId"] for record in daily_records
             }
@@ -148,6 +159,13 @@ class ReviewedSchoolMealTests(unittest.TestCase):
 
     def test_sqlite_contains_normalized_school_meal_records(self) -> None:
         records = load_reviewed_school_meals(PARSED_ROOT)
+        registry = json.loads(ACTIVE_REGISTRY.read_text(encoding="utf-8"))
+        active_ids = {row["fatraceSchoolId"] for row in registry["schools"]}
+        records = [
+            record
+            for record in records
+            if record["school"]["fatraceSchoolId"] in active_ids
+        ]
         expected_counts = {
             "official_meal_days": len(records),
             "official_meals": sum(
@@ -189,8 +207,6 @@ class ReviewedSchoolMealTests(unittest.TestCase):
                     "official_ingredient_certifications",
                 )
             }
-
-        registry = json.loads(ACTIVE_REGISTRY.read_text(encoding="utf-8"))
         self.assertEqual(counts["schools"], len(registry["schools"]))
         for table, expected in expected_counts.items():
             self.assertEqual(counts[table], expected)
